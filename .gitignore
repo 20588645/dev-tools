@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Rust build artifacts
+devtools-desktop/src-tauri/target/
+
+# macOS
+.DS_Store
+*.command
+
+# Data files (contain sensitive info)
+devtools-desktop/sidecar/data/.secret
+deploy-panel/server/data/.secret
+
+# Temp files
+/tmp/
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.pyc
+reports/
+
+# Build output
+devtools-desktop/icon-1024.png
+devtools-desktop/icon.svg

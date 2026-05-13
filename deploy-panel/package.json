@@ -1,0 +1,16 @@
+{
+  "name": "deploy-panel",
+  "version": "1.0.0",
+  "description": "轻量级前端项目部署面板",
+  "main": "server/app.js",
+  "scripts": {
+    "start": "node server/app.js"
+  },
+  "dependencies": {
+    "express": "^4.18.0",
+    "ws": "^8.16.0",
+    "ssh2": "^1.15.0",
+    "glob": "^10.0.0",
+    "uuid": "^9.0.0"
+  }
+}

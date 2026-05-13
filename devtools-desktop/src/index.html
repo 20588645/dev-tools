@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DevTools</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<!-- 侧边栏 -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-top">
+    <div class="app-logo">
+      <span class="logo-icon">⚡</span>
+      <span class="logo-text">DevTools</span>
+    </div>
+  </div>
+
+  <div class="sidebar-content">
+    <!-- 收藏区 -->
+    <div class="nav-section">
+      <div class="nav-section-title">收藏</div>
+      <a class="nav-item" data-page="deploy" data-sub="quick">
+        <span class="nav-icon">⭐</span>
+        <span class="nav-label">快速部署</span>
+      </a>
+      <a class="nav-item" data-page="report" data-sub="quick">
+        <span class="nav-icon">⭐</span>
+        <span class="nav-label">本周周报</span>
+      </a>
+    </div>
+
+    <!-- 工具区 -->
+    <div class="nav-section">
+      <div class="nav-section-title">工具</div>
+      <a class="nav-item active" data-page="home">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">首页</span>
+      </a>
+      <div class="nav-group">
+        <a class="nav-item" data-page="deploy">
+          <span class="nav-icon">🚀</span>
+          <span class="nav-label">部署面板</span>
+          <span class="nav-arrow">›</span>
+        </a>
+        <div class="nav-sub">
+          <a class="nav-sub-item" data-page="deploy" data-sub="projects">项目总览</a>
+          <a class="nav-sub-item" data-page="deploy" data-sub="servers">服务器管理</a>
+          <a class="nav-sub-item" data-page="deploy" data-sub="history">部署历史</a>
+        </div>
+      </div>
+      <div class="nav-group">
+        <a class="nav-item" data-page="report">
+          <span class="nav-icon">📋</span>
+          <span class="nav-label">Git 周报</span>
+          <span class="nav-arrow">›</span>
+        </a>
+        <div class="nav-sub">
+          <a class="nav-sub-item" data-page="report" data-sub="generate">生成周报</a>
+          <a class="nav-sub-item" data-page="report" data-sub="config">仓库配置</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sidebar-bottom">
+    <a class="nav-item" data-page="settings">
+      <span class="nav-icon">⚙️</span>
+      <span class="nav-label">设置</span>
+    </a>
+  </div>
+</aside>
+
+<!-- 主内容区 -->
+<main class="main">
+  <!-- 顶部栏 -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="btn-icon-sm" id="toggleSidebar" title="收起侧边栏">☰</button>
+      <div class="breadcrumb" id="breadcrumb">
+        <span>首页</span>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <button class="search-trigger" id="searchTrigger">
+        <span class="search-icon">🔍</span>
+        <span class="search-placeholder">搜索...</span>
+        <kbd>⌘K</kbd>
+      </button>
+      <button class="status-badge" id="statusBadge" onclick="openStatusModal()">
+        <span class="status-dot" id="statusDot"></span>
+        <span class="status-text" id="statusText">连接中...</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- 页面容器 -->
+  <div class="page-container">
+    <!-- 首页 -->
+    <section class="page active" id="page-home">
+      <div class="home-greeting">
+        <h1 id="greeting">下午好 👋</h1>
+        <p class="greeting-sub">今天是 2026年5月13日，星期三</p>
+      </div>
+
+      <div class="home-quick">
+        <h3 class="section-title">快捷操作</h3>
+        <div class="quick-cards">
+          <div class="quick-card">
+            <div class="quick-card-icon">🚀</div>
+            <div class="quick-card-info">
+              <div class="quick-card-title">上次部署</div>
+              <div class="quick-card-desc">kangzhan-cloud / home → 生产服务器</div>
+              <div class="quick-card-meta">2小时前 · 1m 23s</div>
+            </div>
+            <button class="btn-primary btn-sm">一键重复</button>
+          </div>
+          <div class="quick-card">
+            <div class="quick-card-icon">📋</div>
+            <div class="quick-card-info">
+              <div class="quick-card-title">本周周报</div>
+              <div class="quick-card-desc">2026.05.12 — 2026.05.16</div>
+              <div class="quick-card-meta">尚未生成</div>
+            </div>
+            <button class="btn-primary btn-sm">立即生成</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="home-activity">
+        <h3 class="section-title">最近活动</h3>
+        <div class="activity-list">
+          <div class="activity-item success">
+            <div class="activity-dot"></div>
+            <div class="activity-info">
+              <span class="activity-text">部署成功 — kangzhan-cloud / home, operatingOAS</span>
+              <span class="activity-meta">→ 生产服务器 · 1m 23s</span>
+            </div>
+            <div class="activity-time">12:30</div>
+          </div>
+          <div class="activity-item success">
+            <div class="activity-dot"></div>
+            <div class="activity-info">
+              <span class="activity-text">构建成功 — moutai-frontend / 整体构建</span>
+              <span class="activity-meta">2m 10s</span>
+            </div>
+            <div class="activity-time">11:00</div>
+          </div>
+          <div class="activity-item fail">
+            <div class="activity-dot"></div>
+            <div class="activity-info">
+              <span class="activity-text">部署失败 — tongrentang / home</span>
+              <span class="activity-meta">SSH 连接超时</span>
+            </div>
+            <div class="activity-time">09:15</div>
+          </div>
+          <div class="activity-item success">
+            <div class="activity-dot"></div>
+            <div class="activity-info">
+              <span class="activity-text">周报已生成 — 2026.05.05 ~ 2026.05.09</span>
+              <span class="activity-meta">5 个仓库 · 32 条提交</span>
+            </div>
+            <div class="activity-time">昨天</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="home-stats">
+        <h3 class="section-title">本周统计</h3>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value">12</div>
+            <div class="stat-label">部署次数</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">92%</div>
+            <div class="stat-label">成功率</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">8</div>
+            <div class="stat-label">项目数</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">47</div>
+            <div class="stat-label">本周提交</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 部署面板 - 项目总览 -->
+    <section class="page" id="page-deploy">
+      <div class="page-header">
+        <h2>项目总览</h2>
+        <div class="page-actions">
+          <div class="filter-chips">
+            <button class="chip active" data-filter="all">全部</button>
+            <button class="chip" data-filter="multi">多模块</button>
+            <button class="chip" data-filter="single">单体</button>
+          </div>
+          <div class="search-input">
+            <span>🔍</span>
+            <input type="text" placeholder="搜索项目..." id="deploySearchInput" oninput="renderDeployProjects()">
+          </div>
+          <button class="btn-primary" onclick="addProject()">+ 添加项目</button>
+        </div>
+      </div>
+      <div class="project-grid" id="projectGrid">
+        <div style="text-align:center;color:var(--text-muted);padding:60px;grid-column:1/-1">加载中...</div>
+      </div>
+    </section>
+
+    <!-- 服务器管理 -->
+    <section class="page" id="page-servers">
+      <div class="page-header">
+        <h2>服务器管理</h2>
+        <div class="page-actions">
+          <button class="btn-primary" onclick="showAddServer()">+ 添加服务器</button>
+        </div>
+      </div>
+      <div class="server-list" id="serverList">
+        <div style="text-align:center;color:var(--text-muted);padding:60px">加载中...</div>
+      </div>
+    </section>
+
+    <!-- 部署历史 -->
+    <section class="page" id="page-history">
+      <div class="page-header">
+        <h2>部署历史</h2>
+        <div class="page-actions">
+          <div class="filter-chips">
+            <button class="chip active" data-hfilter="all">全部</button>
+            <button class="chip" data-hfilter="deploy">🚀 部署</button>
+            <button class="chip" data-hfilter="build-only">🔨 构建</button>
+          </div>
+        </div>
+      </div>
+      <div id="historyTable">
+        <div style="text-align:center;color:var(--text-muted);padding:60px">加载中...</div>
+      </div>
+    </section>
+
+    <!-- Git 周报 -->
+    <section class="page" id="page-report">
+      <div class="page-header">
+        <h2>Git 周报</h2>
+        <div class="page-actions">
+          <button class="btn-text" onclick="copyReportMarkdown()">📋 复制 MD</button>
+        </div>
+      </div>
+      <div class="report-layout">
+        <div class="report-sidebar">
+          <div class="form-group">
+            <label>时间范围</label>
+            <div class="date-range">
+              <input type="date" id="reportSince">
+              <span>至</span>
+              <input type="date" id="reportUntil">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>仓库选择</label>
+            <div class="repo-list" id="reportRepoList">
+              <div style="color:var(--text-muted);font-size:12px;padding:12px">加载中...</div>
+            </div>
+          </div>
+          <div class="report-actions">
+            <button class="btn-primary btn-block" onclick="generateReport()">📋 生成周报</button>
+          </div>
+        </div>
+        <div class="report-preview">
+          <div class="preview-content" id="reportPreviewContent">
+            <div style="text-align:center;padding:60px;color:var(--text-muted)">
+              <div style="font-size:32px;margin-bottom:12px">📋</div>
+              <p>选择时间范围和仓库后，点击「生成周报」</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 设置页 -->
+    <section class="page" id="page-settings">
+      <div class="page-header">
+        <h2>设置</h2>
+        <div class="page-actions">
+          <button class="btn-primary" onclick="saveSettings()">💾 保存设置</button>
+        </div>
+      </div>
+      <div class="settings-content">
+        <div class="settings-section">
+          <h3>通用</h3>
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-label">项目扫描目录</div>
+              <div class="setting-desc">部署面板扫描前端项目的根目录</div>
+            </div>
+            <div class="setting-control">
+              <input type="text" id="settingScanDir" value="/Users/ldy/project/" class="input-sm">
+            </div>
+          </div>
+        </div>
+        <div class="settings-section">
+          <h3>GitLab</h3>
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-label">Private Token</div>
+              <div class="setting-desc">用于访问 GitLab API 获取提交记录</div>
+            </div>
+            <div class="setting-control">
+              <input type="password" id="settingToken" class="input-sm" placeholder="输入 GitLab Token">
+            </div>
+          </div>
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-label">默认作者</div>
+              <div class="setting-desc">周报生成时默认过滤的作者名</div>
+            </div>
+            <div class="setting-control">
+              <input type="text" id="settingAuthor" class="input-sm" placeholder="如 ledy">
+            </div>
+          </div>
+        </div>
+        <div class="settings-section">
+          <h3>周报仓库</h3>
+          <div class="setting-item" style="flex-direction:column;align-items:stretch;gap:12px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div class="setting-info">
+                <div class="setting-label">仓库列表</div>
+                <div class="setting-desc">配置需要生成周报的 GitLab 仓库</div>
+              </div>
+              <button class="btn-text" onclick="addRepoRow()">+ 添加仓库</button>
+            </div>
+            <div id="settingRepoList"></div>
+          </div>
+        </div>
+        <div class="settings-section">
+          <h3>关于</h3>
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-label">DevTools Desktop</div>
+              <div class="setting-desc">版本 0.1.0 · Tauri + Node.js Sidecar</div>
+            </div>
+            <div class="setting-control">
+              <span style="font-size:12px;color:var(--text-muted)" id="settingAbout"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<!-- 全局搜索弹窗 -->
+<div class="search-overlay" id="searchOverlay">
+  <div class="search-modal">
+    <div class="search-input-wrap">
+      <span class="search-modal-icon">🔍</span>
+      <input type="text" placeholder="搜索项目、服务器、操作..." id="searchInput" autocomplete="off">
+      <kbd>ESC</kbd>
+    </div>
+    <div class="search-results">
+      <div class="search-group">
+        <div class="search-group-title">最近</div>
+        <a class="search-result-item">
+          <span class="search-result-icon">🚀</span>
+          <span class="search-result-text">部署 kangzhan-cloud</span>
+          <span class="search-result-hint">2小时前</span>
+        </a>
+        <a class="search-result-item">
+          <span class="search-result-icon">📋</span>
+          <span class="search-result-text">生成本周周报</span>
+        </a>
+      </div>
+      <div class="search-group">
+        <div class="search-group-title">项目</div>
+        <a class="search-result-item">
+          <span class="search-result-icon">📦</span>
+          <span class="search-result-text">kangzhan-cloud</span>
+          <span class="search-result-hint">多模块 · 26</span>
+        </a>
+        <a class="search-result-item">
+          <span class="search-result-icon">📦</span>
+          <span class="search-result-text">moutai-frontend</span>
+          <span class="search-result-hint">多模块 · 17</span>
+        </a>
+        <a class="search-result-item">
+          <span class="search-result-icon">📄</span>
+          <span class="search-result-text">netaxfront</span>
+          <span class="search-result-hint">单体 · Vite</span>
+        </a>
+      </div>
+      <div class="search-group">
+        <div class="search-group-title">操作</div>
+        <a class="search-result-item">
+          <span class="search-result-icon">➕</span>
+          <span class="search-result-text">添加项目</span>
+        </a>
+        <a class="search-result-item">
+          <span class="search-result-icon">🖥</span>
+          <span class="search-result-text">添加服务器</span>
+        </a>
+        <a class="search-result-item">
+          <span class="search-result-icon">⚙️</span>
+          <span class="search-result-text">打开设置</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 构建弹窗 -->
+<div class="modal-overlay" id="buildModal">
+  <div class="modal" style="width:720px">
+    <div class="modal-header">
+      <div>
+        <h2 id="buildModalTitle">构建项目</h2>
+        <p style="font-size:12px;color:var(--text-muted);margin-top:4px" id="buildModalSub"></p>
+      </div>
+      <button class="modal-close" onclick="closeBuildModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="buildSingleView" style="display:none">
+        <div style="text-align:center;padding:20px;color:var(--text-secondary)">
+          <div style="font-size:32px;margin-bottom:8px">📄</div>
+          <p>单体项目，将整体构建</p>
+        </div>
+      </div>
+      <div id="buildMultiView">
+        <div class="module-filter-bar">
+          <button class="module-filter-btn active" onclick="setBuildFilter('all',this)">全部</button>
+          <button class="module-filter-btn" onclick="setBuildFilter('fav',this)">⭐ 常用</button>
+          <span style="flex:1"></span>
+          <button class="btn-text" onclick="toggleAllBuildModules(true)">全选</button>
+          <button class="btn-text" onclick="toggleAllBuildModules(false)">全不选</button>
+          <span style="font-size:12px;color:var(--text-muted);padding:4px 8px" id="buildSelectedCount">已选 0 个</span>
+        </div>
+        <div class="module-select-grid" id="buildModuleGrid"></div>
+      </div>
+      <div style="margin-top:16px;display:flex;align-items:center;gap:12px">
+        <label style="font-size:12px;color:var(--text-secondary);white-space:nowrap">Node 版本</label>
+        <select id="buildNodeSelect" style="flex:1;padding:6px 10px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-xs);color:var(--text-primary);font-size:13px"></select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeBuildModal()">取消</button>
+      <button class="btn-primary" onclick="executeBuild()">🔨 开始构建</button>
+    </div>
+  </div>
+</div>
+
+<!-- 部署弹窗 -->
+<div class="modal-overlay" id="deployModal">
+  <div class="modal" style="width:720px">
+    <div class="modal-header">
+      <div>
+        <h2 id="deployModalTitle">部署项目</h2>
+        <p style="font-size:12px;color:var(--text-muted);margin-top:4px" id="deployModalSub"></p>
+      </div>
+      <button class="modal-close" onclick="closeDeployModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="deploySingleView" style="display:none">
+        <div style="text-align:center;padding:20px;color:var(--text-secondary)">
+          <div style="font-size:32px;margin-bottom:8px">📄</div>
+          <p>单体项目，将整体构建并部署</p>
+        </div>
+      </div>
+      <div id="deployMultiView">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <span style="font-size:12px;color:var(--text-secondary)">选择要部署的模块：</span>
+          <div style="display:flex;gap:6px">
+            <button class="btn-text" onclick="toggleAllDeployModules(true)">全选</button>
+            <button class="btn-text" onclick="toggleAllDeployModules(false)">全不选</button>
+            <span style="font-size:12px;color:var(--text-muted);padding:4px 8px" id="deploySelectedCount">已选 0 个</span>
+          </div>
+        </div>
+        <div class="module-select-grid" id="deployModuleGrid"></div>
+      </div>
+      <div style="margin-top:16px;display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <label style="font-size:12px;color:var(--text-secondary);white-space:nowrap;width:70px">Node 版本</label>
+          <select id="deployNodeSelect" style="flex:1;padding:6px 10px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-xs);color:var(--text-primary);font-size:13px"></select>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <label style="font-size:12px;color:var(--text-secondary);white-space:nowrap;width:70px">目标服务器</label>
+          <select id="deployServerSelect" style="flex:1;padding:6px 10px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-xs);color:var(--text-primary);font-size:13px"></select>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <label style="font-size:12px;color:var(--text-secondary);white-space:nowrap;width:70px">发布目录</label>
+          <select id="deployPathSelect" style="flex:1;padding:6px 10px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-xs);color:var(--text-primary);font-size:13px"></select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeDeployModal()">取消</button>
+      <button class="btn-primary" onclick="executeDeploy()">🚀 构建并部署</button>
+    </div>
+  </div>
+</div>
+
+<!-- 实时日志弹窗 -->
+<div class="modal-overlay" id="logModal">
+  <div class="modal" style="width:780px;height:75vh">
+    <div class="modal-header">
+      <div>
+        <h2 id="logModalTitle">部署进度</h2>
+        <p style="font-size:12px;color:var(--text-muted);margin-top:4px" id="logModalSub"></p>
+      </div>
+      <button class="modal-close" onclick="closeLogModal()">✕</button>
+    </div>
+    <div class="modal-body" style="padding:16px 24px;display:flex;flex-direction:column;overflow:hidden">
+      <!-- 阶段步骤指示器 -->
+      <div class="log-steps" id="logSteps"></div>
+      <!-- 进度条 -->
+      <div style="display:flex;align-items:center;gap:10px;margin:10px 0;flex-shrink:0">
+        <div class="log-progress" style="flex:1">
+          <div class="log-progress-bar" id="logProgressBar" style="width:0%"></div>
+        </div>
+        <span style="font-size:12px;color:var(--text-muted);min-width:32px" id="logProgressText">0%</span>
+      </div>
+      <!-- 日志终端 -->
+      <div class="status-log deploy-terminal" id="deployLog"></div>
+    </div>
+    <div class="modal-footer">
+      <div id="logResult" style="flex:1;font-size:13px;display:none">
+        <span id="logResultIcon"></span>
+        <span id="logResultText"></span>
+      </div>
+      <button class="btn-secondary" onclick="closeLogModal()">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 运行状态弹窗 -->
+<div class="modal-overlay" id="statusModal">
+  <div class="modal modal-status">
+    <div class="modal-header">
+      <h2>⚡ 服务运行状态</h2>
+      <button class="modal-close" onclick="closeStatusModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="status-cards">
+        <div class="status-card" id="scTauri">
+          <div class="sc-icon">🖥</div>
+          <div class="sc-info">
+            <div class="sc-name">Tauri 主进程</div>
+            <div class="sc-detail" id="scTauriDetail">检测中...</div>
+          </div>
+          <div class="sc-badge" id="scTauriBadge">--</div>
+        </div>
+        <div class="status-card" id="scSidecar">
+          <div class="sc-icon">⚙️</div>
+          <div class="sc-info">
+            <div class="sc-name">Node Sidecar</div>
+            <div class="sc-detail" id="scSidecarDetail">检测中...</div>
+          </div>
+          <div class="sc-badge" id="scSidecarBadge">--</div>
+        </div>
+        <div class="status-card" id="scWebSocket">
+          <div class="sc-icon">🔌</div>
+          <div class="sc-info">
+            <div class="sc-name">WebSocket</div>
+            <div class="sc-detail" id="scWebSocketDetail">检测中...</div>
+          </div>
+          <div class="sc-badge" id="scWebSocketBadge">--</div>
+        </div>
+      </div>
+      <div class="status-log-header">
+        <span>运行日志</span>
+        <button class="btn-text" onclick="clearStatusLog()">清空</button>
+      </div>
+      <div class="status-log" id="statusLog"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="refreshStatus()">🔄 刷新状态</button>
+      <button class="btn-secondary" onclick="closeStatusModal()">关闭</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/websocket.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

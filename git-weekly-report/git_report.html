@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Git Report · Weekly</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%234f8ff7'/%3E%3Cstop offset='100%25' stop-color='%236366f1'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='url(%23g)'/%3E%3Ccircle cx='16' cy='16' r='4' fill='none' stroke='white' stroke-width='2'/%3E%3Cline x1='4' y1='16' x2='11' y2='16' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3Cline x1='21' y1='16' x2='28' y2='16' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3Cline x1='16' y1='4' x2='16' y2='11' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3Cline x1='16' y1='21' x2='16' y2='28' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0e1a;--bg2:#111827;--card:#161d2e;--card2:#1a2236;--border:rgba(99,118,150,.2);--border2:rgba(99,118,150,.12);--text:#e8ecf4;--dim:#7a869a;--blue:#4f8ff7;--blue2:#6366f1;--green:#34d399;--red:#f87171;--amber:#fbbf24;--purple:#a78bfa;--cyan:#22d3ee;--radius:14px;--shadow:0 4px 24px rgba(0,0,0,.35)}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif;background:var(--bg);color:var(--text);background-image:radial-gradient(rgba(99,118,150,.06) 1px,transparent 1px);background-size:24px 24px}
+.app{max-width:1440px;margin:0 auto;padding:16px 20px;height:100%;display:flex;flex-direction:column}
+
+/* Header */
+.header{position:relative;display:flex;align-items:center;justify-content:space-between;padding:14px 28px;background:linear-gradient(135deg,rgba(16,22,36,.85),rgba(22,29,46,.75));backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(99,118,150,.15);border-radius:var(--radius);margin-bottom:16px;flex-shrink:0}
+.header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--blue),var(--purple),var(--cyan),transparent);opacity:.6}
+.header-brand{display:flex;align-items:center;gap:14px;position:relative;z-index:1}
+.header-logo{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--blue),var(--blue2));display:flex;align-items:center;justify-content:center;box-shadow:0 2px 16px rgba(79,143,247,.35);animation:logoPulse 3s ease-in-out infinite}
+.header-logo svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+@keyframes logoPulse{0%,100%{box-shadow:0 2px 16px rgba(79,143,247,.35)}50%{box-shadow:0 2px 24px rgba(79,143,247,.55)}}
+.header h1{font-size:1.15rem;font-weight:700;letter-spacing:-.02em;background:linear-gradient(135deg,#e8ecf4 30%,var(--blue) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.header .ver{font-size:.6rem;padding:2px 8px;border-radius:20px;background:linear-gradient(135deg,rgba(79,143,247,.15),rgba(99,102,241,.15));color:var(--blue);font-weight:700;margin-left:10px;letter-spacing:.04em;border:1px solid rgba(79,143,247,.2);-webkit-text-fill-color:var(--blue)}
+.header .hint{font-size:.7rem;color:var(--dim);margin-top:3px;letter-spacing:.01em}
+.header .hint .dot{display:inline-block;width:3px;height:3px;border-radius:50%;background:var(--dim);margin:0 8px;vertical-align:middle;opacity:.5}
+.header-actions{display:flex;gap:8px;position:relative;z-index:10}
+.header-actions .btn{padding:7px 14px;border-radius:8px;font-size:.75rem;background:rgba(99,118,150,.08);border:1px solid rgba(99,118,150,.18);color:var(--dim);backdrop-filter:blur(8px);transition:all .25s}
+.header-actions .btn:hover{background:rgba(79,143,247,.1);border-color:rgba(79,143,247,.3);color:var(--blue);transform:translateY(-1px)}
+
+/* Layout */
+.main{display:flex;gap:16px;flex:1;min-height:0}
+.panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--shadow)}
+.panel-left{width:400px;min-width:360px;flex-shrink:0}
+.panel-right{flex:1;min-width:0}
+.panel-title{padding:12px 20px;font-size:.72rem;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;background:rgba(17,24,39,.4)}
+.panel-title::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px rgba(52,211,153,.4);animation:pulse 2.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 8px rgba(52,211,153,.4)}50%{opacity:.5;box-shadow:0 0 4px rgba(52,211,153,.2)}}
+.panel-body{padding:16px 18px;overflow-y:auto;flex:1}
+
+/* Form */
+.field{margin-bottom:12px}
+.field label{display:block;font-size:.7rem;color:var(--dim);margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.field input,.field select{width:100%;padding:9px 12px;background:rgba(10,14,26,.5);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:.82rem;font-family:inherit;outline:none;transition:all .25s}
+.field input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(79,143,247,.12)}
+.field input::placeholder{color:rgba(122,134,154,.5)}
+
+/* Custom Date Picker */
+.date-field{position:relative}
+.date-trigger{cursor:pointer;caret-color:transparent;font-variant-numeric:tabular-nums}
+.date-trigger::after{content:'📅';position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:.75rem;opacity:.5;pointer-events:none;transition:opacity .2s}
+.date-field:hover .date-trigger::after{opacity:.8}
+.cal-popup{position:absolute;top:calc(100% + 6px);left:0;z-index:999;background:rgba(17,20,30,.97);border:1px solid var(--border);border-radius:12px;padding:12px;min-width:260px;box-shadow:0 12px 40px rgba(0,0,0,.5),0 0 0 1px rgba(79,143,247,.08);backdrop-filter:blur(16px);display:none;animation:calFadeIn .2s ease}
+.date-field:last-child .cal-popup{left:auto;right:0}
+.cal-popup.open{display:block}
+@keyframes calFadeIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:0 2px}
+.cal-title{font-size:.8rem;font-weight:700;color:var(--text);cursor:default}
+.cal-nav{display:flex;gap:2px}
+.cal-nav button{background:none;border:none;color:var(--dim);cursor:pointer;font-size:.85rem;width:28px;height:28px;border-radius:6px;transition:all .15s;display:flex;align-items:center;justify-content:center}
+.cal-nav button:hover{background:rgba(79,143,247,.12);color:var(--blue)}
+.cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px}
+.cal-weekdays span{text-align:center;font-size:.6rem;font-weight:600;color:var(--dim);padding:4px 0;text-transform:uppercase}
+.cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cal-day{text-align:center;padding:6px 0;font-size:.72rem;border-radius:6px;cursor:pointer;transition:all .15s;color:var(--text);position:relative}
+.cal-day:hover{background:rgba(79,143,247,.15);color:#fff}
+.cal-day.other{color:rgba(122,134,154,.3)}
+.cal-day.other:hover{color:rgba(122,134,154,.6);background:rgba(79,143,247,.06)}
+.cal-day.today{color:var(--cyan);font-weight:700}
+.cal-day.today::after{content:'';position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--cyan)}
+.cal-day.selected{background:var(--blue);color:#fff;font-weight:600;box-shadow:0 2px 8px rgba(79,143,247,.3)}
+.cal-day.selected.today::after{background:#fff}
+.cal-day.in-range{background:rgba(79,143,247,.1);border-radius:0}
+.cal-day.range-start{border-radius:6px 0 0 6px}
+.cal-day.range-end{border-radius:0 6px 6px 0}
+.cal-footer{display:flex;justify-content:flex-end;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
+.cal-footer button{background:none;border:none;color:var(--blue);cursor:pointer;font-size:.7rem;font-weight:600;padding:4px 10px;border-radius:6px;transition:all .15s}
+.cal-footer button:hover{background:rgba(79,143,247,.12)}
+.row{display:flex;gap:10px}
+.row>.field{flex:1}
+
+/* Section divider */
+.section-label{font-size:.7rem;color:var(--dim);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin:14px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px}
+.section-label .count{font-size:.65rem;padding:1px 7px;border-radius:10px;background:rgba(79,143,247,.12);color:var(--blue);font-weight:700}
+
+/* Repo list */
+.repo-search{width:100%;padding:7px 10px 7px 30px;background:rgba(10,14,26,.4);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:.76rem;font-family:inherit;outline:none;transition:all .25s;margin-bottom:8px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%237a869a' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:8px center}
+.repo-search:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(79,143,247,.12)}
+.repo-search::placeholder{color:rgba(122,134,154,.5)}
+.repo-item{padding:10px 12px 10px 28px;background:rgba(10,14,26,.3);border:1px solid var(--border2);border-radius:10px;margin-bottom:8px;position:relative;transition:all .2s}
+.repo-item::before{content:'';position:absolute;left:5px;top:6px;bottom:6px;width:3px;border-radius:3px;background:var(--blue);transition:background .2s}
+.repo-item.dragging{opacity:.4}
+.repo-item.dragging::before{background:var(--amber)}
+.repo-item.drag-over{border-top:2px solid var(--cyan);margin-top:-2px}
+.repo-item:hover{background:rgba(10,14,26,.5)}
+.repo-item:hover::before{background:var(--cyan)}
+.drag-handle{position:absolute;left:7px;top:50%;transform:translateY(-50%);cursor:grab;color:var(--dim);font-size:.65rem;padding:8px 2px;opacity:.3;transition:opacity .2s;user-select:none;line-height:.8}
+.drag-handle:hover{opacity:.8;color:var(--blue)}
+.drag-handle:active{cursor:grabbing}
+.repo-item .row{margin-bottom:0}
+.repo-item .field{margin-bottom:6px}
+.repo-item .field:last-child{margin-bottom:0}
+.repo-item .field label{font-size:.65rem}
+.repo-item .field input{padding:7px 10px;font-size:.78rem;font-family:'JetBrains Mono','Menlo',monospace}
+.repo-del{position:absolute;top:8px;right:8px;background:none;border:none;color:var(--dim);cursor:pointer;font-size:1rem;line-height:1;padding:2px 6px;border-radius:4px;transition:all .2s}
+.repo-del:hover{color:var(--red);background:rgba(248,113,113,.12)}
+.repo-list{overflow-y:auto;flex:1;padding-right:4px}
+
+/* Buttons */
+.btn{padding:8px 14px;border:none;border-radius:8px;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;justify-content:center;gap:6px;font-family:inherit}
+.btn-primary{background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;box-shadow:0 2px 12px rgba(79,143,247,.25)}
+.btn-primary:hover{filter:brightness(1.12);transform:translateY(-1px);box-shadow:0 4px 16px rgba(79,143,247,.35)}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-success{background:linear-gradient(135deg,#059669,#10b981);color:#fff;box-shadow:0 2px 10px rgba(16,185,129,.2)}
+.btn-success:hover{filter:brightness(1.12);transform:translateY(-1px)}
+.btn-outline{background:rgba(10,14,26,.3);border:1px solid var(--border);color:var(--dim);font-weight:500}
+.btn-outline:hover{border-color:rgba(79,143,247,.4);color:var(--blue);background:rgba(79,143,247,.06)}
+.btn-group{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+
+/* Mode Switcher */
+.mode-switcher{display:flex;background:rgba(10,14,26,.5);border:1px solid var(--border);border-radius:10px;padding:3px;margin-bottom:14px}
+.mode-btn{flex:1;padding:7px 0;text-align:center;font-size:.78rem;font-weight:600;color:var(--dim);border:none;background:none;border-radius:8px;cursor:pointer;transition:all .25s;font-family:inherit;position:relative}
+.mode-btn.active{background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;box-shadow:0 2px 10px rgba(79,143,247,.3)}
+.mode-btn:not(.active):hover{color:var(--text);background:rgba(99,118,150,.08)}
+
+/* Results */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--dim)}
+.empty-state .icon{width:60px;height:60px;border-radius:16px;background:linear-gradient(135deg,var(--blue),var(--blue2));display:flex;align-items:center;justify-content:center;font-size:1.6rem;margin-bottom:14px;box-shadow:0 4px 20px rgba(79,143,247,.2)}
+.result-section{padding:14px 18px;position:relative}
+.result-section+.result-section{border-top:1px solid rgba(255,255,255,.04)}
+.result-section h3{font-size:.82rem;color:var(--text);margin-bottom:10px;display:flex;align-items:center;gap:8px;font-weight:600}
+.result-section h3 .branch{color:var(--blue);font-weight:500;font-size:.68rem;padding:2px 8px;background:rgba(79,143,247,.1);border-radius:6px}
+.result-section .empty-repo{color:var(--dim);font-style:italic;font-size:.82rem;padding:4px 0}
+.result-section .error-repo{color:var(--red);font-size:.82rem;padding:4px 0}
+
+/* Table */
+table{width:100%;border-collapse:separate;border-spacing:0;font-size:.78rem;border-radius:8px;overflow:hidden;border:1px solid var(--border2)}
+th{background:rgba(17,24,39,.6);color:var(--dim);padding:8px 12px;text-align:left;font-weight:600;font-size:.7rem;text-transform:uppercase;letter-spacing:.04em}
+th:first-child{border-radius:8px 0 0 0}
+th:last-child{border-radius:0 8px 0 0}
+td{padding:8px 12px;border-bottom:1px solid var(--border2);color:#b0bdd0;vertical-align:top;transition:background .15s}
+tr:nth-child(even) td{background:rgba(17,24,39,.25)}
+tr:hover td{background:rgba(79,143,247,.06)}
+td.subject{color:var(--text);font-size:.78rem;line-height:1.5}
+
+/* Summary bar */
+.summary{padding:10px 20px;background:rgba(17,24,39,.5);border-bottom:1px solid var(--border);font-size:.8rem;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.summary .stat{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:8px;background:rgba(99,118,150,.08);font-weight:500}
+.summary .stat .num{color:var(--green);font-weight:700}
+.summary .stat.fail{background:rgba(248,113,113,.1);color:var(--red)}
+
+/* Toolbar */
+.toolbar{padding:8px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;background:rgba(17,24,39,.3)}
+.toggle-wrap{display:inline-flex;align-items:center;gap:8px;font-size:.75rem;color:var(--dim);cursor:pointer;user-select:none;font-weight:500}
+.toggle-track{position:relative;width:34px;height:18px;background:rgba(99,118,150,.25);border-radius:9px;transition:background .25s}
+.toggle-track.active{background:var(--blue);box-shadow:0 0 8px rgba(79,143,247,.3)}
+.toggle-knob{position:absolute;top:2px;left:2px;width:14px;height:14px;background:#fff;border-radius:50%;transition:transform .25s;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.toggle-track.active .toggle-knob{transform:translateX(16px)}
+
+/* Loading - Skeleton */
+.loading{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;color:var(--dim);height:100%;padding:40px}
+.loading-header{display:flex;align-items:center;gap:12px}
+.spinner{width:28px;height:28px;border:2.5px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.skeleton-wrap{width:100%;max-width:600px}
+.skeleton-bar{height:12px;border-radius:6px;background:linear-gradient(90deg,rgba(99,118,150,.08) 25%,rgba(99,118,150,.15) 50%,rgba(99,118,150,.08) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;margin-bottom:10px}
+.skeleton-bar:nth-child(1){width:80%}
+.skeleton-bar:nth-child(2){width:100%}
+.skeleton-bar:nth-child(3){width:60%}
+.skeleton-bar:nth-child(4){width:90%}
+.skeleton-bar:nth-child(5){width:45%}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* Toast */
+.toast{position:fixed;top:20px;right:20px;padding:10px 18px;border-radius:10px;color:#fff;font-size:.8rem;font-weight:500;z-index:999;animation:slideIn .3s;box-shadow:0 8px 32px rgba(0,0,0,.4);overflow:hidden}
+.toast::after{content:'';position:absolute;bottom:0;left:0;height:2px;background:rgba(255,255,255,.3);animation:toastProgress 2.5s linear forwards}
+@keyframes toastProgress{from{width:100%}to{width:0}}
+.toast.success{background:linear-gradient(135deg,#059669,#10b981)}
+.toast.error{background:linear-gradient(135deg,#dc2626,#ef4444)}
+@keyframes slideIn{from{transform:translateX(80px);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes fadeSlideIn{from{transform:translateY(-10px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(99,118,150,.25);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:rgba(99,118,150,.4)}
+
+/* Enhanced empty state */
+.empty-state .guide{margin-top:20px;text-align:left;max-width:280px}
+.empty-state .guide-step{display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;font-size:.78rem;color:var(--dim);line-height:1.5}
+.empty-state .guide-step .step-num{width:22px;height:22px;border-radius:50%;background:rgba(79,143,247,.12);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;flex-shrink:0}
+
+/* Date presets */
+.date-presets{display:flex;gap:4px;margin-bottom:10px;flex-wrap:wrap}
+.date-preset{padding:3px 10px;border:1px solid var(--border);border-radius:6px;background:none;color:var(--dim);font-size:.68rem;font-weight:500;cursor:pointer;transition:all .2s;font-family:inherit}
+.date-preset:hover{border-color:var(--blue);color:var(--blue);background:rgba(79,143,247,.06)}
+.date-preset.active{border-color:var(--blue);color:#fff;background:linear-gradient(135deg,var(--blue),var(--blue2))}
+
+/* Token toggle */
+.token-wrap{position:relative}
+.token-wrap input{padding-right:36px}
+.token-toggle{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--dim);cursor:pointer;font-size:.85rem;padding:2px;transition:color .2s;line-height:1}
+.token-toggle:hover{color:var(--blue)}
+
+
+/* Keyboard shortcut hints */
+.kbd{display:inline-block;padding:1px 5px;border:1px solid var(--border);border-radius:4px;font-size:.6rem;color:var(--dim);background:rgba(10,14,26,.5);font-family:'JetBrains Mono',monospace;margin-left:4px;vertical-align:middle;line-height:1.4}
+
+/* Batch import modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);z-index:100;display:flex;align-items:center;justify-content:center;animation:fadeIn .2s}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;width:500px;max-width:90vw;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.modal h3{font-size:.95rem;margin-bottom:6px;color:var(--text)}
+.modal p{font-size:.76rem;color:var(--dim);margin-bottom:14px}
+.modal textarea{width:100%;height:120px;background:rgba(10,14,26,.5);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.76rem;padding:10px;outline:none;resize:vertical}
+.modal textarea:focus{border-color:var(--blue)}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+/* History */
+.history-list{max-height:200px;overflow-y:auto}
+.history-item{padding:8px 12px;background:rgba(10,14,26,.3);border:1px solid var(--border2);border-radius:8px;margin-bottom:6px;cursor:pointer;transition:all .2s;display:flex;justify-content:space-between;align-items:center}
+.history-item:hover{background:rgba(79,143,247,.06);border-color:rgba(79,143,247,.3)}
+.history-item .h-info{font-size:.75rem;color:var(--text)}
+.history-item .h-meta{font-size:.65rem;color:var(--dim)}
+.history-item .h-del{background:none;border:none;color:var(--dim);cursor:pointer;font-size:.8rem;padding:2px 4px;border-radius:4px;transition:all .2s}
+.history-item .h-del:hover{color:var(--red)}
+
+/* Repo groups */
+.repo-group{margin-bottom:10px}
+.repo-group-header{display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(79,143,247,.06);border:1px solid rgba(79,143,247,.12);border-radius:8px;cursor:pointer;transition:all .2s;user-select:none;margin-bottom:6px}
+.repo-group-header:hover{background:rgba(79,143,247,.1)}
+.repo-group-header .group-arrow{font-size:.65rem;transition:transform .2s;color:var(--blue)}
+.repo-group-header .group-arrow.collapsed{transform:rotate(-90deg)}
+.repo-group-header .group-name{font-size:.72rem;font-weight:600;color:var(--blue);flex:1}
+.repo-group-header .group-count{font-size:.6rem;padding:1px 6px;border-radius:8px;background:rgba(79,143,247,.12);color:var(--blue);font-weight:700}
+.repo-group-body.collapsed{display:none}
+.repo-item .group-field{display:flex;align-items:center;gap:6px;margin-top:6px;margin-bottom:0;padding-top:6px;border-top:1px dashed var(--border2)}
+.repo-item .group-field .gf-label{font-size:.6rem;color:var(--dim);font-weight:600;flex-shrink:0;text-transform:uppercase;letter-spacing:.04em}
+.repo-item .group-field input{flex:1;padding:3px 8px;font-size:.7rem;background:transparent;border:1px dashed var(--border);border-radius:4px;color:var(--purple);font-weight:500;outline:none;transition:all .2s;font-family:inherit}
+.repo-item .group-field input:focus{border-style:solid;border-color:var(--purple);background:rgba(167,139,250,.06)}
+.repo-item .group-field input::placeholder{color:rgba(122,134,154,.4);font-weight:400}
+.result-group{margin-bottom:16px;background:var(--card2);border:1px solid var(--border2);border-radius:14px;overflow:hidden;transition:box-shadow .2s}
+.result-group:hover{box-shadow:0 4px 20px rgba(0,0,0,.15)}
+.result-group-title{padding:12px 18px;display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;transition:background .15s}
+.result-group-title:hover{background:rgba(255,255,255,.02)}
+.result-group-title .rg-arrow{font-size:.55rem;color:var(--dim);transition:transform .25s cubic-bezier(.4,0,.2,1);flex-shrink:0}
+.result-group-title .rg-arrow.collapsed{transform:rotate(-90deg)}
+.result-group-title .rg-icon{font-size:.85rem;flex-shrink:0}
+.result-group-title .rg-name{flex:1;font-size:.82rem;font-weight:600;color:var(--text);letter-spacing:.01em}
+.result-group-title .rg-stats{display:flex;gap:5px;align-items:center}
+.result-group-title .rg-pill{font-size:.58rem;padding:3px 9px;border-radius:12px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.result-group-title .rg-pill.repos{background:rgba(79,143,247,.08);color:rgba(79,143,247,.8)}
+.result-group-title .rg-pill.commits{background:rgba(52,211,153,.08);color:rgba(52,211,153,.8)}
+.result-group-body{overflow:hidden;transition:max-height .3s cubic-bezier(.4,0,.2,1)}
+.result-group-body.collapsed{max-height:0 !important}
+
+/* Commit type tags */
+.commit-tag{display:inline-block;font-size:.55rem;font-weight:700;padding:1px 6px;border-radius:4px;margin-right:5px;letter-spacing:.03em;text-transform:uppercase;vertical-align:middle;line-height:1.6}
+.commit-tag.feat{background:rgba(52,211,153,.12);color:#34d399}
+.commit-tag.fix{background:rgba(248,113,113,.12);color:#f87171}
+.commit-tag.refactor{background:rgba(167,139,250,.12);color:#a78bfa}
+.commit-tag.style{background:rgba(34,211,238,.12);color:#22d3ee}
+.commit-tag.chore{background:rgba(122,134,154,.15);color:#7a869a}
+.commit-tag.docs{background:rgba(79,143,247,.12);color:#4f8ff7}
+.commit-tag.perf{background:rgba(251,191,36,.12);color:#fbbf24}
+.commit-tag.test{background:rgba(244,114,182,.12);color:#f472b6}
+
+/* Search bar in toolbar */
+.toolbar-search{flex:1;max-width:280px;padding:5px 10px 5px 28px;background:rgba(10,14,26,.4);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.72rem;font-family:inherit;outline:none;transition:all .2s;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237a869a' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:8px center}
+.toolbar-search:focus{border-color:var(--blue);box-shadow:0 0 0 2px rgba(79,143,247,.1)}
+.toolbar-search::placeholder{color:rgba(122,134,154,.4)}
+mark{background:rgba(251,191,36,.25);color:var(--text);border-radius:2px;padding:0 1px}
+
+/* View switcher */
+.view-switcher{display:flex;background:rgba(10,14,26,.4);border:1px solid var(--border);border-radius:6px;padding:2px;gap:1px}
+.view-btn{padding:3px 10px;font-size:.65rem;font-weight:600;border:none;background:none;color:var(--dim);cursor:pointer;border-radius:4px;transition:all .15s;font-family:inherit;white-space:nowrap}
+.view-btn.active{background:var(--blue);color:#fff}
+.view-btn:not(.active):hover{color:var(--text)}
+
+/* Timeline view */
+.timeline-day{position:relative;padding-left:20px;margin-bottom:16px}
+.timeline-day::before{content:'';position:absolute;left:5px;top:24px;bottom:0;width:1px;background:var(--border)}
+.timeline-date{font-size:.78rem;font-weight:700;color:var(--text);padding:6px 12px;background:var(--card2);border:1px solid var(--border2);border-radius:8px;display:inline-flex;align-items:center;gap:6px;margin-bottom:10px}
+.timeline-date .wd{font-size:.65rem;font-weight:500;color:var(--dim)}
+.timeline-item{position:relative;padding:6px 0 6px 14px;font-size:.76rem;color:var(--text);line-height:1.5}
+.timeline-item::before{content:'';position:absolute;left:-18px;top:12px;width:7px;height:7px;border-radius:50%;background:var(--blue);border:2px solid var(--bg2)}
+.timeline-item .tl-repo{font-size:.62rem;color:var(--dim);font-weight:600;margin-right:6px;padding:1px 6px;background:rgba(99,118,150,.1);border-radius:4px}
+
+/* Summary modal */
+.summary-output{background:rgba(10,14,26,.5);border:1px solid var(--border);border-radius:8px;padding:14px;font-size:.78rem;color:var(--text);line-height:1.7;max-height:400px;overflow-y:auto;white-space:pre-wrap;font-family:inherit}
+.summary-output .sg{font-weight:700;color:var(--blue);font-size:.82rem;margin-bottom:4px}
+.summary-output .st{color:var(--dim);font-size:.68rem;margin-top:8px;margin-bottom:2px;font-weight:600}
+
+/* Progress bar for incremental loading */
+.gen-progress{padding:8px 20px;background:rgba(17,24,39,.4);border-bottom:1px solid var(--border);display:none;align-items:center;gap:10px;font-size:.72rem;color:var(--dim)}
+.gen-progress-bar{flex:1;height:4px;background:rgba(99,118,150,.15);border-radius:2px;overflow:hidden}
+.gen-progress-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--cyan));border-radius:2px;transition:width .3s;width:0}
+.gen-progress .gp-text{font-variant-numeric:tabular-nums;min-width:60px;text-align:right}
+
+/* Config export/import dropdown */
+.config-dropdown{position:relative;display:inline-block}
+.config-menu{position:absolute;top:calc(100% + 4px);right:0;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:4px;min-width:160px;box-shadow:0 8px 24px rgba(0,0,0,.4);z-index:999;display:none}
+.config-menu.open{display:block;animation:calFadeIn .15s ease}
+.config-menu-item{display:flex;align-items:center;gap:8px;padding:7px 12px;font-size:.72rem;color:var(--text);border-radius:6px;cursor:pointer;transition:background .15s;border:none;background:none;width:100%;font-family:inherit;text-align:left}
+.config-menu-item:hover{background:rgba(79,143,247,.08)}
+.config-menu-item .cmi-icon{font-size:.8rem}
+.config-menu-item .cmi-desc{font-size:.6rem;color:var(--dim)}
+@media(max-width:1024px){.app{padding:10px 12px}.panel-left{width:320px;min-width:280px}.header{padding:12px 16px;flex-wrap:wrap;gap:10px}.header-actions{width:100%;justify-content:flex-end}}
+@media(max-width:768px){.main{flex-direction:column}.panel-left{width:100%;min-width:0;max-height:45vh}.panel-right{min-height:300px}.header-brand{gap:10px}.header h1{font-size:1rem}}
+
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="header-brand">
+      <div class="header-logo">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><line x1="1.05" y1="12" x2="7" y2="12"/><line x1="17.01" y1="12" x2="22.96" y2="12"/><line x1="12" y1="1" x2="12" y2="7"/><line x1="12" y1="17" x2="12" y2="23"/></svg>
+      </div>
+      <div>
+        <h1>Git Weekly Report<span class="ver">v2.0</span></h1>
+        <div class="hint">Standalone<span class="dot"></span>YAML Config<span class="dot"></span>GitLab API Proxy</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-outline" onclick="showHistory()">📚 历史</button>
+      <button class="btn btn-outline" onclick="exportMD()">📄 导出<span class="kbd">⌘E</span></button>
+      <button class="btn btn-outline" onclick="copyResult()">📋 复制<span class="kbd">⌘⇧C</span></button>
+      <div class="config-dropdown">
+        <button class="btn btn-outline" onclick="toggleConfigMenu()">⚙ 配置</button>
+        <div class="config-menu" id="configMenu">
+          <button class="config-menu-item" onclick="exportConfig()"><span class="cmi-icon">📤</span><div><div>导出配置</div><div class="cmi-desc">保存为 JSON 文件</div></div></button>
+          <button class="config-menu-item" onclick="importConfig()"><span class="cmi-icon">📥</span><div><div>导入配置</div><div class="cmi-desc">从 JSON 文件导入</div></div></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- Left Panel: Config -->
+    <div class="panel panel-left">
+      <div class="panel-title">配置信息</div>
+      <div class="panel-body" style="display:flex;flex-direction:column">
+        <div class="row">
+          <div class="field"><label>GitLab Token</label><div class="token-wrap"><input type="password" id="token" placeholder="私有仓库 Token"><button class="token-toggle" onclick="toggleToken()" title="显示/隐藏">👁️</button></div></div>
+          <div class="field" style="max-width:120px"><label>作者</label><input id="author" placeholder="用户名"></div>
+        </div>
+        <div class="mode-switcher">
+          <button class="mode-btn active" id="modeWeek" onclick="switchMode('week')">📅 周报</button>
+          <button class="mode-btn" id="modeDay" onclick="switchMode('day')">📋 日报</button>
+        </div>
+        <div class="row" id="dateRow">
+          <div class="field date-field"><label>开始日期</label><input type="text" id="since" class="date-trigger" readonly placeholder="选择日期" onclick="openCal('since')"><div class="cal-popup" id="calSince"></div></div>
+          <div class="field date-field"><label>结束日期</label><input type="text" id="until" class="date-trigger" readonly placeholder="选择日期" onclick="openCal('until')"><div class="cal-popup" id="calUntil"></div></div>
+        </div>
+        <div class="date-presets" id="datePresets">
+          <button class="date-preset" onclick="applyPreset('thisWeek')">本周</button>
+          <button class="date-preset" onclick="applyPreset('lastWeek')">上周</button>
+          <button class="date-preset" onclick="applyPreset('last3')">近 3 天</button>
+          <button class="date-preset" onclick="applyPreset('thisMonth')">本月</button>
+          <button class="date-preset" onclick="applyPreset('lastMonth')">上月</button>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-outline" onclick="addRepo()" style="flex:1">＋ 添加仓库</button>
+          <button class="btn btn-outline" onclick="showBatchImport()" style="flex:1">📋 批量导入</button>
+          <button class="btn btn-success" onclick="saveConfig()" style="flex:1">💾 保存配置</button>
+        </div>
+        <div class="btn-group" style="margin-top:8px">
+          <button class="btn btn-primary" id="genBtn" onclick="generate()" style="flex:1">🚀 生成周报</button>
+        </div>
+
+        <div class="section-label">仓库列表 <span class="count" id="repoCount">0</span></div>
+        <input class="repo-search" id="repoSearch" type="text" placeholder="搜索仓库地址或分支..." oninput="filterRepos()">
+        <div class="repo-list" id="repoList"></div>
+      </div>
+    </div>
+
+    <!-- Right Panel: Results -->
+    <div class="panel panel-right">
+      <div class="panel-title">生成结果</div>
+      <div id="toolbar" class="toolbar" style="display:none">
+        <label class="toggle-wrap" onclick="toggleHideEmpty()">
+          <div class="toggle-track" id="hideEmptyToggle"><div class="toggle-knob"></div></div>
+          <span id="hideEmptyLabel">隐藏空仓库</span>
+        </label>
+        <div class="view-switcher">
+          <button class="view-btn active" id="viewRepo" onclick="switchView('repo')">按仓库</button>
+          <button class="view-btn" id="viewDate" onclick="switchView('date')">按日期</button>
+        </div>
+        <input class="toolbar-search" id="commitSearch" type="text" placeholder="搜索提交内容..." oninput="filterCommits()">
+        <button class="btn btn-outline" style="padding:4px 10px;font-size:.68rem" onclick="showSummary()">📝 摘要</button>
+      </div>
+      <div id="genProgress" class="gen-progress">
+        <span id="gpLabel">加载中...</span>
+        <div class="gen-progress-bar"><div class="gen-progress-fill" id="gpFill"></div></div>
+        <span class="gp-text" id="gpText">0/0</span>
+      </div>
+      <div id="summaryBar" class="summary" style="display:none"></div>
+      <div class="panel-body" id="resultArea">
+        <div class="empty-state">
+          <div class="icon">📝</div>
+          <div style="font-size:1rem;font-weight:500;margin-bottom:6px">Git 仓库周报</div>
+          <div style="font-size:.82rem;color:var(--dim)">只需三步，快速生成报告</div>
+          <div class="guide">
+            <div class="guide-step"><span class="step-num">1</span><span>填写 GitLab Token 和作者名</span></div>
+            <div class="guide-step"><span class="step-num">2</span><span>添加仓库地址并保存配置</span></div>
+            <div class="guide-step"><span class="step-num">3</span><span>点击「🚀 生成周报」查看结果</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = '';
+let repos = [{ repo: '', branch: '', group: '' }];
+let lastResults = null;
+let collapsedGroups = {};
+let hideEmpty = true;
+let reportMode = 'week';
+let currentView = 'repo';
+const WEEKDAYS = ['周一','周二','周三','周四','周五','周六','周日'];
+const COMMIT_TYPES = {feat:'feat',fix:'fix',refactor:'refactor',style:'style',chore:'chore',docs:'docs',perf:'perf',test:'test',build:'chore',ci:'chore'};
+
+// Init
+window.addEventListener('DOMContentLoaded', async () => {
+  setDefaultDates();
+  try {
+    const res = await fetch(API + '/api/config');
+    const cfg = await res.json();
+    if (cfg.token) document.getElementById('token').value = cfg.token;
+    if (cfg.author) document.getElementById('author').value = cfg.author;
+    if (cfg.repos && cfg.repos.length) repos = cfg.repos.map(r => ({...r, group: r.group || ''}));
+  } catch(e) {}
+  renderRepos();
+});
+
+function setDefaultDates() {
+  const now = new Date();
+  if (reportMode === 'day') {
+    document.getElementById('since').value = fmt(now);
+    document.getElementById('until').value = fmt(now);
+  } else {
+    const day = now.getDay() || 7;
+    const mon = new Date(now); mon.setDate(now.getDate() - day + 1);
+    const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+    document.getElementById('since').value = fmt(mon);
+    document.getElementById('until').value = fmt(sun);
+  }
+}
+function fmt(d) { return d.toISOString().slice(0, 10); }
+
+function switchMode(mode) {
+  reportMode = mode;
+  document.getElementById('modeWeek').classList.toggle('active', mode === 'week');
+  document.getElementById('modeDay').classList.toggle('active', mode === 'day');
+  document.getElementById('genBtn').innerHTML = mode === 'day' ? '🚀 生成日报' : '🚀 生成周报';
+  document.getElementById('dateRow').style.display = mode === 'day' ? 'none' : 'flex';
+  document.getElementById('datePresets').style.display = mode === 'day' ? 'none' : 'flex';
+  document.title = mode === 'day' ? 'Git Report · Daily' : 'Git Report · Weekly';
+  setDefaultDates();
+}
+
+// Repos UI
+let dragSrcIdx = null;
+function renderRepos() {
+  const el = document.getElementById('repoList');
+  const search = (document.getElementById('repoSearch')?.value || '').toLowerCase();
+  document.getElementById('repoCount').textContent = repos.length;
+  const filtered = repos.map((r, i) => ({...r, idx: i})).filter(r =>
+    !search || r.repo.toLowerCase().includes(search) || (r.branch||'').toLowerCase().includes(search) || (r.group||'').toLowerCase().includes(search)
+  );
+  // 按 group 分组
+  const groups = {};
+  filtered.forEach(r => {
+    const g = r.group || '未分组';
+    (groups[g] = groups[g] || []).push(r);
+  });
+  const groupNames = Object.keys(groups);
+  // 如果只有一个"未分组"则平铺显示
+  if (groupNames.length === 1 && groupNames[0] === '未分组') {
+    el.innerHTML = renderRepoItems(filtered);
+  } else {
+    el.innerHTML = groupNames.map(g => {
+      if (!(g in collapsedGroups)) collapsedGroups[g] = true;
+      const isCollapsed = collapsedGroups[g];
+      return `<div class="repo-group">
+        <div class="repo-group-header" onclick="toggleGroup('${esc(g)}')">
+          <span class="group-arrow ${isCollapsed ? 'collapsed' : ''}">▼</span>
+          <span class="group-name">${esc(g)}</span>
+          <span class="group-count">${groups[g].length}</span>
+        </div>
+        <div class="repo-group-body ${isCollapsed ? 'collapsed' : ''}">${renderRepoItems(groups[g])}</div>
+      </div>`;
+    }).join('');
+  }
+}
+function renderRepoItems(items) {
+  return items.map(r => `
+    <div class="repo-item" data-idx="${r.idx}"
+      ondragover="onDragOver(event)" ondragenter="onDragEnter(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event,${r.idx})" ondragend="onDragEnd(event)">
+      <div class="drag-handle" draggable="true" ondragstart="onDragStart(event,${r.idx})" title="拖拽排序">⡇⡇</div>
+      ${repos.length > 1 ? `<button class="repo-del" onclick="delRepo(${r.idx})" title="删除">×</button>` : ''}
+      <div class="field"><label>仓库地址</label><input value="${esc(r.repo)}" onchange="repos[${r.idx}].repo=this.value" placeholder="http://.../group/project.git"></div>
+      <div class="field"><label>分支</label><input value="${esc(r.branch||'')}" onchange="repos[${r.idx}].branch=this.value" placeholder="默认主分支"></div>
+      <div class="group-field"><span class="gf-label">分组</span><input value="${esc(r.group||'')}" onchange="repos[${r.idx}].group=this.value;renderRepos()" placeholder="可选，如: 茅台项目"></div>
+    </div>
+  `).join('');
+}
+function toggleGroup(name) { collapsedGroups[name] = !collapsedGroups[name]; renderRepos(); }
+function toggleResultGroup(el) {
+  const arrow = el.querySelector('.rg-arrow');
+  const body = el.nextElementSibling;
+  const isCollapsing = !body.classList.contains('collapsed');
+  if (isCollapsing) {
+    body.style.maxHeight = body.scrollHeight + 'px';
+    requestAnimationFrame(() => { body.classList.add('collapsed'); });
+  } else {
+    body.classList.remove('collapsed');
+    body.style.maxHeight = body.scrollHeight + 'px';
+    body.addEventListener('transitionend', () => { body.style.maxHeight = ''; }, { once: true });
+  }
+  arrow.classList.toggle('collapsed');
+}
+function filterRepos() { renderRepos(); }
+function onDragStart(e, idx) {
+  dragSrcIdx = idx;
+  const card = e.currentTarget.closest('.repo-item');
+  if (card) card.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setDragImage(card || e.currentTarget, 20, 20);
+}
+function onDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
+function onDragEnter(e) { e.preventDefault(); const card = e.currentTarget.closest('.repo-item') || e.currentTarget; card.classList.add('drag-over'); }
+function onDragLeave(e) { const card = e.currentTarget.closest('.repo-item') || e.currentTarget; card.classList.remove('drag-over'); }
+function onDragEnd(e) { document.querySelectorAll('.dragging,.drag-over').forEach(el => el.classList.remove('dragging','drag-over')); }
+function onDrop(e, targetIdx) {
+  e.preventDefault(); e.currentTarget.classList.remove('drag-over');
+  if (dragSrcIdx === null || dragSrcIdx === targetIdx) return;
+  const [moved] = repos.splice(dragSrcIdx, 1);
+  repos.splice(targetIdx, 0, moved);
+  dragSrcIdx = null;
+  renderRepos();
+}
+function esc(s) { if (!s) return ''; return s.toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function addRepo() {
+  repos.unshift({ repo: '', branch: '', group: '' });
+  renderRepos();
+  const list = document.getElementById('repoList');
+  list.scrollTop = 0;
+  const first = list.querySelector('.repo-item');
+  if (first) { first.style.animation = 'none'; first.offsetHeight; first.style.animation = 'fadeSlideIn .35s ease'; }
+}
+function delRepo(i) { repos.splice(i, 1); renderRepos(); }
+
+// Save config
+async function saveConfig() {
+  try {
+    await fetch(API + '/api/config', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        token: document.getElementById('token').value,
+        author: document.getElementById('author').value,
+        repos: repos
+      })
+    });
+    toast('配置已保存', 'success');
+  } catch(e) { toast('保存失败: ' + e.message, 'error'); }
+}
+
+// Generate
+async function generate() {
+  return generateIncremental();
+}
+
+function toggleHideEmpty() {
+  hideEmpty = !hideEmpty;
+  syncToggleUI();
+  if (lastResults) renderResults(lastResults);
+}
+function syncToggleUI() {
+  const track = document.getElementById('hideEmptyToggle');
+  const label = document.getElementById('hideEmptyLabel');
+  if (hideEmpty) { track.classList.add('active'); label.textContent = '已隐藏空仓库'; }
+  else { track.classList.remove('active'); label.textContent = '显示全部仓库'; }
+}
+
+function renderResults(results) {
+  const total = results.reduce((s, r) => s + r.logs.length, 0);
+  const failed = results.filter(r => r.error).length;
+  const emptyCount = results.filter(r => !r.error && !r.logs.length).length;
+  const bar = document.getElementById('summaryBar');
+  bar.style.display = 'flex';
+  bar.innerHTML = `<span class="stat">仓库: <span class="num">${results.length}</span></span>
+    <span class="stat">提交: <span class="num">${total}</span></span>
+    ${emptyCount ? `<span class="stat" style="color:var(--dim)">空仓库: ${emptyCount}</span>` : ''}
+    ${failed ? `<span class="stat fail">失败: ${failed}</span>` : ''}
+    <span class="stat" style="margin-left:auto;color:var(--dim)">${document.getElementById('since').value} ~ ${document.getElementById('until').value}</span>`;
+
+  const display = hideEmpty ? results.filter(r => r.error || r.logs.length > 0) : results;
+  const area = document.getElementById('resultArea');
+  if (display.length === 0) {
+    area.innerHTML = '<div class="empty-state"><div style="font-size:2rem;margin-bottom:8px">📭</div><div>该时间范围内无提交记录' + (hideEmpty && emptyCount ? `（已隐藏 ${emptyCount} 个空仓库）` : '') + '</div></div>';
+    return;
+  }
+
+  // 从前端 repos 配置中关联 group（兼容后端未返回 group 的情况）
+  display.forEach(r => {
+    if (!r.group) {
+      const match = repos.find(c => c.repo === r.repo);
+      if (match && match.group) r.group = match.group;
+    }
+  });
+  // 按日期视图
+  if (currentView === 'date') {
+    area.innerHTML = renderTimelineView(display);
+    return;
+  }
+  const hasGroups = display.some(r => r.group);
+  let html = '';
+  if (hasGroups) {
+    const grouped = {};
+    display.forEach(r => {
+      const g = r.group || '未分组';
+      (grouped[g] = grouped[g] || []).push(r);
+    });
+    html = Object.entries(grouped).map(([g, items], gi) => {
+      const gTotal = items.reduce((s, r) => s + r.logs.length, 0);
+      const inner = items.map(r => renderResultItem(r)).join('');
+      return `<div class="result-group">
+        <div class="result-group-title" onclick="toggleResultGroup(this)">
+          <span class="rg-arrow">▾</span>
+          <span class="rg-icon">📂</span>
+          <span class="rg-name">${esc(g)}</span>
+          <div class="rg-stats">
+            <span class="rg-pill repos">${items.length} 仓库</span>
+            <span class="rg-pill commits">${gTotal} 提交</span>
+          </div>
+        </div>
+        <div class="result-group-body">${inner}</div>
+      </div>`;
+    }).join('');
+  } else {
+    html = display.map(r => renderResultItem(r)).join('');
+  }
+  area.innerHTML = html;
+}
+
+function renderResultItem(r) {
+  const bl = r.branch ? `<span class="branch">[${esc(r.branch)}]</span>` : '';
+  let body;
+  if (r.error) { body = `<div class="error-repo">❌ ${esc(r.error)}</div>`; }
+  else if (!r.logs.length) { body = '<div class="empty-repo">无提交记录</div>'; }
+  else {
+    const grouped = {};
+    r.logs.forEach(l => {
+      const k = l.date + '|' + l.author;
+      (grouped[k] = grouped[k] || []).push(l.subject);
+    });
+    const rows = Object.entries(grouped).map(([k, subs]) => {
+      const [d, a] = k.split('|');
+      const wd = WEEKDAYS[new Date(d).getDay() === 0 ? 6 : new Date(d).getDay() - 1];
+      return `<tr><td>${d}</td><td>${wd}</td><td>${esc(a)}</td><td class="subject">${subs.map(s => tagCommit(s)).join('<br>')}</td></tr>`;
+    }).join('');
+    body = `<table><thead><tr><th style="width:100px">日期</th><th style="width:50px">星期</th><th style="width:70px">作者</th><th>提交内容</th></tr></thead><tbody>${rows}</tbody></table>`;
+  }
+  const name = r.project.split('/').pop().replace('.git', '');
+  return `<div class="result-section"><h3>${esc(name)} ${bl}</h3>${body}</div>`;
+}
+
+// Feature 6: Commit type tag
+function tagCommit(subject) {
+  const m = subject.match(/^(\w+)(?:\(([^)]+)\))?\s*[:：]\s*(.*)/);
+  if (m) {
+    const type = COMMIT_TYPES[m[1].toLowerCase()];
+    if (type) {
+      const scope = m[2] ? `<span style="color:var(--dim);font-size:.68rem;opacity:.7">(${esc(m[2])})</span> ` : '';
+      return `<span class="commit-tag ${type}">${type}</span>${scope}• ${esc(m[3])}`;
+    }
+  }
+  return '• ' + esc(subject);
+}
+
+// Feature 2: Commit search/filter
+function filterCommits() {
+  const q = (document.getElementById('commitSearch')?.value || '').trim().toLowerCase();
+  document.querySelectorAll('#resultArea .result-section').forEach(sec => {
+    const rows = sec.querySelectorAll('tbody tr');
+    if (!rows.length) return;
+    let visible = 0;
+    rows.forEach(tr => {
+      const td = tr.querySelector('td.subject');
+      if (!td) return;
+      const text = td.textContent.toLowerCase();
+      if (!q || text.includes(q)) {
+        tr.style.display = '';
+        if (q) {
+          // Highlight
+          td.innerHTML = td.innerHTML.replace(/<mark>|<\/mark>/g, '');
+          if (q) {
+            const regex = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+            td.innerHTML = td.innerHTML.replace(regex, '<mark>$1</mark>');
+          }
+        }
+        visible++;
+      } else {
+        tr.style.display = 'none';
+      }
+    });
+    sec.style.display = visible || !q ? '' : 'none';
+  });
+  // Also filter timeline items
+  document.querySelectorAll('#resultArea .timeline-item').forEach(item => {
+    const text = item.textContent.toLowerCase();
+    item.style.display = !q || text.includes(q) ? '' : 'none';
+  });
+}
+
+// Feature 3: View switcher (repo / date)
+function switchView(view) {
+  currentView = view;
+  document.getElementById('viewRepo').classList.toggle('active', view === 'repo');
+  document.getElementById('viewDate').classList.toggle('active', view === 'date');
+  if (lastResults) renderResults(lastResults);
+}
+
+function renderTimelineView(results) {
+  const allLogs = [];
+  results.forEach(r => {
+    if (!r.group) {
+      const match = repos.find(c => c.repo === r.repo);
+      if (match && match.group) r.group = match.group;
+    }
+    const name = r.project.split('/').pop().replace('.git', '');
+    r.logs.forEach(l => {
+      allLogs.push({ ...l, repoName: name, group: r.group || '' });
+    });
+  });
+  allLogs.sort((a, b) => b.date.localeCompare(a.date));
+  const byDate = {};
+  allLogs.forEach(l => (byDate[l.date] = byDate[l.date] || []).push(l));
+  return Object.entries(byDate).map(([date, logs]) => {
+    const wd = WEEKDAYS[new Date(date).getDay() === 0 ? 6 : new Date(date).getDay() - 1];
+    const items = logs.map(l => {
+      return `<div class="timeline-item"><span class="tl-repo">${esc(l.repoName)}</span>${tagCommit(l.subject)}</div>`;
+    }).join('');
+    return `<div class="timeline-day"><div class="timeline-date">📅 ${date} <span class="wd">${wd}</span></div>${items}</div>`;
+  }).join('');
+}
+
+// Feature 1: Summary generation
+function showSummary() {
+  if (!lastResults) { toast('请先生成报告', 'error'); return; }
+  const text = buildSummaryText();
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.id = 'summaryModal';
+  overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+  overlay.innerHTML = `<div class="modal" style="width:600px">
+    <h3>📝 周报摘要</h3>
+    <p>已根据 commit 类型自动归类整理，可直接复制使用</p>
+    <div class="summary-output" id="summaryOutput">${esc(text)}</div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="document.getElementById('summaryModal').remove()">关闭</button>
+      <button class="btn btn-primary" onclick="navigator.clipboard.writeText(document.getElementById('summaryOutput').textContent).then(()=>toast('已复制摘要','success'))">📋 复制摘要</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+}
+
+function buildSummaryText() {
+  const TYPE_LABELS = { feat: '新增', fix: '修复', refactor: '重构', style: '样式优化', docs: '文档', perf: '性能优化', chore: '其他', test: '测试' };
+  // Enrich groups
+  lastResults.forEach(r => {
+    if (!r.group) {
+      const match = repos.find(c => c.repo === r.repo);
+      if (match && match.group) r.group = match.group;
+    }
+  });
+  const hasGroups = lastResults.some(r => r.group);
+  const groups = {};
+  lastResults.forEach(r => {
+    const g = r.group || '全部仓库';
+    (groups[g] = groups[g] || []).push(r);
+  });
+  let text = '';
+  Object.entries(groups).forEach(([g, items]) => {
+    if (hasGroups) text += `【${g}】\n`;
+    const typed = {};
+    items.forEach(r => {
+      r.logs.forEach(l => {
+        const m = l.subject.match(/^(\w+)(?:\([^)]*\))?\s*[:：]\s*(.*)/);
+        let type = 'chore', desc = l.subject;
+        if (m && COMMIT_TYPES[m[1].toLowerCase()]) { type = COMMIT_TYPES[m[1].toLowerCase()]; desc = m[2]; }
+        (typed[type] = typed[type] || new Set()).add(desc.trim());
+      });
+    });
+    Object.entries(typed).forEach(([type, descs]) => {
+      const label = TYPE_LABELS[type] || type;
+      text += `- ${label}：${[...descs].join('、')}\n`;
+    });
+    text += '\n';
+  });
+  return text.trim();
+}
+
+// Export
+function buildMarkdown() {
+  if (!lastResults) return '';
+  const since = document.getElementById('since').value;
+  const until = document.getElementById('until').value;
+  const author = document.getElementById('author').value;
+  const total = lastResults.reduce((s, r) => s + r.logs.length, 0);
+  const modeLabel = reportMode === 'day' ? '日报' : '周报';
+  let md = `# Git 仓库${modeLabel}\n\n- 时间范围：${since} 至 ${until}\n- 作者：${author || '全部'}\n\n## 汇总\n\n共 ${lastResults.length} 个仓库，${total} 条提交。\n\n`;
+
+  // 从前端 repos 关联 group
+  lastResults.forEach(r => {
+    if (!r.group) {
+      const match = repos.find(c => c.repo === r.repo);
+      if (match && match.group) r.group = match.group;
+    }
+  });
+  const hasGroups = lastResults.some(r => r.group);
+  function renderRepoMd(r, level) {
+    const bl = r.branch ? ` [${r.branch}]` : '';
+    const h = '#'.repeat(level);
+    md += `${h} ${r.project}${bl}\n\n`;
+    if (r.error) { md += `> 获取失败：${r.error}\n\n`; return; }
+    if (!r.logs.length) { md += '无提交记录\n\n'; return; }
+    md += '| 日期 | 星期 | 作者 | 提交内容 |\n| --- | --- | --- | --- |\n';
+    const grouped = {};
+    r.logs.forEach(l => { const k = l.date+'|'+l.author; (grouped[k]=grouped[k]||[]).push(l.subject); });
+    Object.entries(grouped).forEach(([k, subs]) => {
+      const [d, a] = k.split('|');
+      const wd = WEEKDAYS[new Date(d).getDay()===0?6:new Date(d).getDay()-1];
+      md += `| ${d} | ${wd} | ${a} | ${subs.map(s=>'- '+s).join('<br>')} |\n`;
+    });
+    md += '\n';
+  }
+
+  if (hasGroups) {
+    const grouped = {};
+    lastResults.forEach(r => { const g = r.group || '未分组'; (grouped[g] = grouped[g] || []).push(r); });
+    Object.entries(grouped).forEach(([g, items]) => {
+      md += `## ${g}\n\n`;
+      items.forEach(r => renderRepoMd(r, 3));
+    });
+  } else {
+    lastResults.forEach(r => renderRepoMd(r, 2));
+  }
+  return md;
+}
+
+function exportMD() {
+  const md = buildMarkdown();
+  if (!md) { toast('请先生成' + (reportMode === 'day' ? '日报' : '周报'), 'error'); return; }
+  const blob = new Blob([md], { type: 'text/markdown' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  const prefix = reportMode === 'day' ? 'git-daily-report' : 'git-weekly-report';
+  a.download = `${prefix}_${document.getElementById('since').value}_to_${document.getElementById('until').value}.md`;
+  a.click(); URL.revokeObjectURL(a.href);
+  toast('已下载 Markdown 文件', 'success');
+}
+
+function copyResult() {
+  const md = buildMarkdown();
+  if (!md) { toast('请先生成' + (reportMode === 'day' ? '日报' : '周报'), 'error'); return; }
+  navigator.clipboard.writeText(md).then(() => toast('已复制到剪贴板', 'success')).catch(() => toast('复制失败', 'error'));
+}
+
+// Toast
+function toast(msg, type) {
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 2500);
+}
+
+// === NEW FEATURES ===
+
+// 1. Token visibility toggle
+function toggleToken() {
+  const inp = document.getElementById('token');
+  const btn = inp.nextElementSibling;
+  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🙈'; }
+  else { inp.type = 'password'; btn.textContent = '👁️'; }
+}
+
+// 2. Date presets
+function applyPreset(preset) {
+  const now = new Date();
+  let s, e;
+  const day = now.getDay() || 7;
+  switch(preset) {
+    case 'thisWeek':
+      s = new Date(now); s.setDate(now.getDate() - day + 1);
+      e = new Date(s); e.setDate(s.getDate() + 6); break;
+    case 'lastWeek':
+      s = new Date(now); s.setDate(now.getDate() - day - 6);
+      e = new Date(s); e.setDate(s.getDate() + 6); break;
+    case 'last3':
+      s = new Date(now); s.setDate(now.getDate() - 2);
+      e = new Date(now); break;
+    case 'thisMonth':
+      s = new Date(now.getFullYear(), now.getMonth(), 1);
+      e = new Date(now.getFullYear(), now.getMonth() + 1, 0); break;
+    case 'lastMonth':
+      s = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      e = new Date(now.getFullYear(), now.getMonth(), 0); break;
+  }
+  document.getElementById('since').value = fmt(s);
+  document.getElementById('until').value = fmt(e);
+  document.querySelectorAll('.date-preset').forEach(b => b.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+}
+
+// Feature 4: Config import/export
+function toggleConfigMenu() {
+  const menu = document.getElementById('configMenu');
+  menu.classList.toggle('open');
+  if (menu.classList.contains('open')) {
+    setTimeout(() => document.addEventListener('click', closeConfigMenu), 0);
+  }
+}
+function closeConfigMenu(e) {
+  if (e && e.target.closest('.config-dropdown')) return;
+  document.getElementById('configMenu').classList.remove('open');
+  document.removeEventListener('click', closeConfigMenu);
+}
+function exportConfig() {
+  closeConfigMenu();
+  const cfg = {
+    token: document.getElementById('token').value,
+    author: document.getElementById('author').value,
+    repos: repos
+  };
+  const blob = new Blob([JSON.stringify(cfg, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `git-report-config_${fmt(new Date())}.json`;
+  a.click(); URL.revokeObjectURL(a.href);
+  toast('配置已导出', 'success');
+}
+function importConfig() {
+  closeConfigMenu();
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = '.json';
+  input.onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const cfg = JSON.parse(ev.target.result);
+        if (cfg.token) document.getElementById('token').value = cfg.token;
+        if (cfg.author) document.getElementById('author').value = cfg.author;
+        if (cfg.repos && cfg.repos.length) {
+          repos = cfg.repos.map(r => ({ repo: r.repo || '', branch: r.branch || '', group: r.group || '' }));
+          renderRepos();
+        }
+        toast(`已导入配置（${repos.length} 个仓库）`, 'success');
+      } catch(err) { toast('配置文件格式错误', 'error'); }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+// Feature 5: Incremental loading
+async function generateIncremental() {
+  const btn = document.getElementById('genBtn');
+  const area = document.getElementById('resultArea');
+  const progress = document.getElementById('genProgress');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner" style="width:16px;height:16px;border-width:2px"></div> 生成中...';
+  area.innerHTML = '';
+  document.getElementById('summaryBar').style.display = 'none';
+  document.getElementById('toolbar').style.display = 'flex';
+  syncToggleUI();
+
+  const token = document.getElementById('token').value;
+  const author = document.getElementById('author').value;
+  const since = document.getElementById('since').value;
+  const until = document.getElementById('until').value;
+  const validRepos = repos.filter(r => r.repo.trim());
+  const total = validRepos.length;
+
+  progress.style.display = 'flex';
+  document.getElementById('gpFill').style.width = '0%';
+  document.getElementById('gpText').textContent = `0/${total}`;
+  document.getElementById('gpLabel').textContent = '正在拉取提交记录...';
+
+  const results = [];
+  let done = 0;
+
+  const tasks = validRepos.map(item => {
+    return fetch(API + '/api/generate', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, author, since, until, repos: [item], output_dir: '' })
+    }).then(r => r.json()).then(data => {
+      done++;
+      const pct = Math.round((done / total) * 100);
+      document.getElementById('gpFill').style.width = pct + '%';
+      document.getElementById('gpText').textContent = `${done}/${total}`;
+      if (data.results && data.results.length) {
+        results.push(...data.results);
+        lastResults = results;
+        renderResults(results);
+      }
+      return data;
+    }).catch(err => {
+      done++;
+      document.getElementById('gpFill').style.width = Math.round((done / total) * 100) + '%';
+      document.getElementById('gpText').textContent = `${done}/${total}`;
+      const name = item.repo.split('/').pop().replace('.git', '');
+      results.push({ project: name, repo: item.repo, branch: item.branch, group: item.group, logs: [], error: err.message });
+    });
+  });
+
+  await Promise.all(tasks);
+  lastResults = results;
+  renderResults(results);
+  saveHistory();
+  progress.style.display = 'none';
+  btn.disabled = false;
+  btn.innerHTML = reportMode === 'day' ? '🚀 生成日报' : '🚀 生成周报';
+  toast(reportMode === 'day' ? '日报生成完成' : '周报生成完成', 'success');
+}
+
+// 3. Keyboard shortcuts
+document.addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); generate(); }
+  if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'c') { e.preventDefault(); copyResult(); }
+  if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === 'e') { e.preventDefault(); exportMD(); }
+  if (e.key === 'Escape') { closeBatchImport(); closeHistory(); }
+});
+
+// 5. Batch import
+function showBatchImport() {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.id = 'batchModal';
+  overlay.onclick = e => { if (e.target === overlay) closeBatchImport(); };
+  overlay.innerHTML = '<div class="modal"><h3>📋 批量导入仓库</h3><p>每行一个仓库地址，支持格式：地址 或 地址,分支</p><textarea id="batchInput" placeholder="http://gitlab.com/group/project1.git\nhttp://gitlab.com/group/project2.git,develop"></textarea><div class="modal-actions"><button class="btn btn-outline" onclick="closeBatchImport()">取消</button><button class="btn btn-primary" onclick="doBatchImport()">导入</button></div></div>';
+  document.body.appendChild(overlay);
+  setTimeout(() => document.getElementById('batchInput').focus(), 100);
+}
+function closeBatchImport() { const m = document.getElementById('batchModal'); if (m) m.remove(); }
+function doBatchImport() {
+  const text = document.getElementById('batchInput').value.trim();
+  if (!text) { toast('请输入仓库地址', 'error'); return; }
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  let count = 0;
+  lines.forEach(line => {
+    const parts = line.split(',').map(s => s.trim());
+    const repo = parts[0], branch = parts[1] || '';
+    if (repo && !repos.some(r => r.repo === repo)) {
+      repos.push({ repo, branch });
+      count++;
+    }
+  });
+  closeBatchImport();
+  renderRepos();
+  toast('已导入 ' + count + ' 个仓库', 'success');
+}
+
+// 6. History records (localStorage)
+const HISTORY_KEY = 'git-report-history';
+function saveHistory() {
+  if (!lastResults) return;
+  const records = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+  records.unshift({
+    date: new Date().toLocaleString('zh-CN'),
+    mode: reportMode,
+    since: document.getElementById('since').value,
+    until: document.getElementById('until').value,
+    total: lastResults.reduce((s, r) => s + r.logs.length, 0),
+    repoCount: lastResults.length,
+    results: lastResults
+  });
+  if (records.length > 10) records.length = 10;
+  try { localStorage.setItem(HISTORY_KEY, JSON.stringify(records)); } catch(e) {}
+}
+function showHistory() {
+  const records = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.id = 'historyModal';
+  overlay.onclick = e => { if (e.target === overlay) closeHistory(); };
+  const list = records.length ? records.map((r, i) =>
+    '<div class="history-item" onclick="loadHistory(' + i + ')"><div><div class="h-info">' + (r.mode === 'day' ? '📋 日报' : '📅 周报') + ' · ' + r.since + ' ~ ' + r.until + '</div><div class="h-meta">' + r.date + ' · ' + r.repoCount + ' 仓库 · ' + r.total + ' 提交</div></div><button class="h-del" onclick="event.stopPropagation();delHistory(' + i + ')">×</button></div>'
+  ).join('') : '<div style="text-align:center;color:var(--dim);padding:20px;font-size:.82rem">暂无历史记录</div>';
+  overlay.innerHTML = '<div class="modal"><h3>📚 历史记录</h3><p>最近 10 次生成结果，点击可回查</p><div class="history-list">' + list + '</div><div class="modal-actions"><button class="btn btn-outline" onclick="closeHistory()">关闭</button></div></div>';
+  document.body.appendChild(overlay);
+}
+function closeHistory() { const m = document.getElementById('historyModal'); if (m) m.remove(); }
+function loadHistory(i) {
+  const records = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+  const r = records[i];
+  if (!r) return;
+  lastResults = r.results;
+  document.getElementById('toolbar').style.display = 'flex';
+  syncToggleUI();
+  renderResults(r.results);
+  closeHistory();
+  toast('已加载历史记录', 'success');
+}
+function delHistory(i) {
+  const records = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+  records.splice(i, 1);
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(records));
+  closeHistory(); showHistory();
+}
+
+// ===== Custom Date Picker =====
+let calState = { target: null, year: 0, month: 0 };
+const CAL_MONTHS = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+const CAL_WEEKDAYS_SHORT = ['一','二','三','四','五','六','日'];
+
+function openCal(target) {
+  closeAllCals();
+  const input = document.getElementById(target);
+  const popup = document.getElementById(target === 'since' ? 'calSince' : 'calUntil');
+  const cur = input.value ? new Date(input.value) : new Date();
+  calState = { target, year: cur.getFullYear(), month: cur.getMonth() };
+  renderCal(popup);
+  popup.classList.add('open');
+  setTimeout(() => document.addEventListener('click', onCalOutsideClick), 0);
+}
+
+function closeAllCals() {
+  document.querySelectorAll('.cal-popup').forEach(p => p.classList.remove('open'));
+  document.removeEventListener('click', onCalOutsideClick);
+}
+
+function onCalOutsideClick(e) {
+  if (e.target.closest('.cal-popup') || e.target.closest('.date-trigger')) return;
+  closeAllCals();
+}
+
+function renderCal(popup) {
+  const { year, month } = calState;
+  const today = fmt(new Date());
+  const sinceVal = document.getElementById('since').value;
+  const untilVal = document.getElementById('until').value;
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  // 周一开始 (0=Mon...6=Sun)
+  let startDow = firstDay.getDay() - 1;
+  if (startDow < 0) startDow = 6;
+
+  const days = [];
+  // 前月填充
+  for (let i = startDow - 1; i >= 0; i--) {
+    const d = new Date(year, month, -i);
+    days.push({ date: fmt(d), day: d.getDate(), other: true });
+  }
+  // 当月
+  for (let i = 1; i <= lastDay.getDate(); i++) {
+    const d = new Date(year, month, i);
+    days.push({ date: fmt(d), day: i, other: false });
+  }
+  // 后月填充到 42 格（6行）或至少到下一行
+  const remain = days.length <= 35 ? 35 - days.length : 42 - days.length;
+  for (let i = 1; i <= remain; i++) {
+    const d = new Date(year, month + 1, i);
+    days.push({ date: fmt(d), day: i, other: true });
+  }
+
+  const weekdaysHtml = CAL_WEEKDAYS_SHORT.map(w => `<span>${w}</span>`).join('');
+  const daysHtml = days.map(d => {
+    let cls = d.other ? 'cal-day other' : 'cal-day';
+    if (d.date === today) cls += ' today';
+    if (d.date === sinceVal || d.date === untilVal) cls += ' selected';
+    if (sinceVal && untilVal && d.date > sinceVal && d.date < untilVal) cls += ' in-range';
+    if (d.date === sinceVal && untilVal && sinceVal !== untilVal) cls += ' range-start';
+    if (d.date === untilVal && sinceVal && sinceVal !== untilVal) cls += ' range-end';
+    return `<div class="${cls}" onclick="pickDate('${d.date}')">${d.day}</div>`;
+  }).join('');
+
+  popup.innerHTML = `
+    <div class="cal-header">
+      <div class="cal-nav"><button onclick="calNav(-1,event)">◂</button></div>
+      <div class="cal-title">${year}年 ${CAL_MONTHS[month]}</div>
+      <div class="cal-nav"><button onclick="calNav(1,event)">▸</button></div>
+    </div>
+    <div class="cal-weekdays">${weekdaysHtml}</div>
+    <div class="cal-days">${daysHtml}</div>
+    <div class="cal-footer"><button onclick="pickDate('${today}')">今天</button></div>`;
+}
+
+function calNav(dir, e) {
+  e.stopPropagation();
+  calState.month += dir;
+  if (calState.month > 11) { calState.month = 0; calState.year++; }
+  if (calState.month < 0) { calState.month = 11; calState.year--; }
+  const popup = document.getElementById(calState.target === 'since' ? 'calSince' : 'calUntil');
+  renderCal(popup);
+}
+
+function pickDate(dateStr) {
+  document.getElementById(calState.target).value = dateStr;
+  closeAllCals();
+}
+
+</script>
+</body>
+</html>
