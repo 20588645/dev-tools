@@ -1,6 +1,6 @@
 /**
  * WebSocket 连接管理
- * 自动重连 + 消息分发
+ * 桌面版：连接本地 sidecar 端口
  */
 const WS = {
   socket: null,
@@ -9,8 +9,13 @@ const WS = {
   port: null,
 
   connect(port) {
-    this.port = port || this.port;
-    if (!this.port) return;
+    if (port) this.port = port;
+    if (!this.port) {
+      // 从 API_BASE 提取端口
+      const match = API_BASE && API_BASE.match(/:(\d+)$/);
+      if (match) this.port = parseInt(match[1]);
+      else this.port = 13456;
+    }
 
     const url = 'ws://127.0.0.1:' + this.port + '/ws';
     this.socket = new WebSocket(url);
@@ -21,6 +26,8 @@ const WS = {
       const text = document.querySelector('.status-text');
       if (dot) dot.style.background = 'var(--success)';
       if (text) text.textContent = '服务运行中';
+      // 重连后检查活跃任务
+      if (typeof checkActiveJob === 'function') checkActiveJob();
     };
 
     this.socket.onclose = () => {

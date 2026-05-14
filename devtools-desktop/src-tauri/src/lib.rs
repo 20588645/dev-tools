@@ -13,11 +13,32 @@ fn get_sidecar_port(state: tauri::State<SidecarState>) -> u16 {
     *state.port.lock().unwrap()
 }
 
+#[tauri::command]
+fn pick_folder() -> Option<String> {
+    use std::process::Command;
+    // 使用 osascript 调用 macOS 原生文件夹选择器
+    let output = Command::new("osascript")
+        .arg("-e")
+        .arg("set theFolder to POSIX path of (choose folder with prompt \"选择项目文件夹\")")
+        .output();
+
+    match output {
+        Ok(out) => {
+            if out.status.success() {
+                let path = String::from_utf8_lossy(&out.stdout).trim().to_string();
+                if path.is_empty() { None } else { Some(path.trim_end_matches('/').to_string()) }
+            } else {
+                None // 用户取消了选择
+            }
+        }
+        Err(_) => None,
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
-            // sidecar 固定路径（个人工具，不需要分发）
             let sidecar_dir = std::path::PathBuf::from("/Users/ldy/personalTools/devtools-desktop/sidecar");
             let sidecar_entry = sidecar_dir.join("index.js");
 
@@ -32,16 +53,46 @@ pub fn run() {
                 return Ok(());
             }
 
-            // 启动 Node sidecar
-            let mut child = Command::new("node")
-                .arg(&sidecar_entry)
-                .current_dir(&sidecar_dir)
-                .stdout(Stdio::piped())
-                .stderr(Stdio::inherit())
-                .spawn()
-                .expect("无法启动 Node sidecar 进程");
+            // 尝试多个 node 路径（打包后 PATH 可能不包含 node）
+            let node_paths = [
+                "/usr/local/bin/node",
+                "/opt/homebrew/bin/node",
+                "/Users/ldy/.nvm/current/bin/node",
+                "node",
+            ];
 
-            // 从 stdout 读取端口号
+            let mut child_opt: Option<Child> = None;
+            for node_path in &node_paths {
+                match Command::new(node_path)
+                    .arg(&sidecar_entry)
+                    .current_dir(&sidecar_dir)
+                    .stdout(Stdio::piped())
+                    .stderr(Stdio::inherit())
+                    .spawn()
+                {
+                    Ok(c) => {
+                        println!("[Tauri] 使用 node: {}", node_path);
+                        child_opt = Some(c);
+                        break;
+                    }
+                    Err(e) => {
+                        eprintln!("[Tauri] 尝试 {} 失败: {}", node_path, e);
+                    }
+                }
+            }
+
+            let mut child = match child_opt {
+                Some(c) => c,
+                None => {
+                    eprintln!("[Tauri] 错误：无法启动 Node sidecar（所有 node 路径均失败）");
+                    app.manage(SidecarState {
+                        _child: Mutex::new(None),
+                        port: Mutex::new(0),
+                    });
+                    return Ok(());
+                }
+            };
+
             let stdout = child.stdout.take().expect("无法获取 sidecar stdout");
             let reader = BufReader::new(stdout);
             let mut port: u16 = 0;
@@ -71,7 +122,7 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![get_sidecar_port])
+        .invoke_handler(tauri::generate_handler![get_sidecar_port, pick_folder])
         .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .unwrap_or_else(|e| eprintln!("Tauri 运行错误: {:?}", e));
 }

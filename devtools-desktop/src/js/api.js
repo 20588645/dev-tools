@@ -1,14 +1,9 @@
 /**
  * API 调用封装
- * 自动检测 sidecar 端口并发起请求
+ * 桌面版：自动检测 sidecar 端口
  */
 let API_BASE = '';
 
-/**
- * 初始化 API 基础地址
- * 在 Tauri 环境中通过 IPC 获取 sidecar 端口
- * 在浏览器中使用默认端口（开发调试用）
- */
 async function initAPI() {
   if (window.__TAURI__) {
     try {
@@ -61,7 +56,16 @@ const API = {
     return res.json();
   },
 
-  async del(url, data) {
+  async del(url) {
+    const res = await fetch(API_BASE + url, { method: 'DELETE' });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: res.statusText }));
+      throw new Error(err.error || res.statusText);
+    }
+    return res.json();
+  },
+
+  async delete(url, data) {
     const opts = { method: 'DELETE' };
     if (data) {
       opts.headers = { 'Content-Type': 'application/json' };
