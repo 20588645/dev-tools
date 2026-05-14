@@ -223,6 +223,8 @@ function switchPage(page, el) {
   }
   // 切换到周报时初始化
   if (page === 'report') initReport();
+  // 切换到设置时加载
+  if (page === 'settings') loadSettings();
 }
 
 // ========== 子 Tab 切换 ==========
@@ -2592,4 +2594,97 @@ function rptShowBatchImport() {
   });
   rptRenderRepos();
   showToast(`✅ 已导入 ${count} 个仓库`);
+}
+
+
+// ========== 设置页 ==========
+let settingsLoaded = false;
+
+async function loadSettings() {
+  if (settingsLoaded) return;
+  settingsLoaded = true;
+
+  // Sidecar 状态
+  try {
+    const health = await API.get('/api/health');
+    const badge = document.getElementById('settingSidecarStatus');
+    badge.textContent = `● 运行中 · PID ${health.pid} · 端口 ${API_BASE.split(':').pop()}`;
+    badge.className = 'setting-badge online';
+    document.getElementById('settingAbout').textContent = `macOS · Sidecar PID ${health.pid}`;
+  } catch (e) {
+    const badge = document.getElementById('settingSidecarStatus');
+    badge.textContent = '● 离线';
+    badge.className = 'setting-badge offline';
+  }
+
+  // Node 版本
+  try {
+    const data = await API.get('/api/projects/node-versions/list');
+    document.getElementById('settingNodeVersion').textContent = data.current || data.versions?.[0] || '-';
+  } catch (e) {}
+
+  // 扫描目录
+  document.getElementById('settingScanDir').textContent = '/Users/ldy/project/';
+
+  // GitLab 配置
+  try {
+    const cfg = await API.get('/api/report/config');
+    document.getElementById('settingToken').value = cfg.token || '';
+    document.getElementById('settingAuthor').value = cfg.author || '';
+    renderSettingRepos(cfg.repos || []);
+  } catch (e) {}
+}
+
+function renderSettingRepos(repos) {
+  const list = document.getElementById('settingRepoList');
+  if (!repos || repos.length === 0) {
+    list.innerHTML = '<div style="color:var(--text-muted);font-size:12px;padding:8px 0">暂无仓库，点击「+ 添加仓库」</div>';
+    return;
+  }
+  list.innerHTML = repos.map((r, i) => `
+    <div class="setting-repo-row" data-idx="${i}">
+      <input type="text" class="repo-url" value="${(r.repo||'').replace(/"/g,'&quot;')}" placeholder="仓库地址 (http://...)">
+      <input type="text" class="repo-branch" value="${(r.branch||'').replace(/"/g,'&quot;')}" placeholder="分支">
+      <input type="text" class="repo-group" value="${(r.group||'').replace(/"/g,'&quot;')}" placeholder="分组">
+      <button onclick="this.parentElement.remove()" title="删除">✕</button>
+    </div>
+  `).join('');
+}
+
+function settingsAddRepo() {
+  const list = document.getElementById('settingRepoList');
+  // 如果只有占位文字，清空
+  if (list.querySelector('div:not(.setting-repo-row)')) list.innerHTML = '';
+  const div = document.createElement('div');
+  div.className = 'setting-repo-row';
+  div.innerHTML = `
+    <input type="text" class="repo-url" value="" placeholder="仓库地址 (http://...)">
+    <input type="text" class="repo-branch" value="" placeholder="分支">
+    <input type="text" class="repo-group" value="" placeholder="分组">
+    <button onclick="this.parentElement.remove()" title="删除">✕</button>
+  `;
+  list.appendChild(div);
+}
+
+async function saveAllSettings() {
+  const token = document.getElementById('settingToken').value.trim();
+  const author = document.getElementById('settingAuthor').value.trim();
+
+  // 收集仓库列表
+  const repos = [];
+  document.querySelectorAll('#settingRepoList .setting-repo-row').forEach(row => {
+    const url = row.querySelector('.repo-url').value.trim();
+    const branch = row.querySelector('.repo-branch').value.trim();
+    const group = row.querySelector('.repo-group').value.trim();
+    if (url) repos.push({ repo: url, branch, group });
+  });
+
+  try {
+    await API.post('/api/report/config', { token, author, outputDir: '', repos });
+    // 同步更新周报模块的 repos
+    rptRepos = repos.length ? repos.map(r => ({...r})) : [{ repo: '', branch: '', group: '' }];
+    showToast('✅ 设置已保存');
+  } catch (e) {
+    showAlert('保存失败: ' + e.message, { icon: '❌' });
+  }
 }
