@@ -601,3 +601,120 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',system-u
 
 /* 覆盖网页版的 page 样式适配新框架 */
 .page-sticky-header { position: sticky; top: 0; z-index: 50; background: var(--bg-primary); padding-top: 0; padding-bottom: 16px; }
+
+
+/* ===== Git 周报样式 ===== */
+.report-app { height: calc(100vh - 96px); display: flex; flex-direction: column; }
+.report-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 24px; background: rgba(30,35,50,0.6); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; margin-bottom: 16px; flex-shrink: 0; }
+.report-header-brand { display: flex; align-items: center; gap: 12px; }
+.report-header-logo { width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, #4f8ff7, #6366f1); display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 16px rgba(79,143,247,0.35); }
+.report-header-actions { display: flex; gap: 8px; }
+.rbtn { padding: 7px 14px; border: none; border-radius: 8px; font-size: .75rem; font-weight: 600; cursor: pointer; transition: all .2s; display: inline-flex; align-items: center; gap: 6px; font-family: inherit; }
+.rbtn-outline { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); }
+.rbtn-outline:hover { border-color: rgba(79,143,247,0.4); color: #4f8ff7; background: rgba(79,143,247,0.06); }
+.rbtn-primary { background: linear-gradient(135deg, #4f8ff7, #6366f1); color: #fff; box-shadow: 0 2px 12px rgba(79,143,247,0.25); }
+.rbtn-primary:hover { filter: brightness(1.12); transform: translateY(-1px); }
+.rbtn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+.rbtn-success { background: linear-gradient(135deg, #059669, #10b981); color: #fff; }
+.rbtn-success:hover { filter: brightness(1.12); }
+
+.report-main { display: flex; gap: 16px; flex: 1; min-height: 0; }
+.report-panel { background: rgba(30,35,50,0.6); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; }
+.report-panel-left { width: 380px; min-width: 340px; flex-shrink: 0; }
+.report-panel-right { flex: 1; min-width: 0; }
+.report-panel-title { padding: 12px 20px; font-size: .72rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .08em; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; gap: 8px; background: rgba(17,24,39,0.4); }
+.report-panel-title::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--success); box-shadow: 0 0 8px rgba(34,197,94,0.4); }
+.report-panel-body { padding: 16px 18px; overflow-y: auto; flex: 1; }
+
+.rfield { margin-bottom: 10px; }
+.rfield label { display: block; font-size: .7rem; color: var(--text-muted); margin-bottom: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+.rfield input, .rfield select { width: 100%; padding: 8px 12px; background: rgba(10,14,26,0.5); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; color: var(--text-primary); font-size: .82rem; font-family: inherit; outline: none; transition: all .2s; }
+.rfield input:focus { border-color: #4f8ff7; box-shadow: 0 0 0 3px rgba(79,143,247,0.12); }
+.rfield-row { display: flex; gap: 10px; }
+.rfield-row > .rfield { flex: 1; }
+
+.rpt-token-toggle { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: .85rem; }
+
+.rpt-mode-switcher { display: flex; background: rgba(10,14,26,0.5); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 3px; margin-bottom: 12px; }
+.rpt-mode-btn { flex: 1; padding: 7px 0; text-align: center; font-size: .78rem; font-weight: 600; color: var(--text-muted); border: none; background: none; border-radius: 8px; cursor: pointer; transition: all .25s; font-family: inherit; }
+.rpt-mode-btn.active { background: linear-gradient(135deg, #4f8ff7, #6366f1); color: #fff; box-shadow: 0 2px 10px rgba(79,143,247,0.3); }
+
+.rpt-date-presets { display: flex; gap: 4px; margin-bottom: 12px; flex-wrap: wrap; }
+.rpt-preset { padding: 3px 10px; border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; background: none; color: var(--text-muted); font-size: .68rem; font-weight: 500; cursor: pointer; transition: all .2s; font-family: inherit; }
+.rpt-preset:hover { border-color: #4f8ff7; color: #4f8ff7; }
+.rpt-preset.active { border-color: #4f8ff7; color: #fff; background: linear-gradient(135deg, #4f8ff7, #6366f1); }
+
+.rpt-btn-group { display: flex; gap: 8px; }
+.rpt-section-label { font-size: .7rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; margin: 14px 0 8px; padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; gap: 8px; }
+.rpt-count { font-size: .65rem; padding: 1px 7px; border-radius: 10px; background: rgba(79,143,247,0.12); color: #4f8ff7; font-weight: 700; }
+
+.rpt-repo-search { width: 100%; padding: 7px 10px; background: rgba(10,14,26,0.4); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; color: var(--text-primary); font-size: .76rem; font-family: inherit; outline: none; margin-bottom: 8px; }
+.rpt-repo-search:focus { border-color: #4f8ff7; }
+.rpt-repo-list { overflow-y: auto; flex: 1; }
+
+.rpt-repo-item { padding: 10px 12px; background: rgba(10,14,26,0.3); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; margin-bottom: 8px; position: relative; }
+.rpt-repo-item .rfield { margin-bottom: 6px; }
+.rpt-repo-item .rfield:last-child { margin-bottom: 0; }
+.rpt-repo-item .rfield input { padding: 7px 10px; font-size: .78rem; font-family: 'SF Mono', monospace; }
+.rpt-repo-del { position: absolute; top: 8px; right: 8px; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1rem; padding: 2px 6px; border-radius: 4px; }
+.rpt-repo-del:hover { color: var(--danger); background: rgba(239,68,68,0.12); }
+
+.rpt-toolbar { padding: 8px 20px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; gap: 12px; background: rgba(17,24,39,0.3); }
+.rpt-toggle-wrap { display: inline-flex; align-items: center; gap: 8px; font-size: .75rem; color: var(--text-muted); cursor: pointer; user-select: none; }
+.rpt-toggle-track { position: relative; width: 34px; height: 18px; background: rgba(255,255,255,0.1); border-radius: 9px; transition: background .25s; }
+.rpt-toggle-track.active { background: #4f8ff7; }
+.rpt-toggle-knob { position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; background: #fff; border-radius: 50%; transition: transform .25s; }
+.rpt-toggle-track.active .rpt-toggle-knob { transform: translateX(16px); }
+
+.rpt-view-switcher { display: flex; background: rgba(10,14,26,0.4); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 2px; }
+.rpt-view-btn { padding: 3px 10px; font-size: .65rem; font-weight: 600; border: none; background: none; color: var(--text-muted); cursor: pointer; border-radius: 4px; transition: all .15s; font-family: inherit; }
+.rpt-view-btn.active { background: #4f8ff7; color: #fff; }
+
+.rpt-toolbar-search { flex: 1; max-width: 240px; padding: 5px 10px; background: rgba(10,14,26,0.4); border: 1px solid rgba(255,255,255,0.08); border-radius: 7px; color: var(--text-primary); font-size: .72rem; font-family: inherit; outline: none; }
+.rpt-toolbar-search:focus { border-color: #4f8ff7; }
+
+.rpt-gen-progress { padding: 8px 20px; background: rgba(17,24,39,0.4); border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; gap: 10px; font-size: .72rem; color: var(--text-muted); }
+.rpt-progress-bar { flex: 1; height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; }
+.rpt-progress-fill { height: 100%; background: linear-gradient(90deg, #4f8ff7, #22d3ee); border-radius: 2px; transition: width .3s; width: 0; }
+.rpt-gp-text { font-variant-numeric: tabular-nums; min-width: 50px; text-align: right; }
+
+.rpt-summary-bar { padding: 10px 20px; background: rgba(17,24,39,0.5); border-bottom: 1px solid rgba(255,255,255,0.06); font-size: .8rem; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.rpt-summary-bar .rpt-stat { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 8px; background: rgba(255,255,255,0.04); font-weight: 500; }
+.rpt-summary-bar .rpt-stat .num { color: var(--success); font-weight: 700; }
+
+.rpt-empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-muted); text-align: center; }
+
+/* 周报结果表格 */
+.rpt-result-section { padding: 14px 18px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+.rpt-result-section h3 { font-size: .82rem; color: var(--text-primary); margin-bottom: 10px; font-weight: 600; }
+.rpt-result-section table { width: 100%; border-collapse: collapse; font-size: .78rem; }
+.rpt-result-section th { background: rgba(17,24,39,0.6); color: var(--text-muted); padding: 8px 12px; text-align: left; font-weight: 600; font-size: .7rem; }
+.rpt-result-section td { padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.04); color: var(--text-secondary); vertical-align: top; }
+.rpt-result-section tr:hover td { background: rgba(79,143,247,0.04); }
+.rpt-result-section td.subject { color: var(--text-primary); line-height: 1.5; }
+
+.rpt-commit-tag { display: inline-block; font-size: .55rem; font-weight: 700; padding: 1px 6px; border-radius: 4px; margin-right: 5px; text-transform: uppercase; vertical-align: middle; }
+.rpt-commit-tag.feat { background: rgba(52,211,153,0.12); color: #34d399; }
+.rpt-commit-tag.fix { background: rgba(248,113,113,0.12); color: #f87171; }
+.rpt-commit-tag.refactor { background: rgba(167,139,250,0.12); color: #a78bfa; }
+.rpt-commit-tag.style { background: rgba(34,211,238,0.12); color: #22d3ee; }
+.rpt-commit-tag.chore { background: rgba(122,134,154,0.15); color: #7a869a; }
+.rpt-commit-tag.docs { background: rgba(79,143,247,0.12); color: #4f8ff7; }
+.rpt-commit-tag.perf { background: rgba(251,191,36,0.12); color: #fbbf24; }
+
+/* 时间线视图 */
+.rpt-timeline-day { position: relative; padding-left: 20px; margin-bottom: 16px; }
+.rpt-timeline-day::before { content: ''; position: absolute; left: 5px; top: 24px; bottom: 0; width: 1px; background: rgba(255,255,255,0.06); }
+.rpt-timeline-date { font-size: .78rem; font-weight: 700; padding: 6px 12px; background: rgba(30,35,50,0.8); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 10px; }
+.rpt-timeline-item { position: relative; padding: 6px 0 6px 14px; font-size: .76rem; color: var(--text-primary); line-height: 1.5; }
+.rpt-timeline-item::before { content: ''; position: absolute; left: -18px; top: 12px; width: 7px; height: 7px; border-radius: 50%; background: #4f8ff7; }
+.rpt-timeline-item .tl-repo { font-size: .62rem; color: var(--text-muted); font-weight: 600; margin-right: 6px; padding: 1px 6px; background: rgba(255,255,255,0.04); border-radius: 4px; }
+
+/* 结果分组 */
+.rpt-result-group { margin-bottom: 12px; background: rgba(30,35,50,0.4); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; overflow: hidden; }
+.rpt-result-group-title { padding: 12px 18px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.rpt-result-group-title:hover { background: rgba(255,255,255,0.02); }
+.rpt-result-group-title .rg-name { flex: 1; font-size: .82rem; font-weight: 600; }
+.rpt-result-group-title .rg-pill { font-size: .6rem; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+.rpt-result-group-title .rg-pill.repos { background: rgba(79,143,247,0.08); color: rgba(79,143,247,0.8); }
+.rpt-result-group-title .rg-pill.commits { background: rgba(52,211,153,0.08); color: rgba(52,211,153,0.8); }

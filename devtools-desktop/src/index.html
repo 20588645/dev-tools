@@ -129,13 +129,94 @@
   </div>
 </section>
 
-<!-- Git 周报（占位，后续迁移） -->
+<!-- Git 周报 -->
 <section class="page" id="page-report">
-  <div class="page-title">📋 Git 周报</div>
-  <div class="page-subtitle">自动汇总 GitLab 提交记录，生成周报</div>
-  <div style="text-align:center;color:var(--text-muted);padding:80px 0">
-    <div style="font-size:48px;margin-bottom:16px">📋</div>
-    <div>Git 周报功能即将集成...</div>
+  <div class="report-app">
+    <div class="report-header">
+      <div class="report-header-brand">
+        <div class="report-header-logo">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><line x1="1.05" y1="12" x2="7" y2="12"/><line x1="17.01" y1="12" x2="22.96" y2="12"/><line x1="12" y1="1" x2="12" y2="7"/><line x1="12" y1="17" x2="12" y2="23"/></svg>
+        </div>
+        <div>
+          <h2 style="font-size:1.1rem;font-weight:700;background:linear-gradient(135deg,#e8ecf4 30%,#4f8ff7 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Git Weekly Report</h2>
+          <div style="font-size:.7rem;color:var(--text-muted);margin-top:2px">GitLab API · 增量加载 · 自动分类</div>
+        </div>
+      </div>
+      <div class="report-header-actions">
+        <button class="rbtn rbtn-outline" onclick="reportShowHistory()">📚 历史</button>
+        <button class="rbtn rbtn-outline" onclick="reportExportMD()">📄 导出</button>
+        <button class="rbtn rbtn-outline" onclick="reportCopyResult()">📋 复制</button>
+        <button class="rbtn rbtn-outline" onclick="reportShowSummary()">📝 摘要</button>
+      </div>
+    </div>
+
+    <div class="report-main">
+      <!-- Left Panel: Config -->
+      <div class="report-panel report-panel-left">
+        <div class="report-panel-title">配置信息</div>
+        <div class="report-panel-body">
+          <div class="rfield-row">
+            <div class="rfield"><label>GitLab Token</label><div style="position:relative"><input type="password" id="rptToken" placeholder="私有仓库 Token"><button class="rpt-token-toggle" onclick="rptToggleToken()">👁️</button></div></div>
+            <div class="rfield" style="max-width:120px"><label>作者</label><input id="rptAuthor" placeholder="用户名"></div>
+          </div>
+          <div class="rpt-mode-switcher">
+            <button class="rpt-mode-btn active" id="rptModeWeek" onclick="rptSwitchMode('week')">📅 周报</button>
+            <button class="rpt-mode-btn" id="rptModeDay" onclick="rptSwitchMode('day')">📋 日报</button>
+          </div>
+          <div class="rfield-row" id="rptDateRow">
+            <div class="rfield"><label>开始日期</label><input type="date" id="rptSince"></div>
+            <div class="rfield"><label>结束日期</label><input type="date" id="rptUntil"></div>
+          </div>
+          <div class="rpt-date-presets" id="rptDatePresets">
+            <button class="rpt-preset" onclick="rptApplyPreset('thisWeek')">本周</button>
+            <button class="rpt-preset" onclick="rptApplyPreset('lastWeek')">上周</button>
+            <button class="rpt-preset" onclick="rptApplyPreset('last3')">近3天</button>
+            <button class="rpt-preset" onclick="rptApplyPreset('thisMonth')">本月</button>
+            <button class="rpt-preset" onclick="rptApplyPreset('lastMonth')">上月</button>
+          </div>
+          <div class="rpt-btn-group">
+            <button class="rbtn rbtn-outline" onclick="rptAddRepo()" style="flex:1">＋ 添加仓库</button>
+            <button class="rbtn rbtn-outline" onclick="rptShowBatchImport()" style="flex:1">📋 批量导入</button>
+            <button class="rbtn rbtn-success" onclick="rptSaveConfig()" style="flex:1">💾 保存配置</button>
+          </div>
+          <div class="rpt-btn-group" style="margin-top:8px">
+            <button class="rbtn rbtn-primary" id="rptGenBtn" onclick="rptGenerate()" style="flex:1">🚀 生成周报</button>
+          </div>
+          <div class="rpt-section-label">仓库列表 <span class="rpt-count" id="rptRepoCount">0</span></div>
+          <input class="rpt-repo-search" id="rptRepoSearch" type="text" placeholder="搜索仓库地址或分支..." oninput="rptFilterRepos()">
+          <div class="rpt-repo-list" id="rptRepoList"></div>
+        </div>
+      </div>
+
+      <!-- Right Panel: Results -->
+      <div class="report-panel report-panel-right">
+        <div class="report-panel-title">生成结果</div>
+        <div id="rptToolbar" class="rpt-toolbar" style="display:none">
+          <label class="rpt-toggle-wrap" onclick="rptToggleHideEmpty()">
+            <div class="rpt-toggle-track" id="rptHideEmptyToggle"><div class="rpt-toggle-knob"></div></div>
+            <span id="rptHideEmptyLabel">隐藏空仓库</span>
+          </label>
+          <div class="rpt-view-switcher">
+            <button class="rpt-view-btn active" id="rptViewRepo" onclick="rptSwitchView('repo')">按仓库</button>
+            <button class="rpt-view-btn" id="rptViewDate" onclick="rptSwitchView('date')">按日期</button>
+          </div>
+          <input class="rpt-toolbar-search" id="rptCommitSearch" type="text" placeholder="搜索提交内容..." oninput="rptFilterCommits()">
+        </div>
+        <div id="rptGenProgress" class="rpt-gen-progress" style="display:none">
+          <span id="rptGpLabel">加载中...</span>
+          <div class="rpt-progress-bar"><div class="rpt-progress-fill" id="rptGpFill"></div></div>
+          <span class="rpt-gp-text" id="rptGpText">0/0</span>
+        </div>
+        <div id="rptSummaryBar" class="rpt-summary-bar" style="display:none"></div>
+        <div class="report-panel-body" id="rptResultArea">
+          <div class="rpt-empty-state">
+            <div style="font-size:2.5rem;margin-bottom:12px">📝</div>
+            <div style="font-size:1rem;font-weight:500;margin-bottom:6px">Git 仓库周报</div>
+            <div style="font-size:.82rem;color:var(--text-muted)">填写 Token → 添加仓库 → 生成周报</div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 
