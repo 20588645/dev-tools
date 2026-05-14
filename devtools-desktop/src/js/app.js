@@ -194,20 +194,10 @@ function setupWSHandlers() {
 
 // ========== Navigation ==========
 function setupNavigation() {
-  document.querySelectorAll('.nav-tab').forEach(tab => {
-    tab.addEventListener('click', async () => {
-      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-      tab.classList.add('active');
-      document.getElementById('page-' + tab.dataset.tab).classList.add('active');
-      if (tab.dataset.tab === 'servers') await loadServers();
-      if (tab.dataset.tab === 'history') await loadHistory();
-    });
-  });
-
-  document.querySelectorAll('.chip').forEach(chip => {
+  // 项目筛选 chips
+  document.querySelectorAll('#sub-dashboard .chip').forEach(chip => {
     chip.addEventListener('click', () => {
-      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      document.querySelectorAll('#sub-dashboard .chip').forEach(c => c.classList.remove('active'));
       chip.classList.add('active');
       currentFilter = chip.dataset.filter;
       renderProjects();
@@ -215,6 +205,119 @@ function setupNavigation() {
   });
 
   document.getElementById('searchInput').addEventListener('input', () => renderProjects());
+
+  // 首页初始化
+  initHomePage();
+}
+
+// ========== 页面切换（浮动图标栏） ==========
+function switchPage(page, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.dock-item').forEach(d => d.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  if (el) el.classList.add('active');
+  // 切换到部署面板时加载数据
+  if (page === 'deploy') {
+    const activeSub = document.querySelector('.sub-tab.active');
+    if (activeSub) switchSubTab(activeSub.dataset.sub, activeSub);
+  }
+}
+
+// ========== 子 Tab 切换 ==========
+function switchSubTab(sub, btn) {
+  document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.sub-page').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('sub-' + sub).classList.add('active');
+  // 加载对应数据
+  if (sub === 'servers') loadServers();
+  if (sub === 'history') loadHistory();
+}
+
+// ========== 首页 ==========
+function initHomePage() {
+  // 日期
+  const now = new Date();
+  const weekdays = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+  document.getElementById('homeDate').textContent = `今天是 ${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日，${weekdays[now.getDay()]}`;
+
+  // 问候语
+  const hour = now.getHours();
+  let greeting = '晚上好 🌙';
+  if (hour < 6) greeting = '夜深了 🌙';
+  else if (hour < 12) greeting = '上午好 ☀️';
+  else if (hour < 14) greeting = '中午好 🌤';
+  else if (hour < 18) greeting = '下午好 👋';
+  document.querySelector('#page-home .page-title').textContent = greeting;
+
+  loadHomeData();
+}
+
+async function loadHomeData() {
+  try {
+    // 统计卡片
+    const statsEl = document.getElementById('homeStats');
+    statsEl.innerHTML = `
+      <div class="home-stat-card"><div class="hs-icon">📦</div><div><div class="hs-label">管理项目</div><div class="hs-value">${projects.length}</div></div></div>
+      <div class="home-stat-card"><div class="hs-icon">🖥</div><div><div class="hs-label">服务器</div><div class="hs-value">${servers.length}</div></div></div>
+      <div class="home-stat-card"><div class="hs-icon">🚀</div><div><div class="hs-label">本周部署</div><div class="hs-value">-</div></div></div>
+      <div class="home-stat-card"><div class="hs-icon">✅</div><div><div class="hs-label">成功率</div><div class="hs-value">-</div></div></div>
+    `;
+
+    // 加载历史数据更新统计
+    const history = await API.get('/api/history');
+    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const thisWeek = history.filter(h => new Date(h.timestamp).getTime() > weekAgo);
+    const successCount = thisWeek.filter(h => h.status === 'success').length;
+    const rate = thisWeek.length > 0 ? Math.round(successCount / thisWeek.length * 100) : 0;
+    statsEl.innerHTML = `
+      <div class="home-stat-card"><div class="hs-icon">📦</div><div><div class="hs-label">管理项目</div><div class="hs-value">${projects.length}</div></div></div>
+      <div class="home-stat-card"><div class="hs-icon">🖥</div><div><div class="hs-label">服务器</div><div class="hs-value">${servers.length}</div></div></div>
+      <div class="home-stat-card"><div class="hs-icon">🚀</div><div><div class="hs-label">本周部署</div><div class="hs-value">${thisWeek.length}</div></div></div>
+      <div class="home-stat-card"><div class="hs-icon">✅</div><div><div class="hs-label">成功率</div><div class="hs-value">${rate}%</div></div></div>
+    `;
+
+    // 快捷操作
+    const quickEl = document.getElementById('homeQuick');
+    const lastDeploy = history.find(h => h.type === 'deploy' && h.status === 'success');
+    quickEl.innerHTML = `
+      <div class="home-quick-card" onclick="switchPage('deploy', document.querySelector('.dock-item[data-page=deploy]'))">
+        <div class="hqc-icon">🚀</div>
+        <div class="hqc-info">
+          <div class="hqc-title">上次部署</div>
+          <div class="hqc-desc">${lastDeploy ? lastDeploy.projectName + ' / ' + (lastDeploy.modules||[]).join(', ') + ' · ' + (lastDeploy.duration||'') : '暂无记录'}</div>
+        </div>
+      </div>
+      <div class="home-quick-card" onclick="switchPage('report', document.querySelector('.dock-item[data-page=report]'))">
+        <div class="hqc-icon">📋</div>
+        <div class="hqc-info">
+          <div class="hqc-title">Git 周报</div>
+          <div class="hqc-desc">即将集成...</div>
+        </div>
+      </div>
+    `;
+
+    // 最近活动
+    const activityEl = document.getElementById('homeActivity');
+    const recent = history.slice(0, 5);
+    if (recent.length === 0) {
+      activityEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:32px">暂无活动记录</div>';
+    } else {
+      activityEl.innerHTML = recent.map(h => {
+        const cls = h.status === 'success' ? 'success' : 'fail';
+        const typeLabel = h.type === 'deploy' ? '部署' : '构建';
+        const statusLabel = h.status === 'success' ? typeLabel + '成功' : typeLabel + '失败';
+        const mods = (h.modules || []).join(', ');
+        return `<div class="home-activity-item">
+          <div class="ha-dot ${cls}"></div>
+          <div class="ha-text"><strong>${statusLabel}</strong> — ${h.projectName} / ${mods}</div>
+          <div class="ha-time">${h.duration || ''} · ${timeAgo(h.timestamp)}</div>
+        </div>`;
+      }).join('');
+    }
+  } catch (e) {
+    // 静默失败
+  }
 }
 
 // ========== Node Versions ==========
