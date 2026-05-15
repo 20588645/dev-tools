@@ -457,5 +457,18 @@
     "nodeVersion": "v12.22.12",
     "defaultServerIds": [],
     "displayName": "茅台调度中心"
+  },
+  {
+    "name": "moutai-web-portal",
+    "path": "/Users/ldy/project/moutai-jt/moutai-web-portal",
+    "type": "single",
+    "tool": "Vue CLI",
+    "buildCommand": "npm run build",
+    "distDir": "dist",
+    "modules": [],
+    "excludeModules": [],
+    "defaultServerId": null,
+    "remotePath": "",
+    "nodeVersion": ""
   }
 ]

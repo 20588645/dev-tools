@@ -87,6 +87,8 @@ function showAlert(msg, opts = {}) {
 
 // ========== Init ==========
 document.addEventListener('DOMContentLoaded', async () => {
+  // 主题初始化
+  initTheme();
   // 桌面版：先初始化 API 地址，再连接 WebSocket
   await initAPI();
   WS.connect();
@@ -95,7 +97,38 @@ document.addEventListener('DOMContentLoaded', async () => {
   requestNotificationPermission();
   await Promise.all([loadProjects(), loadServers(), loadNodeVersions()]);
   checkActiveJob();
+  // 更新 toolbar 日期
+  updateToolbarDate();
 });
+
+// ========== 主题切换 ==========
+function initTheme() {
+  const saved = localStorage.getItem('devtools-theme');
+  const theme = saved || 'dark';
+  document.body.setAttribute('data-theme', theme);
+  updateThemeIcon(theme);
+}
+
+function toggleTheme() {
+  const current = document.body.getAttribute('data-theme') || 'dark';
+  const next = current === 'dark' ? 'light' : 'dark';
+  document.body.setAttribute('data-theme', next);
+  localStorage.setItem('devtools-theme', next);
+  updateThemeIcon(next);
+}
+
+function updateThemeIcon(theme) {
+  const el = document.getElementById('themeIcon');
+  if (el) el.textContent = theme === 'dark' ? '☾' : '☀';
+}
+
+function updateToolbarDate() {
+  const el = document.getElementById('toolbarDate');
+  if (!el) return;
+  const now = new Date();
+  const weekdays = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+  el.textContent = `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日 ${weekdays[now.getDay()]}`;
+}
 
 // ========== WebSocket Handlers ==========
 function setupWSHandlers() {
@@ -210,12 +243,15 @@ function setupNavigation() {
   initHomePage();
 }
 
-// ========== 页面切换（浮动图标栏） ==========
+// ========== 页面切换 ==========
 function switchPage(page, el) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  // Support both old .dock-item and new .sidebar-item
   document.querySelectorAll('.dock-item').forEach(d => d.classList.remove('active'));
+  document.querySelectorAll('.sidebar-item').forEach(d => d.classList.remove('active'));
   document.getElementById('page-' + page).classList.add('active');
-  if (el) el.classList.add('active');
+  const navEl = el || document.querySelector(`.sidebar-item[data-page="${page}"], .dock-item[data-page="${page}"]`);
+  if (navEl) navEl.classList.add('active');
   // 切换到部署面板时加载数据
   if (page === 'deploy') {
     const activeSub = document.querySelector('.sub-tab.active');
@@ -252,73 +288,104 @@ function initHomePage() {
   else if (hour < 12) greeting = '上午好 ☀️';
   else if (hour < 14) greeting = '中午好 🌤';
   else if (hour < 18) greeting = '下午好 👋';
-  document.querySelector('#page-home .page-title').textContent = greeting;
+  document.getElementById('homeGreeting').textContent = greeting;
 
   loadHomeData();
 }
 
 async function loadHomeData() {
   try {
-    // 统计卡片
-    const statsEl = document.getElementById('homeStats');
-    statsEl.innerHTML = `
-      <div class="home-stat-card"><div class="hs-icon">📦</div><div><div class="hs-label">管理项目</div><div class="hs-value">${projects.length}</div></div></div>
-      <div class="home-stat-card"><div class="hs-icon">🖥</div><div><div class="hs-label">服务器</div><div class="hs-value">${servers.length}</div></div></div>
-      <div class="home-stat-card"><div class="hs-icon">🚀</div><div><div class="hs-label">本周部署</div><div class="hs-value">-</div></div></div>
-      <div class="home-stat-card"><div class="hs-icon">✅</div><div><div class="hs-label">成功率</div><div class="hs-value">-</div></div></div>
-    `;
-
-    // 加载历史数据更新统计
+    // 加载历史数据
     const history = await API.get('/api/history');
     const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
     const thisWeek = history.filter(h => new Date(h.timestamp).getTime() > weekAgo);
     const successCount = thisWeek.filter(h => h.status === 'success').length;
+    const failCount = thisWeek.length - successCount;
     const rate = thisWeek.length > 0 ? Math.round(successCount / thisWeek.length * 100) : 0;
+
+    // 统计卡片
+    const statsEl = document.getElementById('homeStats');
     statsEl.innerHTML = `
-      <div class="home-stat-card"><div class="hs-icon">📦</div><div><div class="hs-label">管理项目</div><div class="hs-value">${projects.length}</div></div></div>
-      <div class="home-stat-card"><div class="hs-icon">🖥</div><div><div class="hs-label">服务器</div><div class="hs-value">${servers.length}</div></div></div>
-      <div class="home-stat-card"><div class="hs-icon">🚀</div><div><div class="hs-label">本周部署</div><div class="hs-value">${thisWeek.length}</div></div></div>
-      <div class="home-stat-card"><div class="hs-icon">✅</div><div><div class="hs-label">成功率</div><div class="hs-value">${rate}%</div></div></div>
+      <div class="stat-card">
+        <div class="stat-info">
+          <div class="stat-label">管理项目</div>
+          <div class="stat-value">${projects.length}</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-info">
+          <div class="stat-label">服务器</div>
+          <div class="stat-value">${servers.length}</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-info">
+          <div class="stat-label">本周部署</div>
+          <div class="stat-value">${thisWeek.length}</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-info">
+          <div class="stat-label">成功率</div>
+          <div class="stat-value">${rate}%</div>
+        </div>
+      </div>
     `;
+
+    // 最近活动（表格，带状态圆点和事件列）
+    const activityEl = document.getElementById('homeActivity');
+    const recent = history.slice(0, 8);
+    if (recent.length === 0) {
+      activityEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:40px">暂无活动记录</div>';
+    } else {
+      activityEl.innerHTML = `<table class="ha-table">
+        <thead><tr><th>时间</th><th>事件</th><th>项目</th><th>类型</th><th>服务器</th><th>状态</th><th>耗时</th></tr></thead>
+        <tbody>${recent.map(h => {
+          const time = new Date(h.timestamp).toLocaleTimeString('zh-CN', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+          const typeLabel = h.type === 'deploy' ? '部署' : '构建';
+          const eventLabel = h.status === 'success' ? typeLabel + '成功' : (h.status === 'running' ? '构建中' : typeLabel + '失败');
+          const dotCls = h.status === 'success' ? 'success' : (h.status === 'running' ? 'running' : 'fail');
+          const statusCls = h.status === 'success' ? 'success' : 'fail';
+          const statusText = h.status === 'success' ? '成功' : '失败';
+          const mods = (h.modules || []).slice(0, 1).join(', ');
+          const projectDisplay = h.projectName + (mods ? ' / ' + mods : '');
+          return `<tr>
+            <td class="ha-time">${time}</td>
+            <td><span class="ha-event"><span class="ha-dot ${dotCls}"></span>${eventLabel}</span></td>
+            <td class="ha-project">${projectDisplay}</td>
+            <td>${typeLabel}</td>
+            <td>${h.serverName || '本地'}</td>
+            <td class="ha-status ${statusCls}">${statusText}</td>
+            <td>${h.duration || '—'}</td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>`;
+    }
 
     // 快捷操作
     const quickEl = document.getElementById('homeQuick');
-    const lastDeploy = history.find(h => h.type === 'deploy' && h.status === 'success');
     quickEl.innerHTML = `
-      <div class="home-quick-card" onclick="switchPage('deploy', document.querySelector('.dock-item[data-page=deploy]'))">
-        <div class="hqc-icon">🚀</div>
-        <div class="hqc-info">
-          <div class="hqc-title">上次部署</div>
-          <div class="hqc-desc">${lastDeploy ? lastDeploy.projectName + ' / ' + (lastDeploy.modules||[]).join(', ') + ' · ' + (lastDeploy.duration||'') : '暂无记录'}</div>
-        </div>
+      <div class="quick-action-card" onclick="switchPage('deploy', document.querySelector('.sidebar-item[data-page=deploy]'))">
+        <div class="qa-icon green">🚀</div>
+        <div class="qa-info"><div class="qa-title">快速部署</div></div>
       </div>
-      <div class="home-quick-card" onclick="switchPage('report', document.querySelector('.dock-item[data-page=report]'))">
-        <div class="hqc-icon">📋</div>
-        <div class="hqc-info">
-          <div class="hqc-title">Git 周报</div>
-          <div class="hqc-desc">即将集成...</div>
-        </div>
+      <div class="quick-action-card" onclick="switchPage('deploy', document.querySelector('.sidebar-item[data-page=deploy]'))">
+        <div class="qa-icon blue">🔨</div>
+        <div class="qa-info"><div class="qa-title">构建项目</div></div>
+      </div>
+      <div class="quick-action-card" onclick="switchPage('report', document.querySelector('.sidebar-item[data-page=report]'))">
+        <div class="qa-icon purple">📋</div>
+        <div class="qa-info"><div class="qa-title">Git 周报</div></div>
+      </div>
+      <div class="quick-action-card" onclick="switchPage('deploy', document.querySelector('.sidebar-item[data-page=deploy]'));setTimeout(()=>switchSubTab('servers',document.querySelector('.sub-tab[data-sub=servers]')),100)">
+        <div class="qa-icon orange">🖥</div>
+        <div class="qa-info"><div class="qa-title">服务器管理</div></div>
+      </div>
+      <div class="quick-action-card" onclick="switchPage('settings', document.querySelector('.sidebar-item[data-page=settings]'))">
+        <div class="qa-icon gray">⚙️</div>
+        <div class="qa-info"><div class="qa-title">系统设置</div></div>
       </div>
     `;
-
-    // 最近活动
-    const activityEl = document.getElementById('homeActivity');
-    const recent = history.slice(0, 5);
-    if (recent.length === 0) {
-      activityEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:32px">暂无活动记录</div>';
-    } else {
-      activityEl.innerHTML = recent.map(h => {
-        const cls = h.status === 'success' ? 'success' : 'fail';
-        const typeLabel = h.type === 'deploy' ? '部署' : '构建';
-        const statusLabel = h.status === 'success' ? typeLabel + '成功' : typeLabel + '失败';
-        const mods = (h.modules || []).join(', ');
-        return `<div class="home-activity-item">
-          <div class="ha-dot ${cls}"></div>
-          <div class="ha-text"><strong>${statusLabel}</strong> — ${h.projectName} / ${mods}</div>
-          <div class="ha-time">${h.duration || ''} · ${timeAgo(h.timestamp)}</div>
-        </div>`;
-      }).join('');
-    }
   } catch (e) {
     // 静默失败
   }

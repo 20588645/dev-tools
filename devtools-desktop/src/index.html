@@ -12,40 +12,33 @@
 </script>
 <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
-<!-- 浮动图标栏 -->
-<nav class="icon-dock">
-  <div class="dock-item active" data-page="home" onclick="switchPage('home', this)">
-    🏠
-    <span class="dock-tooltip">首页</span>
-  </div>
-  <div class="dock-item" data-page="deploy" onclick="switchPage('deploy', this)">
-    🚀
-    <span class="dock-tooltip">部署面板</span>
-  </div>
-  <div class="dock-item" data-page="report" onclick="switchPage('report', this)">
-    📋
-    <span class="dock-tooltip">Git 周报</span>
-  </div>
-  <div class="dock-divider"></div>
-  <div class="dock-item" data-page="settings" onclick="switchPage('settings', this)">
-    ⚙️
-    <span class="dock-tooltip">设置</span>
-  </div>
-</nav>
-
-<!-- 主内容区 -->
-<div class="main-content">
+<body data-theme="light">
+<div class="app-shell">
+  <aside class="app-sidebar">
+    <nav class="sidebar-nav" aria-label="主导航">
+      <button class="sidebar-item active" data-page="home" onclick="switchPage('home', this)"><span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span><span>首页</span></button>
+      <button class="sidebar-item" data-page="deploy" onclick="switchPage('deploy', this)"><span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg></span><span>部署面板</span></button>
+      <button class="sidebar-item" data-page="report" onclick="switchPage('report', this)"><span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span><span>Git 周报</span></button>
+      <button class="sidebar-item" data-page="settings" onclick="switchPage('settings', this)"><span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68 1.65 1.65 0 0 0 9 3.17V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span>设置</span></button>
+    </nav>
+  </aside>
+  <div class="app-main">
+    <main class="main-content">
 
 <!-- 首页 -->
 <section class="page active" id="page-home">
-  <div class="page-title">下午好 👋</div>
-  <div class="page-subtitle" id="homeDate"></div>
+  <div class="home-header">
+    <h1 class="home-greeting" id="homeGreeting">下午好 👋</h1>
+    <p class="home-date" id="homeDate"></p>
+  </div>
   <div class="home-stats" id="homeStats"></div>
-  <div class="section-title" style="margin-top:32px">快捷操作</div>
-  <div class="home-quick" id="homeQuick"></div>
-  <div class="section-title" style="margin-top:32px">最近活动</div>
-  <div class="home-activity" id="homeActivity"></div>
+  <div class="home-activity-card">
+    <div class="home-card-header">
+      <span class="home-card-title">最近活动</span>
+      <button class="btn-text" onclick="switchPage('deploy', document.querySelector('.sidebar-item[data-page=deploy]'));setTimeout(()=>switchSubTab('history',document.querySelector('.sub-tab[data-sub=history]')),100)">查看全部 →</button>
+    </div>
+    <div class="home-activity-table" id="homeActivity"></div>
+  </div>
 </section>
 
 <!-- 部署面板 -->
@@ -310,7 +303,9 @@
   </div>
 </section>
 
-</div><!-- /.main-content -->
+</main>
+  </div>
+</div><!-- /.app-shell -->
 
 <!-- 模块选择弹窗 -->
 <!-- 构建弹窗 (仅构建) -->

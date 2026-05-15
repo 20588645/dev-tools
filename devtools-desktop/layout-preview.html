@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>布局风格预览</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif; background: #0a0e1a; color: #e2e8f0; }
+h1 { text-align: center; padding: 40px 0 20px; font-size: 24px; color: #818cf8; }
+.preview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; max-width: 1400px; margin: 0 auto; padding: 20px 40px 60px; }
+.preview-item { border: 1px solid #2e3150; border-radius: 16px; overflow: hidden; background: #111827; }
+.preview-title { padding: 16px 20px; font-size: 16px; font-weight: 600; border-bottom: 1px solid #2e3150; display: flex; align-items: center; justify-content: space-between; }
+.preview-title span { font-size: 12px; color: #64748b; font-weight: 400; }
+.preview-body { height: 420px; position: relative; overflow: hidden; }
+
+/* ===== 风格 A: 左侧侧边栏 ===== */
+.layout-a { display: flex; height: 100%; }
+.layout-a .sidebar { width: 200px; background: #181926; border-right: 1px solid #2e3150; padding: 16px 8px; display: flex; flex-direction: column; }
+.layout-a .sidebar .logo { padding: 8px 12px 20px; font-size: 14px; font-weight: 700; color: #818cf8; }
+.layout-a .sidebar .nav-item { padding: 8px 12px; border-radius: 6px; font-size: 13px; color: #94a3b8; cursor: pointer; margin-bottom: 2px; display: flex; align-items: center; gap: 8px; }
+.layout-a .sidebar .nav-item.active { background: rgba(99,102,241,0.15); color: #818cf8; }
+.layout-a .sidebar .nav-section { font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; padding: 12px 12px 6px; }
+.layout-a .main { flex: 1; padding: 20px; }
+.layout-a .main .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.layout-a .main .topbar h2 { font-size: 18px; }
+.layout-a .main .content-placeholder { background: #1e2035; border: 1px dashed #2e3150; border-radius: 8px; height: 300px; display: flex; align-items: center; justify-content: center; color: #64748b; font-size: 13px; }
+
+/* ===== 风格 B: 左侧图标栏 ===== */
+.layout-b { display: flex; height: 100%; }
+.layout-b .icon-bar { width: 56px; background: #12131f; border-right: 1px solid #2e3150; display: flex; flex-direction: column; align-items: center; padding: 12px 0; gap: 4px; }
+.layout-b .icon-bar .icon-item { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; transition: 0.15s; }
+.layout-b .icon-bar .icon-item.active { background: rgba(99,102,241,0.2); }
+.layout-b .icon-bar .icon-item:hover { background: rgba(255,255,255,0.05); }
+.layout-b .icon-bar .spacer { flex: 1; }
+.layout-b .main { flex: 1; display: flex; flex-direction: column; }
+.layout-b .main .topbar { height: 48px; border-bottom: 1px solid #2e3150; display: flex; align-items: center; padding: 0 20px; justify-content: space-between; }
+.layout-b .main .topbar h2 { font-size: 15px; font-weight: 600; }
+.layout-b .main .content { flex: 1; padding: 20px; }
+.layout-b .main .content-placeholder { background: #1e2035; border: 1px dashed #2e3150; border-radius: 8px; height: 100%; display: flex; align-items: center; justify-content: center; color: #64748b; font-size: 13px; }
+
+/* ===== 风格 C: 顶部 Tab ===== */
+.layout-c { display: flex; flex-direction: column; height: 100%; }
+.layout-c .topbar { height: 52px; background: #181926; border-bottom: 1px solid #2e3150; display: flex; align-items: center; padding: 0 20px; gap: 16px; }
+.layout-c .topbar .logo { font-size: 15px; font-weight: 700; color: #818cf8; margin-right: 24px; }
+.layout-c .topbar .tab { padding: 6px 14px; border-radius: 6px; font-size: 13px; color: #94a3b8; cursor: pointer; }
+.layout-c .topbar .tab.active { background: rgba(99,102,241,0.15); color: #818cf8; }
+.layout-c .topbar .spacer { flex: 1; }
+.layout-c .topbar .status { font-size: 12px; color: #64748b; display: flex; align-items: center; gap: 6px; }
+.layout-c .topbar .status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: #22c55e; }
+.layout-c .content { flex: 1; padding: 20px; }
+.layout-c .content-placeholder { background: #1e2035; border: 1px dashed #2e3150; border-radius: 8px; height: 100%; display: flex; align-items: center; justify-content: center; color: #64748b; font-size: 13px; }
+
+/* ===== 风格 D: 首页卡片入口 ===== */
+.layout-d { display: flex; flex-direction: column; height: 100%; padding: 24px; }
+.layout-d .header { margin-bottom: 24px; }
+.layout-d .header h2 { font-size: 20px; margin-bottom: 4px; }
+.layout-d .header p { font-size: 13px; color: #64748b; }
+.layout-d .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; flex: 1; }
+.layout-d .tool-card { background: #1e2035; border: 1px solid #2e3150; border-radius: 12px; padding: 24px; cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; }
+.layout-d .tool-card:hover { border-color: #818cf8; transform: translateY(-2px); }
+.layout-d .tool-card .card-icon { font-size: 32px; margin-bottom: 12px; }
+.layout-d .tool-card .card-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.layout-d .tool-card .card-desc { font-size: 12px; color: #64748b; line-height: 1.5; }
+.layout-d .tool-card .card-badge { margin-top: auto; padding-top: 12px; font-size: 11px; color: #94a3b8; }
+</style>
+</head>
+<body>
+<h1>桌面应用布局风格预览</h1>
+<div class="preview-grid">
+
+<!-- 风格 A: 左侧侧边栏 -->
+<div class="preview-item">
+  <div class="preview-title">风格 A：左侧侧边栏 <span>类似 VS Code / Notion</span></div>
+  <div class="preview-body">
+    <div class="layout-a">
+      <div class="sidebar">
+        <div class="logo">⚡ DevTools</div>
+        <div class="nav-section">工具</div>
+        <div class="nav-item active">🏠 首页</div>
+        <div class="nav-item">🚀 部署面板</div>
+        <div class="nav-item">📋 Git 周报</div>
+        <div class="nav-section">系统</div>
+        <div class="nav-item">⚙️ 设置</div>
+      </div>
+      <div class="main">
+        <div class="topbar">
+          <h2>首页</h2>
+          <div style="font-size:12px;color:#64748b">● 服务运行中</div>
+        </div>
+        <div class="content-placeholder">页面内容区域</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 风格 B: 左侧图标栏 -->
+<div class="preview-item">
+  <div class="preview-title">风格 B：左侧图标栏 <span>类似 Slack / Activity Monitor</span></div>
+  <div class="preview-body">
+    <div class="layout-b">
+      <div class="icon-bar">
+        <div class="icon-item active">🏠</div>
+        <div class="icon-item">🚀</div>
+        <div class="icon-item">📋</div>
+        <div class="spacer"></div>
+        <div class="icon-item">⚙️</div>
+      </div>
+      <div class="main">
+        <div class="topbar">
+          <h2>部署面板</h2>
+          <div style="font-size:12px;color:#22c55e">● 在线</div>
+        </div>
+        <div class="content">
+          <div class="content-placeholder">页面内容区域（更宽）</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 风格 C: 顶部 Tab -->
+<div class="preview-item">
+  <div class="preview-title">风格 C：顶部 Tab 栏 <span>类似浏览器 / 当前网页版</span></div>
+  <div class="preview-body">
+    <div class="layout-c">
+      <div class="topbar">
+        <div class="logo">⚡ DevTools</div>
+        <div class="tab active">首页</div>
+        <div class="tab">部署面板</div>
+        <div class="tab">Git 周报</div>
+        <div class="tab">设置</div>
+        <div class="spacer"></div>
+        <div class="status">服务运行中</div>
+      </div>
+      <div class="content">
+        <div class="content-placeholder">页面内容区域（最大化利用空间）</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 风格 D: 首页卡片 -->
+<div class="preview-item">
+  <div class="preview-title">风格 D：首页卡片入口 <span>类似系统偏好设置 / Raycast</span></div>
+  <div class="preview-body">
+    <div class="layout-d">
+      <div class="header">
+        <h2>⚡ DevTools</h2>
+        <p>选择一个工具开始使用</p>
+      </div>
+      <div class="card-grid">
+        <div class="tool-card">
+          <div class="card-icon">🚀</div>
+          <div class="card-title">部署面板</div>
+          <div class="card-desc">前端项目构建、SFTP 部署、多服务器管理</div>
+          <div class="card-badge">8 个项目 · 3 台服务器</div>
+        </div>
+        <div class="tool-card">
+          <div class="card-icon">📋</div>
+          <div class="card-title">Git 周报</div>
+          <div class="card-desc">自动汇总 GitLab 提交记录，生成周报</div>
+          <div class="card-badge">5 个仓库</div>
+        </div>
+        <div class="tool-card">
+          <div class="card-icon">🔧</div>
+          <div class="card-title">更多工具</div>
+          <div class="card-desc">即将推出...</div>
+          <div class="card-badge"></div>
+        </div>
+        <div class="tool-card">
+          <div class="card-icon">⚙️</div>
+          <div class="card-title">设置</div>
+          <div class="card-desc">全局配置、Token 管理</div>
+          <div class="card-badge"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+</body>
+</html>

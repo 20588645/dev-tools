@@ -1,5 +1,776 @@
 [
   {
+    "id": "build-1778728670853",
+    "timestamp": "2026-05-14T03:18:18.680Z",
+    "projectName": "moutai-oas-dispatchcenter",
+    "modules": [
+      "整体构建"
+    ],
+    "serverId": null,
+    "serverName": "—",
+    "remotePath": "—",
+    "status": "success",
+    "type": "build-only",
+    "duration": "27s",
+    "logs": [
+      {
+        "type": "info",
+        "text": "╔══════════════════════════════════════════╗",
+        "time": 1778728670853
+      },
+      {
+        "type": "info",
+        "text": "║           🚀 构建任务启动                ║",
+        "time": 1778728670853
+      },
+      {
+        "type": "info",
+        "text": "╚══════════════════════════════════════════╝",
+        "time": 1778728670854
+      },
+      {
+        "type": "info",
+        "text": "📋 项目: moutai-oas-dispatchcenter",
+        "time": 1778728670854
+      },
+      {
+        "type": "info",
+        "text": "📦 模块: 整体构建",
+        "time": 1778728670854
+      },
+      {
+        "type": "info",
+        "text": "🔧 Node: v12.22.12",
+        "time": 1778728670854
+      },
+      {
+        "type": "info",
+        "text": "⏰ 开始时间: 2026/5/14 11:17:50",
+        "time": 1778728670882
+      },
+      {
+        "type": "info",
+        "text": "",
+        "time": 1778728670882
+      },
+      {
+        "type": "info",
+        "text": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+        "time": 1778728670883
+      },
+      {
+        "type": "info",
+        "text": "📥 阶段一：拉取最新代码",
+        "time": 1778728670883
+      },
+      {
+        "type": "info",
+        "text": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+        "time": 1778728670883
+      },
+      {
+        "type": "info",
+        "text": "📂 工作目录: /Users/ldy/project/moutai-jt/moutai-oas-dispatchcenter",
+        "time": 1778728670904
+      },
+      {
+        "type": "info",
+        "text": "🌿 当前分支: master",
+        "time": 1778728670904
+      },
+      {
+        "type": "cmd",
+        "text": "$ git pull origin master",
+        "time": 1778728670904
+      },
+      {
+        "type": "info",
+        "text": "",
+        "time": 1778728670904
+      },
+      {
+        "type": "info",
+        "text": "  Already up to date.",
+        "time": 1778728671538
+      },
+      {
+        "type": "info",
+        "text": "✅ 代码拉取完成",
+        "time": 1778728671546
+      },
+      {
+        "type": "info",
+        "text": "",
+        "time": 1778728671546
+      },
+      {
+        "type": "info",
+        "text": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+        "time": 1778728671546
+      },
+      {
+        "type": "info",
+        "text": "🔨 阶段二：执行构建",
+        "time": 1778728671546
+      },
+      {
+        "type": "info",
+        "text": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+        "time": 1778728671546
+      },
+      {
+        "type": "info",
+        "text": "🔧 Node 版本: v12.22.12",
+        "time": 1778728671546
+      },
+      {
+        "type": "info",
+        "text": "   路径: /Users/ldy/.nvm/versions/node/v12.22.12/bin",
+        "time": 1778728671546
+      },
+      {
+        "type": "cmd",
+        "text": "$ npm run build",
+        "time": 1778728671546
+      },
+      {
+        "type": "info",
+        "text": "📂 工作目录: /Users/ldy/project/moutai-jt/moutai-oas-dispatchcenter",
+        "time": 1778728671546
+      },
+      {
+        "type": "info",
+        "text": "",
+        "time": 1778728671546
+      },
+      {
+        "type": "info",
+        "text": "> jzyc@1.0.0 build /Users/ldy/project/moutai-jt/moutai-oas-dispatchcenter",
+        "time": 1778728672054
+      },
+      {
+        "type": "info",
+        "text": "> node build/build.js",
+        "time": 1778728672054
+      },
+      {
+        "type": "info",
+        "text": "{",
+        "time": 1778728672857
+      },
+      {
+        "type": "info",
+        "text": "  'style-vendor': 'StyleVendor',",
+        "time": 1778728672857
+      },
+      {
+        "type": "info",
+        "text": "  vue: 'Vue',",
+        "time": 1778728672857
+      },
+      {
+        "type": "info",
+        "text": "  'vue-router': 'VueRouter',",
+        "time": 1778728672857
+      },
+      {
+        "type": "info",
+        "text": "  vuex: 'Vuex',",
+        "time": 1778728672857
+      },
+      {
+        "type": "info",
+        "text": "  axios: 'axios',",
+        "time": 1778728672857
+      },
+      {
+        "type": "info",
+        "text": "  lodash: '_',",
+        "time": 1778728672857
+      },
+      {
+        "type": "info",
+        "text": "  GCONF: 'GCONF',",
+        "time": 1778728672857
+      },
+      {
+        "type": "info",
+        "text": "  'element-ui': 'ELEMENT'",
+        "time": 1778728672857
+      },
+      {
+        "type": "info",
+        "text": "}",
+        "time": 1778728672857
+      },
+      {
+        "type": "info",
+        "text": "Hash: \u001b[1mc632e9e6accfb8661454\u001b[39m\u001b[22m",
+        "time": 1778728698529
+      },
+      {
+        "type": "info",
+        "text": "Version: webpack \u001b[1m4.47.0\u001b[39m\u001b[22m",
+        "time": 1778728698529
+      },
+      {
+        "type": "info",
+        "text": "Time: \u001b[1m24679\u001b[39m\u001b[22mms",
+        "time": 1778728698529
+      },
+      {
+        "type": "info",
+        "text": "Built at: 2026-05-14 \u001b[1m11:18:18 ├F10: AM┤\u001b[39m\u001b[22m",
+        "time": 1778728698529
+      },
+      {
+        "type": "info",
+        "text": "                                     \u001b[1mAsset\u001b[39m\u001b[22m        \u001b[1mSize\u001b[39m\u001b[22m  \u001b[1mChunks\u001b[39m\u001b[22m  \u001b[1m\u001b[39m\u001b[22m                       \u001b[1m\u001b[39m\u001b[22m       \u001b[1mChunk Names\u001b[39m\u001b[22m",
+        "time": 1778728698529
+      },
+      {
+        "type": "info",
+        "text": "            \u001b[1m\u001b[33m35cc686057021ee808c5.worker.js\u001b[39m\u001b[22m     \u001b[1m\u001b[33m817 KiB\u001b[39m\u001b[22m        \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m  \u001b[1m\u001b[33m[big]\u001b[39m\u001b[22m  ",
+        "time": 1778728698529
+      },
+      {
+        "type": "info",
+        "text": "\u001b[1m\u001b[32m35cc686057021ee808c5.worker.js.LICENSE.txt\u001b[39m\u001b[22m  1020 bytes        \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1778728698529
+      },
+      {
+        "type": "info",
+        "text": "         \u001b[1m\u001b[32m35cc686057021ee808c5.worker.js.gz\u001b[39m\u001b[22m     236 KiB        \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1778728698529
+      },
+      {
+        "type": "info",
+        "text": "                             \u001b[1m\u001b[33mcss.worker.js\u001b[39m\u001b[22m     \u001b[1m\u001b[33m805 KiB\u001b[39m\u001b[22m        \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m              \u001b[1m\u001b[33m[big]\u001b[39m\u001b[22m  ",
+        "time": 1778728698529
+      },
+      {
+        "type": "info",
+        "text": "                 \u001b[1m\u001b[32mcss.worker.js.LICENSE.txt\u001b[39m\u001b[22m    75 bytes        \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1778728698529
+      },
+      {
+        "type": "info",
+        "text": "                          \u001b[1m\u001b[32mcss.worker.js.gz\u001b[39m\u001b[22m     170 KiB        \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1778728698529
+      },
+      {
+        "type": "info",
+        "text": "                                \u001b[1m\u001b[32mcss/10.css\u001b[39m\u001b[22m   307 bytes      \u001b[1m10\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1778728698529
+      },
+      {
+        "type": "info",
+        "text": "                                \u001b[1m\u001b[32mcss/11.css\u001b[39m\u001b[22m   307 bytes      \u001b[1m11\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1778728698529
+      },
+      {
+        "type": "info",
+        "text": "                                 \u001b[1m\u001b[32mcss/5.css\u001b[39m\u001b[22m    11.3 KiB       \u001b[1m5\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     entry",
+        "time": 1778728698529
+      },
+      {
+        "type": "info",
+        "text": "                              \u001b[1m\u001b[32mcss/5.css.gz\u001b[39m\u001b[22m    3.07 KiB        \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1778728698529
+      },
+      {
+        "type": "info",
+        "text": "                          \u001b[1m\u001b[32meditor.worker.js\u001b[39m\u001b[22m     122 KiB        \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1778728698529
+      },
+      {
+        "type": "info",
+        "text": "              \u001b[1m\u001b[32meditor.worker.js.LICENSE.txt\u001b[39m\u001b[22m    75 bytes        \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1778728698529
+      },
+      {
+        "type": "info",
+        "text": "                       \u001b[1m\u001b[32meditor.worker.js.gz\u001b[39m\u001b[22m    38.5 KiB        \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1778728698529
+      },
+      {
+        "type": "info",
+        "text": "                            \u001b[1m\u001b[33mhtml.worker.js\u001b[39m\u001b[22m     \u001b[1m\u001b[33m528 KiB\u001b[39m\u001b[22m        \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m              \u001b[1m\u001b[33m[big]\u001b[39m\u001b[22m  ",
+        "time": 1778728698529
+      },
+      {
+        "type": "info",
+        "text": "                \u001b[1m\u001b[32mhtml.worker.js.LICENSE.txt\u001b[39m\u001b[22m    75 bytes        \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1778728698529
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mhtml.worker.js.gz\u001b[39m\u001b[22m     131 KiB        \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1778728698529
+      },
+      {
+        "type": "info",
+        "text": "                                \u001b[1m\u001b[32mindex.html\u001b[39m\u001b[22m   977 bytes        \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1778728698529
+      },
+      {
+        "type": "info",
+        "text": "                          \u001b[1m\u001b[33mjs/0.1eb1346f.js\u001b[39m\u001b[22m    \u001b[1m\u001b[33m1.03 MiB\u001b[39m\u001b[22m       \u001b[1m0\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m  \u001b[1m\u001b[33m[big]\u001b[39m\u001b[22m  ",
+        "time": 1778728698529
+      },
+      {
+        "type": "info",
+        "text": "              \u001b[1m\u001b[32mjs/0.1eb1346f.js.LICENSE.txt\u001b[39m\u001b[22m   996 bytes        \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1778728698529
+      },
+      {
+        "type": "info",
+        "text": "                       \u001b[1m\u001b[33mjs/0.1eb1346f.js.gz\u001b[39m\u001b[22m     \u001b[1m\u001b[33m334 KiB\u001b[39m\u001b[22m        \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m              \u001b[1m\u001b[33m[big]\u001b[39m\u001b[22m  ",
+        "time": 1778728698529
+      },
+      {
+        "type": "info",
+        "text": "                          \u001b[1m\u001b[32mjs/1.3219c374.js\u001b[39m\u001b[22m     151 KiB       \u001b[1m1\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1778728698529
+      },
+      {
+        "type": "info",
+        "text": "              \u001b[1m\u001b[32mjs/1.3219c374.js.LICENSE.txt\u001b[39m\u001b[22m    6.89 KiB        \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1778728698529
+      },
+      {
+        "type": "info",
+        "text": "                       \u001b[1m\u001b[32mjs/1.3219c374.js.gz\u001b[39m\u001b[22m    35.9 KiB        \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1778728698529
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/10.80dcfce7.js\u001b[39m\u001b[22m    42.8 KiB      \u001b[1m10\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1778728698529
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/10.80dcfce7.js.gz\u001b[39m\u001b[22m    15.6 KiB        \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1778728698529
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/11.0e37bb90.js\u001b[39m\u001b[22m    42.2 KiB      \u001b[1m11\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1778728698529
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/11.0e37bb90.js.gz\u001b[39m\u001b[22m    14.6 KiB        \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1778728698529
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/12.a42d41b9.js\u001b[39m\u001b[22m    54.8 KiB      \u001b[1m12\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1778728698529
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/12.a42d41b9.js.gz\u001b[39m\u001b[22m    15.7 KiB        \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1778728698529
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/13.e480649f.js\u001b[39m\u001b[22m    45.6 KiB      \u001b[1m13\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1778728698529
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/13.e480649f.js.gz\u001b[39m\u001b[22m    9.88 KiB        \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1778728698529
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/14.90486ae6.js\u001b[39m\u001b[22m    44.8 KiB      \u001b[1m14\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1778728698529
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/14.90486ae6.js.gz\u001b[39m\u001b[22m    9.94 KiB        \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1778728698529
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/15.14ad0619.js\u001b[39m\u001b[22m    6.62 KiB      \u001b[1m15\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1778728698529
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/16.b93afa70.js\u001b[39m\u001b[22m    23.7 KiB      \u001b[1m16\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1778728698529
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/16.b93afa70.js.gz\u001b[39m\u001b[22m    6.11 KiB        \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1778728698529
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/17.e749af29.js\u001b[39m\u001b[22m    4.98 KiB      \u001b[1m17\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1778728698529
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/18.4e2453c5.js\u001b[39m\u001b[22m    22.5 KiB      \u001b[1m18\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1778728698529
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/18.4e2453c5.js.gz\u001b[39m\u001b[22m    5.21 KiB        \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1778728698529
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/19.2cb7e5d8.js\u001b[39m\u001b[22m    15.3 KiB      \u001b[1m19\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1778728698529
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/19.2cb7e5d8.js.gz\u001b[39m\u001b[22m    5.08 KiB        \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1778728698530
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/20.4493c5c4.js\u001b[39m\u001b[22m    10.4 KiB      \u001b[1m20\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1778728698530
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/20.4493c5c4.js.gz\u001b[39m\u001b[22m    4.07 KiB        \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1778728698530
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/21.771c319e.js\u001b[39m\u001b[22m   926 bytes      \u001b[1m21\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1778728698530
+      },
+      {
+        "type": "info",
+        "text": "                          \u001b[1m\u001b[33mjs/3.8de6c1e4.js\u001b[39m\u001b[22m    \u001b[1m\u001b[33m1.45 MiB\u001b[39m\u001b[22m       \u001b[1m3\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m  \u001b[1m\u001b[33m[big]\u001b[39m\u001b[22m  ",
+        "time": 1778728698530
+      },
+      {
+        "type": "info",
+        "text": "              \u001b[1m\u001b[32mjs/3.8de6c1e4.js.LICENSE.txt\u001b[39m\u001b[22m   870 bytes        \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1778728698530
+      },
+      {
+        "type": "info",
+        "text": "                       \u001b[1m\u001b[33mjs/3.8de6c1e4.js.gz\u001b[39m\u001b[22m     \u001b[1m\u001b[33m406 KiB\u001b[39m\u001b[22m        \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m              \u001b[1m\u001b[33m[big]\u001b[39m\u001b[22m  ",
+        "time": 1778728698530
+      },
+      {
+        "type": "info",
+        "text": "                          \u001b[1m\u001b[33mjs/4.0c679a46.js\u001b[39m\u001b[22m     \u001b[1m\u001b[33m880 KiB\u001b[39m\u001b[22m       \u001b[1m4\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m  \u001b[1m\u001b[33m[big]\u001b[39m\u001b[22m  ",
+        "time": 1778728698530
+      },
+      {
+        "type": "info",
+        "text": "                       \u001b[1m\u001b[32mjs/4.0c679a46.js.gz\u001b[39m\u001b[22m     228 KiB        \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1778728698530
+      },
+      {
+        "type": "info",
+        "text": "                          \u001b[1m\u001b[32mjs/7.62b464a8.js\u001b[39m\u001b[22m     101 KiB       \u001b[1m7\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1778728698530
+      },
+      {
+        "type": "info",
+        "text": "                       \u001b[1m\u001b[32mjs/7.62b464a8.js.gz\u001b[39m\u001b[22m    30.5 KiB        \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1778728698530
+      },
+      {
+        "type": "info",
+        "text": "                          \u001b[1m\u001b",
+        "time": 1778728698530
+      },
+      {
+        "type": "info",
+        "text": "[32mjs/8.f78ce97f.js\u001b[39m\u001b[22m     166 KiB       \u001b[1m8\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1778728698530
+      },
+      {
+        "type": "info",
+        "text": "                       \u001b[1m\u001b[32mjs/8.f78ce97f.js.gz\u001b[39m\u001b[22m    43.1 KiB        \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1778728698530
+      },
+      {
+        "type": "info",
+        "text": "                          \u001b[1m\u001b[32mjs/9.2a3a4bf9.js\u001b[39m\u001b[22m    71.4 KiB       \u001b[1m9\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1778728698530
+      },
+      {
+        "type": "info",
+        "text": "              \u001b[1m\u001b[32mjs/9.2a3a4bf9.js.LICENSE.txt\u001b[39m\u001b[22m    85 bytes        \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1778728698530
+      },
+      {
+        "type": "info",
+        "text": "                       \u001b[1m\u001b[32mjs/9.2a3a4bf9.js.gz\u001b[39m\u001b[22m    20.3 KiB        \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1778728698530
+      },
+      {
+        "type": "info",
+        "text": "                     \u001b[1m\u001b[33mjs/common.2edfc496.js\u001b[39m\u001b[22m     \u001b[1m\u001b[33m296 KiB\u001b[39m\u001b[22m       \u001b[1m2\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m  \u001b[1m\u001b[33m[big]\u001b[39m\u001b[22m  common",
+        "time": 1778728698530
+      },
+      {
+        "type": "info",
+        "text": "                  \u001b[1m\u001b[32mjs/common.2edfc496.js.gz\u001b[39m\u001b[22m    76.4 KiB        \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1778728698530
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[33mjs/entry.515c7ca5.js\u001b[39m\u001b[22m    \u001b[1m\u001b[33m1.79 MiB\u001b[39m\u001b[22m       \u001b[1m5\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m  \u001b[1m\u001b[33m[big]\u001b[39m\u001b[22m  entry",
+        "time": 1778728698530
+      },
+      {
+        "type": "info",
+        "text": "          \u001b[1m\u001b[32mjs/entry.515c7ca5.js.LICENSE.txt\u001b[39m\u001b[22m    2.87 KiB        \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1778728698530
+      },
+      {
+        "type": "info",
+        "text": "                   \u001b[1m\u001b[33mjs/entry.515c7ca5.js.gz\u001b[39m\u001b[22m     \u001b[1m\u001b[33m588 KiB\u001b[39m\u001b[22m        \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m              \u001b[1m\u001b[33m[big]\u001b[39m\u001b[22m  ",
+        "time": 1778728698530
+      },
+      {
+        "type": "info",
+        "text": "                            \u001b[1m\u001b[32mjson.worker.js\u001b[39m\u001b[22m     229 KiB        \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1778728698530
+      },
+      {
+        "type": "info",
+        "text": "                \u001b[1m\u001b[32mjson.worker.js.LICENSE.txt\u001b[39m\u001b[22m    75 bytes        \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1778728698530
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjson.worker.js.gz\u001b[39m\u001b[22m    66.2 KiB        \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1778728698530
+      },
+      {
+        "type": "info",
+        "text": "                       \u001b[1m\u001b[32mruntime.7a538ae0.js\u001b[39m\u001b[22m    3.23 KiB       \u001b[1m6\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         runtime",
+        "time": 1778728698530
+      },
+      {
+        "type": "info",
+        "text": "                              \u001b[1m\u001b[33mts.worker.js\u001b[39m\u001b[22m    \u001b[1m\u001b[33m3.44 MiB\u001b[39m\u001b[22m        \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m              \u001b[1m\u001b[33m[big]\u001b[39m\u001b[22m  ",
+        "time": 1778728698530
+      },
+      {
+        "type": "info",
+        "text": "                  \u001b[1m\u001b[32mts.worker.js.LICENSE.txt\u001b[39m\u001b[22m   894 bytes        \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1778728698530
+      },
+      {
+        "type": "info",
+        "text": "                           \u001b[1m\u001b[33mts.worker.js.gz\u001b[39m\u001b[22m     \u001b[1m\u001b[33m790 KiB\u001b[39m\u001b[22m        \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m              \u001b[1m\u001b[33m[big]\u001b[39m\u001b[22m  ",
+        "time": 1778728698530
+      },
+      {
+        "type": "info",
+        "text": "Entrypoint \u001b[1mentry\u001b[39m\u001b[22m \u001b[1m\u001b[33m[big]\u001b[39m\u001b[22m = \u001b[1m\u001b[32mruntime.7a538ae0.js\u001b[39m\u001b[22m \u001b[1m\u001b[32mjs/common.2edfc496.js\u001b[39m\u001b[22m \u001b[1m\u001b[32mcss/5.css\u001b[39m\u001b[22m \u001b[1m\u001b[32mjs/entry.515c7ca5.js\u001b[39m\u001b[22m",
+        "time": 1778728698530
+      },
+      {
+        "type": "info",
+        "text": "\u001b[1m\u001b[33mWARNING in ./static/js/h265/index.js 1:292-296",
+        "time": 1778728698530
+      },
+      {
+        "type": "info",
+        "text": "Critical dependency: the request of a dependency is an expression",
+        "time": 1778728698530
+      },
+      {
+        "type": "info",
+        "text": " @ ./src/home/pages/dispatchingCommandCenter/components/video/video.vue?vue&type=script&lang=js (./node_modules/babel-loader/lib??ref--5!./node_modules/vue-loader/lib??vue-loader-options!./src/home/pages/dispatchingCommandCenter/components/video/video.vue?vue&type=script&lang=js)",
+        "time": 1778728698530
+      },
+      {
+        "type": "info",
+        "text": " @ ./src/home/pages/dispatchingCommandCenter/components/video/video.vue?vue&type=script&lang=js",
+        "time": 1778728698530
+      },
+      {
+        "type": "info",
+        "text": " @ ./src/home/pages/dispatchingCommandCenter/components/video/video.vue",
+        "time": 1778728698530
+      },
+      {
+        "type": "info",
+        "text": " @ ./node_modules/babel-loader/lib??ref--5!./node_modules/vue-loader/lib??vue-loader-options!./src/home/pages/dispatchingCommandCenter/regionalWarehouseVideoMonitoring.vue?vue&type=script&lang=js",
+        "time": 1778728698530
+      },
+      {
+        "type": "info",
+        "text": " @ ./src/home/pages/dispatchingCommandCenter/regionalWarehouseVideoMonitoring.vue?vue&type=script&lang=js",
+        "time": 1778728698530
+      },
+      {
+        "type": "info",
+        "text": " @ ./src/home/pages/dispatchingCommandCenter/regionalWarehouseVideoMonitoring.vue",
+        "time": 1778728698530
+      },
+      {
+        "type": "info",
+        "text": " @ ./src/home/router/index.js",
+        "time": 1778728698530
+      },
+      {
+        "type": "info",
+        "text": " @ ./src/home/main.js\u001b[39m\u001b[22m",
+        "time": 1778728698530
+      },
+      {
+        "type": "info",
+        "text": "\u001b[1m\u001b[33mWARNING in asset size limit: The following asset(s) exceed the recommended size limit (244 KiB).",
+        "time": 1778728698530
+      },
+      {
+        "type": "info",
+        "text": "This can impact web performance.",
+        "time": 1778728698530
+      },
+      {
+        "type": "info",
+        "text": "Assets: ",
+        "time": 1778728698530
+      },
+      {
+        "type": "info",
+        "text": "  css.worker.js (805 KiB)",
+        "time": 1778728698531
+      },
+      {
+        "type": "info",
+        "text": "  html.worker.js (528 KiB)",
+        "time": 1778728698531
+      },
+      {
+        "type": "info",
+        "text": "  ts.worker.js (3.44 MiB)",
+        "time": 1778728698531
+      },
+      {
+        "type": "info",
+        "text": "  35cc686057021ee808c5.worker.js (817 KiB)",
+        "time": 1778728698531
+      },
+      {
+        "type": "info",
+        "text": "  js/0.1eb1346f.js (1.03 MiB)",
+        "time": 1778728698531
+      },
+      {
+        "type": "info",
+        "text": "  js/common.2edfc496.js (296 KiB)",
+        "time": 1778728698531
+      },
+      {
+        "type": "info",
+        "text": "  js/3.8de6c1e4.js (1.45 MiB)",
+        "time": 1778728698531
+      },
+      {
+        "type": "info",
+        "text": "  js/4.0c679a46.js (880 KiB)",
+        "time": 1778728698531
+      },
+      {
+        "type": "info",
+        "text": "  js/entry.515c7ca5.js (1.79 MiB)",
+        "time": 1778728698531
+      },
+      {
+        "type": "info",
+        "text": "  js/0.1eb1346f.js.gz (334 KiB)",
+        "time": 1778728698531
+      },
+      {
+        "type": "info",
+        "text": "  js/3.8de6c1e4.js.gz (406 KiB)",
+        "time": 1778728698531
+      },
+      {
+        "type": "info",
+        "text": "  js/entry.515c7ca5.js.gz (588 KiB)",
+        "time": 1778728698531
+      },
+      {
+        "type": "info",
+        "text": "  ts.worker.js.gz (790 KiB)\u001b[39m\u001b[22m",
+        "time": 1778728698531
+      },
+      {
+        "type": "info",
+        "text": "\u001b[1m\u001b[33mWARNING in entrypoint size limit: The following entrypoint(s) combined asset size exceeds the recommended limit (244 KiB). This can impact web performance.",
+        "time": 1778728698531
+      },
+      {
+        "type": "info",
+        "text": "Entrypoints:",
+        "time": 1778728698531
+      },
+      {
+        "type": "info",
+        "text": "  entry (2.1 MiB)",
+        "time": 1778728698531
+      },
+      {
+        "type": "info",
+        "text": "      runtime.7a538ae0.js",
+        "time": 1778728698531
+      },
+      {
+        "type": "info",
+        "text": "      js/common.2edfc496.js",
+        "time": 1778728698531
+      },
+      {
+        "type": "info",
+        "text": "      css/5.css",
+        "time": 1778728698531
+      },
+      {
+        "type": "info",
+        "text": "      js/entry.515c7ca5.js",
+        "time": 1778728698531
+      },
+      {
+        "type": "info",
+        "text": "\u001b[39m\u001b[22m",
+        "time": 1778728698531
+      },
+      {
+        "type": "info",
+        "text": "  Build complete.",
+        "time": 1778728698531
+      },
+      {
+        "type": "info",
+        "text": "  Tip: built files are meant to be served over an HTTP server.",
+        "time": 1778728698531
+      },
+      {
+        "type": "info",
+        "text": "  Opening index.html over file:// won't work.",
+        "time": 1778728698531
+      },
+      {
+        "type": "success",
+        "text": "\n✓ 构建完成 (27s)",
+        "time": 1778728698680
+      }
+    ]
+  },
+  {
     "id": "deploy-1778659918767",
     "timestamp": "2026-05-13T08:13:05.051Z",
     "projectName": "tongrentang",

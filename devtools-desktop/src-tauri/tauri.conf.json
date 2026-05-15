@@ -10,14 +10,16 @@
     "windows": [
       {
         "title": "DevTools",
-        "width": 1200,
+        "width": 1280,
         "height": 800,
         "minWidth": 900,
         "minHeight": 600,
         "center": true,
         "resizable": true,
         "decorations": true,
-        "fullscreen": false
+        "fullscreen": false,
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true
       }
     ],
     "security": {
