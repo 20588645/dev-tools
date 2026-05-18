@@ -156,6 +156,8 @@ router.post('/:name/refresh', (req, res) => {
     refreshed.runCommand = old.runCommand || refreshed.runCommand || '';
     refreshed.runPort = old.runPort || '';
     refreshed.runHomeModule = old.runHomeModule || refreshed.runHomeModule || 'home';
+    refreshed.runIncludeHome = old.runIncludeHome !== undefined ? old.runIncludeHome : refreshed.runIncludeHome !== false;
+    refreshed.favoriteRunModules = Array.isArray(old.favoriteRunModules) ? old.favoriteRunModules : [];
 
     // 保留已有模块的 uploadStrategy
     refreshed.modules = refreshed.modules.map(sm => {
@@ -177,7 +179,7 @@ router.put('/:name', (req, res) => {
   const idx = projects.findIndex(p => p.name === req.params.name);
   if (idx === -1) return res.status(404).json({ error: '项目不存在' });
 
-  const { defaultServerId, defaultServerIds, remotePath, buildCommand, runCommand, runPort, runHomeModule, modules, nodeVersion, displayName } = req.body;
+  const { defaultServerId, defaultServerIds, remotePath, buildCommand, runCommand, runPort, runHomeModule, runIncludeHome, favoriteRunModules, modules, nodeVersion, displayName } = req.body;
   if (defaultServerId !== undefined) projects[idx].defaultServerId = defaultServerId;
   if (defaultServerIds !== undefined) projects[idx].defaultServerIds = defaultServerIds;
   if (remotePath !== undefined) projects[idx].remotePath = remotePath;
@@ -185,6 +187,8 @@ router.put('/:name', (req, res) => {
   if (runCommand !== undefined) projects[idx].runCommand = runCommand;
   if (runPort !== undefined) projects[idx].runPort = runPort;
   if (runHomeModule !== undefined) projects[idx].runHomeModule = runHomeModule || 'home';
+  if (runIncludeHome !== undefined) projects[idx].runIncludeHome = runIncludeHome !== false;
+  if (favoriteRunModules !== undefined) projects[idx].favoriteRunModules = Array.isArray(favoriteRunModules) ? favoriteRunModules : [];
   if (modules !== undefined) projects[idx].modules = modules;
   if (nodeVersion !== undefined) projects[idx].nodeVersion = nodeVersion;
   if (displayName !== undefined) projects[idx].displayName = displayName;
