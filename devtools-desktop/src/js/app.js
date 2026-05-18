@@ -11,33 +11,126 @@ let checkedAvailableProjects = new Set();
 let busyProjects = new Set();       // 防重复部署锁
 let lastDeployCache = {};            // 项目最近部署记录缓存
 
-// ========== 浏览器桌面通知 ==========
-function requestNotificationPermission() {
+// ========== 桌面通知 ==========
+const NOTIFICATION_ENABLED_KEY = 'devtools-notifications-enabled';
+const NOTIFICATION_ACTION_TTL = 2 * 60 * 1000;
+let pendingNotificationAction = null;
+
+function areNotificationsEnabled() {
+  return localStorage.getItem(NOTIFICATION_ENABLED_KEY) !== 'false';
+}
+
+function setNotificationsEnabled(enabled) {
+  localStorage.setItem(NOTIFICATION_ENABLED_KEY, enabled ? 'true' : 'false');
+}
+
+function getTauriNotificationAPI() {
+  return window.__TAURI__?.notification || null;
+}
+
+async function isNotificationPermissionGranted() {
+  const tauriNotification = getTauriNotificationAPI();
+  if (tauriNotification?.isPermissionGranted) {
+    try {
+      return await tauriNotification.isPermissionGranted();
+    } catch (e) {
+      console.warn('检查 Tauri 通知权限失败:', e);
+    }
+  }
+  return 'Notification' in window && Notification.permission === 'granted';
+}
+
+async function requestNotificationPermission(options = {}) {
+  const force = options.force === true;
+  if (!force && !areNotificationsEnabled()) return false;
+
+  const tauriNotification = getTauriNotificationAPI();
+  if (tauriNotification?.requestPermission) {
+    try {
+      const permission = await tauriNotification.requestPermission();
+      return permission === 'granted';
+    } catch (e) {
+      console.warn('请求 Tauri 通知权限失败:', e);
+    }
+  }
+
   if ('Notification' in window && Notification.permission === 'default') {
-    Notification.requestPermission();
+    const permission = await Notification.requestPermission();
+    return permission === 'granted';
+  }
+  return 'Notification' in window && Notification.permission === 'granted';
+}
+
+async function sendDesktopNotification(title, body, isSuccess, options = {}) {
+  if (!areNotificationsEnabled() && !options.force) return;
+  const granted = await requestNotificationPermission({ force: options.force });
+  if (!granted) return;
+
+  try {
+    rememberNotificationAction(options);
+    const tauriNotification = getTauriNotificationAPI();
+    const notificationOptions = {
+      title,
+      body,
+      group: 'devtools-tasks',
+      autoCancel: true,
+      extra: {
+        status: isSuccess ? 'success' : 'fail',
+        target: options.target || 'log',
+      },
+    };
+
+    if (tauriNotification?.sendNotification) {
+      tauriNotification.sendNotification(notificationOptions);
+      return;
+    }
+
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    const notification = new Notification(title, {
+      body,
+      tag: 'devtools-' + Date.now(),
+      requireInteraction: false,
+      silent: false,
+    });
+    notification.onclick = () => {
+      window.focus();
+      if (options.target === 'log') reopenLogModal();
+      notification.close?.();
+    };
+    setTimeout(() => notification.close?.(), 10000);
+  } catch (e) {
+    console.warn('桌面通知发送失败:', e);
   }
 }
 
-function sendDesktopNotification(title, body, isSuccess) {
-  // 无论页面是否可见都发送通知
-  if (!('Notification' in window) || Notification.permission !== 'granted') return;
-  try {
-    const notification = new Notification(title, {
-      body,
-      icon: '/favicon.svg',
-      tag: 'deploy-panel-' + Date.now(),
-      requireInteraction: true,  // 通知不会自动消失，需要用户手动关闭
-      silent: false,
-    });
-    // 点击通知时聚焦窗口
-    notification.onclick = () => {
-      window.focus();
-      notification.close();
-    };
-    // 10秒后自动关闭
-    setTimeout(() => notification.close(), 10000);
-  } catch (e) {
-    console.warn('桌面通知发送失败:', e);
+function rememberNotificationAction(options = {}) {
+  if (options.target !== 'log') return;
+  if (!document.hidden && document.hasFocus?.()) return;
+
+  pendingNotificationAction = {
+    target: options.target,
+    createdAt: Date.now(),
+  };
+}
+
+function setupNotificationActionHandlers() {
+  window.addEventListener('focus', handlePendingNotificationAction);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) handlePendingNotificationAction();
+  });
+}
+
+function handlePendingNotificationAction() {
+  if (!pendingNotificationAction) return;
+  if (Date.now() - pendingNotificationAction.createdAt > NOTIFICATION_ACTION_TTL) {
+    pendingNotificationAction = null;
+    return;
+  }
+
+  const action = pendingNotificationAction;
+  pendingNotificationAction = null;
+  if (action.target === 'log') {
+    setTimeout(() => reopenLogModal(), 80);
   }
 }
 let activeTask = null;               // 当前正在执行的任务 { id, projectName, isRunning }
@@ -107,6 +200,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupWSHandlers();
   setupNavigation();
   setupModalDismissal();
+  setupNotificationActionHandlers();
   requestNotificationPermission();
   await Promise.all([loadProjects(), loadServers(), loadNodeVersions()]);
   await loadHomeData();
@@ -158,6 +252,10 @@ function updateSidebarCollapseIcon(collapsed) {
   if (icon) icon.textContent = collapsed ? '›' : '‹';
   if (label) label.textContent = collapsed ? '展开' : '收起';
   btn.title = collapsed ? '展开侧栏' : '折叠侧栏';
+}
+
+function openProjectIntro() {
+  document.getElementById('projectIntroModal')?.classList.add('active');
 }
 
 function setupModalDismissal() {
@@ -266,17 +364,29 @@ function setupWSHandlers() {
       return;
     }
 
+    const stepCount = getProgressStepCount();
     if (data.phase === 'preflight') {
       setStepActive(0);
     } else if (data.phase === 'pulling') {
-      setStepDone(0);
-      setStepActive(1);
+      if (stepCount <= 2) {
+        setStepActive(0);
+      } else {
+        setStepDone(0);
+        setStepActive(1);
+      }
     } else if (data.phase === 'building') {
-      setStepDone(0); setStepDone(1);
-      setStepActive(2);
+      if (stepCount <= 2) {
+        setStepDone(0);
+        setStepActive(1);
+      } else {
+        setStepDone(0); setStepDone(1);
+        setStepActive(2);
+      }
     } else if (data.phase === 'uploading') {
-      setStepDone(0); setStepDone(1); setStepDone(2);
-      setStepActive(3);
+      if (stepCount > 3) {
+        setStepDone(0); setStepDone(1); setStepDone(2);
+        setStepActive(3);
+      }
     } else if (data.phase === 'done') {
       document.querySelectorAll('.step').forEach(s => { s.classList.remove('active'); s.classList.add('done'); });
       document.getElementById('progressBar').style.width = '100%';
@@ -310,7 +420,7 @@ function setupWSHandlers() {
       const notifyBody = data.status === 'success'
         ? `${data.projectName} ${typeText}完成，耗时 ${data.duration}`
         : `${data.projectName} ${typeText}失败`;
-      sendDesktopNotification(`${typeText}${statusText}`, notifyBody, data.status === 'success');
+      sendDesktopNotification(`${typeText}${statusText}`, notifyBody, data.status === 'success', { target: 'log' });
       loadProjects();
     }
   });
@@ -1750,6 +1860,10 @@ function setStepDone(idx) {
   if (step) { step.classList.remove('active'); step.classList.add('done'); }
 }
 
+function getProgressStepCount() {
+  return document.querySelectorAll('#progressSteps .step').length;
+}
+
 // ========== 刷新后活跃任务恢复 ==========
 let _checkActiveJobRunning = false;
 async function checkActiveJob() {
@@ -1785,7 +1899,9 @@ async function checkActiveJob() {
     ).join('');
 
     // 恢复阶段指示器状态
-    const phaseMap = { preflight: 0, pulling: 1, building: 2, uploading: 3 };
+    const phaseMap = job.type === 'build-only'
+      ? { pulling: 0, building: 1 }
+      : { preflight: 0, pulling: 1, building: 2, uploading: 3 };
     const activeIdx = phaseMap[job.phase] ?? 0;
     for (let i = 0; i < activeIdx; i++) setStepDone(i);
     setStepActive(activeIdx);
@@ -2837,6 +2953,7 @@ async function loadSettings() {
 
   // 扫描目录
   document.getElementById('settingScanDir').textContent = '/Users/ldy/project/';
+  await updateNotificationSettingsUI();
 
   // GitLab 配置
   try {
@@ -2845,6 +2962,48 @@ async function loadSettings() {
     document.getElementById('settingAuthor').value = cfg.author || '';
     renderSettingRepos(cfg.repos || []);
   } catch (e) {}
+}
+
+async function updateNotificationSettingsUI() {
+  const toggle = document.getElementById('settingNotificationEnabled');
+  const status = document.getElementById('settingNotificationStatus');
+  if (!toggle || !status) return;
+
+  const enabled = areNotificationsEnabled();
+  toggle.checked = enabled;
+
+  if (!enabled) {
+    status.textContent = '已关闭';
+    status.className = 'setting-badge offline';
+    return;
+  }
+
+  const granted = await isNotificationPermissionGranted();
+  status.textContent = granted ? '已允许' : '未授权';
+  status.className = granted ? 'setting-badge online' : 'setting-badge offline';
+}
+
+async function toggleNotificationEnabled(enabled) {
+  setNotificationsEnabled(enabled);
+  if (enabled) {
+    const granted = await requestNotificationPermission({ force: true });
+    if (!granted) {
+      showToast('通知未授权', '请在系统设置中允许 DevTools 发送通知');
+    }
+  }
+  await updateNotificationSettingsUI();
+}
+
+async function testDesktopNotification() {
+  setNotificationsEnabled(true);
+  const granted = await requestNotificationPermission({ force: true });
+  await updateNotificationSettingsUI();
+  if (!granted) {
+    await showAlert('系统通知未授权，请在 macOS 系统设置中允许 DevTools 发送通知。', { icon: '🔔' });
+    return;
+  }
+  await sendDesktopNotification('DevTools 通知已开启', '构建、部署任务完成后会通过系统通知提醒你。', true, { force: true });
+  showToast('🔔 测试通知已发送');
 }
 
 function renderSettingRepos(repos) {

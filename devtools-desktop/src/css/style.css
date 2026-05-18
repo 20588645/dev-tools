@@ -4480,6 +4480,443 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
   padding: 0 !important;
 }
 
+/* ========== Final Log Modal Polish ========== */
+#logModal .modal {
+  width: min(980px, 90vw) !important;
+  max-width: min(980px, 90vw) !important;
+  height: min(680px, 82vh) !important;
+  max-height: min(680px, 82vh) !important;
+  background: var(--bg-elevated) !important;
+}
+
+#logModal .modal-header {
+  flex: 0 0 auto;
+  min-height: 58px !important;
+  padding: 14px 18px 12px !important;
+  background: color-mix(in srgb, var(--bg-elevated) 90%, var(--bg-input)) !important;
+}
+
+#logModal .modal-header h2 {
+  font-size: 15px !important;
+  line-height: 1.3 !important;
+}
+
+#logModal .modal-subtitle {
+  margin-top: 4px;
+  font-size: 12px !important;
+}
+
+#logModal .modal-body {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden !important;
+  padding: 0 !important;
+  background: var(--bg-elevated);
+}
+
+#logModal .deploy-progress {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px 12px;
+  align-items: center;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg-input) 48%, var(--bg-elevated));
+}
+
+#logModal .progress-steps {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  overflow-x: auto;
+  padding-bottom: 1px;
+}
+
+#logModal .step {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+  padding: 4px 9px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg-elevated) 84%, transparent);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+#logModal .step-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--border-strong);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.34);
+}
+
+#logModal .step.active {
+  color: var(--primary);
+  border-color: color-mix(in srgb, var(--primary) 42%, transparent);
+  background: var(--primary-light);
+}
+
+#logModal .step.active .step-dot {
+  background: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 16%, transparent);
+}
+
+#logModal .step.done {
+  color: var(--success);
+  border-color: color-mix(in srgb, var(--success) 34%, transparent);
+  background: var(--success-subtle);
+}
+
+#logModal .step.done .step-dot {
+  background: var(--success);
+}
+
+#logModal .progress-bar-container {
+  height: 6px;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--border) 62%, transparent);
+}
+
+#logModal .progress-bar {
+  height: 100%;
+  width: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  transition: width 0.22s ease;
+}
+
+#logModal .progress-text {
+  min-width: 42px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 720;
+  text-align: right;
+}
+
+#logModal .log-search-bar {
+  flex: 0 0 auto;
+  display: none;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg-input) 38%, var(--bg-elevated));
+}
+
+#logModal .log-search-bar.active {
+  display: flex;
+}
+
+#logModal #logSearchInput {
+  width: min(260px, 34vw);
+  height: 30px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 12px;
+}
+
+#logModal .log-search-info {
+  min-width: 46px;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+#logModal .log-search-btn {
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+#logModal .log-search-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+  background: var(--bg-hover);
+}
+
+#logModal .log-terminal {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  margin: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #253047;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.56;
+  white-space: pre-wrap;
+  word-break: break-word;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+#logModal .log-line {
+  min-height: 18px;
+}
+
+#logModal .log-cmd { color: #1d4ed8; }
+#logModal .log-info { color: #253047; }
+#logModal .log-success { color: #15803d; }
+#logModal .log-warn { color: #b45309; }
+#logModal .log-error { color: #dc2626; }
+#logModal .log-highlight { background: rgba(250, 204, 21, 0.22); border-radius: 3px; }
+#logModal .log-highlight-active { background: rgba(37, 99, 235, 0.2); }
+
+#logModal .modal-footer {
+  flex: 0 0 auto;
+  min-height: 54px !important;
+  padding: 10px 14px !important;
+  background: color-mix(in srgb, var(--bg-elevated) 82%, var(--bg-input)) !important;
+}
+
+#logModal .deploy-result {
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+body[data-theme="light"] #logModal .modal {
+  background: rgba(255, 255, 255, 0.96) !important;
+  box-shadow: 0 18px 52px rgba(16, 24, 40, 0.16), 0 1px 2px rgba(16, 24, 40, 0.06) !important;
+}
+
+body[data-theme="light"] #logModal .modal-header,
+body[data-theme="light"] #logModal .modal-footer {
+  background: rgba(255, 255, 255, 0.9) !important;
+}
+
+body[data-theme="light"] #logModal .deploy-progress,
+body[data-theme="light"] #logModal .log-search-bar {
+  background: rgba(248, 250, 252, 0.88) !important;
+}
+
+body[data-theme="dark"] #logModal .modal {
+  background: rgba(18, 31, 44, 0.98) !important;
+}
+
+body[data-theme="dark"] #logModal .modal-header,
+body[data-theme="dark"] #logModal .modal-footer {
+  background: rgba(18, 31, 44, 0.94) !important;
+}
+
+body[data-theme="dark"] #logModal .deploy-progress,
+body[data-theme="dark"] #logModal .log-search-bar {
+  background: rgba(15, 28, 41, 0.94) !important;
+}
+
+body[data-theme="dark"] #logModal .log-terminal {
+  border-color: rgba(174, 190, 211, 0.14);
+  background: #0d1b28;
+  color: #d7e0ec;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+body[data-theme="dark"] #logModal .log-cmd { color: #8fa7ff; }
+body[data-theme="dark"] #logModal .log-info { color: #d7e0ec; }
+body[data-theme="dark"] #logModal .log-success { color: #5be58e; }
+body[data-theme="dark"] #logModal .log-warn { color: #f7c56d; }
+body[data-theme="dark"] #logModal .log-error { color: #ff7a86; }
+
+@media (max-width: 720px) {
+  #logModal .modal {
+    width: 94vw !important;
+    height: 84vh !important;
+  }
+
+  #logModal .deploy-progress {
+    padding: 10px 12px;
+  }
+
+  #logModal .log-terminal {
+    margin: 10px;
+    padding: 12px;
+    font-size: 11px;
+  }
+}
+
+/* ========== Notification Settings ========== */
+.setting-switch {
+  position: relative;
+  width: 38px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.setting-switch input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.setting-switch-track {
+  width: 38px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--border-strong);
+  border: 1px solid var(--border);
+  transition: background 0.16s ease, border-color 0.16s ease;
+}
+
+.setting-switch-track::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--bg-elevated);
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.22);
+  transition: transform 0.16s ease;
+}
+
+.setting-switch input:checked + .setting-switch-track {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.setting-switch input:checked + .setting-switch-track::after {
+  transform: translateX(16px);
+}
+
+/* ========== Project Intro Modal ========== */
+.modal-intro {
+  max-width: 540px !important;
+}
+
+.intro-hero {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--bg-input) 72%, transparent);
+}
+
+.intro-mark {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  background: var(--primary-light);
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.intro-title {
+  font-size: 13px;
+  font-weight: 720;
+  color: var(--text-primary);
+  margin-bottom: 5px;
+}
+
+.intro-desc {
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.intro-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.intro-item {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 10px;
+  min-height: 78px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-elevated);
+}
+
+.intro-item-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  background: var(--primary-light);
+  font-size: 15px;
+  line-height: 1;
+}
+
+.intro-item strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 12px;
+  color: var(--text-primary);
+}
+
+.intro-item span {
+  display: block;
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.intro-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 12px;
+}
+
+.intro-meta span {
+  padding: 5px 9px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: 650;
+}
+
+@media (max-width: 640px) {
+  .intro-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ========== Final Sidebar Footer Width Fix ========== */
 .app-sidebar .sidebar-footer {
   box-sizing: border-box !important;
