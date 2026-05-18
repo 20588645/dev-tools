@@ -78,6 +78,7 @@ function stripTerminalControl(text) {
     .replace(/\x9B[0-?]*[ -/]*[@-~]/g, '')
     .replace(/\x1B[@-_]/g, '')
     .replace(/\[[\d;]*m/g, '')
+    .replace(/(^|\n)\s*(?:\d{1,2};)*\d{1,2}m/g, '$1')
     .replace(/\r\n/g, '\n')
     .replace(/\r/g, '\n')
     .replace(/[^\S\n]+$/gm, '');
@@ -141,11 +142,13 @@ function inferProjectPort(project, command) {
 }
 
 function inferUrl(text, fallbackPort) {
-  const urlMatch = String(text).match(/https?:\/\/(?:localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])(?::\d+)?[^\s)'"<]*/i);
+  const value = String(text || '');
+  if (/\[HPM\]|Proxy created|Proxy rewrite/i.test(value)) return '';
+  const urlMatch = value.match(/https?:\/\/(?:localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])(?::\d+)?[^\s)'"<]*/i);
   if (urlMatch) return urlMatch[0].replace('0.0.0.0', 'localhost');
-  const portMatch = String(text).match(/(?:localhost|127\.0\.0\.1|0\.0\.0\.0):(\d{2,5})/i);
+  const portMatch = value.match(/(?:localhost|127\.0\.0\.1|0\.0\.0\.0):(\d{2,5})/i);
   if (portMatch) return `http://localhost:${portMatch[1]}`;
-  return fallbackPort ? `http://localhost:${fallbackPort}` : '';
+  return '';
 }
 
 function detectAddressInUsePort(text) {
@@ -202,6 +205,17 @@ function markJobRunning(app, job, url = '') {
   broadcastStatus(app, job);
 }
 
+function isRunReadyLine(text) {
+  return /(?:compiled (?:successfully|with (?:\d+\s+)?warnings?)|compiled successfully|compiled with (?:\d+\s+)?warnings?|listening at|local:)/i.test(String(text || ''));
+}
+
+function addPendingReadyLine(job, line) {
+  const clean = stripTerminalControl(line).trim();
+  if (!clean) return;
+  if (!job.pendingReadyLines) job.pendingReadyLines = [];
+  if (!job.pendingReadyLines.includes(clean)) job.pendingReadyLines.push(clean);
+}
+
 function terminateJob(job, signal = 'SIGTERM') {
   if (!job || !job.pid) return;
   try {
@@ -225,9 +239,6 @@ function markRunningFromOutput(app, job, text) {
 
   const url = inferUrl(text, job.port);
   if (url) job.url = url;
-  if (job.status === 'starting' && (url || /compiled (successfully|with warnings)|compiled successfully|compiled with warnings|listening at|local:/i.test(text))) {
-    markJobRunning(app, job, url);
-  }
 }
 
 function getPidsOnPort(port) {
@@ -302,11 +313,7 @@ function handleRunOutput(app, job, text, fallbackType = 'info') {
   job.outputBuffer = `${job.outputBuffer || ''}${stripTerminalControl(text)}`;
   const lines = job.outputBuffer.split('\n');
   job.outputBuffer = lines.pop() || '';
-  lines.filter(line => line.trim()).forEach(line => {
-    const type = /(?:\bwarn(?:ing)?\b|deprecated|deprecation)/i.test(line) ? 'warn' : fallbackType;
-    pushLog(app, job, type, line);
-    markRunningFromOutput(app, job, line);
-  });
+  lines.filter(line => line.trim()).forEach(line => processRunOutputLine(app, job, line, fallbackType));
   scheduleRunOutputFlush(app, job);
 }
 
@@ -318,11 +325,7 @@ function flushRunOutput(app, job) {
   const text = (job.outputBuffer || '').trimEnd();
   job.outputBuffer = '';
   if (!text.trim()) return;
-  text.split('\n').filter(line => line.trim()).forEach(line => {
-    const type = /(?:\bwarn(?:ing)?\b|deprecated|deprecation)/i.test(line) ? 'warn' : 'info';
-    pushLog(app, job, type, line);
-    markRunningFromOutput(app, job, line);
-  });
+  text.split('\n').filter(line => line.trim()).forEach(line => processRunOutputLine(app, job, line, 'info'));
 }
 
 function scheduleRunOutputFlush(app, job) {
@@ -331,6 +334,61 @@ function scheduleRunOutputFlush(app, job) {
   job.outputFlushTimer = setTimeout(() => {
     flushRunOutput(app, job);
   }, 350);
+}
+
+function processRunOutputLine(app, job, line, fallbackType = 'info') {
+  const clean = stripTerminalControl(line).trimEnd();
+  if (!clean.trim()) return;
+
+  const readyMatch = clean.match(/(?:[iℹ⚠]\s*)?｢wdm｣:\s*Compiled with (?:\d+\s+)?warnings?\.?|(?:[iℹ]\s*)?｢wdm｣:\s*Compiled successfully\.?|Compiled with (?:\d+\s+)?warnings?\.?|Compiled successfully\.?|>\s*Listening at\s+https?:\/\/[^\s]+|Listening at\s+https?:\/\/[^\s]+/i);
+  if (readyMatch) {
+    const before = clean.slice(0, readyMatch.index).trimEnd();
+    if (before && !/^(?:warning|warn|success|info)$/i.test(before.trim())) processPlainRunOutputLine(app, job, before, fallbackType);
+    addPendingReadyLine(job, readyMatch[0]);
+    markRunningFromOutput(app, job, readyMatch[0]);
+    scheduleRunReadyFlush(app, job);
+    return;
+  }
+
+  processPlainRunOutputLine(app, job, clean, fallbackType);
+}
+
+function processPlainRunOutputLine(app, job, line, fallbackType = 'info') {
+  markRunningFromOutput(app, job, line);
+  if (isRunReadyLine(line)) {
+    addPendingReadyLine(job, line);
+    scheduleRunReadyFlush(app, job);
+    return;
+  }
+
+  const type = /(?:\bwarn(?:ing)?\b|deprecated|deprecation)/i.test(line) ? 'warn' : fallbackType;
+  pushLog(app, job, type, line);
+}
+
+function scheduleRunReadyFlush(app, job) {
+  if (job.readyFlushTimer) clearTimeout(job.readyFlushTimer);
+  job.readyFlushTimer = setTimeout(() => flushRunReady(app, job), 1200);
+}
+
+function flushRunReady(app, job) {
+  if (job.readyFlushTimer) {
+    clearTimeout(job.readyFlushTimer);
+    job.readyFlushTimer = null;
+  }
+  flushRunOutput(app, job);
+  if (job.readyFlushTimer) {
+    clearTimeout(job.readyFlushTimer);
+    job.readyFlushTimer = null;
+  }
+  const readyLines = job.pendingReadyLines || [];
+  job.pendingReadyLines = [];
+  readyLines.forEach(line => {
+    const type = /warning/i.test(line) ? 'warn' : 'success';
+    pushLog(app, job, type, line);
+  });
+  if (job.status === 'starting' && readyLines.length) {
+    markJobRunning(app, job, job.url || (job.port ? `http://localhost:${job.port}` : ''));
+  }
 }
 
 function spawnRunProcess(app, job, project, launchCommand, env, moduleArgs) {
@@ -372,6 +430,7 @@ function spawnRunProcess(app, job, project, launchCommand, env, moduleArgs) {
   child.on('close', async (code, signal) => {
     if (attempt !== job.attempt) return;
     flushRunOutput(app, job);
+    flushRunReady(app, job);
     job.exitCode = code;
     job.stoppedAt = Date.now();
 
