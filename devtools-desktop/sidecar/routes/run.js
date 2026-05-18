@@ -43,7 +43,14 @@ function normalizeModuleNames(moduleNames, moduleName, includeHome, homeModuleNa
 }
 
 function buildRunEnv(nodeVersion, port) {
-  const env = { ...process.env, FORCE_COLOR: '0' };
+  const env = {
+    ...process.env,
+    FORCE_COLOR: '0',
+    NO_COLOR: '1',
+    TERM: 'dumb',
+    COLUMNS: process.env.COLUMNS || '160',
+    LINES: process.env.LINES || '40',
+  };
   if (port) {
     env.PORT = String(port);
     env.npm_config_port = String(port);
@@ -56,6 +63,18 @@ function buildRunEnv(nodeVersion, port) {
     }
   }
   return env;
+}
+
+function stripTerminalControl(text) {
+  return String(text || '')
+    .replace(/\x1B\][^\x07]*(?:\x07|\x1B\\)/g, '')
+    .replace(/\x1B\[[0-?]*[ -/]*[@-~]/g, '')
+    .replace(/\x9B[0-?]*[ -/]*[@-~]/g, '')
+    .replace(/\x1B[@-_]/g, '')
+    .replace(/\[[\d;]*m/g, '')
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
+    .replace(/[^\S\n]+$/gm, '');
 }
 
 function firstPortMatch(text, patterns) {
@@ -151,10 +170,12 @@ function publicJob(job) {
 }
 
 function pushLog(app, job, type, text) {
-  const line = { type, text, time: Date.now() };
+  const cleanText = stripTerminalControl(text);
+  if (!cleanText.trim()) return;
+  const line = { type, text: cleanText, time: Date.now() };
   job.logs.push(line);
   if (job.logs.length > 5000) job.logs.splice(0, job.logs.length - 4000);
-  app.get('broadcast')('run-log', { id: job.id, projectName: job.projectName, type, text });
+  app.get('broadcast')('run-log', { id: job.id, projectName: job.projectName, type, text: cleanText });
 }
 
 function broadcastStatus(app, job) {
@@ -258,6 +279,28 @@ function logRunStart(app, job, project, launchCommand, moduleArgs) {
   pushLog(app, job, 'info', '');
 }
 
+function handleRunOutput(app, job, text, fallbackType = 'info') {
+  job.outputBuffer = `${job.outputBuffer || ''}${stripTerminalControl(text)}`;
+  const lines = job.outputBuffer.split('\n');
+  job.outputBuffer = lines.pop() || '';
+  lines.filter(line => line.trim()).forEach(line => {
+    const type = /(?:\bwarn(?:ing)?\b|deprecated|deprecation)/i.test(line) ? 'warn' : fallbackType;
+    pushLog(app, job, type, line);
+    markRunningFromOutput(app, job, line);
+  });
+}
+
+function flushRunOutput(app, job) {
+  const text = (job.outputBuffer || '').trimEnd();
+  job.outputBuffer = '';
+  if (!text.trim()) return;
+  text.split('\n').filter(line => line.trim()).forEach(line => {
+    const type = /(?:\bwarn(?:ing)?\b|deprecated|deprecation)/i.test(line) ? 'warn' : 'info';
+    pushLog(app, job, type, line);
+    markRunningFromOutput(app, job, line);
+  });
+}
+
 function spawnRunProcess(app, job, project, launchCommand, env, moduleArgs) {
   job.status = 'starting';
   job.error = '';
@@ -267,9 +310,9 @@ function spawnRunProcess(app, job, project, launchCommand, env, moduleArgs) {
   job.attempt = (job.attempt || 0) + 1;
   const attempt = job.attempt;
 
-  const child = spawn(launchCommand, {
+  const mergedCommand = `exec 2>&1\n${launchCommand}`;
+  const child = spawn('/bin/bash', ['-lc', mergedCommand], {
     cwd: project.path,
-    shell: true,
     env,
     detached: true,
   });
@@ -279,20 +322,8 @@ function spawnRunProcess(app, job, project, launchCommand, env, moduleArgs) {
 
   logRunStart(app, job, project, launchCommand, moduleArgs);
 
-  child.stdout.on('data', (data) => {
-    data.toString().split('\n').filter(line => line.trim()).forEach(line => {
-      pushLog(app, job, 'info', line);
-      markRunningFromOutput(app, job, line);
-    });
-  });
-
-  child.stderr.on('data', (data) => {
-    data.toString().split('\n').filter(line => line.trim()).forEach(line => {
-      const type = /warn/i.test(line) ? 'warn' : 'error';
-      pushLog(app, job, type, line);
-      markRunningFromOutput(app, job, line);
-    });
-  });
+  child.stdout.on('data', (data) => handleRunOutput(app, job, data.toString(), 'info'));
+  child.stderr.on('data', (data) => handleRunOutput(app, job, data.toString(), 'error'));
 
   child.on('error', (err) => {
     job.status = 'error';
@@ -304,6 +335,7 @@ function spawnRunProcess(app, job, project, launchCommand, env, moduleArgs) {
 
   child.on('close', async (code, signal) => {
     if (attempt !== job.attempt) return;
+    flushRunOutput(app, job);
     job.exitCode = code;
     job.stoppedAt = Date.now();
 
