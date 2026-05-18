@@ -5,6 +5,7 @@ let nodeVersions = [];
 let currentNodeVersion = '';
 let currentProject = null;
 let currentFilter = 'all';
+let currentRunFilter = 'all';
 let currentDeployId = null;
 let availableProjects = [];
 let checkedAvailableProjects = new Set();
@@ -440,6 +441,7 @@ function setupWSHandlers() {
 
     if (data.id === currentRunId) updateRunLogStatus(data);
     renderProjects();
+    renderRunPage();
   });
 }
 
@@ -466,6 +468,16 @@ function setupNavigation() {
   });
 
   document.getElementById('searchInput').addEventListener('input', () => renderProjects());
+  const runSearchInput = document.getElementById('runSearchInput');
+  if (runSearchInput) runSearchInput.addEventListener('input', () => renderRunPage());
+  document.querySelectorAll('#page-run .chip[data-run-filter]').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('#page-run .chip[data-run-filter]').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      currentRunFilter = chip.dataset.runFilter;
+      renderRunPage();
+    });
+  });
 
   // 首页初始化
   initHomePage();
@@ -488,6 +500,10 @@ function switchPage(page, el) {
   if (page === 'deploy') {
     const activeSub = document.querySelector('.sub-tab.active');
     if (activeSub) switchSubTab(activeSub.dataset.sub, activeSub);
+  }
+  // 切换到本地运行时刷新运行状态
+  if (page === 'run') {
+    loadRunStatuses().then(() => renderRunPage());
   }
   // 切换到周报时初始化
   if (page === 'report') initReport();
@@ -641,7 +657,7 @@ async function loadHomeData() {
         <div class="qa-icon purple">◇</div>
         <div class="qa-info"><div class="qa-title">构建项目</div></div>
       </div>
-      <div class="quick-action-card" onclick="switchPage('deploy', document.querySelector('.sidebar-item[data-page=deploy]'))">
+      <div class="quick-action-card" onclick="switchPage('run', document.querySelector('.sidebar-item[data-page=run]'))">
         <div class="qa-icon green">▶</div>
         <div class="qa-info"><div class="qa-title">本地运行</div></div>
       </div>
@@ -680,6 +696,7 @@ async function loadProjects() {
     projects = await API.get('/api/projects');
     await loadRunStatuses();
     renderProjects();
+    renderRunPage();
   } catch (e) {
     console.error('加载项目失败:', e);
   }
@@ -720,7 +737,6 @@ function renderProjects() {
     const nodeLabel = p.nodeVersion ? `<span class="badge-tool">${p.nodeVersion}</span>` : '';
     const isBusy = busyProjects.has(p.name);
     const disabledAttr = isBusy ? 'disabled' : '';
-    const running = runningProjects[p.name];
     const last = lastDeployCache[p.name];
     let lastDeployHtml = '<div class="card-last-deploy">○ 暂无构建/部署记录</div>';
     if (last) {
@@ -740,13 +756,11 @@ function renderProjects() {
       <div class="card-meta">
         <span><span class="badge-tool">${p.tool}</span> ${nodeLabel} ${isMulti ? moduleCount + ' 个模块' : ''}</span>
         <span>构建: ${p.buildCommand || 'npm run build'}</span>
-        <span>运行: ${p.runCommand || inferRunCommand(p)}</span>
       </div>
       ${isMulti ? `<div class="card-modules">${(p.modules || []).slice(0, 5).map(m => `<span class="module-tag">${m.name}</span>`).join('')}${moduleCount > 5 ? `<span class="module-more">+${moduleCount - 5}</span>` : ''}</div>` : ''}
       <div class="card-status ${getProjectDefaultServerIds(p).length > 0 ? 'status-configured' : 'status-unconfigured'}">
         ${getProjectDefaultServerIds(p).length > 0 ? `● 已配置 ${getProjectDefaultServerIds(p).length} 台服务器` : '○ 未配置服务器'}
       </div>
-      ${renderRunStatus(running)}
       ${lastDeployHtml}
       <div class="card-actions">
         ${isBusy ? `
@@ -754,12 +768,7 @@ function renderProjects() {
         ` : `
         <button class="btn-deploy-card btn-build-card" onclick="event.stopPropagation();openBuildModal('${p.name}')" ${disabledAttr}>🔨 构建</button>
         <button class="btn-deploy-card" onclick="event.stopPropagation();openDeployModal('${p.name}')" ${disabledAttr}>🚀 部署</button>
-        ${running
-          ? `<button class="btn-deploy-card btn-run-card running" onclick="event.stopPropagation();stopLocalRun('${p.name}')">■ 停止</button>`
-          : `<button class="btn-deploy-card btn-run-card" onclick="event.stopPropagation();openRunModal('${p.name}')" ${disabledAttr}>▶ 运行</button>`}
         <button class="btn-deploy-card btn-quick" onclick="event.stopPropagation();quickRepeat('${p.name}')" ${disabledAttr || !last ? 'disabled' : ''} title="快速复用上次操作">⚡</button>
-        ${running ? `<button class="btn-icon" onclick="event.stopPropagation();openRunUrl('${p.name}')" title="打开本地地址">↗</button>
-        <button class="btn-icon" onclick="event.stopPropagation();openRunLog('${p.name}')" title="查看运行日志">⌗</button>` : ''}
         <button class="btn-icon" onclick="event.stopPropagation();openProjectConfig('${p.name}')" title="默认配置">⚙</button>
         <button class="btn-icon danger" onclick="event.stopPropagation();removeProject('${p.name}')" title="移除项目">🗑</button>
         `}
@@ -777,16 +786,73 @@ function inferRunCommand(project) {
   return 'npm run dev';
 }
 
-function renderRunStatus(job) {
-  if (!job) return '';
-  const label = job.status === 'starting' ? '启动中' : '运行中';
-  const url = job.url || (job.port ? `http://localhost:${job.port}` : '等待地址');
-  const uptime = formatRunUptime(job.startedAt);
-  return `
-    <div class="card-run-status">
-      <div><span class="run-dot"></span>${label} · ${url}</div>
-      <span>PID ${job.pid || '—'} · ${uptime}</span>
-    </div>`;
+function renderRunPage() {
+  const grid = document.getElementById('runProjectGrid');
+  const overview = document.getElementById('runOverview');
+  if (!grid || !overview) return;
+
+  const search = (document.getElementById('runSearchInput')?.value || '').toLowerCase();
+  let list = projects.filter(p => !search
+    || p.name.toLowerCase().includes(search)
+    || (p.displayName && p.displayName.toLowerCase().includes(search))
+    || (p.path && p.path.toLowerCase().includes(search)));
+
+  if (currentRunFilter === 'running') list = list.filter(p => runningProjects[p.name]);
+  else if (currentRunFilter === 'multi') list = list.filter(p => p.type === 'multi-module');
+  else if (currentRunFilter === 'single') list = list.filter(p => p.type === 'single');
+
+  const runningCount = Object.values(runningProjects).filter(job => ['starting', 'running'].includes(job.status)).length;
+  const configuredRunCount = projects.filter(p => p.runCommand).length;
+  overview.innerHTML = `
+    <div class="run-stat-card"><span>可运行项目</span><strong>${projects.length}</strong></div>
+    <div class="run-stat-card"><span>运行中</span><strong>${runningCount}</strong></div>
+    <div class="run-stat-card"><span>已保存命令</span><strong>${configuredRunCount}</strong></div>
+  `;
+
+  if (list.length === 0) {
+    grid.innerHTML = '<div class="run-empty">没有匹配的项目</div>';
+    return;
+  }
+
+  grid.innerHTML = list.map(p => {
+    const isMulti = p.type === 'multi-module';
+    const moduleCount = (p.modules || []).length;
+    const job = runningProjects[p.name];
+    const command = p.runCommand || inferRunCommand(p);
+    const nodeLabel = p.nodeVersion || '系统默认';
+    const url = job ? (job.url || (job.port ? `http://localhost:${job.port}` : '等待地址')) : '未启动';
+    return `
+      <div class="run-project-card" data-project="${p.name}">
+        <div class="run-card-top">
+          <div class="run-card-title">${isMulti ? '📦' : '📄'} ${p.displayName || p.name}</div>
+          <span class="card-badge ${isMulti ? 'badge-multi' : 'badge-single'}">${isMulti ? '多模块' : '单体'}</span>
+        </div>
+        <div class="run-card-path">${p.path || ''}</div>
+        <div class="run-card-meta">
+          <span>${p.tool}</span>
+          <span>${nodeLabel}</span>
+          ${isMulti ? `<span>${moduleCount} 个模块</span>` : ''}
+        </div>
+        <div class="run-card-command">
+          <span>启动命令</span>
+          <code>${command}</code>
+        </div>
+        <div class="run-card-state ${job ? 'active' : ''}">
+          ${job ? `<div><span class="run-dot"></span>${job.status === 'starting' ? '启动中' : '运行中'} · ${url}</div>
+          <span>PID ${job.pid || '—'} · ${formatRunUptime(job.startedAt)}</span>` : '<div>○ 尚未运行</div><span>点击启动可配置命令、模块和端口</span>'}
+        </div>
+        <div class="run-card-actions">
+          ${job ? `
+            <button class="btn-danger" onclick="stopLocalRun('${p.name}')">■ 停止</button>
+            <button class="btn-secondary" onclick="openRunLog('${p.name}')">查看日志</button>
+            <button class="btn-primary" onclick="openRunUrl('${p.name}')">打开地址</button>
+          ` : `
+            <button class="btn-primary" onclick="openRunModal('${p.name}')">▶ 启动运行</button>
+            <button class="btn-secondary" onclick="openRunModal('${p.name}')">配置</button>
+          `}
+        </div>
+      </div>`;
+  }).join('');
 }
 
 function formatRunUptime(startedAt) {
