@@ -66,6 +66,13 @@ function inferUrl(text, fallbackPort) {
   return fallbackPort ? `http://localhost:${fallbackPort}` : '';
 }
 
+function detectAddressInUsePort(text) {
+  const value = String(text || '');
+  if (!/EADDRINUSE|address already in use/i.test(value)) return '';
+  const match = value.match(/(?::|port:\s*)(\d{2,5})\b/i);
+  return match ? match[1] : '';
+}
+
 function publicJob(job) {
   return {
     id: job.id,
@@ -115,12 +122,165 @@ function cleanupRunJobs() {
 }
 
 function markRunningFromOutput(app, job, text) {
+  const busyPort = detectAddressInUsePort(text);
+  if (busyPort) job.addressInUsePort = busyPort;
+
   const url = inferUrl(text, job.port);
   if (url && !job.url) job.url = url;
   if (job.status === 'starting' && (url || /compiled|ready|started|listening|running|local:/i.test(text))) {
     job.status = 'running';
     broadcastStatus(app, job);
   }
+}
+
+function getPidsOnPort(port) {
+  return new Promise((resolve) => {
+    execFile('lsof', ['-ti', `tcp:${port}`], (err, stdout) => {
+      if (err && !stdout) return resolve([]);
+      const pids = String(stdout || '')
+        .split(/\s+/)
+        .map(pid => Number(pid))
+        .filter(Boolean);
+      resolve([...new Set(pids)]);
+    });
+  });
+}
+
+function isProcessAlive(pid) {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function stopProcessesOnPort(port, currentPid) {
+  const pids = (await getPidsOnPort(port))
+    .filter(pid => pid !== process.pid && pid !== currentPid);
+
+  for (const pid of pids) {
+    try { process.kill(pid, 'SIGTERM'); } catch {}
+  }
+
+  await new Promise(resolve => setTimeout(resolve, 900));
+
+  for (const pid of pids) {
+    if (isProcessAlive(pid)) {
+      try { process.kill(pid, 'SIGKILL'); } catch {}
+    }
+  }
+
+  return pids;
+}
+
+function logRunStart(app, job, project, launchCommand, moduleArgs) {
+  pushLog(app, job, 'info', '╔══════════════════════════════════════════╗');
+  pushLog(app, job, 'info', `║        ▶ 本地运行任务启动${job.retryCount ? ' (重试)' : '       '}        ║`);
+  pushLog(app, job, 'info', '╚══════════════════════════════════════════╝');
+  pushLog(app, job, 'info', `📋 项目: ${project.displayName || job.projectName}`);
+  if (moduleArgs.length) pushLog(app, job, 'info', `📦 模块: ${moduleArgs.join(', ')}`);
+  pushLog(app, job, 'info', `🔧 Node: ${job.nodeVersion || '系统默认'}`);
+  if (job.port) pushLog(app, job, 'info', `🌐 端口: ${job.port}`);
+  pushLog(app, job, 'cmd', `$ ${launchCommand}`);
+  pushLog(app, job, 'info', `📂 工作目录: ${project.path}`);
+  pushLog(app, job, 'info', '');
+}
+
+function spawnRunProcess(app, job, project, launchCommand, env, moduleArgs) {
+  job.status = 'starting';
+  job.error = '';
+  job.exitCode = null;
+  job.stoppedAt = null;
+  job.addressInUsePort = '';
+  job.attempt = (job.attempt || 0) + 1;
+  const attempt = job.attempt;
+
+  const child = spawn(launchCommand, {
+    cwd: project.path,
+    shell: true,
+    env,
+    detached: true,
+  });
+  job.child = child;
+  job.pid = child.pid;
+  job.startedAt = Date.now();
+
+  logRunStart(app, job, project, launchCommand, moduleArgs);
+
+  child.stdout.on('data', (data) => {
+    data.toString().split('\n').filter(line => line.trim()).forEach(line => {
+      pushLog(app, job, 'info', line);
+      markRunningFromOutput(app, job, line);
+    });
+  });
+
+  child.stderr.on('data', (data) => {
+    data.toString().split('\n').filter(line => line.trim()).forEach(line => {
+      const type = /warn/i.test(line) ? 'warn' : 'error';
+      pushLog(app, job, type, line);
+      markRunningFromOutput(app, job, line);
+    });
+  });
+
+  child.on('error', (err) => {
+    job.status = 'error';
+    job.error = err.message;
+    job.stoppedAt = Date.now();
+    pushLog(app, job, 'error', `运行进程错误: ${err.message}`);
+    broadcastStatus(app, job);
+  });
+
+  child.on('close', async (code, signal) => {
+    if (attempt !== job.attempt) return;
+    job.exitCode = code;
+    job.stoppedAt = Date.now();
+
+    if (job.status === 'stopping') {
+      job.status = 'stopped';
+      pushLog(app, job, 'warn', '已停止本地运行服务');
+      broadcastStatus(app, job);
+      return;
+    }
+
+    if (code !== 0 && job.addressInUsePort && !job.retriedAddressInUse) {
+      const busyPort = job.addressInUsePort;
+      job.retriedAddressInUse = true;
+      job.retryCount = (job.retryCount || 0) + 1;
+      pushLog(app, job, 'warn', `检测到端口 ${busyPort} 已被占用，正在停止旧本地服务...`);
+      const stoppedPids = await stopProcessesOnPort(busyPort, job.pid);
+      if (stoppedPids.length) {
+        pushLog(app, job, 'success', `已停止占用端口 ${busyPort} 的旧进程: ${stoppedPids.join(', ')}`);
+      } else {
+        pushLog(app, job, 'warn', `未找到端口 ${busyPort} 的占用进程，仍将重新尝试启动`);
+      }
+      pushLog(app, job, 'info', '正在重新启动当前本地运行任务...');
+      broadcastStatus(app, job);
+      spawnRunProcess(app, job, project, launchCommand, env, moduleArgs);
+      return;
+    }
+
+    if (code === 0) {
+      job.status = 'stopped';
+      pushLog(app, job, 'warn', '本地运行服务已退出');
+    } else {
+      job.status = 'error';
+      job.error = signal ? `进程被信号终止: ${signal}` : `退出码: ${code}`;
+      pushLog(app, job, 'error', `本地运行服务异常退出 (${job.error})`);
+    }
+    broadcastStatus(app, job);
+  });
+
+  setTimeout(() => {
+    if (attempt === job.attempt && job.status === 'starting') {
+      job.status = 'running';
+      if (!job.url && job.port) job.url = `http://localhost:${job.port}`;
+      pushLog(app, job, 'success', job.url ? `本地服务运行中: ${job.url}` : '本地服务已启动，等待开发服务器输出访问地址');
+      broadcastStatus(app, job);
+    }
+  }, 1800);
+
+  broadcastStatus(app, job);
 }
 
 router.get('/status', (req, res) => {
@@ -173,74 +333,7 @@ router.post('/start', (req, res) => {
 
   runJobs.set(id, job);
   const env = buildRunEnv(job.nodeVersion, job.port);
-  const child = spawn(launchCommand, {
-    cwd: project.path,
-    shell: true,
-    env,
-    detached: true,
-  });
-  job.child = child;
-  job.pid = child.pid;
-
-  pushLog(req.app, job, 'info', '╔══════════════════════════════════════════╗');
-  pushLog(req.app, job, 'info', '║           ▶ 本地运行任务启动             ║');
-  pushLog(req.app, job, 'info', '╚══════════════════════════════════════════╝');
-  pushLog(req.app, job, 'info', `📋 项目: ${project.displayName || projectName}`);
-  if (moduleArgs.length) pushLog(req.app, job, 'info', `📦 模块: ${moduleArgs.join(', ')}`);
-  pushLog(req.app, job, 'info', `🔧 Node: ${job.nodeVersion || '系统默认'}`);
-  if (job.port) pushLog(req.app, job, 'info', `🌐 端口: ${job.port}`);
-  pushLog(req.app, job, 'cmd', `$ ${launchCommand}`);
-  pushLog(req.app, job, 'info', `📂 工作目录: ${project.path}`);
-  pushLog(req.app, job, 'info', '');
-
-  child.stdout.on('data', (data) => {
-    data.toString().split('\n').filter(line => line.trim()).forEach(line => {
-      pushLog(req.app, job, 'info', line);
-      markRunningFromOutput(req.app, job, line);
-    });
-  });
-
-  child.stderr.on('data', (data) => {
-    data.toString().split('\n').filter(line => line.trim()).forEach(line => {
-      const type = /warn/i.test(line) ? 'warn' : 'error';
-      pushLog(req.app, job, type, line);
-      markRunningFromOutput(req.app, job, line);
-    });
-  });
-
-  child.on('error', (err) => {
-    job.status = 'error';
-    job.error = err.message;
-    job.stoppedAt = Date.now();
-    pushLog(req.app, job, 'error', `运行进程错误: ${err.message}`);
-    broadcastStatus(req.app, job);
-  });
-
-  child.on('close', (code, signal) => {
-    job.exitCode = code;
-    job.stoppedAt = Date.now();
-    if (job.status === 'stopping') {
-      job.status = 'stopped';
-      pushLog(req.app, job, 'warn', '已停止本地运行服务');
-    } else if (code === 0) {
-      job.status = 'stopped';
-      pushLog(req.app, job, 'warn', '本地运行服务已退出');
-    } else {
-      job.status = 'error';
-      job.error = signal ? `进程被信号终止: ${signal}` : `退出码: ${code}`;
-      pushLog(req.app, job, 'error', `本地运行服务异常退出 (${job.error})`);
-    }
-    broadcastStatus(req.app, job);
-  });
-
-  setTimeout(() => {
-    if (job.status === 'starting') {
-      job.status = 'running';
-      if (!job.url && job.port) job.url = `http://localhost:${job.port}`;
-      pushLog(req.app, job, 'success', job.url ? `本地服务运行中: ${job.url}` : '本地服务已启动，等待开发服务器输出访问地址');
-      broadcastStatus(req.app, job);
-    }
-  }, 1800);
+  spawnRunProcess(req.app, job, project, launchCommand, env, moduleArgs);
 
   res.json(publicJob(job));
   broadcastStatus(req.app, job);
