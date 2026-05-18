@@ -42,6 +42,12 @@ function normalizeModuleNames(moduleNames, moduleName, includeHome, homeModuleNa
   });
 }
 
+function getNodeBinPath(nodeVersion) {
+  if (!nodeVersion) return '';
+  const nvmNodeBin = path.join(os.homedir(), '.nvm/versions/node', nodeVersion, 'bin');
+  return fs.existsSync(nvmNodeBin) ? nvmNodeBin : '';
+}
+
 function buildRunEnv(nodeVersion, port) {
   const env = {
     ...process.env,
@@ -56,11 +62,11 @@ function buildRunEnv(nodeVersion, port) {
     env.npm_config_port = String(port);
     env.VITE_PORT = String(port);
   }
-  if (nodeVersion) {
-    const nvmNodeBin = path.join(os.homedir(), '.nvm/versions/node', nodeVersion, 'bin');
-    if (fs.existsSync(nvmNodeBin)) {
-      env.PATH = `${nvmNodeBin}:${env.PATH}`;
-    }
+  const nvmNodeBin = getNodeBinPath(nodeVersion);
+  if (nvmNodeBin) {
+    env.PATH = `${nvmNodeBin}:${env.PATH || ''}`;
+    env.NVM_BIN = nvmNodeBin;
+    env.NVM_DIR = path.join(os.homedir(), '.nvm');
   }
   return env;
 }
@@ -310,8 +316,12 @@ function spawnRunProcess(app, job, project, launchCommand, env, moduleArgs) {
   job.attempt = (job.attempt || 0) + 1;
   const attempt = job.attempt;
 
-  const mergedCommand = `exec 2>&1\n${launchCommand}`;
-  const child = spawn('/bin/bash', ['-lc', mergedCommand], {
+  const nodeBin = getNodeBinPath(job.nodeVersion);
+  const nodeEnvPrefix = nodeBin
+    ? `export PATH=${shellQuote(nodeBin)}:$PATH\nexport NVM_BIN=${shellQuote(nodeBin)}\nexport NVM_DIR=${shellQuote(path.join(os.homedir(), '.nvm'))}\n`
+    : '';
+  const mergedCommand = `${nodeEnvPrefix}exec 2>&1\n${launchCommand}`;
+  const child = spawn('/bin/bash', ['-c', mergedCommand], {
     cwd: project.path,
     env,
     detached: true,
