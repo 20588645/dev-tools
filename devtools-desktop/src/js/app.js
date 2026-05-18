@@ -15,7 +15,7 @@ let runningProjects = {};            // projectName -> 本地运行任务
 let currentRunId = null;             // 当前日志弹窗展示的本地运行任务
 let runModalProjectName = '';
 let runModalMode = 'start';
-let selectedRunModuleName = '';
+let selectedRunModuleNames = new Set();
 
 // ========== 桌面通知 ==========
 const NOTIFICATION_ENABLED_KEY = 'devtools-notifications-enabled';
@@ -841,7 +841,7 @@ function renderRunPage() {
         </div>
         <div class="run-card-state ${job ? 'active' : ''}">
           ${job ? `<div><span class="run-dot"></span>${job.status === 'starting' ? '启动中' : '运行中'} · ${url}</div>
-          <span>PID ${job.pid || '—'} · ${formatRunUptime(job.startedAt)}</span>` : '<div>○ 尚未运行</div><span>点击启动可配置命令、模块和端口</span>'}
+          <span>PID ${job.pid || '—'} · ${formatRunUptime(job.startedAt)}</span>` : '<div>○ 尚未运行</div><span>点击启动可配置命令和模块</span>'}
         </div>
         <div class="run-card-actions">
           ${job ? `
@@ -1104,21 +1104,27 @@ function getRunFavoriteModules(project) {
   return validFavorites;
 }
 
+function setRunModuleSearchVisible(visible) {
+  const search = document.getElementById('runModuleSearch');
+  if (!search) return;
+  search.style.display = visible ? '' : 'none';
+  if (!visible) search.value = '';
+}
+
 function renderRunModulePicker(project, mode = runModalMode) {
   const moduleRow = document.getElementById('runModuleRow');
   const homeRow = document.getElementById('runHomeRow');
   const modulePicker = document.getElementById('runModuleSelect');
   const includeHome = document.getElementById('runIncludeHome');
   const homeInput = document.getElementById('runHomeModuleName');
-  const moduleLabel = moduleRow?.querySelector('label');
   const homeModuleName = project.runHomeModule || 'home';
   const favoriteModules = normalizeModuleList(project.favoriteRunModules);
   const modules = (project.modules || []).filter(m => m.name && m.name.toLowerCase() !== homeModuleName.toLowerCase());
-  if (moduleLabel) moduleLabel.textContent = '收藏模块';
 
   if (project.type !== 'multi-module') {
     moduleRow.style.display = 'none';
     homeRow.style.display = 'none';
+    setRunModuleSearchVisible(false);
     modulePicker.innerHTML = '';
     includeHome.checked = false;
     homeInput.value = 'home';
@@ -1128,6 +1134,7 @@ function renderRunModulePicker(project, mode = runModalMode) {
   if (mode === 'start') {
     moduleRow.style.display = 'none';
     homeRow.style.display = 'none';
+    setRunModuleSearchVisible(false);
     modulePicker.innerHTML = '';
     includeHome.checked = project.runIncludeHome !== false;
     homeInput.value = homeModuleName;
@@ -1135,6 +1142,7 @@ function renderRunModulePicker(project, mode = runModalMode) {
   }
 
   homeRow.style.display = '';
+  setRunModuleSearchVisible(true);
   includeHome.checked = project.runIncludeHome !== false;
   homeInput.value = homeModuleName;
 
@@ -1144,12 +1152,13 @@ function renderRunModulePicker(project, mode = runModalMode) {
       const value = escapeAttr(m.name);
       const label = escapeHtml(m.name);
       return `
-        <label class="run-module-option" title="${value}">
+        <label class="run-module-option" data-module-name="${value}" title="${value}">
           <input type="checkbox" value="${value}" ${favoriteModules.some(name => name.toLowerCase() === m.name.toLowerCase()) ? 'checked' : ''}>
           <span>${label}</span>
         </label>`;
     }).join('')
     : '';
+  filterRunConfigModules();
 }
 
 function getCheckedRunFavoriteModules() {
@@ -1158,10 +1167,26 @@ function getCheckedRunFavoriteModules() {
     .filter(Boolean);
 }
 
-function selectRunQuickModule(moduleName) {
-  selectedRunModuleName = moduleName || '';
+function filterRunConfigModules() {
+  const search = (document.getElementById('runModuleSearch')?.value || '').trim().toLowerCase();
+  document.querySelectorAll('#runModuleSelect .run-module-option').forEach(option => {
+    const name = (option.dataset.moduleName || option.textContent || '').toLowerCase();
+    option.style.display = !search || name.includes(search) ? '' : 'none';
+  });
+}
+
+function toggleRunQuickModule(moduleName) {
+  if (!moduleName) return;
+  if (selectedRunModuleNames.has(moduleName)) {
+    selectedRunModuleNames.delete(moduleName);
+  } else {
+    selectedRunModuleNames.add(moduleName);
+  }
   document.querySelectorAll('.run-quick-module').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.module === selectedRunModuleName);
+    const checked = selectedRunModuleNames.has(btn.dataset.module);
+    btn.classList.toggle('active', checked);
+    const mark = btn.querySelector('.run-quick-check');
+    if (mark) mark.textContent = checked ? '✓' : '';
   });
 }
 
@@ -1170,7 +1195,7 @@ function openRunModal(projectName, mode = 'start') {
   if (!project) return;
   runModalProjectName = projectName;
   runModalMode = mode;
-  selectedRunModuleName = '';
+  selectedRunModuleNames = new Set();
 
   const modal = document.querySelector('#runModal .modal-run');
   if (modal) modal.classList.toggle('config-mode', mode === 'config');
@@ -1187,10 +1212,10 @@ function openRunModal(projectName, mode = 'start') {
   renderRunModulePicker(project, mode);
 
   document.getElementById('runCommand').value = project.runCommand || inferRunCommand(project);
-  document.getElementById('runPort').value = project.runPort || '';
   if (mode === 'start') {
     const favorites = getRunFavoriteModules(project);
-    selectedRunModuleName = favorites[0] || '';
+    const homeModuleName = (project.runHomeModule || 'home').trim() || 'home';
+    selectedRunModuleNames = new Set(project.runIncludeHome !== false && favorites.some(name => name.toLowerCase() === homeModuleName.toLowerCase()) ? [homeModuleName] : []);
     renderRunModalStatus(runningProjects[projectName]);
   }
   document.getElementById('runModal').classList.add('active');
@@ -1208,8 +1233,9 @@ function renderRunModalStatus(job) {
         ${quickModules.length
           ? `<div class="run-quick-grid">
               ${quickModules.map(name => `
-                <button class="run-quick-module${name === selectedRunModuleName ? ' active' : ''}" data-module="${escapeAttr(name)}" onclick="selectRunQuickModule('${escapeAttr(name)}')" title="${escapeAttr(name)}">
-                  <span>▶</span><strong>${escapeHtml(name)}</strong>
+                <button type="button" class="run-quick-module${selectedRunModuleNames.has(name) ? ' active' : ''}" data-module="${escapeAttr(name)}" onclick="toggleRunQuickModule('${escapeAttr(name)}')" title="${escapeAttr(name)}">
+                  <span class="run-quick-check">${selectedRunModuleNames.has(name) ? '✓' : ''}</span>
+                  <strong>${escapeHtml(name)}</strong>
                 </button>
               `).join('')}
             </div>`
@@ -1218,7 +1244,7 @@ function renderRunModalStatus(job) {
     : '';
 
   if (!job) {
-    panel.innerHTML = `${quickHtml}<div class="run-status-empty">选择模块后启动，本地服务日志会显示在统一日志弹窗中。</div>`;
+    panel.innerHTML = `${quickHtml}<div class="run-status-empty">勾选一个或多个模块后启动，本地服务日志会显示在统一日志弹窗中。</div>`;
     return;
   }
   const url = job.url || (job.port ? `http://localhost:${job.port}` : '等待地址');
@@ -1241,17 +1267,17 @@ async function startLocalRunFromModal() {
   const config = await persistLocalRunConfig(project);
   if (!config) return;
 
-  const { command, nodeVersion, port } = config;
-  const moduleName = project.type === 'multi-module' ? selectedRunModuleName : '';
+  const { command, nodeVersion } = config;
+  const moduleNames = project.type === 'multi-module' ? [...selectedRunModuleNames] : [];
 
-  if (project.type === 'multi-module' && !moduleName) {
-    await showAlert('请选择要运行的模块。可以先在配置里收藏常用模块，再从启动弹窗中快速选择。', { icon: '⚠️' });
+  if (project.type === 'multi-module' && moduleNames.length === 0) {
+    await showAlert('请选择要运行的模块。可以先在配置里收藏常用模块，再从启动弹窗中勾选一个或多个模块。', { icon: '⚠️' });
     return;
   }
 
   try {
     document.getElementById('runStartBtn').disabled = true;
-    const data = await API.post('/api/run/start', { projectName: project.name, command, moduleName, nodeVersion, port });
+    const data = await API.post('/api/run/start', { projectName: project.name, command, moduleNames, nodeVersion });
     runningProjects[project.name] = data;
     closeModal('runModal');
     showRunLogShell(data);
@@ -1292,16 +1318,15 @@ async function persistLocalRunConfig(project) {
   const favoriteRunModules = runModalMode === 'config' ? getCheckedRunFavoriteModules() : normalizeModuleList(project.favoriteRunModules);
   const runIncludeHome = !!document.getElementById('runIncludeHome')?.checked;
   const homeModuleName = getRunHomeModuleName();
-  const port = document.getElementById('runPort').value.trim();
 
-  await API.put(`/api/projects/${project.name}`, { runCommand: command, runPort: port, runHomeModule: homeModuleName, runIncludeHome, favoriteRunModules, nodeVersion });
+  await API.put(`/api/projects/${project.name}`, { runCommand: command, runPort: '', runHomeModule: homeModuleName, runIncludeHome, favoriteRunModules, nodeVersion });
   project.runCommand = command;
-  project.runPort = port;
+  project.runPort = '';
   project.runHomeModule = homeModuleName;
   project.runIncludeHome = runIncludeHome;
   project.favoriteRunModules = favoriteRunModules;
   project.nodeVersion = nodeVersion;
-  return { command, nodeVersion, favoriteRunModules, runIncludeHome, homeModuleName, port };
+  return { command, nodeVersion, favoriteRunModules, runIncludeHome, homeModuleName };
 }
 
 function showRunLogShell(job) {

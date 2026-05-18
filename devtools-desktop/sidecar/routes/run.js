@@ -159,7 +159,7 @@ router.post('/start', (req, res) => {
     includeHome: !!includeHome,
     command: finalCommand,
     nodeVersion: nodeVersion || project.nodeVersion || '',
-    port: port || project.runPort || '',
+    port: port || '',
     url: '',
     status: 'starting',
     pid: null,

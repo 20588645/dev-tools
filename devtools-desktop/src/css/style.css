@@ -4863,6 +4863,18 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
   align-items: start;
 }
 
+.run-module-config {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.run-module-config #runModuleSearch {
+  width: 100%;
+  height: 32px;
+}
+
 .run-module-picker {
   width: 100%;
   min-height: 128px;
@@ -5039,8 +5051,23 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
   color: var(--primary);
 }
 
-.run-quick-module span {
-  font-size: 11px;
+.run-quick-check {
+  width: 14px;
+  height: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in srgb, var(--text-muted) 62%, transparent);
+  border-radius: 4px;
+  color: white;
+  font-size: 10px;
+  font-weight: 760;
+  line-height: 1;
+}
+
+.run-quick-module.active .run-quick-check {
+  border-color: var(--primary);
+  background: var(--primary);
 }
 
 .run-quick-module strong {
