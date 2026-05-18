@@ -31,6 +31,8 @@ function analyzeProject(projectPath) {
       type: 'single',
       tool: detectBuildTool(projectPath, pkg),
       buildCommand: detectBuildCommand(pkg),
+      runCommand: detectRunCommand(pkg),
+      runPort: '',
       distDir: 'dist',
       modules: [],
       excludeModules: [],
@@ -127,6 +129,15 @@ function detectBuildCommand(pkg) {
   if (scripts['build:prod']) return 'npm run build:prod';
   if (scripts.build) return 'npm run build';
   return 'npm run build';
+}
+
+function detectRunCommand(pkg) {
+  const scripts = pkg.scripts || {};
+  if (scripts.dev) return 'npm run dev';
+  if (scripts.serve) return 'npm run serve';
+  if (scripts.start) return 'npm start';
+  if (scripts.local) return 'npm run local';
+  return 'npm run dev';
 }
 
 /**

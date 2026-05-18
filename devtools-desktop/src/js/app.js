@@ -10,6 +10,9 @@ let availableProjects = [];
 let checkedAvailableProjects = new Set();
 let busyProjects = new Set();       // 防重复部署锁
 let lastDeployCache = {};            // 项目最近部署记录缓存
+let runningProjects = {};            // projectName -> 本地运行任务
+let currentRunId = null;             // 当前日志弹窗展示的本地运行任务
+let runModalProjectName = '';
 
 // ========== 桌面通知 ==========
 const NOTIFICATION_ENABLED_KEY = 'devtools-notifications-enabled';
@@ -322,7 +325,7 @@ function updateToolbarDate() {
 // ========== WebSocket Handlers ==========
 function setupWSHandlers() {
   WS.on('log', (data) => {
-    if (!currentDeployId && activeTask) {
+    if (!currentDeployId && activeTask && activeTask.taskKind !== 'run') {
       // 还没拿到 deployId，但有活跃任务，先接收日志
       appendLog(data.text, data.type);
       return;
@@ -423,6 +426,20 @@ function setupWSHandlers() {
       sendDesktopNotification(`${typeText}${statusText}`, notifyBody, data.status === 'success', { target: 'log' });
       loadProjects();
     }
+  });
+
+  WS.on('run-log', (data) => {
+    if (data.id !== currentRunId) return;
+    appendLog(data.text, data.type);
+  });
+
+  WS.on('run-status', (data) => {
+    const isActive = ['starting', 'running'].includes(data.status);
+    if (isActive) runningProjects[data.projectName] = data;
+    else delete runningProjects[data.projectName];
+
+    if (data.id === currentRunId) updateRunLogStatus(data);
+    renderProjects();
   });
 }
 
@@ -624,6 +641,10 @@ async function loadHomeData() {
         <div class="qa-icon purple">◇</div>
         <div class="qa-info"><div class="qa-title">构建项目</div></div>
       </div>
+      <div class="quick-action-card" onclick="switchPage('deploy', document.querySelector('.sidebar-item[data-page=deploy]'))">
+        <div class="qa-icon green">▶</div>
+        <div class="qa-info"><div class="qa-title">本地运行</div></div>
+      </div>
       <div class="quick-action-card" onclick="switchPage('report', document.querySelector('.sidebar-item[data-page=report]'))">
         <div class="qa-icon green">▤</div>
         <div class="qa-info"><div class="qa-title">Git 周报</div></div>
@@ -657,9 +678,24 @@ async function loadNodeVersions() {
 async function loadProjects() {
   try {
     projects = await API.get('/api/projects');
+    await loadRunStatuses();
     renderProjects();
   } catch (e) {
     console.error('加载项目失败:', e);
+  }
+}
+
+async function loadRunStatuses() {
+  try {
+    const list = await API.get('/api/run/status');
+    runningProjects = {};
+    (list || []).forEach(job => {
+      if (['starting', 'running'].includes(job.status)) {
+        runningProjects[job.projectName] = job;
+      }
+    });
+  } catch (e) {
+    runningProjects = {};
   }
 }
 
@@ -684,6 +720,7 @@ function renderProjects() {
     const nodeLabel = p.nodeVersion ? `<span class="badge-tool">${p.nodeVersion}</span>` : '';
     const isBusy = busyProjects.has(p.name);
     const disabledAttr = isBusy ? 'disabled' : '';
+    const running = runningProjects[p.name];
     const last = lastDeployCache[p.name];
     let lastDeployHtml = '<div class="card-last-deploy">○ 暂无构建/部署记录</div>';
     if (last) {
@@ -703,21 +740,28 @@ function renderProjects() {
       <div class="card-meta">
         <span><span class="badge-tool">${p.tool}</span> ${nodeLabel} ${isMulti ? moduleCount + ' 个模块' : ''}</span>
         <span>构建: ${p.buildCommand || 'npm run build'}</span>
+        <span>运行: ${p.runCommand || inferRunCommand(p)}</span>
       </div>
       ${isMulti ? `<div class="card-modules">${(p.modules || []).slice(0, 5).map(m => `<span class="module-tag">${m.name}</span>`).join('')}${moduleCount > 5 ? `<span class="module-more">+${moduleCount - 5}</span>` : ''}</div>` : ''}
       <div class="card-status ${getProjectDefaultServerIds(p).length > 0 ? 'status-configured' : 'status-unconfigured'}">
         ${getProjectDefaultServerIds(p).length > 0 ? `● 已配置 ${getProjectDefaultServerIds(p).length} 台服务器` : '○ 未配置服务器'}
       </div>
+      ${renderRunStatus(running)}
       ${lastDeployHtml}
-      <div style="display:flex;gap:8px;margin-top:auto">
+      <div class="card-actions">
         ${isBusy ? `
         <button class="btn-deploy-card btn-progress-card" style="flex:1" onclick="event.stopPropagation();reopenLogModal()">⏳ 查看进度...</button>
         ` : `
-        <button class="btn-deploy-card btn-build-card" style="flex:1" onclick="event.stopPropagation();openBuildModal('${p.name}')" ${disabledAttr}>🔨 构建</button>
-        <button class="btn-deploy-card" style="flex:1" onclick="event.stopPropagation();openDeployModal('${p.name}')" ${disabledAttr}>🚀 部署</button>
-        <button class="btn-deploy-card btn-quick" style="flex-shrink:0;width:40px;height:40px" onclick="event.stopPropagation();quickRepeat('${p.name}')" ${disabledAttr || !last ? 'disabled' : ''} title="快速复用上次操作">⚡</button>
-        <button class="btn-icon" style="flex-shrink:0;width:40px;height:40px" onclick="event.stopPropagation();openProjectConfig('${p.name}')" title="默认配置">⚙</button>
-        <button class="btn-icon danger" style="flex-shrink:0;width:40px;height:40px" onclick="event.stopPropagation();removeProject('${p.name}')" title="移除项目">🗑</button>
+        <button class="btn-deploy-card btn-build-card" onclick="event.stopPropagation();openBuildModal('${p.name}')" ${disabledAttr}>🔨 构建</button>
+        <button class="btn-deploy-card" onclick="event.stopPropagation();openDeployModal('${p.name}')" ${disabledAttr}>🚀 部署</button>
+        ${running
+          ? `<button class="btn-deploy-card btn-run-card running" onclick="event.stopPropagation();stopLocalRun('${p.name}')">■ 停止</button>`
+          : `<button class="btn-deploy-card btn-run-card" onclick="event.stopPropagation();openRunModal('${p.name}')" ${disabledAttr}>▶ 运行</button>`}
+        <button class="btn-deploy-card btn-quick" onclick="event.stopPropagation();quickRepeat('${p.name}')" ${disabledAttr || !last ? 'disabled' : ''} title="快速复用上次操作">⚡</button>
+        ${running ? `<button class="btn-icon" onclick="event.stopPropagation();openRunUrl('${p.name}')" title="打开本地地址">↗</button>
+        <button class="btn-icon" onclick="event.stopPropagation();openRunLog('${p.name}')" title="查看运行日志">⌗</button>` : ''}
+        <button class="btn-icon" onclick="event.stopPropagation();openProjectConfig('${p.name}')" title="默认配置">⚙</button>
+        <button class="btn-icon danger" onclick="event.stopPropagation();removeProject('${p.name}')" title="移除项目">🗑</button>
         `}
       </div>
     </div>`;
@@ -725,6 +769,33 @@ function renderProjects() {
 
   // 异步加载每个项目的最近部署信息
   loadLastDeployInfos(filtered);
+}
+
+function inferRunCommand(project) {
+  if (project.runCommand) return project.runCommand;
+  if (project.tool === 'Vue CLI') return 'npm run serve';
+  return 'npm run dev';
+}
+
+function renderRunStatus(job) {
+  if (!job) return '';
+  const label = job.status === 'starting' ? '启动中' : '运行中';
+  const url = job.url || (job.port ? `http://localhost:${job.port}` : '等待地址');
+  const uptime = formatRunUptime(job.startedAt);
+  return `
+    <div class="card-run-status">
+      <div><span class="run-dot"></span>${label} · ${url}</div>
+      <span>PID ${job.pid || '—'} · ${uptime}</span>
+    </div>`;
+}
+
+function formatRunUptime(startedAt) {
+  if (!startedAt) return '刚刚';
+  const seconds = Math.max(0, Math.floor((Date.now() - startedAt) / 1000));
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m`;
+  return `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
 }
 
 // 加载项目最近部署信息（批量异步，不阻塞渲染）
@@ -925,6 +996,170 @@ async function confirmQuickRepeat() {
     clearBusy(projectName);
     showAlert(`快速${typeLabel}失败: ` + e.message, { icon: '❌' });
   }
+}
+
+// ========== 本地运行 ==========
+function openRunModal(projectName) {
+  const project = projects.find(p => p.name === projectName);
+  if (!project) return;
+  runModalProjectName = projectName;
+
+  document.getElementById('runSubtitle').textContent = `${project.displayName || project.name} · ${project.path}`;
+  const nodeSelect = document.getElementById('runNodeVersion');
+  nodeSelect.innerHTML = `<option value="">系统默认 (${currentNodeVersion})</option>`
+    + nodeVersions.map(v => `<option value="${v}" ${v === (project.nodeVersion || '') ? 'selected' : ''}>${v}</option>`).join('');
+
+  const moduleRow = document.getElementById('runModuleRow');
+  const moduleSelect = document.getElementById('runModuleSelect');
+  if (project.type === 'multi-module' && (project.modules || []).length > 0) {
+    moduleRow.style.display = '';
+    moduleSelect.innerHTML = '<option value="">不指定模块</option>'
+      + (project.modules || []).map(m => `<option value="${m.name}">${m.name}</option>`).join('');
+  } else {
+    moduleRow.style.display = 'none';
+    moduleSelect.innerHTML = '<option value="">整体项目</option>';
+  }
+
+  document.getElementById('runCommand').value = project.runCommand || inferRunCommand(project);
+  document.getElementById('runPort').value = project.runPort || '';
+  renderRunModalStatus(runningProjects[projectName]);
+  document.getElementById('runModal').classList.add('active');
+}
+
+function renderRunModalStatus(job) {
+  const panel = document.getElementById('runStatusPanel');
+  if (!panel) return;
+  if (!job) {
+    panel.innerHTML = '<div class="run-status-empty">选择配置后启动，本地服务日志会显示在统一日志弹窗中。</div>';
+    return;
+  }
+  const url = job.url || (job.port ? `http://localhost:${job.port}` : '等待地址');
+  panel.innerHTML = `
+    <div class="run-live-card">
+      <div class="run-live-state"><span class="run-dot"></span>${job.status === 'starting' ? '启动中' : '运行中'}</div>
+      <div class="run-live-url">${url}</div>
+      <div class="run-live-meta">PID ${job.pid || '—'} · ${job.command || ''}</div>
+      <div class="run-live-actions">
+        <button class="btn-secondary" onclick="openRunLog('${job.projectName}')">查看日志</button>
+        <button class="btn-secondary" onclick="openRunUrl('${job.projectName}')">打开地址</button>
+        <button class="btn-danger" onclick="stopLocalRun('${job.projectName}')">停止运行</button>
+      </div>
+    </div>`;
+}
+
+async function startLocalRunFromModal() {
+  const project = projects.find(p => p.name === runModalProjectName);
+  if (!project) return;
+  const command = document.getElementById('runCommand').value.trim();
+  if (!command) {
+    await showAlert('请输入启动命令', { icon: '⚠️' });
+    return;
+  }
+
+  const nodeVersion = document.getElementById('runNodeVersion').value;
+  const moduleName = document.getElementById('runModuleSelect').value;
+  const port = document.getElementById('runPort').value.trim();
+
+  try {
+    document.getElementById('runStartBtn').disabled = true;
+    await API.put(`/api/projects/${project.name}`, { runCommand: command, runPort: port, nodeVersion });
+    project.runCommand = command;
+    project.runPort = port;
+    project.nodeVersion = nodeVersion;
+
+    const data = await API.post('/api/run/start', { projectName: project.name, command, moduleName, nodeVersion, port });
+    runningProjects[project.name] = data;
+    closeModal('runModal');
+    showRunLogShell(data);
+    showToast('▶ 本地运行已启动', project.displayName || project.name);
+    renderProjects();
+  } catch (e) {
+    showAlert('启动失败: ' + e.message, { icon: '❌' });
+  } finally {
+    document.getElementById('runStartBtn').disabled = false;
+  }
+}
+
+function showRunLogShell(job) {
+  currentRunId = job.id;
+  currentDeployId = null;
+  activeTask = { id: job.id, projectName: job.projectName, isRunning: ['starting', 'running'].includes(job.status), taskKind: 'run' };
+  document.getElementById('logTitle').textContent = '运行日志';
+  document.getElementById('logSubtitle').textContent = `${job.projectName}${job.moduleName ? ' · ' + job.moduleName : ''}`;
+  document.getElementById('logTerminal').innerHTML = '';
+  document.getElementById('deployResult').style.display = 'flex';
+  document.getElementById('resultIcon').textContent = '▶';
+  document.getElementById('resultText').textContent = job.status === 'starting' ? '正在启动本地服务' : '本地服务运行中';
+  document.getElementById('progressBar').style.width = job.status === 'starting' ? '35%' : '100%';
+  document.getElementById('progressText').textContent = job.status === 'starting' ? '启动中' : '运行中';
+  document.getElementById('progressSteps').innerHTML = ['启动中', '运行中'].map((s, i) =>
+    `<div class="step${i === 0 ? ' active' : ''}" id="step${i}"><div class="step-dot"></div>${s}</div>`
+  ).join('');
+  document.getElementById('logModal').classList.add('active');
+  updateLogModalCloseBtn();
+}
+
+async function openRunLog(projectName) {
+  const job = runningProjects[projectName];
+  if (!job) return;
+  try {
+    const data = await API.get(`/api/run/${job.id}/logs`);
+    showRunLogShell(data);
+    (data.logs || []).forEach(log => appendLog(log.text, log.type));
+    updateRunLogStatus(data);
+  } catch (e) {
+    showAlert('加载运行日志失败: ' + e.message, { icon: '❌' });
+  }
+}
+
+async function openRunUrl(projectName) {
+  const job = runningProjects[projectName];
+  if (!job) return;
+  try {
+    const data = await API.post(`/api/run/${job.id}/open`, {});
+    showToast('已打开本地地址', data.url);
+  } catch (e) {
+    showAlert('打开失败: ' + e.message, { icon: '❌' });
+  }
+}
+
+async function stopLocalRun(projectName) {
+  const job = runningProjects[projectName];
+  if (!job) return;
+  try {
+    await API.post(`/api/run/${job.id}/stop`, {});
+    showToast('正在停止本地服务', projectName);
+  } catch (e) {
+    showAlert('停止失败: ' + e.message, { icon: '❌' });
+  }
+}
+
+function updateRunLogStatus(job) {
+  if (job.id !== currentRunId) return;
+  const isRunning = ['starting', 'running'].includes(job.status);
+  if (activeTask && activeTask.taskKind === 'run') activeTask.isRunning = isRunning;
+  if (job.status === 'starting') {
+    setStepActive(0);
+    document.getElementById('progressBar').style.width = '35%';
+    document.getElementById('progressText').textContent = '启动中';
+    document.getElementById('resultIcon').textContent = '▶';
+    document.getElementById('resultText').textContent = '正在启动本地服务';
+  } else if (job.status === 'running') {
+    setStepDone(0);
+    setStepActive(1);
+    document.getElementById('progressBar').style.width = '100%';
+    document.getElementById('progressText').textContent = '运行中';
+    document.getElementById('resultIcon').textContent = '✅';
+    document.getElementById('resultText').textContent = job.url ? `本地服务运行中 · ${job.url}` : '本地服务运行中';
+  } else {
+    document.querySelectorAll('#progressSteps .step').forEach(s => s.classList.add('done'));
+    document.getElementById('progressBar').style.width = '100%';
+    document.getElementById('progressText').textContent = job.status === 'error' ? '失败' : '已停止';
+    document.getElementById('resultIcon').textContent = job.status === 'error' ? '❌' : '■';
+    document.getElementById('resultText').textContent = job.status === 'error' ? `本地服务异常退出：${job.error || '未知错误'}` : '本地服务已停止';
+  }
+  updateLogModalCloseBtn();
+  if (runModalProjectName === job.projectName) renderRunModalStatus(isRunning ? job : null);
 }
 
 async function removeProject(name) {
@@ -2347,7 +2582,9 @@ function closeModal(id) {
   // 如果关闭的是日志弹窗且任务正在进行中，执行最小化而非关闭
   if (id === 'logModal' && activeTask && activeTask.isRunning) {
     document.getElementById(id).classList.remove('active');
-    showToast('📌 任务仍在后台运行', '点击此处可查看进度', { clickable: true, persistent: true });
+    const title = activeTask.taskKind === 'run' ? '▶ 本地服务仍在运行' : '📌 任务仍在后台运行';
+    const message = activeTask.taskKind === 'run' ? '点击此处可查看运行日志' : '点击此处可查看进度';
+    showToast(title, message, { clickable: true, persistent: true });
     return;
   }
   document.getElementById(id).classList.remove('active');

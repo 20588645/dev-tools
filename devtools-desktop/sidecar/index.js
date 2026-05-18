@@ -45,6 +45,7 @@ app.use((req, res, next) => {
 app.use('/api/projects', require('./routes/projects'));
 app.use('/api/servers', require('./routes/servers'));
 app.use('/api/deploy', require('./routes/deploy'));
+app.use('/api/run', require('./routes/run'));
 app.use('/api/history', require('./routes/history'));
 app.use('/api/report', require('./routes/report'));
 

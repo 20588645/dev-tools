@@ -530,6 +530,50 @@
   </div>
 </div>
 
+<!-- 本地运行弹窗 -->
+<div class="modal-overlay" id="runModal">
+  <div class="modal modal-run">
+    <div class="modal-header">
+      <div>
+        <h2>▶ 运行本地项目</h2>
+        <p class="modal-subtitle" id="runSubtitle"></p>
+      </div>
+      <button class="modal-close" onclick="closeModal('runModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="run-layout">
+        <div class="run-config-panel">
+          <div class="run-section-title">运行配置</div>
+          <div class="config-row">
+            <label>Node 版本</label>
+            <select id="runNodeVersion"></select>
+          </div>
+          <div class="config-row" id="runModuleRow">
+            <label>运行模块</label>
+            <select id="runModuleSelect"></select>
+          </div>
+          <div class="config-row">
+            <label>启动命令</label>
+            <input type="text" id="runCommand" placeholder="npm run dev">
+          </div>
+          <div class="config-row">
+            <label>端口</label>
+            <input type="number" id="runPort" placeholder="自动识别">
+          </div>
+          <div class="run-hint">端口会写入 <code>PORT</code> / <code>npm_config_port</code> 环境变量；如果项目脚本自身指定端口，将以脚本为准。</div>
+        </div>
+        <div class="run-status-panel" id="runStatusPanel">
+          <div class="run-status-empty">选择配置后启动，本地服务日志会显示在统一日志弹窗中。</div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('runModal')">取消</button>
+      <button class="btn-primary" id="runStartBtn" onclick="startLocalRunFromModal()">▶ 启动运行</button>
+    </div>
+  </div>
+</div>
+
 <!-- 项目介绍弹窗 -->
 <div class="modal-overlay" id="projectIntroModal">
   <div class="modal modal-intro">
