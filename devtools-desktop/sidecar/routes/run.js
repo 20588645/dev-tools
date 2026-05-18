@@ -58,6 +58,63 @@ function buildRunEnv(nodeVersion, port) {
   return env;
 }
 
+function firstPortMatch(text, patterns) {
+  const value = String(text || '');
+  for (const pattern of patterns) {
+    const match = value.match(pattern);
+    if (match?.[1]) return match[1];
+  }
+  return '';
+}
+
+function readProjectFile(projectPath, relativePath) {
+  try {
+    const file = path.join(projectPath, relativePath);
+    if (!fs.existsSync(file)) return '';
+    return fs.readFileSync(file, 'utf8');
+  } catch {
+    return '';
+  }
+}
+
+function inferProjectPort(project, command) {
+  const commandPort = firstPortMatch(command, [
+    /(?:^|\s)(?:PORT|VITE_PORT|npm_config_port)=(\d{2,5})(?:\s|$)/i,
+    /(?:^|\s)--port(?:=|\s+)(\d{2,5})(?:\s|$)/i,
+    /(?:^|\s)-p\s+(\d{2,5})(?:\s|$)/i,
+  ]);
+  if (commandPort) return commandPort;
+
+  const vueConfig = readProjectFile(project.path, 'vue.config.js');
+  const vuePort = firstPortMatch(vueConfig, [
+    /devServer\s*:\s*{[\s\S]*?port\s*:\s*(?:Number\([^)]*\)|parseInt\([^)]*\)|['"]?)(\d{2,5})/i,
+    /port\s*:\s*(?:Number\([^)]*\)|parseInt\([^)]*\)|['"]?)(\d{2,5})/i,
+  ]);
+  if (vuePort) return vuePort;
+
+  const viteFiles = ['vite.config.js', 'vite.config.ts', 'vite.config.mjs', 'vite.config.cjs'];
+  for (const file of viteFiles) {
+    const viteConfig = readProjectFile(project.path, file);
+    const vitePort = firstPortMatch(viteConfig, [
+      /server\s*:\s*{[\s\S]*?port\s*:\s*(?:Number\([^)]*\)|parseInt\([^)]*\)|['"]?)(\d{2,5})/i,
+      /port\s*:\s*(?:Number\([^)]*\)|parseInt\([^)]*\)|['"]?)(\d{2,5})/i,
+    ]);
+    if (vitePort) return vitePort;
+  }
+
+  const vueCliConfig = readProjectFile(project.path, 'config/index.js');
+  const vueCliPort = firstPortMatch(vueCliConfig, [
+    /dev\s*:\s*{[\s\S]*?port\s*:\s*(?:process\.env\.[A-Z_]+\s*\|\|\s*)?['"]?(\d{2,5})/i,
+  ]);
+  if (vueCliPort) return vueCliPort;
+
+  const devServer = readProjectFile(project.path, 'build/dev-server.js');
+  return firstPortMatch(devServer, [
+    /(?:var|let|const)\s+port\s*=\s*(?:process\.env\.[A-Z_]+\s*\|\|\s*)?['"]?(\d{2,5})/i,
+    /listen\(\s*['"]?(\d{2,5})['"]?/i,
+  ]);
+}
+
 function inferUrl(text, fallbackPort) {
   const urlMatch = String(text).match(/https?:\/\/(?:localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])(?::\d+)?[^\s)'"<]*/i);
   if (urlMatch) return urlMatch[0].replace('0.0.0.0', 'localhost');
@@ -172,6 +229,20 @@ async function stopProcessesOnPort(port, currentPid) {
   }
 
   return pids;
+}
+
+async function ensurePortAvailable(app, job, port) {
+  if (!port) return [];
+  const pids = (await getPidsOnPort(port))
+    .filter(pid => pid !== process.pid && pid !== job.pid);
+  if (!pids.length) return [];
+
+  pushLog(app, job, 'warn', `检测到端口 ${port} 已被旧服务占用，正在先停止旧服务...`);
+  const stoppedPids = await stopProcessesOnPort(port, job.pid);
+  if (stoppedPids.length) {
+    pushLog(app, job, 'success', `已停止占用端口 ${port} 的旧进程: ${stoppedPids.join(', ')}`);
+  }
+  return stoppedPids;
 }
 
 function logRunStart(app, job, project, launchCommand, moduleArgs) {
@@ -293,7 +364,7 @@ router.get('/:id/logs', (req, res) => {
   res.json({ ...publicJob(job), logs: job.logs });
 });
 
-router.post('/start', (req, res) => {
+router.post('/start', async (req, res) => {
   const { projectName, command, moduleName = '', moduleNames = [], includeHome = false, homeModuleNames = [], nodeVersion = '', port = '' } = req.body;
   if (!projectName) return res.status(400).json({ error: 'projectName 必填' });
 
@@ -319,7 +390,7 @@ router.post('/start', (req, res) => {
     includeHome: !!includeHome,
     command: finalCommand,
     nodeVersion: nodeVersion || project.nodeVersion || '',
-    port: port || '',
+    port: port || inferProjectPort(project, finalCommand),
     url: '',
     status: 'starting',
     pid: null,
@@ -333,6 +404,7 @@ router.post('/start', (req, res) => {
 
   runJobs.set(id, job);
   const env = buildRunEnv(job.nodeVersion, job.port);
+  await ensurePortAvailable(req.app, job, job.port);
   spawnRunProcess(req.app, job, project, launchCommand, env, moduleArgs);
 
   res.json(publicJob(job));
