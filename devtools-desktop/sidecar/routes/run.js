@@ -20,18 +20,18 @@ function shellQuote(value) {
   return `'${String(value).replace(/'/g, `'\\''`)}'`;
 }
 
-function normalizeModuleNames(moduleNames, moduleName, includeHome) {
+function normalizeModuleNames(moduleNames, moduleName, includeHome, homeModuleNames = []) {
   const source = Array.isArray(moduleNames)
     ? moduleNames
     : (typeof moduleNames === 'string' && moduleNames ? moduleNames.split(',') : []);
+  const homeModules = Array.isArray(homeModuleNames)
+    ? homeModuleNames
+    : (typeof homeModuleNames === 'string' && homeModuleNames ? homeModuleNames.split(',') : []);
   const normalized = source
     .concat(moduleName ? [moduleName] : [])
+    .concat(includeHome ? homeModules : [])
     .map(v => String(v).trim())
     .filter(Boolean);
-
-  if (includeHome && !normalized.some(v => v.toLowerCase() === 'home')) {
-    normalized.push('home');
-  }
 
   const seen = new Set();
   return normalized.filter(v => {
@@ -134,7 +134,7 @@ router.get('/:id/logs', (req, res) => {
 });
 
 router.post('/start', (req, res) => {
-  const { projectName, command, moduleName = '', moduleNames = [], includeHome = false, nodeVersion = '', port = '' } = req.body;
+  const { projectName, command, moduleName = '', moduleNames = [], includeHome = false, homeModuleNames = [], nodeVersion = '', port = '' } = req.body;
   if (!projectName) return res.status(400).json({ error: 'projectName 必填' });
 
   const existing = [...runJobs.values()].find(job => job.projectName === projectName && ['starting', 'running'].includes(job.status));
@@ -148,7 +148,7 @@ router.post('/start', (req, res) => {
   if (!finalCommand) return res.status(400).json({ error: '启动命令不能为空' });
 
   const id = `run-${Date.now()}`;
-  const moduleArgs = normalizeModuleNames(moduleNames, moduleName, includeHome);
+  const moduleArgs = normalizeModuleNames(moduleNames, moduleName, includeHome, homeModuleNames);
   const launchCommand = moduleArgs.length ? `${finalCommand} ${moduleArgs.map(shellQuote).join(' ')}` : finalCommand;
 
   const job = {

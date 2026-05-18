@@ -4852,12 +4852,13 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
 
 .run-module-picker {
   width: 100%;
-  min-height: 92px;
-  max-height: 142px;
+  min-height: 128px;
+  max-height: 190px;
   overflow: auto;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  grid-template-columns: 1fr;
+  align-content: start;
+  gap: 6px;
   padding: 8px;
   border: 1px solid var(--border);
   border-radius: 7px;
@@ -4866,7 +4867,8 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
 
 .run-module-option {
   min-width: 0;
-  height: 30px;
+  width: 100% !important;
+  min-height: 32px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -4877,6 +4879,7 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
   color: var(--text-secondary);
   font-size: 11.5px;
   font-weight: 640;
+  box-sizing: border-box;
   cursor: pointer;
 }
 
@@ -4899,9 +4902,8 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
 
 .run-module-option span {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
+  line-height: 1.25;
 }
 
 .run-home-toggle {
