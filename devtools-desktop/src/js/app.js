@@ -41,6 +41,7 @@ function sendDesktopNotification(title, body, isSuccess) {
   }
 }
 let activeTask = null;               // 当前正在执行的任务 { id, projectName, isRunning }
+let activeSysDialogClose = null;     // 当前系统弹窗的关闭回调
 
 // ========== Custom System Dialog (替代 confirm / alert) ==========
 /**
@@ -60,7 +61,12 @@ function showConfirm(msg, opts = {}) {
       <button class="sys-btn-confirm${dangerCls}" id="sysOk">${opts.confirmText || '确定'}</button>
     `;
     overlay.classList.add('active');
-    const cleanup = (val) => { overlay.classList.remove('active'); resolve(val); };
+    const cleanup = (val) => {
+      overlay.classList.remove('active');
+      activeSysDialogClose = null;
+      resolve(val);
+    };
+    activeSysDialogClose = cleanup;
     document.getElementById('sysCancel').onclick = () => cleanup(false);
     document.getElementById('sysOk').onclick = () => cleanup(true);
   });
@@ -81,7 +87,13 @@ function showAlert(msg, opts = {}) {
       <button class="sys-btn-ok" id="sysOk">${opts.okText || '知道了'}</button>
     `;
     overlay.classList.add('active');
-    document.getElementById('sysOk').onclick = () => { overlay.classList.remove('active'); resolve(); };
+    const cleanup = () => {
+      overlay.classList.remove('active');
+      activeSysDialogClose = null;
+      resolve();
+    };
+    activeSysDialogClose = cleanup;
+    document.getElementById('sysOk').onclick = cleanup;
   });
 }
 
@@ -94,8 +106,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   WS.connect();
   setupWSHandlers();
   setupNavigation();
+  setupModalDismissal();
   requestNotificationPermission();
   await Promise.all([loadProjects(), loadServers(), loadNodeVersions()]);
+  await loadHomeData();
   checkActiveJob();
   // 更新 toolbar 日期
   updateToolbarDate();
@@ -120,6 +134,83 @@ function toggleTheme() {
 function updateThemeIcon(theme) {
   const el = document.getElementById('themeIcon');
   if (el) el.textContent = theme === 'dark' ? '☾' : '☀';
+}
+
+function initSidebarState() {
+  const saved = sessionStorage.getItem('devtools-sidebar-collapsed');
+  const collapsed = saved === null ? true : saved === 'true';
+  document.body.classList.toggle('sidebar-collapsed', collapsed);
+  updateSidebarCollapseIcon(collapsed);
+}
+
+function toggleSidebarCollapse() {
+  const collapsed = !document.body.classList.contains('sidebar-collapsed');
+  document.body.classList.toggle('sidebar-collapsed', collapsed);
+  sessionStorage.setItem('devtools-sidebar-collapsed', String(collapsed));
+  updateSidebarCollapseIcon(collapsed);
+}
+
+function updateSidebarCollapseIcon(collapsed) {
+  const btn = document.querySelector('.sidebar-collapse-toggle');
+  if (!btn) return;
+  const icon = btn.querySelector('.sidebar-collapse-icon');
+  const label = btn.querySelector('.sidebar-collapse-label');
+  if (icon) icon.textContent = collapsed ? '›' : '‹';
+  if (label) label.textContent = collapsed ? '展开' : '收起';
+  btn.title = collapsed ? '展开侧栏' : '折叠侧栏';
+}
+
+function setupModalDismissal() {
+  document.addEventListener('mousedown', (event) => {
+    const overlay = event.target;
+    if (overlay?.classList?.contains('modal-overlay') && overlay.classList.contains('active')) {
+      closeModal(overlay.id);
+      return;
+    }
+    if (overlay?.id === 'sysDialog' && overlay.classList.contains('active') && activeSysDialogClose) {
+      activeSysDialogClose(false);
+    }
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return;
+
+    const logSearchBar = document.getElementById('logSearchBar');
+    const logSearchInput = document.getElementById('logSearchInput');
+    if (logSearchBar?.classList.contains('active') && document.activeElement === logSearchInput) {
+      event.preventDefault();
+      event.stopPropagation();
+      closeLogSearch();
+      return;
+    }
+
+    const sysDialog = document.getElementById('sysDialog');
+    if (sysDialog?.classList.contains('active') && activeSysDialogClose) {
+      event.preventDefault();
+      event.stopPropagation();
+      activeSysDialogClose(false);
+      return;
+    }
+
+    const topModal = getTopActiveModal();
+    if (topModal) {
+      event.preventDefault();
+      event.stopPropagation();
+      closeModal(topModal.id);
+    }
+  }, true);
+}
+
+function getTopActiveModal() {
+  const activeModals = Array.from(document.querySelectorAll('.modal-overlay.active'));
+  if (activeModals.length === 0) return null;
+  return activeModals
+    .map((el, index) => ({
+      el,
+      index,
+      zIndex: Number.parseInt(getComputedStyle(el).zIndex, 10) || 0,
+    }))
+    .sort((a, b) => (b.zIndex - a.zIndex) || (b.index - a.index))[0].el;
 }
 
 function updateToolbarDate() {
@@ -227,6 +318,16 @@ function setupWSHandlers() {
 
 // ========== Navigation ==========
 function setupNavigation() {
+  initSidebarState();
+  const collapseBtn = document.querySelector('.sidebar-collapse-toggle');
+  if (collapseBtn) {
+    collapseBtn.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      toggleSidebarCollapse();
+    });
+  }
+
   // 项目筛选 chips
   document.querySelectorAll('#sub-dashboard .chip').forEach(chip => {
     chip.addEventListener('click', () => {
@@ -252,6 +353,10 @@ function switchPage(page, el) {
   document.getElementById('page-' + page).classList.add('active');
   const navEl = el || document.querySelector(`.sidebar-item[data-page="${page}"], .dock-item[data-page="${page}"]`);
   if (navEl) navEl.classList.add('active');
+  const main = document.querySelector('.main-content');
+  if (main) { main.scrollTop = 0; main.scrollLeft = 0; }
+  const activePage = document.getElementById('page-' + page);
+  if (activePage) { activePage.scrollTop = 0; activePage.scrollLeft = 0; }
   // 切换到部署面板时加载数据
   if (page === 'deploy') {
     const activeSub = document.querySelector('.sub-tab.active');
@@ -268,7 +373,11 @@ function switchSubTab(sub, btn) {
   document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.sub-page').forEach(p => p.classList.remove('active'));
   btn.classList.add('active');
-  document.getElementById('sub-' + sub).classList.add('active');
+  const subPage = document.getElementById('sub-' + sub);
+  subPage.classList.add('active');
+  subPage.scrollTop = 0;
+  const scrollTarget = subPage.querySelector('.project-grid, .server-list, .history-table');
+  if (scrollTarget) scrollTarget.scrollTop = 0;
   // 加载对应数据
   if (sub === 'servers') loadServers();
   if (sub === 'history') loadHistory();
@@ -297,37 +406,69 @@ async function loadHomeData() {
   try {
     // 加载历史数据
     const history = await API.get('/api/history');
-    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-    const thisWeek = history.filter(h => new Date(h.timestamp).getTime() > weekAgo);
+    const now = new Date();
+    const todayStart = new Date(now);
+    todayStart.setHours(0, 0, 0, 0);
+    const weekStart = new Date(todayStart);
+    weekStart.setDate(todayStart.getDate() - ((todayStart.getDay() + 6) % 7));
+    const lastWeekStart = new Date(weekStart);
+    lastWeekStart.setDate(weekStart.getDate() - 7);
+
+    const thisWeek = history.filter(h => {
+      const time = new Date(h.timestamp).getTime();
+      return time >= weekStart.getTime() && time <= now.getTime();
+    });
+    const lastWeek = history.filter(h => {
+      const time = new Date(h.timestamp).getTime();
+      return time >= lastWeekStart.getTime() && time < weekStart.getTime();
+    });
     const successCount = thisWeek.filter(h => h.status === 'success').length;
     const failCount = thisWeek.length - successCount;
     const rate = thisWeek.length > 0 ? Math.round(successCount / thisWeek.length * 100) : 0;
+    const multiProjectCount = projects.filter(p => p.type === 'multi-module').length;
+    const singleProjectCount = projects.length - multiProjectCount;
+    const configuredProjectCount = projects.filter(p => getProjectDefaultServerIds(p).length > 0).length;
+    const unconfiguredProjectCount = projects.length - configuredProjectCount;
+    const weekDeployCount = thisWeek.filter(h => h.type === 'deploy').length;
+    const weekBuildCount = thisWeek.length - weekDeployCount;
+    const weekDelta = thisWeek.length - lastWeek.length;
+    const trendHtml = weekDelta === 0
+      ? '<span class="stat-change flat">持平</span>'
+      : `<span class="stat-change ${weekDelta > 0 ? 'up' : 'down'}">${weekDelta > 0 ? '+' : ''}${weekDelta}</span>`;
 
     // 统计卡片
     const statsEl = document.getElementById('homeStats');
     statsEl.innerHTML = `
       <div class="stat-card">
+        <div class="stat-icon blue">⌂</div>
         <div class="stat-info">
           <div class="stat-label">管理项目</div>
           <div class="stat-value">${projects.length}</div>
+          <div class="stat-sub">多模块 ${multiProjectCount} · 单体 ${singleProjectCount}</div>
         </div>
       </div>
       <div class="stat-card">
+        <div class="stat-icon green">▣</div>
         <div class="stat-info">
-          <div class="stat-label">服务器</div>
-          <div class="stat-value">${servers.length}</div>
+          <div class="stat-label">已配置项目</div>
+          <div class="stat-value">${configuredProjectCount}</div>
+          <div class="stat-sub">已配置 ${configuredProjectCount} · 未配置 ${unconfiguredProjectCount}</div>
         </div>
       </div>
       <div class="stat-card">
+        <div class="stat-icon orange">↗</div>
         <div class="stat-info">
-          <div class="stat-label">本周部署</div>
-          <div class="stat-value">${thisWeek.length}</div>
+          <div class="stat-label">本周操作</div>
+          <div class="stat-value">${thisWeek.length}${trendHtml}</div>
+          <div class="stat-sub">部署 ${weekDeployCount} · 构建 ${weekBuildCount}</div>
         </div>
       </div>
       <div class="stat-card">
+        <div class="stat-icon teal">◯</div>
         <div class="stat-info">
           <div class="stat-label">成功率</div>
           <div class="stat-value">${rate}%</div>
+          <div class="stat-sub">成功 ${successCount} · 失败 ${failCount}</div>
         </div>
       </div>
     `;
@@ -355,7 +496,7 @@ async function loadHomeData() {
             <td class="ha-project">${projectDisplay}</td>
             <td>${typeLabel}</td>
             <td>${h.serverName || '本地'}</td>
-            <td class="ha-status ${statusCls}">${statusText}</td>
+            <td><span class="ha-status-badge ${statusCls}">${statusText}</span></td>
             <td>${h.duration || '—'}</td>
           </tr>`;
         }).join('')}</tbody>
@@ -364,25 +505,25 @@ async function loadHomeData() {
 
     // 快捷操作
     const quickEl = document.getElementById('homeQuick');
-    quickEl.innerHTML = `
+    if (quickEl) quickEl.innerHTML = `
       <div class="quick-action-card" onclick="switchPage('deploy', document.querySelector('.sidebar-item[data-page=deploy]'))">
-        <div class="qa-icon green">🚀</div>
+        <div class="qa-icon blue">↗</div>
         <div class="qa-info"><div class="qa-title">快速部署</div></div>
       </div>
       <div class="quick-action-card" onclick="switchPage('deploy', document.querySelector('.sidebar-item[data-page=deploy]'))">
-        <div class="qa-icon blue">🔨</div>
+        <div class="qa-icon purple">◇</div>
         <div class="qa-info"><div class="qa-title">构建项目</div></div>
       </div>
       <div class="quick-action-card" onclick="switchPage('report', document.querySelector('.sidebar-item[data-page=report]'))">
-        <div class="qa-icon purple">📋</div>
+        <div class="qa-icon green">▤</div>
         <div class="qa-info"><div class="qa-title">Git 周报</div></div>
       </div>
       <div class="quick-action-card" onclick="switchPage('deploy', document.querySelector('.sidebar-item[data-page=deploy]'));setTimeout(()=>switchSubTab('servers',document.querySelector('.sub-tab[data-sub=servers]')),100)">
-        <div class="qa-icon orange">🖥</div>
+        <div class="qa-icon orange">⌁</div>
         <div class="qa-info"><div class="qa-title">服务器管理</div></div>
       </div>
       <div class="quick-action-card" onclick="switchPage('settings', document.querySelector('.sidebar-item[data-page=settings]'))">
-        <div class="qa-icon gray">⚙️</div>
+        <div class="qa-icon gray">⌘</div>
         <div class="qa-info"><div class="qa-title">系统设置</div></div>
       </div>
     `;
@@ -1694,18 +1835,23 @@ function renderServers() {
     list.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:60px">暂无服务器，点击"添加服务器"按钮</div>';
     return;
   }
-  list.innerHTML = servers.map(s => `
-    <div class="server-card">
-      <div class="server-info">
-        <div class="server-icon">🖥</div>
-        <div><div class="server-name">${s.name}</div><div class="server-host">${s.username}@${s.host}:${s.port} → ${s.defaultRemotePath}</div></div>
-      </div>
+  list.innerHTML = `
+    <div class="server-row server-head">
+      <div>名称</div><div>Host</div><div>用户</div><div>端口</div><div>目标路径</div><div>操作</div>
+    </div>
+    ${servers.map(s => `
+    <div class="server-row server-card">
+      <div class="server-name">📦 ${s.name}</div>
+      <div class="server-host">${s.host}</div>
+      <div>${s.username}</div>
+      <div>${s.port}</div>
+      <div class="server-host">${s.defaultRemotePath || '/'}</div>
       <div class="server-actions">
         <button class="btn-icon" title="编辑" onclick="editServer('${s.id}')">✎</button>
         <button class="btn-icon" title="测试连接" onclick="testServer('${s.id}', this)">⚡</button>
         <button class="btn-icon danger" title="删除" onclick="deleteServer('${s.id}')">🗑</button>
       </div>
-    </div>`).join('');
+    </div>`).join('')}`;
 }
 
 // 发布目录标签列表（内存态）
@@ -1937,7 +2083,7 @@ function renderHistory() {
   const checkHeader = batchSelectMode ? '<div class="h-cell h-check"></div>' : '';
 
   table.innerHTML = `
-    <div class="history-row header">
+    <div class="history-row history-header">
       ${checkHeader}
       <div class="h-cell h-time">时间</div>
       <div class="h-cell h-project">项目</div>
@@ -1949,7 +2095,9 @@ function renderHistory() {
     </div>
     ${filtered.map(h => {
       const time = new Date(h.timestamp).toLocaleString('zh-CN', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
-      const typeLabel = h.type === 'deploy' ? '🚀 部署' : '🔨 构建';
+      const typeLabel = h.type === 'deploy' ? '部署' : '构建';
+      const typeDot = h.type === 'deploy' ? 'deploy' : 'build';
+      const statusText = h.status === 'success' ? h.duration : '失败';
       const isSelected = selectedHistoryIds.has(h.id);
       const checkCell = batchSelectMode
         ? `<div class="h-cell h-check"><input type="checkbox" class="ios-check" ${isSelected ? 'checked' : ''} onchange="toggleHistorySelect('${h.id}', this.checked)"></div>`
@@ -1958,13 +2106,13 @@ function renderHistory() {
         ${checkCell}
         <div class="h-cell h-time">${time}</div>
         <div class="h-cell h-project">${h.projectName}</div>
-        <div class="h-cell h-type">${typeLabel}</div>
+        <div class="h-cell h-type"><span class="type-pill ${typeDot}">${typeLabel}</span></div>
         <div class="h-cell h-modules"><span class="history-modules">${(h.modules || []).map(m => `<span class="module-tag">${m}</span>`).join('')}</span></div>
         <div class="h-cell h-server">${h.serverName || '—'}</div>
-        <div class="h-cell h-status ${h.status === 'success' ? 'status-success' : 'status-fail'}">${h.status === 'success' ? '✅ ' + h.duration : '❌ 失败'}</div>
+        <div class="h-cell h-status ${h.status === 'success' ? 'status-success' : 'status-fail'}"><span class="status-dot-mini"></span>${statusText}</div>
         <div class="h-cell h-actions">
-          <button class="btn-icon" onclick="viewLog('${h.id}')" title="查看日志">📋</button>
-          <button class="btn-icon danger" onclick="event.stopPropagation();deleteSingleHistory('${h.id}')" title="删除">🗑</button>
+          <button class="btn-icon" onclick="viewLog('${h.id}')" title="查看日志">⌗</button>
+          <button class="btn-icon danger" onclick="event.stopPropagation();deleteSingleHistory('${h.id}')" title="删除">⌫</button>
         </div>
       </div>`;
     }).join('')}`;
@@ -2119,24 +2267,21 @@ function showToast(title, message, options = {}) {
   if (!container) {
     container = document.createElement('div');
     container.id = 'toastContainer';
-    container.style.cssText = 'position:fixed;top:20px;right:20px;z-index:10001;display:flex;flex-direction:column;gap:8px;';
+    container.className = 'toast-container';
     document.body.appendChild(container);
   }
   const toast = document.createElement('div');
-  toast.style.cssText = 'background:rgba(30,34,50,0.95);border:1px solid rgba(99,102,241,0.4);border-radius:10px;padding:12px 20px;color:#e2e8f0;font-size:14px;box-shadow:0 8px 32px rgba(0,0,0,0.4);backdrop-filter:blur(12px);max-width:320px;animation:slideIn .3s ease;position:relative;';
-  if (options.clickable) toast.style.cursor = 'pointer';
+  toast.className = `toast-item${options.clickable ? ' clickable' : ''}`;
 
   const dismissToast = () => {
-    toast.style.transition = 'opacity .3s, transform .3s';
-    toast.style.opacity = '0';
-    toast.style.transform = 'translateX(100%)';
-    setTimeout(() => toast.remove(), 300);
+    toast.classList.add('leaving');
+    setTimeout(() => toast.remove(), 220);
   };
 
   toast.innerHTML = `
-    <span class="toast-close" style="position:absolute;top:6px;right:10px;cursor:pointer;opacity:0.5;font-size:16px;line-height:1">&times;</span>
-    <div style="font-weight:600;margin-bottom:2px;padding-right:20px">${title}</div>
-    ${message ? `<div style="font-size:12px;opacity:0.7">${message}</div>` : ''}
+    <span class="toast-close">&times;</span>
+    <div class="toast-title">${title}</div>
+    ${message ? `<div class="toast-message">${message}</div>` : ''}
   `;
 
   // ❌ 关闭按钮

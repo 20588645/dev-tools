@@ -12,17 +12,26 @@
 </script>
 <link rel="stylesheet" href="css/style.css">
 </head>
-<body data-theme="light">
+<body data-theme="light" class="sidebar-collapsed">
 <div class="app-shell">
-  <aside class="app-sidebar">
+  <aside class="app-sidebar" data-tauri-drag-region="deep">
+    <div class="sidebar-brand">
+      <span class="brand-icon">⌘</span>
+      <span>DevTools</span>
+    </div>
     <nav class="sidebar-nav" aria-label="主导航">
       <button class="sidebar-item active" data-page="home" onclick="switchPage('home', this)"><span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span><span>首页</span></button>
       <button class="sidebar-item" data-page="deploy" onclick="switchPage('deploy', this)"><span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg></span><span>部署面板</span></button>
       <button class="sidebar-item" data-page="report" onclick="switchPage('report', this)"><span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span><span>Git 周报</span></button>
       <button class="sidebar-item" data-page="settings" onclick="switchPage('settings', this)"><span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68 1.65 1.65 0 0 0 9 3.17V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span>设置</span></button>
     </nav>
+    <div class="sidebar-footer">
+      <button class="theme-toggle sidebar-tool-button" onclick="toggleTheme()" title="切换主题"><span class="sidebar-tool-icon" id="themeIcon">☀</span><span class="sidebar-tool-label">外观</span></button>
+      <button class="theme-toggle sidebar-tool-button sidebar-collapse-toggle" title="折叠侧栏"><span class="sidebar-tool-icon sidebar-collapse-icon">‹</span><span class="sidebar-tool-label sidebar-collapse-label">收起</span></button>
+    </div>
   </aside>
   <div class="app-main">
+    <div class="window-drag-region" data-tauri-drag-region aria-hidden="true"></div>
     <main class="main-content">
 
 <!-- 首页 -->
@@ -32,25 +41,33 @@
     <p class="home-date" id="homeDate"></p>
   </div>
   <div class="home-stats" id="homeStats"></div>
-  <div class="home-activity-card">
-    <div class="home-card-header">
-      <span class="home-card-title">最近活动</span>
-      <button class="btn-text" onclick="switchPage('deploy', document.querySelector('.sidebar-item[data-page=deploy]'));setTimeout(()=>switchSubTab('history',document.querySelector('.sub-tab[data-sub=history]')),100)">查看全部 →</button>
+  <div class="home-body">
+    <div class="home-activity-card">
+      <div class="home-card-header">
+        <span class="home-card-title">最近活动</span>
+        <button class="btn-text" onclick="switchPage('deploy', document.querySelector('.sidebar-item[data-page=deploy]'));setTimeout(()=>switchSubTab('history',document.querySelector('.sub-tab[data-sub=history]')),100)">查看全部</button>
+      </div>
+      <div class="home-activity-table" id="homeActivity"></div>
     </div>
-    <div class="home-activity-table" id="homeActivity"></div>
+    <aside class="home-quick-card">
+      <div class="home-card-header right-header">
+        <span class="home-card-title">快捷操作</span>
+      </div>
+      <div class="home-quick" id="homeQuick"></div>
+      <div class="home-mini-report">
+        <span>Git 周报</span>
+        <button class="btn-primary" onclick="switchPage('report', document.querySelector('.sidebar-item[data-page=report]'))">生成周报</button>
+      </div>
+    </aside>
   </div>
 </section>
 
 <!-- 部署面板 -->
 <section class="page" id="page-deploy">
-  <div class="page-header-bar">
+  <div class="page-header-bar page-header-simple">
     <div>
-      <div class="page-title" style="margin-bottom:4px">🚀 部署面板</div>
-      <div class="page-subtitle" style="margin-bottom:0">项目构建与 SFTP 部署管理</div>
-    </div>
-    <div class="status-pill">
-      <span class="status-dot"></span>
-      <span class="status-text">连接中...</span>
+      <div class="page-title">🚀 部署面板</div>
+      <div class="page-subtitle">项目构建与 SFTP 部署管理</div>
     </div>
   </div>
 
@@ -125,21 +142,10 @@
 <!-- Git 周报 -->
 <section class="page" id="page-report">
   <div class="report-app">
-    <div class="report-header">
-      <div class="report-header-brand">
-        <div class="report-header-logo">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><line x1="1.05" y1="12" x2="7" y2="12"/><line x1="17.01" y1="12" x2="22.96" y2="12"/><line x1="12" y1="1" x2="12" y2="7"/><line x1="12" y1="17" x2="12" y2="23"/></svg>
-        </div>
-        <div>
-          <h2 style="font-size:1.1rem;font-weight:700;background:linear-gradient(135deg,#e8ecf4 30%,#4f8ff7 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Git Weekly Report</h2>
-          <div style="font-size:.7rem;color:var(--text-muted);margin-top:2px">GitLab API · 增量加载 · 自动分类</div>
-        </div>
-      </div>
-      <div class="report-header-actions">
-        <button class="rbtn rbtn-outline" onclick="reportShowHistory()">📚 历史</button>
-        <button class="rbtn rbtn-outline" onclick="reportExportMD()">📄 导出</button>
-        <button class="rbtn rbtn-outline" onclick="reportCopyResult()">📋 复制</button>
-        <button class="rbtn rbtn-outline" onclick="reportShowSummary()">📝 摘要</button>
+    <div class="page-header-bar page-header-simple">
+      <div>
+        <div class="page-title">Git Weekly Report</div>
+        <div class="page-subtitle">GitLab API · 增量加载 · 自动分类</div>
       </div>
     </div>
 
@@ -149,7 +155,7 @@
         <div class="report-panel-title">配置信息</div>
         <div class="report-panel-body">
           <div class="rfield-row">
-            <div class="rfield"><label>GitLab Token</label><div style="position:relative"><input type="password" id="rptToken" placeholder="私有仓库 Token"><button class="rpt-token-toggle" onclick="rptToggleToken()">👁️</button></div></div>
+            <div class="rfield"><label>GitLab Token</label><div class="rpt-token-field"><input type="password" id="rptToken" placeholder="私有仓库 Token"><button class="rpt-token-toggle" onclick="rptToggleToken()">👁️</button></div></div>
             <div class="rfield" style="max-width:120px"><label>作者</label><input id="rptAuthor" placeholder="用户名"></div>
           </div>
           <div class="rpt-mode-switcher">
@@ -183,7 +189,15 @@
 
       <!-- Right Panel: Results -->
       <div class="report-panel report-panel-right">
-        <div class="report-panel-title">生成结果</div>
+        <div class="report-panel-title report-result-title">
+          <span>生成结果</span>
+          <div class="report-result-actions">
+            <button class="rbtn rbtn-outline" onclick="reportShowHistory()">📚 历史</button>
+            <button class="rbtn rbtn-outline" onclick="reportExportMD()">📄 导出</button>
+            <button class="rbtn rbtn-outline" onclick="reportCopyResult()">📋 复制</button>
+            <button class="rbtn rbtn-outline" onclick="reportShowSummary()">📝 摘要</button>
+          </div>
+        </div>
         <div id="rptToolbar" class="rpt-toolbar" style="display:none">
           <label class="rpt-toggle-wrap" onclick="rptToggleHideEmpty()">
             <div class="rpt-toggle-track" id="rptHideEmptyToggle"><div class="rpt-toggle-knob"></div></div>
@@ -215,8 +229,12 @@
 
 <!-- 设置 -->
 <section class="page" id="page-settings">
-  <div class="page-title">⚙️ 设置</div>
-  <div class="page-subtitle">全局配置与系统信息</div>
+  <div class="page-header-bar page-header-simple">
+    <div>
+      <div class="page-title">⚙️ 设置</div>
+      <div class="page-subtitle">全局配置与系统信息</div>
+    </div>
+  </div>
 
   <div class="settings-content">
     <!-- 通用 -->
@@ -282,7 +300,7 @@
         </div>
         <div id="settingRepoList"></div>
       </div>
-      <div style="margin-top:16px">
+      <div class="settings-actions">
         <button class="btn-primary" onclick="saveAllSettings()">💾 保存设置</button>
       </div>
     </div>
