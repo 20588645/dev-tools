@@ -4798,10 +4798,23 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
   max-width: min(760px, 88vw) !important;
 }
 
+.modal-run.config-mode {
+  width: min(540px, 88vw) !important;
+  max-width: min(540px, 88vw) !important;
+}
+
 .run-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(260px, 0.82fr);
   gap: 14px;
+}
+
+.modal-run.config-mode .run-layout {
+  grid-template-columns: 1fr;
+}
+
+.modal-run.config-mode .run-status-panel {
+  display: none !important;
 }
 
 .run-config-panel,

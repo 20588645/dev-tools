@@ -14,6 +14,7 @@ let lastDeployCache = {};            // 项目最近部署记录缓存
 let runningProjects = {};            // projectName -> 本地运行任务
 let currentRunId = null;             // 当前日志弹窗展示的本地运行任务
 let runModalProjectName = '';
+let runModalMode = 'start';
 
 // ========== 桌面通知 ==========
 const NOTIFICATION_ENABLED_KEY = 'devtools-notifications-enabled';
@@ -847,8 +848,8 @@ function renderRunPage() {
             <button class="btn-secondary" onclick="openRunLog('${p.name}')">查看日志</button>
             <button class="btn-primary" onclick="openRunUrl('${p.name}')">打开地址</button>
           ` : `
-            <button class="btn-primary" onclick="openRunModal('${p.name}')">▶ 启动运行</button>
-            <button class="btn-secondary" onclick="openRunModal('${p.name}')">配置</button>
+            <button class="btn-primary" onclick="openRunModal('${p.name}', 'start')">▶ 启动运行</button>
+            <button class="btn-secondary" onclick="openRunModal('${p.name}', 'config')">配置</button>
           `}
         </div>
       </div>`;
@@ -1127,11 +1128,19 @@ function getRunSelectedModules() {
   return modules;
 }
 
-function openRunModal(projectName) {
+function openRunModal(projectName, mode = 'start') {
   const project = projects.find(p => p.name === projectName);
   if (!project) return;
   runModalProjectName = projectName;
+  runModalMode = mode;
 
+  const modal = document.querySelector('#runModal .modal-run');
+  if (modal) modal.classList.toggle('config-mode', mode === 'config');
+  document.getElementById('runModalTitle').textContent = mode === 'config' ? '本地运行配置' : '▶ 运行本地项目';
+  document.getElementById('runSectionTitle').textContent = mode === 'config' ? '默认配置' : '运行配置';
+  const startBtn = document.getElementById('runStartBtn');
+  startBtn.textContent = mode === 'config' ? '保存配置' : '▶ 启动运行';
+  startBtn.onclick = mode === 'config' ? saveLocalRunConfig : startLocalRunFromModal;
   document.getElementById('runSubtitle').textContent = `${project.displayName || project.name} · ${project.path}`;
   const nodeSelect = document.getElementById('runNodeVersion');
   nodeSelect.innerHTML = `<option value="">系统默认 (${currentNodeVersion})</option>`
@@ -1141,7 +1150,7 @@ function openRunModal(projectName) {
 
   document.getElementById('runCommand').value = project.runCommand || inferRunCommand(project);
   document.getElementById('runPort').value = project.runPort || '';
-  renderRunModalStatus(runningProjects[projectName]);
+  if (mode === 'start') renderRunModalStatus(runningProjects[projectName]);
   document.getElementById('runModal').classList.add('active');
 }
 
@@ -1169,10 +1178,48 @@ function renderRunModalStatus(job) {
 async function startLocalRunFromModal() {
   const project = projects.find(p => p.name === runModalProjectName);
   if (!project) return;
+  const config = await persistLocalRunConfig(project);
+  if (!config) return;
+
+  const { command, nodeVersion, moduleNames, includeHome, homeModuleName, port } = config;
+
+  try {
+    document.getElementById('runStartBtn').disabled = true;
+    const data = await API.post('/api/run/start', { projectName: project.name, command, moduleNames, includeHome, homeModuleNames: [homeModuleName], nodeVersion, port });
+    runningProjects[project.name] = data;
+    closeModal('runModal');
+    showRunLogShell(data);
+    showToast('▶ 本地运行已启动', project.displayName || project.name);
+    renderRunPage();
+  } catch (e) {
+    showAlert('启动失败: ' + e.message, { icon: '❌' });
+  } finally {
+    document.getElementById('runStartBtn').disabled = false;
+  }
+}
+
+async function saveLocalRunConfig() {
+  const project = projects.find(p => p.name === runModalProjectName);
+  if (!project) return;
+  try {
+    document.getElementById('runStartBtn').disabled = true;
+    const config = await persistLocalRunConfig(project);
+    if (!config) return;
+    closeModal('runModal');
+    showToast('配置已保存', project.displayName || project.name);
+    renderRunPage();
+  } catch (e) {
+    showAlert('保存配置失败: ' + e.message, { icon: '❌' });
+  } finally {
+    document.getElementById('runStartBtn').disabled = false;
+  }
+}
+
+async function persistLocalRunConfig(project) {
   const command = document.getElementById('runCommand').value.trim();
   if (!command) {
     await showAlert('请输入启动命令', { icon: '⚠️' });
-    return;
+    return null;
   }
 
   const nodeVersion = document.getElementById('runNodeVersion').value;
@@ -1181,25 +1228,12 @@ async function startLocalRunFromModal() {
   const homeModuleName = getRunHomeModuleName();
   const port = document.getElementById('runPort').value.trim();
 
-  try {
-    document.getElementById('runStartBtn').disabled = true;
-    await API.put(`/api/projects/${project.name}`, { runCommand: command, runPort: port, runHomeModule: homeModuleName, nodeVersion });
-    project.runCommand = command;
-    project.runPort = port;
-    project.runHomeModule = homeModuleName;
-    project.nodeVersion = nodeVersion;
-
-    const data = await API.post('/api/run/start', { projectName: project.name, command, moduleNames, includeHome, homeModuleNames: [homeModuleName], nodeVersion, port });
-    runningProjects[project.name] = data;
-    closeModal('runModal');
-    showRunLogShell(data);
-    showToast('▶ 本地运行已启动', project.displayName || project.name);
-    renderProjects();
-  } catch (e) {
-    showAlert('启动失败: ' + e.message, { icon: '❌' });
-  } finally {
-    document.getElementById('runStartBtn').disabled = false;
-  }
+  await API.put(`/api/projects/${project.name}`, { runCommand: command, runPort: port, runHomeModule: homeModuleName, nodeVersion });
+  project.runCommand = command;
+  project.runPort = port;
+  project.runHomeModule = homeModuleName;
+  project.nodeVersion = nodeVersion;
+  return { command, nodeVersion, moduleNames, includeHome, homeModuleName, port };
 }
 
 function showRunLogShell(job) {

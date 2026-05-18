@@ -562,7 +562,7 @@
   <div class="modal modal-run">
     <div class="modal-header">
       <div>
-        <h2>▶ 运行本地项目</h2>
+        <h2 id="runModalTitle">▶ 运行本地项目</h2>
         <p class="modal-subtitle" id="runSubtitle"></p>
       </div>
       <button class="modal-close" onclick="closeModal('runModal')">✕</button>
@@ -570,7 +570,7 @@
     <div class="modal-body">
       <div class="run-layout">
         <div class="run-config-panel">
-          <div class="run-section-title">运行配置</div>
+          <div class="run-section-title" id="runSectionTitle">运行配置</div>
           <div class="config-row">
             <label>Node 版本</label>
             <select id="runNodeVersion"></select>
