@@ -20,6 +20,28 @@ function shellQuote(value) {
   return `'${String(value).replace(/'/g, `'\\''`)}'`;
 }
 
+function normalizeModuleNames(moduleNames, moduleName, includeHome) {
+  const source = Array.isArray(moduleNames)
+    ? moduleNames
+    : (typeof moduleNames === 'string' && moduleNames ? moduleNames.split(',') : []);
+  const normalized = source
+    .concat(moduleName ? [moduleName] : [])
+    .map(v => String(v).trim())
+    .filter(Boolean);
+
+  if (includeHome && !normalized.some(v => v.toLowerCase() === 'home')) {
+    normalized.push('home');
+  }
+
+  const seen = new Set();
+  return normalized.filter(v => {
+    const key = v.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 function buildRunEnv(nodeVersion, port) {
   const env = { ...process.env, FORCE_COLOR: '0' };
   if (port) {
@@ -49,6 +71,8 @@ function publicJob(job) {
     id: job.id,
     projectName: job.projectName,
     moduleName: job.moduleName,
+    moduleNames: job.moduleNames,
+    includeHome: job.includeHome,
     command: job.command,
     nodeVersion: job.nodeVersion,
     port: job.port,
@@ -110,7 +134,7 @@ router.get('/:id/logs', (req, res) => {
 });
 
 router.post('/start', (req, res) => {
-  const { projectName, command, moduleName = '', nodeVersion = '', port = '' } = req.body;
+  const { projectName, command, moduleName = '', moduleNames = [], includeHome = false, nodeVersion = '', port = '' } = req.body;
   if (!projectName) return res.status(400).json({ error: 'projectName 必填' });
 
   const existing = [...runJobs.values()].find(job => job.projectName === projectName && ['starting', 'running'].includes(job.status));
@@ -124,12 +148,15 @@ router.post('/start', (req, res) => {
   if (!finalCommand) return res.status(400).json({ error: '启动命令不能为空' });
 
   const id = `run-${Date.now()}`;
-  const launchCommand = moduleName ? `${finalCommand} ${shellQuote(moduleName)}` : finalCommand;
+  const moduleArgs = normalizeModuleNames(moduleNames, moduleName, includeHome);
+  const launchCommand = moduleArgs.length ? `${finalCommand} ${moduleArgs.map(shellQuote).join(' ')}` : finalCommand;
 
   const job = {
     id,
     projectName,
-    moduleName,
+    moduleName: moduleArgs[0] || '',
+    moduleNames: moduleArgs,
+    includeHome: !!includeHome,
     command: finalCommand,
     nodeVersion: nodeVersion || project.nodeVersion || '',
     port: port || project.runPort || '',
@@ -159,7 +186,7 @@ router.post('/start', (req, res) => {
   pushLog(req.app, job, 'info', '║           ▶ 本地运行任务启动             ║');
   pushLog(req.app, job, 'info', '╚══════════════════════════════════════════╝');
   pushLog(req.app, job, 'info', `📋 项目: ${project.displayName || projectName}`);
-  if (moduleName) pushLog(req.app, job, 'info', `📦 模块: ${moduleName}`);
+  if (moduleArgs.length) pushLog(req.app, job, 'info', `📦 模块: ${moduleArgs.join(', ')}`);
   pushLog(req.app, job, 'info', `🔧 Node: ${job.nodeVersion || '系统默认'}`);
   if (job.port) pushLog(req.app, job, 'info', `🌐 端口: ${job.port}`);
   pushLog(req.app, job, 'cmd', `$ ${launchCommand}`);

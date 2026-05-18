@@ -4500,6 +4500,38 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
   width: min(360px, 42vw);
 }
 
+#page-run .search-bar {
+  width: min(360px, 42vw) !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  padding: 0 12px !important;
+  gap: 9px !important;
+  background: var(--bg-input) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+#page-run .search-bar:focus-within {
+  border-color: color-mix(in srgb, var(--primary) 42%, var(--border)) !important;
+  box-shadow: 0 0 0 3px var(--primary-light) !important;
+}
+
+#page-run .search-bar input,
+#page-run .search-bar input:focus {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  color: var(--text-primary) !important;
+  font-size: 12px !important;
+}
+
 .run-page-filters {
   display: flex;
   flex-wrap: wrap;
@@ -4692,6 +4724,9 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
   .run-page-search {
     width: 100%;
   }
+  #page-run .search-bar {
+    width: 100% !important;
+  }
   .run-overview {
     grid-template-columns: 1fr;
   }
@@ -4811,6 +4846,96 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
   font-size: 12px;
 }
 
+.run-config-panel #runModuleRow {
+  align-items: start;
+}
+
+.run-module-picker {
+  width: 100%;
+  min-height: 92px;
+  max-height: 142px;
+  overflow: auto;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--bg-elevated);
+}
+
+.run-module-option {
+  min-width: 0;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 9px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  font-size: 11.5px;
+  font-weight: 640;
+  cursor: pointer;
+}
+
+.run-module-option:hover {
+  border-color: color-mix(in srgb, var(--primary) 30%, var(--border));
+  color: var(--text-primary);
+}
+
+.run-module-option input {
+  flex: 0 0 14px !important;
+  width: 14px !important;
+  height: 14px !important;
+  min-height: 14px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+  accent-color: var(--primary);
+}
+
+.run-module-option span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.run-home-toggle {
+  width: 100%;
+  min-height: 32px;
+  display: flex !important;
+  align-items: center;
+  gap: 9px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--bg-elevated);
+  color: var(--text-secondary) !important;
+  font-size: 12px !important;
+  font-weight: 650 !important;
+  cursor: pointer;
+}
+
+.run-config-panel .config-row > .run-home-toggle {
+  width: 100% !important;
+}
+
+.run-home-toggle input {
+  flex: 0 0 14px !important;
+  width: 14px !important;
+  height: 14px !important;
+  min-height: 14px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+  accent-color: var(--primary);
+}
+
 .run-hint {
   margin-top: 4px;
   color: var(--text-muted);
@@ -4894,6 +5019,9 @@ body[data-theme="dark"] .run-status-panel {
 
 @media (max-width: 760px) {
   .run-layout {
+    grid-template-columns: 1fr;
+  }
+  .run-module-picker {
     grid-template-columns: 1fr;
   }
 }

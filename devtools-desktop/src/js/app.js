@@ -864,6 +864,13 @@ function formatRunUptime(startedAt) {
   return `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
 }
 
+function formatRunModules(job, prefix = '') {
+  const modules = Array.isArray(job.moduleNames) && job.moduleNames.length
+    ? job.moduleNames
+    : (job.moduleName ? [job.moduleName] : []);
+  return modules.length ? `${prefix}${modules.join(', ')}` : `${prefix}整体项目`;
+}
+
 // 加载项目最近部署信息（批量异步，不阻塞渲染）
 async function loadLastDeployInfos(projectList) {
   const promises = projectList.map(async (p) => {
@@ -1065,6 +1072,47 @@ async function confirmQuickRepeat() {
 }
 
 // ========== 本地运行 ==========
+function renderRunModulePicker(project) {
+  const moduleRow = document.getElementById('runModuleRow');
+  const homeRow = document.getElementById('runHomeRow');
+  const modulePicker = document.getElementById('runModuleSelect');
+  const includeHome = document.getElementById('runIncludeHome');
+  const modules = (project.modules || []).filter(m => m.name && m.name.toLowerCase() !== 'home');
+
+  if (project.type !== 'multi-module' || modules.length === 0) {
+    moduleRow.style.display = 'none';
+    homeRow.style.display = 'none';
+    modulePicker.innerHTML = '';
+    includeHome.checked = false;
+    return;
+  }
+
+  moduleRow.style.display = '';
+  homeRow.style.display = '';
+  includeHome.checked = true;
+  modulePicker.innerHTML = modules.map(m => {
+    const value = escapeAttr(m.name);
+    const label = escapeHtml(m.name);
+    return `
+      <label class="run-module-option">
+        <input type="checkbox" value="${value}">
+        <span>${label}</span>
+      </label>`;
+  }).join('');
+}
+
+function getRunSelectedModules() {
+  const selected = [...document.querySelectorAll('#runModuleSelect input[type="checkbox"]:checked')]
+    .map(input => input.value)
+    .filter(Boolean);
+  const includeHome = !!document.getElementById('runIncludeHome')?.checked;
+  const modules = [...selected];
+  if (includeHome && !modules.some(m => m.toLowerCase() === 'home')) {
+    modules.push('home');
+  }
+  return modules;
+}
+
 function openRunModal(projectName) {
   const project = projects.find(p => p.name === projectName);
   if (!project) return;
@@ -1075,16 +1123,7 @@ function openRunModal(projectName) {
   nodeSelect.innerHTML = `<option value="">系统默认 (${currentNodeVersion})</option>`
     + nodeVersions.map(v => `<option value="${v}" ${v === (project.nodeVersion || '') ? 'selected' : ''}>${v}</option>`).join('');
 
-  const moduleRow = document.getElementById('runModuleRow');
-  const moduleSelect = document.getElementById('runModuleSelect');
-  if (project.type === 'multi-module' && (project.modules || []).length > 0) {
-    moduleRow.style.display = '';
-    moduleSelect.innerHTML = '<option value="">不指定模块</option>'
-      + (project.modules || []).map(m => `<option value="${m.name}">${m.name}</option>`).join('');
-  } else {
-    moduleRow.style.display = 'none';
-    moduleSelect.innerHTML = '<option value="">整体项目</option>';
-  }
+  renderRunModulePicker(project);
 
   document.getElementById('runCommand').value = project.runCommand || inferRunCommand(project);
   document.getElementById('runPort').value = project.runPort || '';
@@ -1104,7 +1143,7 @@ function renderRunModalStatus(job) {
     <div class="run-live-card">
       <div class="run-live-state"><span class="run-dot"></span>${job.status === 'starting' ? '启动中' : '运行中'}</div>
       <div class="run-live-url">${url}</div>
-      <div class="run-live-meta">PID ${job.pid || '—'} · ${job.command || ''}</div>
+      <div class="run-live-meta">PID ${job.pid || '—'} · ${formatRunModules(job)} · ${job.command || ''}</div>
       <div class="run-live-actions">
         <button class="btn-secondary" onclick="openRunLog('${job.projectName}')">查看日志</button>
         <button class="btn-secondary" onclick="openRunUrl('${job.projectName}')">打开地址</button>
@@ -1123,7 +1162,8 @@ async function startLocalRunFromModal() {
   }
 
   const nodeVersion = document.getElementById('runNodeVersion').value;
-  const moduleName = document.getElementById('runModuleSelect').value;
+  const moduleNames = getRunSelectedModules();
+  const includeHome = !!document.getElementById('runIncludeHome')?.checked;
   const port = document.getElementById('runPort').value.trim();
 
   try {
@@ -1133,7 +1173,7 @@ async function startLocalRunFromModal() {
     project.runPort = port;
     project.nodeVersion = nodeVersion;
 
-    const data = await API.post('/api/run/start', { projectName: project.name, command, moduleName, nodeVersion, port });
+    const data = await API.post('/api/run/start', { projectName: project.name, command, moduleNames, includeHome, nodeVersion, port });
     runningProjects[project.name] = data;
     closeModal('runModal');
     showRunLogShell(data);
@@ -1151,7 +1191,7 @@ function showRunLogShell(job) {
   currentDeployId = null;
   activeTask = { id: job.id, projectName: job.projectName, isRunning: ['starting', 'running'].includes(job.status), taskKind: 'run' };
   document.getElementById('logTitle').textContent = '运行日志';
-  document.getElementById('logSubtitle').textContent = `${job.projectName}${job.moduleName ? ' · ' + job.moduleName : ''}`;
+  document.getElementById('logSubtitle').textContent = `${job.projectName}${formatRunModules(job, ' · ')}`;
   document.getElementById('logTerminal').innerHTML = '';
   document.getElementById('deployResult').style.display = 'flex';
   document.getElementById('resultIcon').textContent = '▶';
@@ -2146,7 +2186,11 @@ function gitTimeAgo(ts) {
 }
 
 function escapeHtml(str) {
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function escapeAttr(str) {
+  return escapeHtml(str).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 function setStepActive(idx) {
