@@ -16,6 +16,7 @@ let currentRunId = null;             // 当前日志弹窗展示的本地运行�
 let runModalProjectName = '';
 let runModalMode = 'start';
 let selectedRunModuleNames = new Set();
+let notifiedRunIds = new Set();
 
 // ========== 桌面通知 ==========
 const NOTIFICATION_ENABLED_KEY = 'devtools-notifications-enabled';
@@ -440,6 +441,14 @@ function setupWSHandlers() {
     const isActive = ['starting', 'running'].includes(data.status);
     if (isActive) runningProjects[data.projectName] = data;
     else delete runningProjects[data.projectName];
+
+    if (data.status === 'running' && !notifiedRunIds.has(data.id)) {
+      notifiedRunIds.add(data.id);
+      const modulesText = (data.moduleNames || []).length ? ` · ${(data.moduleNames || []).join(', ')}` : '';
+      const urlText = data.url ? `\n${data.url}` : '';
+      sendDesktopNotification('本地运行成功', `${data.projectName}${modulesText} 已启动${urlText}`, true, { target: 'log' });
+    }
+    if (!isActive && data.id) notifiedRunIds.delete(data.id);
 
     if (data.id === currentRunId) updateRunLogStatus(data);
     renderProjects();

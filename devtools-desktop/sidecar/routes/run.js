@@ -188,6 +188,20 @@ function broadcastStatus(app, job) {
   app.get('broadcast')('run-status', publicJob(job));
 }
 
+function markJobRunning(app, job, url = '') {
+  const wasRunning = job.status === 'running';
+  if (url && !job.url) job.url = url;
+  if (wasRunning) {
+    broadcastStatus(app, job);
+    return;
+  }
+
+  job.status = 'running';
+  const displayUrl = job.url || (job.port ? `http://localhost:${job.port}` : '');
+  pushLog(app, job, 'success', displayUrl ? `✅ 本地服务运行成功: ${displayUrl}` : '✅ 本地服务运行成功');
+  broadcastStatus(app, job);
+}
+
 function terminateJob(job, signal = 'SIGTERM') {
   if (!job || !job.pid) return;
   try {
@@ -210,10 +224,9 @@ function markRunningFromOutput(app, job, text) {
   if (busyPort) job.addressInUsePort = busyPort;
 
   const url = inferUrl(text, job.port);
-  if (url && !job.url) job.url = url;
-  if (job.status === 'starting' && (url || /compiled|ready|started|listening|running|local:/i.test(text))) {
-    job.status = 'running';
-    broadcastStatus(app, job);
+  if (url) job.url = url;
+  if (job.status === 'starting' && (url || /compiled (successfully|with warnings)|compiled successfully|compiled with warnings|listening at|local:/i.test(text))) {
+    markJobRunning(app, job, url);
   }
 }
 
@@ -294,9 +307,14 @@ function handleRunOutput(app, job, text, fallbackType = 'info') {
     pushLog(app, job, type, line);
     markRunningFromOutput(app, job, line);
   });
+  scheduleRunOutputFlush(app, job);
 }
 
 function flushRunOutput(app, job) {
+  if (job.outputFlushTimer) {
+    clearTimeout(job.outputFlushTimer);
+    job.outputFlushTimer = null;
+  }
   const text = (job.outputBuffer || '').trimEnd();
   job.outputBuffer = '';
   if (!text.trim()) return;
@@ -305,6 +323,14 @@ function flushRunOutput(app, job) {
     pushLog(app, job, type, line);
     markRunningFromOutput(app, job, line);
   });
+}
+
+function scheduleRunOutputFlush(app, job) {
+  if (!job.outputBuffer?.trim()) return;
+  if (job.outputFlushTimer) clearTimeout(job.outputFlushTimer);
+  job.outputFlushTimer = setTimeout(() => {
+    flushRunOutput(app, job);
+  }, 350);
 }
 
 function spawnRunProcess(app, job, project, launchCommand, env, moduleArgs) {
@@ -386,12 +412,16 @@ function spawnRunProcess(app, job, project, launchCommand, env, moduleArgs) {
 
   setTimeout(() => {
     if (attempt === job.attempt && job.status === 'starting') {
-      job.status = 'running';
-      if (!job.url && job.port) job.url = `http://localhost:${job.port}`;
-      pushLog(app, job, 'success', job.url ? `本地服务运行中: ${job.url}` : '本地服务已启动，等待开发服务器输出访问地址');
+      pushLog(app, job, 'info', '本地服务进程已启动，正在等待开发服务器输出编译完成或访问地址...');
       broadcastStatus(app, job);
     }
   }, 1800);
+
+  setTimeout(() => {
+    if (attempt === job.attempt && job.status === 'starting') {
+      markJobRunning(app, job, job.port ? `http://localhost:${job.port}` : '');
+    }
+  }, 120000);
 
   broadcastStatus(app, job);
 }
