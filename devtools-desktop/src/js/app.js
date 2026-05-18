@@ -14,7 +14,6 @@ let lastDeployCache = {};            // 项目最近部署记录缓存
 let runningProjects = {};            // projectName -> 本地运行任务
 let currentRunId = null;             // 当前日志弹窗展示的本地运行任务
 let runModalProjectName = '';
-let currentRunHomeModules = [];
 
 // ========== 桌面通知 ==========
 const NOTIFICATION_ENABLED_KEY = 'devtools-notifications-enabled';
@@ -1073,15 +1072,8 @@ async function confirmQuickRepeat() {
 }
 
 // ========== 本地运行 ==========
-function isRunHomeModuleName(name) {
-  return /home/i.test(String(name || ''));
-}
-
-function detectRunHomeModules(project) {
-  return (project.modules || [])
-    .map(m => m.name)
-    .filter(Boolean)
-    .filter(isRunHomeModuleName);
+function getRunHomeModuleName() {
+  return (document.getElementById('runHomeModuleName')?.value || '').trim() || 'home';
 }
 
 function renderRunModulePicker(project) {
@@ -1089,18 +1081,22 @@ function renderRunModulePicker(project) {
   const homeRow = document.getElementById('runHomeRow');
   const modulePicker = document.getElementById('runModuleSelect');
   const includeHome = document.getElementById('runIncludeHome');
-  const homeLabel = document.getElementById('runHomeLabel');
-  currentRunHomeModules = detectRunHomeModules(project);
-  const modules = (project.modules || []).filter(m => m.name && !isRunHomeModuleName(m.name));
+  const homeInput = document.getElementById('runHomeModuleName');
+  const homeModuleName = project.runHomeModule || 'home';
+  const modules = (project.modules || []).filter(m => m.name && m.name.toLowerCase() !== homeModuleName.toLowerCase());
 
   if (project.type !== 'multi-module') {
     moduleRow.style.display = 'none';
     homeRow.style.display = 'none';
     modulePicker.innerHTML = '';
     includeHome.checked = false;
-    currentRunHomeModules = [];
+    homeInput.value = 'home';
     return;
   }
+
+  homeRow.style.display = '';
+  includeHome.checked = true;
+  homeInput.value = homeModuleName;
 
   moduleRow.style.display = modules.length ? '' : 'none';
   modulePicker.innerHTML = modules.length
@@ -1114,12 +1110,6 @@ function renderRunModulePicker(project) {
         </label>`;
     }).join('')
     : '';
-
-  homeRow.style.display = currentRunHomeModules.length ? '' : 'none';
-  includeHome.checked = currentRunHomeModules.length > 0;
-  homeLabel.textContent = currentRunHomeModules.length
-    ? `同步运行 ${currentRunHomeModules.join(', ')}`
-    : '未识别到首页模块';
 }
 
 function getRunSelectedModules() {
@@ -1129,11 +1119,10 @@ function getRunSelectedModules() {
   const includeHome = !!document.getElementById('runIncludeHome')?.checked;
   const modules = [...selected];
   if (includeHome) {
-    currentRunHomeModules.forEach(homeModule => {
-      if (!modules.some(m => m.toLowerCase() === homeModule.toLowerCase())) {
-        modules.push(homeModule);
-      }
-    });
+    const homeModule = getRunHomeModuleName();
+    if (!modules.some(m => m.toLowerCase() === homeModule.toLowerCase())) {
+      modules.push(homeModule);
+    }
   }
   return modules;
 }
@@ -1189,16 +1178,18 @@ async function startLocalRunFromModal() {
   const nodeVersion = document.getElementById('runNodeVersion').value;
   const moduleNames = getRunSelectedModules();
   const includeHome = !!document.getElementById('runIncludeHome')?.checked;
+  const homeModuleName = getRunHomeModuleName();
   const port = document.getElementById('runPort').value.trim();
 
   try {
     document.getElementById('runStartBtn').disabled = true;
-    await API.put(`/api/projects/${project.name}`, { runCommand: command, runPort: port, nodeVersion });
+    await API.put(`/api/projects/${project.name}`, { runCommand: command, runPort: port, runHomeModule: homeModuleName, nodeVersion });
     project.runCommand = command;
     project.runPort = port;
+    project.runHomeModule = homeModuleName;
     project.nodeVersion = nodeVersion;
 
-    const data = await API.post('/api/run/start', { projectName: project.name, command, moduleNames, includeHome, homeModuleNames: currentRunHomeModules, nodeVersion, port });
+    const data = await API.post('/api/run/start', { projectName: project.name, command, moduleNames, includeHome, homeModuleNames: [homeModuleName], nodeVersion, port });
     runningProjects[project.name] = data;
     closeModal('runModal');
     showRunLogShell(data);

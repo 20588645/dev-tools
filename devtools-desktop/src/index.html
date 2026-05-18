@@ -581,10 +581,13 @@
           </div>
           <div class="config-row" id="runHomeRow">
             <label>首页模块</label>
-            <label class="run-home-toggle">
-              <input type="checkbox" id="runIncludeHome">
-              <span id="runHomeLabel">同步运行首页模块</span>
-            </label>
+            <div class="run-home-control">
+              <label class="run-home-check">
+                <input type="checkbox" id="runIncludeHome">
+                <span>同步运行</span>
+              </label>
+              <input type="text" id="runHomeModuleName" placeholder="home">
+            </div>
           </div>
           <div class="config-row">
             <label>启动命令</label>

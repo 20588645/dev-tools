@@ -4906,12 +4906,21 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
   line-height: 1.25;
 }
 
-.run-home-toggle {
+.run-home-control {
   width: 100%;
   min-height: 32px;
-  display: flex !important;
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: 9px;
+}
+
+.run-home-check {
+  width: 92px !important;
+  min-height: 32px;
+  display: inline-flex !important;
+  align-items: center;
+  gap: 8px;
   padding: 0 10px;
   border: 1px solid var(--border);
   border-radius: 7px;
@@ -4919,14 +4928,15 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
   color: var(--text-secondary) !important;
   font-size: 12px !important;
   font-weight: 650 !important;
+  white-space: nowrap;
   cursor: pointer;
 }
 
-.run-config-panel .config-row > .run-home-toggle {
+.run-config-panel .config-row > .run-home-control {
   width: 100% !important;
 }
 
-.run-home-toggle input {
+.run-home-check input {
   flex: 0 0 14px !important;
   width: 14px !important;
   height: 14px !important;
@@ -4936,6 +4946,12 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
   border-radius: 4px !important;
   box-shadow: none !important;
   accent-color: var(--primary);
+}
+
+.run-home-control #runHomeModuleName {
+  height: 32px !important;
+  min-height: 32px !important;
+  font-family: var(--font-mono);
 }
 
 .run-hint {

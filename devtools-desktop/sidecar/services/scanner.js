@@ -33,6 +33,7 @@ function analyzeProject(projectPath) {
       buildCommand: detectBuildCommand(pkg),
       runCommand: detectRunCommand(pkg),
       runPort: '',
+      runHomeModule: 'home',
       distDir: 'dist',
       modules: [],
       excludeModules: [],
