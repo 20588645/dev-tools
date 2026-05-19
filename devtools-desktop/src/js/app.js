@@ -17,6 +17,7 @@ let runModalProjectName = '';
 let runModalMode = 'start';
 let selectedRunModuleNames = new Set();
 let notifiedRunIds = new Set();
+let notifiedRunCompileErrors = new Set();
 
 // ========== 桌面通知 ==========
 const NOTIFICATION_ENABLED_KEY = 'devtools-notifications-enabled';
@@ -447,6 +448,15 @@ function setupWSHandlers() {
       const modulesText = (data.moduleNames || []).length ? ` · ${(data.moduleNames || []).join(', ')}` : '';
       const urlText = data.url ? `\n${data.url}` : '';
       sendDesktopNotification('本地运行成功', `${data.projectName}${modulesText} 已启动${urlText}`, true, { target: 'log' });
+    }
+    if (data.compileStatus === 'error' && data.compileErrorSeq) {
+      const errorKey = `${data.id}:${data.compileErrorSeq}`;
+      if (!notifiedRunCompileErrors.has(errorKey)) {
+        notifiedRunCompileErrors.add(errorKey);
+        const modulesText = (data.moduleNames || []).length ? ` · ${(data.moduleNames || []).join(', ')}` : '';
+        sendDesktopNotification('本地项目编译报错', `${data.projectName}${modulesText}\n${data.compileError || '请查看运行日志'}`, false, { target: 'log' });
+        showToast('❌ 本地项目编译报错', data.projectName, { clickable: true });
+      }
     }
     if (!isActive && data.id) notifiedRunIds.delete(data.id);
 
@@ -1342,6 +1352,7 @@ function showRunLogShell(job) {
   currentRunId = job.id;
   currentDeployId = null;
   activeTask = { id: job.id, projectName: job.projectName, isRunning: ['starting', 'running'].includes(job.status), taskKind: 'run' };
+  document.getElementById('logModal').classList.remove('run-compile-error', 'run-compile-warning');
   document.getElementById('logTitle').textContent = '运行日志';
   document.getElementById('logSubtitle').textContent = `${job.projectName}${formatRunModules(job, ' · ')}`;
   document.getElementById('logTerminal').innerHTML = '';
@@ -1395,6 +1406,9 @@ async function stopLocalRun(projectName) {
 function updateRunLogStatus(job) {
   if (job.id !== currentRunId) return;
   const isRunning = ['starting', 'running'].includes(job.status);
+  const logModal = document.getElementById('logModal');
+  logModal.classList.toggle('run-compile-error', job.compileStatus === 'error');
+  logModal.classList.toggle('run-compile-warning', job.compileStatus === 'warning');
   if (activeTask && activeTask.taskKind === 'run') activeTask.isRunning = isRunning;
   if (job.status === 'starting') {
     setStepActive(0);
@@ -1406,9 +1420,19 @@ function updateRunLogStatus(job) {
     setStepDone(0);
     setStepActive(1);
     document.getElementById('progressBar').style.width = '100%';
-    document.getElementById('progressText').textContent = '运行中';
-    document.getElementById('resultIcon').textContent = '✅';
-    document.getElementById('resultText').textContent = job.url ? `本地服务运行中 · ${job.url}` : '本地服务运行中';
+    if (job.compileStatus === 'error') {
+      document.getElementById('progressText').textContent = '编译报错';
+      document.getElementById('resultIcon').textContent = '❌';
+      document.getElementById('resultText').textContent = `本地项目编译报错：${job.compileError || '请查看日志'}`;
+    } else if (job.compileStatus === 'compiling') {
+      document.getElementById('progressText').textContent = '编译中';
+      document.getElementById('resultIcon').textContent = '●';
+      document.getElementById('resultText').textContent = '本地服务运行中，正在重新编译';
+    } else {
+      document.getElementById('progressText').textContent = job.compileStatus === 'warning' ? '有警告' : '运行中';
+      document.getElementById('resultIcon').textContent = '✅';
+      document.getElementById('resultText').textContent = job.url ? `本地服务运行中 · ${job.url}` : '本地服务运行中';
+    }
   } else {
     document.querySelectorAll('#progressSteps .step').forEach(s => s.classList.add('done'));
     document.getElementById('progressBar').style.width = '100%';

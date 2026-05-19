@@ -175,6 +175,10 @@ function publicJob(job) {
     stoppedAt: job.stoppedAt,
     exitCode: job.exitCode,
     error: job.error,
+    compileStatus: job.compileStatus || '',
+    compileError: job.compileError || '',
+    compileErrorAt: job.compileErrorAt || null,
+    compileErrorSeq: job.compileErrorSeq || 0,
   };
 }
 
@@ -209,11 +213,40 @@ function isRunReadyLine(text) {
   return /(?:compiled (?:successfully|with (?:\d+\s+)?warnings?)|compiled successfully|compiled with (?:\d+\s+)?warnings?|listening at|local:)/i.test(String(text || ''));
 }
 
+function isRunCompileStartLine(text) {
+  return /(?:｢wdm｣:\s*)?compiling\.{2,}|wait until bundle finished|starting dev server/i.test(String(text || ''));
+}
+
+function isRunCompileErrorLine(text) {
+  return /(?:failed to compile|module (?:build )?error|syntax error|typeerror:|referenceerror:|eslint-loader|npm err!|error in \.\/|^\s*error\s+in\s+|^\s*error\s{2,}|^\s*errors?:\s*$|^\s*[✖×]\s+\d+\s+problems?)/i.test(String(text || ''));
+}
+
 function addPendingReadyLine(job, line) {
   const clean = stripTerminalControl(line).trim();
   if (!clean) return;
   if (!job.pendingReadyLines) job.pendingReadyLines = [];
   if (!job.pendingReadyLines.includes(clean)) job.pendingReadyLines.push(clean);
+}
+
+function markCompileStarting(app, job) {
+  if (job.compileStatus === 'compiling') return;
+  job.compileStatus = 'compiling';
+  job.compileErrorActive = false;
+  job.compileError = '';
+  broadcastStatus(app, job);
+}
+
+function markCompileError(app, job, line) {
+  const clean = stripTerminalControl(line).trim();
+  const alreadyInError = job.compileStatus === 'error' && job.compileErrorActive;
+  job.compileStatus = 'error';
+  job.compileErrorActive = true;
+  if (!job.compileError) job.compileError = clean || '编译失败';
+  if (!alreadyInError) {
+    job.compileErrorAt = Date.now();
+    job.compileErrorSeq = (job.compileErrorSeq || 0) + 1;
+    broadcastStatus(app, job);
+  }
 }
 
 function terminateJob(job, signal = 'SIGTERM') {
@@ -361,7 +394,13 @@ function processPlainRunOutputLine(app, job, line, fallbackType = 'info') {
     return;
   }
 
-  const type = /(?:\bwarn(?:ing)?\b|deprecated|deprecation)/i.test(line) ? 'warn' : fallbackType;
+  if (isRunCompileStartLine(line)) markCompileStarting(app, job);
+  const isWarningLine = /(?:\bwarn(?:ing)?\b|deprecated|deprecation)/i.test(line);
+  const isErrorLine = isRunCompileErrorLine(line) || job.compileErrorActive || (fallbackType === 'error' && !isWarningLine);
+  if (isErrorLine) markCompileError(app, job, line);
+  const type = isErrorLine
+    ? 'error'
+    : isWarningLine ? 'warn' : fallbackType;
   pushLog(app, job, type, line);
 }
 
@@ -382,12 +421,25 @@ function flushRunReady(app, job) {
   }
   const readyLines = job.pendingReadyLines || [];
   job.pendingReadyLines = [];
+  const displayUrl = job.url || (job.port ? `http://localhost:${job.port}` : '');
+  if (readyLines.length && displayUrl && !readyLines.some(line => /listening at/i.test(line))) {
+    readyLines.push(`> Listening at ${displayUrl}`);
+  }
   readyLines.forEach(line => {
     const type = /warning/i.test(line) ? 'warn' : 'success';
     pushLog(app, job, type, line);
   });
+  if (readyLines.length) {
+    job.compileStatus = /warning/i.test(readyLines.join('\n')) ? 'warning' : 'success';
+    job.compileErrorActive = false;
+    job.compileError = '';
+    job.compileErrorAt = null;
+  }
   if (job.status === 'starting' && readyLines.length) {
-    markJobRunning(app, job, job.url || (job.port ? `http://localhost:${job.port}` : ''));
+    markJobRunning(app, job, displayUrl);
+  } else if (job.status === 'running' && readyLines.length) {
+    pushLog(app, job, 'success', displayUrl ? `✅ 本地服务运行成功: ${displayUrl}` : '✅ 本地服务运行成功');
+    broadcastStatus(app, job);
   }
 }
 
@@ -529,6 +581,11 @@ router.post('/start', async (req, res) => {
     stoppedAt: null,
     exitCode: null,
     error: '',
+    compileStatus: '',
+    compileError: '',
+    compileErrorAt: null,
+    compileErrorSeq: 0,
+    compileErrorActive: false,
     logs: [],
     child: null,
   };

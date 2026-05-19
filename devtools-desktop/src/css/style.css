@@ -5362,6 +5362,32 @@ body[data-theme="dark"] .run-status-panel {
 #logModal .log-highlight { background: rgba(250, 204, 21, 0.22); border-radius: 3px; }
 #logModal .log-highlight-active { background: rgba(37, 99, 235, 0.2); }
 
+#logModal.run-compile-error .progress-bar {
+  background: linear-gradient(90deg, #ef4444, #dc2626);
+}
+
+#logModal.run-compile-error .progress-text,
+#logModal.run-compile-error .deploy-result {
+  color: #dc2626;
+}
+
+#logModal.run-compile-error .step.active,
+#logModal.run-compile-error .step.done {
+  color: #dc2626;
+  border-color: rgba(220, 38, 38, 0.3);
+  background: rgba(254, 226, 226, 0.82);
+}
+
+#logModal.run-compile-error .step.active .step-dot,
+#logModal.run-compile-error .step.done .step-dot {
+  background: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.14);
+}
+
+#logModal.run-compile-warning .progress-text {
+  color: #b45309;
+}
+
 #logModal .modal-footer {
   flex: 0 0 auto;
   min-height: 54px !important;
@@ -5419,6 +5445,22 @@ body[data-theme="dark"] #logModal .log-info { color: #d7e0ec; }
 body[data-theme="dark"] #logModal .log-success { color: #5be58e; }
 body[data-theme="dark"] #logModal .log-warn { color: #f7c56d; }
 body[data-theme="dark"] #logModal .log-error { color: #ff7a86; }
+
+body[data-theme="dark"] #logModal.run-compile-error .progress-text,
+body[data-theme="dark"] #logModal.run-compile-error .deploy-result {
+  color: #ff7a86;
+}
+
+body[data-theme="dark"] #logModal.run-compile-error .step.active,
+body[data-theme="dark"] #logModal.run-compile-error .step.done {
+  color: #ff7a86;
+  border-color: rgba(255, 122, 134, 0.32);
+  background: rgba(127, 29, 29, 0.32);
+}
+
+body[data-theme="dark"] #logModal.run-compile-warning .progress-text {
+  color: #f7c56d;
+}
 
 @media (max-width: 720px) {
   #logModal .modal {
