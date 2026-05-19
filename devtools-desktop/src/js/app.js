@@ -22,6 +22,18 @@ let pendingRunCompileErrorTimers = {};
 const RUN_COMPILE_ERROR_NOTIFY_DELAY = 15000;
 const APP_VERSION = '0.1.0';
 
+// ========== 托盘菜单同步 ==========
+function syncTrayMenu() {
+  if (!window.__TAURI__?.core?.invoke) return;
+  const running = Object.values(runningProjects || {})
+    .filter(job => ['starting', 'running'].includes(job.status))
+    .map(job => ({
+      name: job.displayName || job.projectName || job.name || '未知项目',
+      status: job.compileStatus === 'error' ? 'error' : job.status,
+    }));
+  window.__TAURI__.core.invoke('update_tray_menu', { projects: running }).catch(() => {});
+}
+
 // ========== 桌面通知 ==========
 const NOTIFICATION_ENABLED_KEY = 'devtools-notifications-enabled';
 const NOTIFICATION_ACTION_TTL = 2 * 60 * 1000;
@@ -463,6 +475,7 @@ function setupWSHandlers() {
 	    renderProjects();
 	    renderRunPage();
 	    refreshHomeIfVisible();
+	    syncTrayMenu();
 	  });
 	}
 
@@ -962,6 +975,7 @@ async function loadProjects() {
 	    renderProjects();
 	    renderRunPage();
 	    refreshHomeIfVisible();
+	    syncTrayMenu();
 	  } catch (e) {
     console.error('加载项目失败:', e);
   }

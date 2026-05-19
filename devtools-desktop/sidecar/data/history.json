@@ -1,5 +1,1386 @@
 [
   {
+    "id": "build-1779174641542",
+    "timestamp": "2026-05-19T07:11:14.908Z",
+    "projectName": "moutai-shuanglong",
+    "modules": [
+      "WMSstoreModule"
+    ],
+    "serverId": null,
+    "serverName": "—",
+    "remotePath": "—",
+    "status": "success",
+    "type": "build-only",
+    "duration": "33s",
+    "logs": [
+      {
+        "type": "info",
+        "text": "╔══════════════════════════════════════════╗",
+        "time": 1779174641542
+      },
+      {
+        "type": "info",
+        "text": "║           🚀 构建任务启动                ║",
+        "time": 1779174641542
+      },
+      {
+        "type": "info",
+        "text": "╚══════════════════════════════════════════╝",
+        "time": 1779174641542
+      },
+      {
+        "type": "info",
+        "text": "📋 项目: moutai-shuanglong",
+        "time": 1779174641542
+      },
+      {
+        "type": "info",
+        "text": "📦 模块: WMSstoreModule",
+        "time": 1779174641542
+      },
+      {
+        "type": "info",
+        "text": "🔧 Node: v12.22.12",
+        "time": 1779174641542
+      },
+      {
+        "type": "info",
+        "text": "⏰ 开始时间: 2026/5/19 15:10:41",
+        "time": 1779174641543
+      },
+      {
+        "type": "info",
+        "text": "",
+        "time": 1779174641543
+      },
+      {
+        "type": "info",
+        "text": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+        "time": 1779174641543
+      },
+      {
+        "type": "info",
+        "text": "📥 阶段一：拉取最新代码",
+        "time": 1779174641543
+      },
+      {
+        "type": "info",
+        "text": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+        "time": 1779174641543
+      },
+      {
+        "type": "info",
+        "text": "📂 工作目录: /Users/ldy/project/maotou-sl/moutai-shuanglong",
+        "time": 1779174641564
+      },
+      {
+        "type": "info",
+        "text": "🌿 当前分支: production",
+        "time": 1779174641565
+      },
+      {
+        "type": "cmd",
+        "text": "$ git pull origin production",
+        "time": 1779174641565
+      },
+      {
+        "type": "info",
+        "text": "",
+        "time": 1779174641565
+      },
+      {
+        "type": "info",
+        "text": "  Already up to date.",
+        "time": 1779174642177
+      },
+      {
+        "type": "info",
+        "text": "✅ 代码拉取完成",
+        "time": 1779174642183
+      },
+      {
+        "type": "info",
+        "text": "",
+        "time": 1779174642184
+      },
+      {
+        "type": "info",
+        "text": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+        "time": 1779174642184
+      },
+      {
+        "type": "info",
+        "text": "🔨 阶段二：执行构建",
+        "time": 1779174642184
+      },
+      {
+        "type": "info",
+        "text": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+        "time": 1779174642184
+      },
+      {
+        "type": "info",
+        "text": "🔧 Node 版本: v12.22.12",
+        "time": 1779174642184
+      },
+      {
+        "type": "info",
+        "text": "   路径: /Users/ldy/.nvm/versions/node/v12.22.12/bin",
+        "time": 1779174642184
+      },
+      {
+        "type": "cmd",
+        "text": "$ npm run build WMSstoreModule",
+        "time": 1779174642184
+      },
+      {
+        "type": "info",
+        "text": "📂 工作目录: /Users/ldy/project/maotou-sl/moutai-shuanglong",
+        "time": 1779174642184
+      },
+      {
+        "type": "info",
+        "text": "",
+        "time": 1779174642184
+      },
+      {
+        "type": "info",
+        "text": "> jzyc@1.0.0 build /Users/ldy/project/maotou-sl/moutai-shuanglong",
+        "time": 1779174642586
+      },
+      {
+        "type": "info",
+        "text": "> node build/build.js \"WMSstoreModule\"",
+        "time": 1779174642586
+      },
+      {
+        "type": "info",
+        "text": "{",
+        "time": 1779174643222
+      },
+      {
+        "type": "info",
+        "text": "  'style-vendor': 'StyleVendor',",
+        "time": 1779174643222
+      },
+      {
+        "type": "info",
+        "text": "  vue: 'Vue',",
+        "time": 1779174643222
+      },
+      {
+        "type": "info",
+        "text": "  'vue-router': 'VueRouter',",
+        "time": 1779174643222
+      },
+      {
+        "type": "info",
+        "text": "  vuex: 'Vuex',",
+        "time": 1779174643223
+      },
+      {
+        "type": "info",
+        "text": "  axios: 'axios',",
+        "time": 1779174643223
+      },
+      {
+        "type": "info",
+        "text": "  lodash: '_',",
+        "time": 1779174643223
+      },
+      {
+        "type": "info",
+        "text": "  GCONF: 'GCONF',",
+        "time": 1779174643223
+      },
+      {
+        "type": "info",
+        "text": "  'element-ui': 'ELEMENT'",
+        "time": 1779174643223
+      },
+      {
+        "type": "info",
+        "text": "}",
+        "time": 1779174643223
+      },
+      {
+        "type": "info",
+        "text": "Hash: \u001b[1mcdc19bd426560d406796\u001b[39m\u001b[22m",
+        "time": 1779174674746
+      },
+      {
+        "type": "info",
+        "text": "Version: webpack \u001b[1m4.46.0\u001b[39m\u001b[22m",
+        "time": 1779174674746
+      },
+      {
+        "type": "info",
+        "text": "Time: \u001b[1m30834\u001b[39m\u001b[22mms",
+        "time": 1779174674746
+      },
+      {
+        "type": "info",
+        "text": "Built at: 05/19/2026 \u001b[1m3:11:14 PM\u001b[39m\u001b[22m",
+        "time": 1779174674746
+      },
+      {
+        "type": "info",
+        "text": "                                     \u001b[1mAsset\u001b[39m\u001b[22m        \u001b[1mSize\u001b[39m\u001b[22m   \u001b[1mChunks\u001b[39m\u001b[22m  \u001b[1m\u001b[39m\u001b[22m                       \u001b[1m\u001b[39m\u001b[22m       \u001b[1mChunk Names\u001b[39m\u001b[22m",
+        "time": 1779174674746
+      },
+      {
+        "type": "info",
+        "text": "            \u001b[1m\u001b[33m0f90ea971b62a1e81337.worker.js\u001b[39m\u001b[22m     \u001b[1m\u001b[33m817 KiB\u001b[39m\u001b[22m         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m  \u001b[1m\u001b[33m[big]\u001b[39m\u001b[22m  ",
+        "time": 1779174674746
+      },
+      {
+        "type": "info",
+        "text": "\u001b[1m\u001b[32m0f90ea971b62a1e81337.worker.js.LICENSE.txt\u001b[39m\u001b[22m  1020 bytes         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674746
+      },
+      {
+        "type": "info",
+        "text": "         \u001b[1m\u001b[32m0f90ea971b62a1e81337.worker.js.gz\u001b[39m\u001b[22m     236 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674746
+      },
+      {
+        "type": "info",
+        "text": "                             \u001b[1m\u001b[33mcss.worker.js\u001b[39m\u001b[22m     \u001b[1m\u001b[33m805 KiB\u001b[39m\u001b[22m         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m              \u001b[1m\u001b[33m[big]\u001b[39m\u001b[22m  ",
+        "time": 1779174674746
+      },
+      {
+        "type": "info",
+        "text": "                          \u001b[1m\u001b[32mcss.worker.js.gz\u001b[39m\u001b[22m     170 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674746
+      },
+      {
+        "type": "info",
+        "text": "                                 \u001b[1m\u001b[32mcss/0.css\u001b[39m\u001b[22m    45 bytes        \u001b[1m0\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     common",
+        "time": 1779174674746
+      },
+      {
+        "type": "info",
+        "text": "                                \u001b[1m\u001b[32mcss/14.css\u001b[39m\u001b[22m    57 bytes       \u001b[1m14\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674746
+      },
+      {
+        "type": "info",
+        "text": "                                \u001b[1m\u001b[32mcss/19.css\u001b[39m\u001b[22m    57 bytes       \u001b[1m19\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674746
+      },
+      {
+        "type": "info",
+        "text": "                                 \u001b[1m\u001b[32mcss/3.css\u001b[39m\u001b[22m    63.8 KiB        \u001b[1m3\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     entry",
+        "time": 1779174674746
+      },
+      {
+        "type": "info",
+        "text": "                              \u001b[1m\u001b[32mcss/3.css.gz\u001b[39m\u001b[22m    8.33 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674746
+      },
+      {
+        "type": "info",
+        "text": "                                \u001b[1m\u001b[32mcss/30.css\u001b[39m\u001b[22m   125 bytes       \u001b[1m30\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674746
+      },
+      {
+        "type": "info",
+        "text": "                                \u001b[1m\u001b[32mcss/31.css\u001b[39m\u001b[22m   134 bytes       \u001b[1m31\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674746
+      },
+      {
+        "type": "info",
+        "text": "                                \u001b[1m\u001b[32mcss/48.css\u001b[39m\u001b[22m    77 bytes       \u001b[1m48\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674746
+      },
+      {
+        "type": "info",
+        "text": "                          \u001b[1m\u001b[32meditor.worker.js\u001b[39m\u001b[22m     122 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674746
+      },
+      {
+        "type": "info",
+        "text": "                       \u001b[1m\u001b[32meditor.worker.js.gz\u001b[39m\u001b[22m    38.4 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674746
+      },
+      {
+        "type": "info",
+        "text": "                            \u001b[1m\u001b[33mhtml.worker.js\u001b[39m\u001b[22m     \u001b[1m\u001b[33m528 KiB\u001b[39m\u001b[22m         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m              \u001b[1m\u001b[33m[big]\u001b[39m\u001b[22m  ",
+        "time": 1779174674746
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mhtml.worker.js.gz\u001b[39m\u001b[22m     131 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674746
+      },
+      {
+        "type": "info",
+        "text": "                               \u001b[1m\u001b[32mimg/box.png\u001b[39m\u001b[22m    12.8 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674746
+      },
+      {
+        "type": "info",
+        "text": "                \u001b[1m\u001b[32mimg/lengthconveyorline.png\u001b[39m\u001b[22m     109 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674746
+      },
+      {
+        "type": "info",
+        "text": "                             \u001b[1m\u001b[32mimg/nobox.png\u001b[39m\u001b[22m    11.4 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674746
+      },
+      {
+        "type": "info",
+        "text": "                                \u001b[1m\u001b[32mindex.html\u001b[39m\u001b[22m    1.17 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674746
+      },
+      {
+        "type": "info",
+        "text": "                          \u001b[1m\u001b[33mjs/1.5a801990.js\u001b[39m\u001b[22m    \u001b[1m\u001b[33m1.02 MiB\u001b[39m\u001b[22m        \u001b[1m1\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m  \u001b[1m\u001b[33m[big]\u001b[39m\u001b[22m  ",
+        "time": 1779174674746
+      },
+      {
+        "type": "info",
+        "text": "              \u001b[1m\u001b[32mjs/1.5a801990.js.LICENSE.txt\u001b[39m\u001b[22m   996 bytes         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674746
+      },
+      {
+        "type": "info",
+        "text": "                       \u001b[1m\u001b[33mjs/1.5a801990.js.gz\u001b[39m\u001b[22m     \u001b[1m\u001b[33m329 KiB\u001b[39m\u001b[22m         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m              \u001b[1m\u001b[33m[big]\u001b[39m\u001b[22m  ",
+        "time": 1779174674746
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/10.68953277.js\u001b[39m\u001b[22m    16.8 KiB       \u001b[1m10\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674746
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/10.68953277.js.gz\u001b[39m\u001b[22m    4.48 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674746
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/100.c8c7bc95.js\u001b[39m\u001b[22m    8.76 KiB      \u001b[1m100\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674746
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/101.9a354fe0.js\u001b[39m\u001b[22m    8.85 KiB      \u001b[1m101\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674746
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/102.8965d0de.js\u001b[39m\u001b[22m    11.5 KiB      \u001b[1m102\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674746
+      },
+      {
+        "type": "info",
+        "text": "                     \u001b[1m\u001b[32mjs/102.8965d0de.js.gz\u001b[39m\u001b[22m     3.1 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674746
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/103.12427c04.js\u001b[39m\u001b[22m    5.07 KiB      \u001b[1m103\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674746
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/104.139d002f.js\u001b[39m\u001b[22m     7.3 KiB      \u001b[1m104\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674746
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/105.2950a063.js\u001b[39m\u001b[22m    13.5 KiB      \u001b[1m105\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674746
+      },
+      {
+        "type": "info",
+        "text": "                     \u001b[1m\u001b[32mjs/105.2950a063.js.gz\u001b[39m\u001b[22m    3.45 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674746
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/106.453ec277.js\u001b[39m\u001b[22m    4.93 KiB      \u001b[1m106\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674746
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/107.7f67e9ec.js\u001b[39m\u001b[22m     2.6 KiB      \u001b[1m107\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674746
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/108.cda9aca1.js\u001b[39m\u001b[22m    3.08 KiB      \u001b[1m108\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674746
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/109.90120754.js\u001b[39m\u001b[22m    3.88 KiB      \u001b[1m109\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674746
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/11.92f01396.js\u001b[39m\u001b[22m    23.4 KiB       \u001b[1m11\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674746
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/11.92f01396.js.gz\u001b[39m\u001b[22m    5.13 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674746
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/110.fa422918.js\u001b[39m\u001b[22m     3.8 KiB      \u001b[1m110\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/111.f0dee0f4.js\u001b[39m\u001b[22m    3.03 KiB      \u001b[1m111\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/112.52034929.js\u001b[39m\u001b[22m    12.8 KiB      \u001b[1m112\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                     \u001b[1m\u001b[32mjs/112.52034929.js.gz\u001b[39m\u001b[22m    3.06 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/113.c14bea28.js\u001b[39m\u001b[22m    3.22 KiB      \u001b[1m113\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/114.ce2b3b16.js\u001b[39m\u001b[22m    5.13 KiB      \u001b[1m114\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/115.02514648.js\u001b[39m\u001b[22m    13.3 KiB      \u001b[1m115\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                     \u001b[1m\u001b[32mjs/115.02514648.js.gz\u001b[39m\u001b[22m    3.32 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/116.17654aff.js\u001b[39m\u001b[22m    4.24 KiB      \u001b[1m116\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/117.e7bddf54.js\u001b[39m\u001b[22m    2.98 KiB      \u001b[1m117\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/118.afc1e7ce.js\u001b[39m\u001b[22m       6 KiB      \u001b[1m118\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/119.dc3f19a3.js\u001b[39m\u001b[22m    2.69 KiB      \u001b[1m119\u001b[39m\u001b[22m  \u001b",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/12.dd823caf.js\u001b[39m\u001b[22m    22.8 KiB       \u001b[1m12\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/12.dd823caf.js.gz\u001b[39m\u001b[22m    5.09 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/120.b5ccbe33.js\u001b[39m\u001b[22m    7.88 KiB      \u001b[1m120\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/121.1b884cbd.js\u001b[39m\u001b[22m    1.97 KiB      \u001b[1m121\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/122.102b84d8.js\u001b[39m\u001b[22m    1.85 KiB      \u001b[1m122\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/123.50e4fe75.js\u001b[39m\u001b[22m    1.82 KiB      \u001b[1m123\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/124.04e4d7c6.js\u001b[39m\u001b[22m    3.07 KiB      \u001b[1m124\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/13.f391b8c4.js\u001b[39m\u001b[22m    22.3 KiB       \u001b[1m13\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/13.f391b8c4.js.gz\u001b[39m\u001b[22m    5.03 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/14.e62ae09b.js\u001b[39m\u001b[22m    21.1 KiB       \u001b[1m14\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/14.e62ae09b.js.gz\u001b[39m\u001b[22m    4.35 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/15.1b473474.js\u001b[39m\u001b[22m    15.3 KiB       \u001b[1m15\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/15.1b473474.js.gz\u001b[39m\u001b[22m    4.03 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/16.aca448c5.js\u001b[39m\u001b[22m    25.1 KiB       \u001b[1m16\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/16.aca448c5.js.gz\u001b[39m\u001b[22m    5.64 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/17.f55d0bf2.js\u001b[39m\u001b[22m    13.5 KiB       \u001b[1m17\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/17.f55d0bf2.js.gz\u001b[39m\u001b[22m    3.66 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/18.8d9e5789.js\u001b[39m\u001b[22m    22.6 KiB       \u001b[1m18\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/18.8d9e5789.js.gz\u001b[39m\u001b[22m    5.37 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/19.4b21685a.js\u001b[39m\u001b[22m    12.6 KiB       \u001b[1m19\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/19.4b21685a.js.gz\u001b[39m\u001b[22m    3.67 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                          \u001b[1m\u001b[32mjs/2.22c9f61c.js\u001b[39m\u001b[22m    50.9 KiB        \u001b[1m2\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "              \u001b[1m\u001b[32mjs/2.22c9f61c.js.LICENSE.txt\u001b[39m\u001b[22m    85 bytes         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                       \u001b[1m\u001b[32mjs/2.22c9f61c.js.gz\u001b[39m\u001b[22m    14.5 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/20.ce03532f.js\u001b[39m\u001b[22m    5.38 KiB       \u001b[1m20\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/21.92aab894.js\u001b[39m\u001b[22m    7.18 KiB       \u001b[1m21\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/22.4636033d.js\u001b[39m\u001b[22m    7.18 KiB       \u001b[1m22\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/23.8653ba8a.js\u001b[39m\u001b[22m    26.6 KiB       \u001b[1m23\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/23.8653ba8a.js.gz\u001b[39m\u001b[22m    6.43 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/24.e7b96e74.js\u001b[39m\u001b[22m    24.3 KiB       \u001b[1m24\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/24.e7b96e74.js.gz\u001b[39m\u001b[22m    5.72 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/25.968240df.js\u001b[39m\u001b[22m    10.5 KiB       \u001b[1m25\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/25.968240df.js.gz\u001b[39m\u001b[22m    3.15 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/26.8b6bb58c.js\u001b[39m\u001b[22m    12.2 KiB       \u001b[1m26\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/26.8b6bb58c.js.gz\u001b[39m\u001b[22m    3.71 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/27.ec714522.js\u001b[39m\u001b[22m      11 KiB       \u001b[1m27\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/27.ec714522.js.gz\u001b[39m\u001b[22m    3.17 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/28.11fc8107.js\u001b[39m\u001b[22m    39.9 KiB  \u001b[1m28, 105\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/28.11fc8107.js.gz\u001b[39m\u001b[22m    6.28 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/29.f2072fe5.js\u001b[39m\u001b[22m    3.76 KiB       \u001b[1m29\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/30.4fc5d274.js\u001b[39m\u001b[22m    7.94 KiB       \u001b[1m30\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/31.e851d4a6.js\u001b[39m\u001b[22m    12.6 KiB       \u001b[1m31\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/31.e851d4a6.js.gz\u001b[39m\u001b[22m    3.34 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/32.8dce7d5d.js\u001b[39m\u001b[22m     9.6 KiB       \u001b[1m32\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/33.fe1bcbac.js\u001b[39m\u001b[22m    9.28 KiB       \u001b[1m33\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/34.268d1324.js\u001b[39m\u001b[22m    8.04 KiB       \u001b[1m34\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/35.590f87db.js\u001b[39m\u001b[22m    12.9 KiB       \u001b[1m35\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/35.590f87db.js.gz\u001b[39m\u001b[22m    3.84 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/36.88d82e67.js\u001b[39m\u001b[22m    18.7 KiB       \u001b[1m36\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/36.88d82e67.js.gz\u001b[39m\u001b[22m    4.98 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/37.6d86f6a1.js\u001b[39m\u001b[22m      10 KiB       \u001b[1m37\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/37.6d86f6a1.js.gz\u001b[39m\u001b[22m    2.54 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/38.2c432154.js\u001b[39m\u001b[22m    10.2 KiB       \u001b[1m38\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/38.2c432154.js.gz\u001b[39m\u001b[22m    3.73 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/39.69a0cd70.js\u001b[39m\u001b[22m    7.99 KiB       \u001b[1m39\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/40.7c2a18fa.js\u001b[39m\u001b[22m    5.08 KiB       \u001b[1m40\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/41.62c595d6.js\u001b[39m\u001b[22m    5.66 KiB       \u001b[1m41\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/42.dccb1c82.js\u001b[39m\u001b[22m    12.3 KiB       \u001b[1m42\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/42.dccb1c82.js.gz\u001b[39m\u001b[22m    3.41 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/43.c89a0222.js\u001b[39m\u001b[22m    5.23 KiB       \u001b[1m43\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/44.d3bd6aad.js\u001b[39m\u001b[22m    5.02 KiB       \u001b[1m44\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/45.c0516661.js\u001b[39m\u001b[22m    6.29 KiB       \u001b[1m45\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/46.4729f89e.js\u001b[39m\u001b[22m    10.3 KiB       \u001b[1m46\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/46.4729f89e.js.gz\u001b[39m\u001b[22m    3.13 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/47.323a4d75.js\u001b[39m\u001b[22m    16.9 KiB       \u001b[1m47\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/47.323a4d75.js.gz\u001b[39m\u001b[22m    4.35 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/48.abddaf4a.js\u001b[39m\u001b[22m     9.2 KiB       \u001b[1m48\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/49.91fc558a.js\u001b[39m\u001b[22m    9.85 KiB       \u001b[1m49\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                          \u001b[1m\u001b[32mjs/5.fd2d91c1.js\u001b[39m\u001b[22m    73.7 KiB        \u001b[1m5\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                       \u001b[1m\u001b[32mjs/5.fd2d91c1.js.gz\u001b[39m\u001b[22m    13.9 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/50.aaddb619.js\u001b[39m\u001b[22m    5.23 KiB       \u001b[1m50\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/51.8f842ae9.js\u001b[39m\u001b[22m    7.83 KiB       \u001b[1m51\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/52.2c6de231.js\u001b[39m\u001b[22m    41.5 KiB       \u001b[1m52\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/52.2c6de231.js.gz\u001b[39m\u001b[22m    6.47 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/53.de7b53c7.js\u001b[39m\u001b[22m    21.9 KiB       \u001b[1m53\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/53.de7b53c7.js.gz\u001b[39m\u001b[22m    4.92 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/54.476e5a8d.js\u001b[39m\u001b[22m    12.4 KiB       \u001b[1m54\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/54.476e5a8d.js.gz\u001b[39m\u001b[22m    3.39 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/55.580d0a64.js\u001b[39m\u001b[22m    7.28 KiB       \u001b[1m55\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/56.ce287d34.js\u001b[39m\u001b[22m    9.62 KiB       \u001b[1m56\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/57.b236f27c.js\u001b[39m\u001b[22m    7.44 KiB       \u001b[1m57\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/58.f570f5ac.js\u001b[39m\u001b[22m    9.83 KiB       \u001b[1m58\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/59.0d8007fd.js\u001b[39m\u001b[22m    6.18 KiB       \u001b[1m59\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                          \u001b[1m\u001b[32mjs/6.3270c62f.js\u001b[39m\u001b[22m    51.9 KiB        \u001b[1m6\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                       \u001b[1m\u001b[32mjs/6.3270c62f.js.gz\u001b[39m\u001b[22m    13.7 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/60.d633da61.js\u001b[39m\u001b[22m    11.1 KiB       \u001b[1m60\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/60.d633da61.js.gz\u001b[39m\u001b[22m    3.31 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/61.3439216e.js\u001b[39m\u001b[22m    11.1 KiB       \u001b[1m61\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/61.3439216e.js.gz\u001b[39m\u001b[22m    3.31 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/62.b473bd12.js\u001b[39m\u001b[22m    13.5 KiB       \u001b[1m62\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/62.b473bd12.js.gz\u001b[39m\u001b[22m    4.14 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/63.fbd545d9.js\u001b[39m\u001b[22m    9.49 KiB       \u001b[1m63\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/64.09201e1e.js\u001b[39m\u001b[22m    8.95 KiB       \u001b[1m64\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/65.2e156b60.js\u001b[39m\u001b[22m    4.14 KiB       \u001b[1m65\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/66.c6da397a.js\u001b[39m\u001b[22m    9.28 KiB       \u001b[1m66\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/67.d6a601bc.js\u001b[39m\u001b[22m    4.04 KiB       \u001b[1m67\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/68.11abe144.js\u001b[39m\u001b[22m    3.61 KiB       \u001b[1m68\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/69.7505ea46.js\u001b[39m\u001b[22m    10.2 KiB       \u001b[1m69\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/69.7505ea46.js.gz\u001b[39m\u001b[22m     3.2 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                          \u001b[1m\u001b[32mjs/7.ddff2271.js\u001b[39m\u001b[22m    59.4 KiB        \u001b[1m7\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                       \u001b[1m\u001b[32mjs/7.ddff2271.js.gz\u001b[39m\u001b[22m    15.3 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/70.5ad4e980.js\u001b[39m\u001b[22m    3.58 KiB       \u001b[1m70\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/71.c564414c.js\u001b[39m\u001b[22m    6.04 KiB       \u001b[1m71\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/72.f71140f7.js\u001b[39m\u001b[22m    8.41 KiB       \u001b[1m72\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/73.8cd6209b.js\u001b[39m\u001b[22m    4.91 KiB       \u001b[1m73\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674747
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/74.f53a3257.js\u001b[39m\u001b[22m    5.07 KiB       \u001b[1m74\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/75.5228312c.js\u001b[39m\u001b[22m    3.79 KiB       \u001b[1m75\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/76.669ea2a8.js\u001b[39m\u001b[22m    2.12 KiB       \u001b[1m76\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/77.0fd90109.js\u001b[39m\u001b[22m    2.57 KiB       \u001b[1m77\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/78.779295e3.js\u001b[39m\u001b[22m    11.1 KiB       \u001b[1m78\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/78.779295e3.js.gz\u001b[39",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "m\u001b[22m    3.19 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/79.fb2d83bf.js\u001b[39m\u001b[22m    2.32 KiB       \u001b[1m79\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "                          \u001b[1m\u001b[32mjs/8.3c5df8ba.js\u001b[39m\u001b[22m      28 KiB        \u001b[1m8\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "                       \u001b[1m\u001b[32mjs/8.3c5df8ba.js.gz\u001b[39m\u001b[22m    6.69 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/80.ac84becb.js\u001b[39m\u001b[22m    9.66 KiB       \u001b[1m80\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/81.416ad0f3.js\u001b[39m\u001b[22m    7.42 KiB       \u001b[1m81\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/82.2aaec838.js\u001b[39m\u001b[22m    8.18 KiB       \u001b[1m82\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/83.99aea043.js\u001b[39m\u001b[22m    9.85 KiB       \u001b[1m83\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/84.2bcbd073.js\u001b[39m\u001b[22m    3.24 KiB       \u001b[1m84\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/85.d5947fa8.js\u001b[39m\u001b[22m    5.93 KiB       \u001b[1m85\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/86.0d8589a0.js\u001b[39m\u001b[22m    10.9 KiB       \u001b[1m86\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/86.0d8589a0.js.gz\u001b[39m\u001b[22m     3.7 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/87.bd8c093b.js\u001b[39m\u001b[22m    2.45 KiB       \u001b[1m87\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/88.1181958a.js\u001b[39m\u001b[22m    8.37 KiB       \u001b[1m88\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/89.5326b8f8.js\u001b[39m\u001b[22m    10.6 KiB       \u001b[1m89\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/89.5326b8f8.js.gz\u001b[39m\u001b[22m    2.91 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "                          \u001b[1m\u001b[32mjs/9.1effed99.js\u001b[39m\u001b[22m    70.5 KiB        \u001b[1m9\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "                       \u001b[1m\u001b[32mjs/9.1effed99.js.gz\u001b[39m\u001b[22m    21.6 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/90.6ec436ce.js\u001b[39m\u001b[22m    7.82 KiB       \u001b[1m90\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/91.0d0cf903.js\u001b[39m\u001b[22m    5.95 KiB       \u001b[1m91\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/92.52d6de44.js\u001b[39m\u001b[22m    5.67 KiB       \u001b[1m92\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/93.efe6b1d6.js\u001b[39m\u001b[22m    3.07 KiB       \u001b[1m93\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/94.c75e4f37.js\u001b[39m\u001b[22m    6.68 KiB       \u001b[1m94\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/95.ca26f589.js\u001b[39m\u001b[22m       3 KiB       \u001b[1m95\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/96.37783044.js\u001b[39m\u001b[22m    2.97 KiB       \u001b[1m96\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/97.bd1dd822.js\u001b[39m\u001b[22m    5.96 KiB       \u001b[1m97\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/98.3e8c6bc7.js\u001b[39m\u001b[22m     5.6 KiB       \u001b[1m98\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/99.aa8a204c.js\u001b[39m\u001b[22m    5.66 KiB       \u001b[1m99\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "                     \u001b[1m\u001b[33mjs/common.7794bffb.js\u001b[39m\u001b[22m     \u001b[1m\u001b[33m355 KiB\u001b[39m\u001b[22m        \u001b[1m0\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m  \u001b[1m\u001b[33m[big]\u001b[39m\u001b[22m  common",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "                  \u001b[1m\u001b[32mjs/common.7794bffb.js.gz\u001b[39m\u001b[22m    91.1 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[33mjs/entry.0bde87ab.js\u001b[39m\u001b[22m    \u001b[1m\u001b[33m1.77 MiB\u001b[39m\u001b[22m        \u001b[1m3\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m  \u001b[1m\u001b[33m[big]\u001b[39m\u001b[22m  entry",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "          \u001b[1m\u001b[32mjs/entry.0bde87ab.js.LICENSE.txt\u001b[39m\u001b[22m    3.12 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "                   \u001b[1m\u001b[33mjs/entry.0bde87ab.js.gz\u001b[39m\u001b[22m     \u001b[1m\u001b[33m573 KiB\u001b[39m\u001b[22m         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m              \u001b[1m\u001b[33m[big]\u001b[39m\u001b[22m  ",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "                            \u001b[1m\u001b[32mjson.worker.js\u001b[39m\u001b[22m     229 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjson.worker.js.gz\u001b[39m\u001b[22m    66.1 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "                       \u001b[1m\u001b[32mruntime.ec5fa150.js\u001b[39m\u001b[22m    4.67 KiB        \u001b[1m4\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         runtime",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "                              \u001b[1m\u001b[33mts.worker.js\u001b[39m\u001b[22m    \u001b[1m\u001b[33m4.49 MiB\u001b[39m\u001b[22m         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m              \u001b[1m\u001b[33m[big]\u001b[39m\u001b[22m  ",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "                  \u001b[1m\u001b[32mts.worker.js.LICENSE.txt\u001b[39m\u001b[22m   818 bytes         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "                           \u001b[1m\u001b[33mts.worker.js.gz\u001b[39m\u001b[22m     \u001b[1m\u001b[33m938 KiB\u001b[39m\u001b[22m         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m              \u001b[1m\u001b[33m[big]\u001b[39m\u001b[22m  ",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "Entrypoint \u001b[1mentry\u001b[39m\u001b[22m \u001b[1m\u001b[33m[big]\u001b[39m\u001b[22m = \u001b[1m\u001b[32mruntime.ec5fa150.js\u001b[39m\u001b[22m \u001b[1m\u001b[32mcss/0.css\u001b[39m\u001b[22m \u001b[1m\u001b[32mjs/common.7794bffb.js\u001b[39m\u001b[22m \u001b[1m\u001b[32mcss/3.css\u001b[39m\u001b[22m \u001b[1m\u001b[32mjs/entry.0bde87ab.js\u001b[39m\u001b[22m",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "\u001b[1m\u001b[33mWARNING in asset size limit: The following asset(s) exceed the recommended size limit (244 KiB).",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "This can impact web performance.",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "Assets: ",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "  html.worker.js (528 KiB)",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "  css.worker.js (805 KiB)",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "  ts.worker.js (4.49 MiB)",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "  0f90ea971b62a1e81337.worker.js (817 KiB)",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "  js/common.7794bffb.js (355 KiB)",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "  js/1.5a801990.js (1.02 MiB)",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "  js/entry.0bde87ab.js (1.77 MiB)",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "  js/1.5a801990.js.gz (329 KiB)",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "  js/entry.0bde87ab.js.gz (573 KiB)",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "  ts.worker.js.gz (938 KiB)\u001b[39m\u001b[22m",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "\u001b[1m\u001b[33mWARNING in entrypoint size limit: The following entrypoint(s) combined asset size exceeds the recommended limit (244 KiB). This can impact web performance.",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "Entrypoints:",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "  entry (2.18 MiB)",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "      runtime.ec5fa150.js",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "      css/0.css",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "      js/common.7794bffb.js",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "      css/3.css",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "      js/entry.0bde87ab.js",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "\u001b[39m\u001b[22m",
+        "time": 1779174674748
+      },
+      {
+        "type": "info",
+        "text": "  Build complete.",
+        "time": 1779174674749
+      },
+      {
+        "type": "info",
+        "text": "  Tip: built files are meant to be served over an HTTP server.",
+        "time": 1779174674749
+      },
+      {
+        "type": "info",
+        "text": "  Opening index.html over file:// won't work.",
+        "time": 1779174674749
+      },
+      {
+        "type": "success",
+        "text": "\n✓ 构建完成 (33s)",
+        "time": 1779174674908
+      }
+    ]
+  },
+  {
     "id": "build-1778728670853",
     "timestamp": "2026-05-14T03:18:18.680Z",
     "projectName": "moutai-oas-dispatchcenter",

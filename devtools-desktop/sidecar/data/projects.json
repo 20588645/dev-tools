@@ -470,5 +470,70 @@
     "defaultServerId": null,
     "remotePath": "",
     "nodeVersion": ""
+  },
+  {
+    "name": "moutai-shuanglong",
+    "path": "/Users/ldy/project/maotou-sl/moutai-shuanglong",
+    "type": "multi-module",
+    "tool": "Webpack",
+    "buildCommand": "npm run build",
+    "runCommand": "npm run dev",
+    "runPort": "",
+    "runHomeModule": "home",
+    "runIncludeHome": true,
+    "favoriteRunModules": [
+      "WMSstoreModule"
+    ],
+    "distDir": "dist",
+    "modules": [
+      {
+        "name": "BMScostModule",
+        "uploadStrategy": "folder"
+      },
+      {
+        "name": "Bpm",
+        "uploadStrategy": "folder"
+      },
+      {
+        "name": "Mip",
+        "uploadStrategy": "folder"
+      },
+      {
+        "name": "SystemModule",
+        "uploadStrategy": "folder"
+      },
+      {
+        "name": "WMSstoreModule",
+        "uploadStrategy": "folder"
+      },
+      {
+        "name": "home",
+        "uploadStrategy": "root"
+      }
+    ],
+    "excludeModules": [
+      "userAudit",
+      "wisdomPark",
+      "transAging",
+      "linkTrack",
+      "common",
+      "test",
+      "gtp",
+      "jlp",
+      "custom",
+      "exception",
+      "router",
+      "store",
+      "structure",
+      "tmp",
+      "temperatureControl",
+      "weiAdmin",
+      "App",
+      "main",
+      "login"
+    ],
+    "defaultServerId": null,
+    "remotePath": "",
+    "nodeVersion": "v12.22.12"
   }
 ]
