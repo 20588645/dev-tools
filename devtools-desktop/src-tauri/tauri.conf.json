@@ -10,8 +10,8 @@
     "windows": [
       {
         "title": "DevTools",
-        "width": 1280,
-        "height": 800,
+        "width": 1665,
+        "height": 1184,
         "minWidth": 900,
         "minHeight": 600,
         "center": true,
