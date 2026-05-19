@@ -23,8 +23,8 @@ function preflightCheck(serverConfig, remotePath) {
     const fail = (result) => { if (done) return; done = true; conn.end(); resolve(result); };
 
     const timer = setTimeout(() => {
-      fail({ success: false, error: '连接超时 (15s)' });
-    }, 15000);
+      fail({ success: false, error: '连接超时 (60s)' });
+    }, 60000);
 
     conn.on('ready', () => {
       // SSH 连通，继续检查远程目录
@@ -59,7 +59,7 @@ function preflightCheck(serverConfig, remotePath) {
       username: serverConfig.username,
       password: decryptedPwd,
       tryKeyboard: true,
-      readyTimeout: 15000,
+      readyTimeout: 60000,
       authHandler: (() => {
         let attempts = 0;
         return (methodsLeft, partialSuccess, callback) => {

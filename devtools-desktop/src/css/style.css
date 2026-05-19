@@ -251,6 +251,18 @@ body {
 .status-indicator .dot.connecting { background: var(--warning); animation: blink 1.5s infinite; }
 @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
 
+/* ---------- Spinner ---------- */
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent, #2f73f6);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
 /* ---------- Content Area ---------- */
 .content-area {
   flex: 1;
@@ -2273,7 +2285,7 @@ input:focus, select:focus { border-color: var(--accent); }
 .server-check-item.checked .srv-check { background: var(--primary); border-color: var(--primary); color: #fff; }
 
 /* 连接状态徽章 */
-.conn-badge { font-size: 11px; padding: 2px 8px; border-radius: 8px; margin-left: auto; font-weight: 600; }
+.conn-badge { font-size: 11px; padding: 2px 8px; border-radius: 8px; margin-left: auto; font-weight: 600; white-space: nowrap; }
 .conn-testing { color: var(--text-muted); background: var(--bg-input); }
 .conn-ok { color: var(--success); background: var(--success-subtle); }
 .conn-fail { color: var(--danger); background: var(--danger-subtle); }
@@ -6939,7 +6951,7 @@ textarea,
   min-width: 0 !important;
   box-sizing: border-box !important;
   display: grid !important;
-  grid-template-columns: 18px minmax(0, 1fr) !important;
+  grid-template-columns: 18px minmax(0, 1fr) auto !important;
   align-items: center !important;
   gap: 8px !important;
   padding: 0 12px !important;

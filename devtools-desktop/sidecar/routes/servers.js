@@ -245,8 +245,8 @@ router.post('/:id/quick-test', async (req, res) => {
 
   const timeout = setTimeout(() => {
     conn.end();
-    safeRes({ success: false, error: '连接超时 (15s)', duration: Date.now() - startTime });
-  }, 15000);
+    safeRes({ success: false, error: '连接超时 (60s)', duration: Date.now() - startTime });
+  }, 60000);
 
   conn.on('ready', () => {
     clearTimeout(timeout);
@@ -268,7 +268,7 @@ router.post('/:id/quick-test', async (req, res) => {
     username: server.username,
     password: decryptedPwd,
     tryKeyboard: true,
-    readyTimeout: 15000,
+    readyTimeout: 60000,
     authHandler: (() => {
       let attempts = 0;
       return (methodsLeft, partialSuccess, callback) => {
@@ -474,8 +474,8 @@ router.post('/:id/browse', (req, res) => {
 
   const conn = new Client();
   const timeout = setTimeout(() => {
-    safeJson(504, { error: '连接超时 (20s)' });
-  }, 20000);
+    safeJson(504, { error: '连接超时 (60s)' });
+  }, 60000);
 
   conn.on('ready', () => {
     conn.sftp((err, sftp) => {
