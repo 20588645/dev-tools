@@ -1,9 +1,0 @@
-# 配置文件（含 Token 等敏感信息）
-git-report-config.yaml
-
-# macOS
-.DS_Store
-
-# Python
-__pycache__/
-*.pyc
