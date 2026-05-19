@@ -9,6 +9,7 @@ const http = require('http');
 const { WebSocketServer } = require('ws');
 const path = require('path');
 const net = require('net');
+const sidecarPackage = require('./package.json');
 
 const app = express();
 const server = http.createServer(app);
@@ -51,7 +52,13 @@ app.use('/api/report', require('./routes/report'));
 
 // 健康检查
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', uptime: process.uptime(), pid: process.pid });
+  res.json({
+    status: 'ok',
+    uptime: process.uptime(),
+    pid: process.pid,
+    version: sidecarPackage.version,
+    dataDir: path.join(__dirname, 'data'),
+  });
 });
 
 // WebSocket 连接事件

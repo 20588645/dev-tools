@@ -20,6 +20,7 @@ let notifiedRunIds = new Set();
 let notifiedRunCompileErrors = new Set();
 let pendingRunCompileErrorTimers = {};
 const RUN_COMPILE_ERROR_NOTIFY_DELAY = 15000;
+const APP_VERSION = '0.1.0';
 
 // ========== 桌面通知 ==========
 const NOTIFICATION_ENABLED_KEY = 'devtools-notifications-enabled';
@@ -266,6 +267,7 @@ function updateSidebarCollapseIcon(collapsed) {
 
 function openProjectIntro() {
   document.getElementById('projectIntroModal')?.classList.add('active');
+  refreshProjectIntroStatus();
 }
 
 function setupModalDismissal() {
@@ -457,11 +459,12 @@ function setupWSHandlers() {
       clearRunCompileErrorTimers(data.id);
     }
 
-    if (data.id === currentRunId) updateRunLogStatus(data);
-    renderProjects();
-    renderRunPage();
-  });
-}
+	    if (data.id === currentRunId) updateRunLogStatus(data);
+	    renderProjects();
+	    renderRunPage();
+	    refreshHomeIfVisible();
+	  });
+	}
 
 function clearRunCompileErrorTimers(jobId) {
   Object.keys(pendingRunCompileErrorTimers)
@@ -552,9 +555,12 @@ function switchPage(page, el) {
     if (activeSub) switchSubTab(activeSub.dataset.sub, activeSub);
   }
   // 切换到本地运行时刷新运行状态
-  if (page === 'run') {
-    loadRunStatuses().then(() => renderRunPage());
-  }
+	  if (page === 'run') {
+	    loadRunStatuses().then(() => renderRunPage());
+	  }
+	  if (page === 'home') {
+	    loadRunStatuses().then(() => loadHomeData());
+	  }
   // 切换到周报时初始化
   if (page === 'report') initReport();
   // 切换到设置时加载
@@ -625,6 +631,12 @@ async function loadHomeData() {
     const weekDeployCount = thisWeek.filter(h => h.type === 'deploy').length;
     const weekBuildCount = thisWeek.length - weekDeployCount;
     const weekDelta = thisWeek.length - lastWeek.length;
+    const activeRuns = getActiveRunJobs();
+    const todayHistory = history.filter(h => {
+      const time = new Date(h.timestamp).getTime();
+      return time >= todayStart.getTime() && time <= now.getTime();
+    });
+    const avgDuration = formatAverageDuration(thisWeek);
     const trendHtml = weekDelta === 0
       ? '<span class="stat-change flat">持平</span>'
       : `<span class="stat-change ${weekDelta > 0 ? 'up' : 'down'}">${weekDelta > 0 ? '+' : ''}${weekDelta}</span>`;
@@ -643,9 +655,9 @@ async function loadHomeData() {
       <div class="stat-card">
         <div class="stat-icon green">▣</div>
         <div class="stat-info">
-          <div class="stat-label">已配置项目</div>
-          <div class="stat-value">${configuredProjectCount}</div>
-          <div class="stat-sub">已配置 ${configuredProjectCount} · 未配置 ${unconfiguredProjectCount}</div>
+          <div class="stat-label">本地运行</div>
+          <div class="stat-value">${activeRuns.length}</div>
+          <div class="stat-sub">可运行 ${projects.length} · 已配置 ${projects.filter(p => p.runCommand).length}</div>
         </div>
       </div>
       <div class="stat-card">
@@ -666,30 +678,55 @@ async function loadHomeData() {
       </div>
     `;
 
+    renderHomeRunningServices(activeRuns);
+    renderHomeInsights({
+      todayCount: todayHistory.length,
+      weekDelta,
+      avgDuration,
+      failCount,
+      configuredProjectCount,
+      unconfiguredProjectCount,
+    });
+
     // 最近活动（表格，带状态圆点和事件列）
     const activityEl = document.getElementById('homeActivity');
-    const recent = history.slice(0, 8);
+    const runActivities = activeRuns.map(job => ({
+      type: 'run',
+      status: job.compileStatus === 'error' ? 'warning' : job.status,
+      projectName: job.projectName,
+      displayName: job.displayName,
+      modules: getRunModuleNames(job),
+      serverName: job.url || '本地',
+      duration: formatRunUptime(job.startedAt),
+      timestamp: job.startedAt || Date.now(),
+    }));
+    const recent = [...runActivities, ...history]
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      .slice(0, 8);
     if (recent.length === 0) {
-      activityEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:40px">暂无活动记录</div>';
+      activityEl.innerHTML = `
+        <div class="home-empty">
+          <strong>暂无活动记录</strong>
+          <span>启动本地服务、构建或部署后，这里会显示最新动态。</span>
+          <button class="btn-primary" onclick="switchPage('run', document.querySelector('.sidebar-item[data-page=run]'))">启动本地运行</button>
+        </div>`;
     } else {
       activityEl.innerHTML = `<table class="ha-table">
         <thead><tr><th>时间</th><th>事件</th><th>项目</th><th>类型</th><th>服务器</th><th>状态</th><th>耗时</th></tr></thead>
         <tbody>${recent.map(h => {
           const time = new Date(h.timestamp).toLocaleTimeString('zh-CN', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
-          const typeLabel = h.type === 'deploy' ? '部署' : '构建';
-          const eventLabel = h.status === 'success' ? typeLabel + '成功' : (h.status === 'running' ? '构建中' : typeLabel + '失败');
-          const dotCls = h.status === 'success' ? 'success' : (h.status === 'running' ? 'running' : 'fail');
-          const statusCls = h.status === 'success' ? 'success' : 'fail';
-          const statusText = h.status === 'success' ? '成功' : '失败';
+          const typeLabel = getHomeActivityTypeLabel(h);
+          const statusInfo = getHomeActivityStatus(h);
+          const eventLabel = statusInfo.eventLabel || `${typeLabel}${statusInfo.statusText}`;
           const mods = (h.modules || []).slice(0, 1).join(', ');
-          const projectDisplay = h.projectName + (mods ? ' / ' + mods : '');
+          const projectDisplay = (h.displayName || h.projectName) + (mods ? ' / ' + mods : '');
           return `<tr>
             <td class="ha-time">${time}</td>
-            <td><span class="ha-event"><span class="ha-dot ${dotCls}"></span>${eventLabel}</span></td>
-            <td class="ha-project">${projectDisplay}</td>
+            <td><span class="ha-event"><span class="ha-dot ${statusInfo.dotCls}"></span>${eventLabel}</span></td>
+            <td class="ha-project" title="${escapeAttr(projectDisplay)}">${escapeHtml(projectDisplay)}</td>
             <td>${typeLabel}</td>
-            <td>${h.serverName || '本地'}</td>
-            <td><span class="ha-status-badge ${statusCls}">${statusText}</span></td>
+            <td title="${escapeAttr(h.serverName || '本地')}">${escapeHtml(h.serverName || '本地')}</td>
+            <td><span class="ha-status-badge ${statusInfo.statusCls}">${statusInfo.statusText}</span></td>
             <td>${h.duration || '—'}</td>
           </tr>`;
         }).join('')}</tbody>
@@ -699,6 +736,10 @@ async function loadHomeData() {
     // 快捷操作
     const quickEl = document.getElementById('homeQuick');
     if (quickEl) quickEl.innerHTML = `
+      <div class="quick-action-card" onclick="switchPage('run', document.querySelector('.sidebar-item[data-page=run]'))">
+        <div class="qa-icon green">▶</div>
+        <div class="qa-info"><div class="qa-title">本地运行</div></div>
+      </div>
       <div class="quick-action-card" onclick="switchPage('deploy', document.querySelector('.sidebar-item[data-page=deploy]'))">
         <div class="qa-icon blue">↗</div>
         <div class="qa-info"><div class="qa-title">快速部署</div></div>
@@ -706,10 +747,6 @@ async function loadHomeData() {
       <div class="quick-action-card" onclick="switchPage('deploy', document.querySelector('.sidebar-item[data-page=deploy]'))">
         <div class="qa-icon purple">◇</div>
         <div class="qa-info"><div class="qa-title">构建项目</div></div>
-      </div>
-      <div class="quick-action-card" onclick="switchPage('run', document.querySelector('.sidebar-item[data-page=run]'))">
-        <div class="qa-icon green">▶</div>
-        <div class="qa-info"><div class="qa-title">本地运行</div></div>
       </div>
       <div class="quick-action-card" onclick="switchPage('report', document.querySelector('.sidebar-item[data-page=report]'))">
         <div class="qa-icon green">▤</div>
@@ -729,6 +766,183 @@ async function loadHomeData() {
   }
 }
 
+function getActiveRunJobs() {
+  return Object.values(runningProjects || {})
+    .filter(job => ['starting', 'running'].includes(job.status))
+    .map(job => {
+      const project = projects.find(p => p.name === job.projectName);
+      return {
+        ...job,
+        displayName: project?.displayName || job.displayName || job.projectName,
+      };
+    })
+    .sort((a, b) => (b.startedAt || 0) - (a.startedAt || 0));
+}
+
+function getRunModuleNames(job) {
+  if (Array.isArray(job.moduleNames) && job.moduleNames.length) return job.moduleNames;
+  if (job.moduleName) return [job.moduleName];
+  return [];
+}
+
+function refreshHomeIfVisible() {
+  const home = document.getElementById('page-home');
+  if (home?.classList.contains('active')) loadHomeData();
+}
+
+function renderHomeRunningServices(activeRuns) {
+  const list = document.getElementById('homeRunningList');
+  if (!list) return;
+  if (!activeRuns.length) {
+    list.innerHTML = `
+      <div class="home-running-empty">
+        <div>
+          <strong>暂无本地服务运行</strong>
+          <span>启动后这里会显示地址、模块和运行时长。</span>
+        </div>
+        <button class="btn-primary" onclick="switchPage('run', document.querySelector('.sidebar-item[data-page=run]'))">去启动</button>
+      </div>`;
+    return;
+  }
+
+  list.innerHTML = activeRuns.map(job => {
+    const modulesText = formatRunModules(job);
+    const url = job.url || (job.port ? `http://localhost:${job.port}` : '等待地址');
+    const statusClass = job.compileStatus === 'error' ? 'warning' : (job.status === 'starting' ? 'starting' : 'running');
+    const statusText = job.compileStatus === 'error' ? '有报错' : (job.status === 'starting' ? '启动中' : '运行中');
+    return `
+      <div class="home-running-item">
+        <div class="home-running-main">
+          <div class="home-running-title">
+            <span class="home-running-dot ${statusClass}"></span>
+            <strong>${escapeHtml(job.displayName || job.projectName)}</strong>
+            <span>${statusText}</span>
+          </div>
+          <div class="home-running-meta" title="${escapeAttr(modulesText)}">${escapeHtml(modulesText)}</div>
+        </div>
+        <div class="home-running-url" title="${escapeAttr(url)}">${escapeHtml(url)}</div>
+        <div class="home-running-time">${formatRunUptime(job.startedAt)}</div>
+        <div class="home-running-actions">
+          <button class="btn-secondary" onclick="openRunLog('${escapeAttr(job.projectName)}')">日志</button>
+          <button class="btn-primary" onclick="openRunUrl('${escapeAttr(job.projectName)}')">打开</button>
+          <button class="btn-danger" onclick="stopLocalRun('${escapeAttr(job.projectName)}')">停止</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function renderHomeInsights(data) {
+  const el = document.getElementById('homeInsights');
+  if (!el) return;
+  const deltaText = data.weekDelta === 0 ? '与上周持平' : `${data.weekDelta > 0 ? '较上周增加' : '较上周减少'} ${Math.abs(data.weekDelta)} 次`;
+  const failClass = data.failCount > 0 ? 'danger' : 'success';
+  el.innerHTML = `
+    <div class="home-insight-card">
+      <span>今日操作</span>
+      <strong>${data.todayCount}</strong>
+    </div>
+    <div class="home-insight-card">
+      <span>周趋势</span>
+      <strong>${deltaText}</strong>
+    </div>
+    <div class="home-insight-card">
+      <span>平均耗时</span>
+      <strong>${data.avgDuration}</strong>
+    </div>
+    <div class="home-insight-card ${failClass}">
+      <span>失败待关注</span>
+      <strong>${data.failCount}</strong>
+    </div>
+    <div class="home-insight-card">
+      <span>配置覆盖</span>
+      <strong>${data.configuredProjectCount}/${data.configuredProjectCount + data.unconfiguredProjectCount}</strong>
+    </div>`;
+}
+
+function getHomeActivityTypeLabel(item) {
+  if (item.type === 'deploy') return '部署';
+  if (item.type === 'run') return '运行';
+  return '构建';
+}
+
+function getHomeActivityStatus(item) {
+  if (item.type === 'run') {
+    if (item.status === 'warning') {
+      return { dotCls: 'warning', statusCls: 'warning', statusText: '有报错', eventLabel: '本地运行异常' };
+    }
+    if (item.status === 'starting') {
+      return { dotCls: 'running', statusCls: 'running', statusText: '启动中', eventLabel: '本地启动中' };
+    }
+    return { dotCls: 'running', statusCls: 'running', statusText: '运行中', eventLabel: '本地运行中' };
+  }
+  if (item.status === 'success') return { dotCls: 'success', statusCls: 'success', statusText: '成功' };
+  if (item.status === 'running') return { dotCls: 'running', statusCls: 'running', statusText: '进行中' };
+  return { dotCls: 'fail', statusCls: 'fail', statusText: '失败' };
+}
+
+function formatAverageDuration(history) {
+  const seconds = history
+    .map(item => parseDurationSeconds(item.duration))
+    .filter(value => Number.isFinite(value) && value > 0);
+  if (!seconds.length) return '—';
+  const avg = Math.round(seconds.reduce((sum, value) => sum + value, 0) / seconds.length);
+  if (avg < 60) return `${avg}s`;
+  const minutes = Math.floor(avg / 60);
+  const remainSeconds = avg % 60;
+  if (minutes < 60) return remainSeconds ? `${minutes}m ${remainSeconds}s` : `${minutes}m`;
+  return `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
+}
+
+function parseDurationSeconds(duration) {
+  if (typeof duration === 'number') return duration;
+  if (!duration) return NaN;
+  const text = String(duration);
+  let total = 0;
+  const hour = text.match(/(\d+)\s*h/);
+  const minute = text.match(/(\d+)\s*m/);
+  const second = text.match(/(\d+)\s*s/);
+  if (hour) total += Number(hour[1]) * 3600;
+  if (minute) total += Number(minute[1]) * 60;
+  if (second) total += Number(second[1]);
+  if (total > 0) return total;
+  const plain = text.match(/^(\d+)$/);
+  return plain ? Number(plain[1]) : NaN;
+}
+
+async function refreshProjectIntroStatus() {
+  const versionEl = document.getElementById('introVersion');
+  const sidecarEl = document.getElementById('introSidecarStatus');
+  const notificationEl = document.getElementById('introNotificationStatus');
+  const dataDirEl = document.getElementById('introDataDir');
+
+  if (versionEl) versionEl.textContent = `App ${APP_VERSION}`;
+  if (notificationEl) {
+    const granted = await isNotificationPermissionGranted();
+    notificationEl.textContent = areNotificationsEnabled()
+      ? (granted ? '已开启' : '等待授权')
+      : '已关闭';
+    notificationEl.className = areNotificationsEnabled() && granted ? 'ok' : 'warn';
+  }
+
+  try {
+    const health = await API.get('/api/health');
+    if (sidecarEl) {
+      sidecarEl.textContent = `运行中 · PID ${health.pid || '—'}`;
+      sidecarEl.className = 'ok';
+    }
+    if (dataDirEl) {
+      dataDirEl.textContent = health.dataDir || 'sidecar/data';
+      dataDirEl.title = health.dataDir || 'sidecar/data';
+    }
+  } catch (e) {
+    if (sidecarEl) {
+      sidecarEl.textContent = '未连接';
+      sidecarEl.className = 'danger';
+    }
+    if (dataDirEl) dataDirEl.textContent = '读取失败';
+  }
+}
+
 // ========== Node Versions ==========
 async function loadNodeVersions() {
   try {
@@ -744,10 +958,11 @@ async function loadNodeVersions() {
 async function loadProjects() {
   try {
     projects = await API.get('/api/projects');
-    await loadRunStatuses();
-    renderProjects();
-    renderRunPage();
-  } catch (e) {
+	    await loadRunStatuses();
+	    renderProjects();
+	    renderRunPage();
+	    refreshHomeIfVisible();
+	  } catch (e) {
     console.error('加载项目失败:', e);
   }
 }

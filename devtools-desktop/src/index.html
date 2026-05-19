@@ -41,10 +41,18 @@
   <div class="home-header">
     <h1 class="home-greeting" id="homeGreeting">下午好 👋</h1>
     <p class="home-date" id="homeDate"></p>
-  </div>
-  <div class="home-stats" id="homeStats"></div>
-  <div class="home-body">
-    <div class="home-activity-card">
+	  </div>
+	  <div class="home-stats" id="homeStats"></div>
+	  <div class="home-running-card" id="homeRunningCard">
+	    <div class="home-card-header compact">
+	      <span class="home-card-title">当前运行服务</span>
+	      <button class="btn-text" onclick="switchPage('run', document.querySelector('.sidebar-item[data-page=run]'))">管理运行</button>
+	    </div>
+	    <div class="home-running-list" id="homeRunningList"></div>
+	  </div>
+	  <div class="home-insights" id="homeInsights"></div>
+	  <div class="home-body">
+	    <div class="home-activity-card">
       <div class="home-card-header">
         <span class="home-card-title">最近活动</span>
         <button class="btn-text" onclick="switchPage('deploy', document.querySelector('.sidebar-item[data-page=deploy]'));setTimeout(()=>switchSubTab('history',document.querySelector('.sub-tab[data-sub=history]')),100)">查看全部</button>
@@ -613,29 +621,36 @@
 <!-- 项目介绍弹窗 -->
 <div class="modal-overlay" id="projectIntroModal">
   <div class="modal modal-intro">
-    <div class="modal-header">
-      <div>
-        <h2>DevTools Desktop</h2>
-        <p class="modal-subtitle">轻量级前端项目构建、部署与 Git 周报工具</p>
-      </div>
-      <button class="modal-close" onclick="closeModal('projectIntroModal')">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="intro-hero">
-        <div class="intro-mark">⌘</div>
-        <div>
-          <div class="intro-title">为日常前端发布流程准备的桌面工具</div>
-          <div class="intro-desc">集中管理本地项目、Node 版本、构建记录和 SFTP 部署配置，减少重复打开终端和手动整理记录的时间。</div>
-        </div>
-      </div>
-      <div class="intro-grid">
-        <div class="intro-item">
-          <div class="intro-item-icon">↗</div>
-          <div>
-            <strong>项目部署</strong>
-            <span>支持单体与多模块项目构建，复用历史配置快速发布。</span>
-          </div>
-        </div>
+	    <div class="modal-header">
+	      <div>
+	        <h2>DevTools Desktop</h2>
+	        <p class="modal-subtitle">前端本地运行、构建部署、Git 周报与系统通知工作台</p>
+	      </div>
+	      <button class="modal-close" onclick="closeModal('projectIntroModal')">✕</button>
+	    </div>
+	    <div class="modal-body">
+	      <div class="intro-hero">
+	        <div class="intro-mark">⌘</div>
+	        <div>
+	          <div class="intro-title">为日常前端发布流程准备的桌面工具</div>
+	          <div class="intro-desc">集中管理本地项目、Node 版本、本地开发服务、构建部署记录和 SFTP 发布配置，减少重复打开终端和手动整理记录的时间。</div>
+	        </div>
+	      </div>
+	      <div class="intro-grid">
+	        <div class="intro-item">
+	          <div class="intro-item-icon">▶</div>
+	          <div>
+	            <strong>本地运行</strong>
+	            <span>按项目保存常用模块、首页模块和启动命令，快速启动 Vue 前端服务。</span>
+	          </div>
+	        </div>
+	        <div class="intro-item">
+	          <div class="intro-item-icon">↗</div>
+	          <div>
+	            <strong>构建部署</strong>
+	            <span>支持单体与多模块项目构建，复用历史配置快速发布。</span>
+	          </div>
+	        </div>
         <div class="intro-item">
           <div class="intro-item-icon">▣</div>
           <div>
@@ -643,24 +658,58 @@
             <span>按项目保存 Node 版本、目标服务器和常用模块选择。</span>
           </div>
         </div>
-        <div class="intro-item">
-          <div class="intro-item-icon">▤</div>
-          <div>
-            <strong>Git 周报</strong>
-            <span>基于 GitLab 提交记录生成日报、周报并支持导出。</span>
-          </div>
-        </div>
-        <div class="intro-item">
-          <div class="intro-item-icon">⌗</div>
-          <div>
-            <strong>历史追踪</strong>
-            <span>保留构建和部署日志，方便回看结果和排查问题。</span>
-          </div>
-        </div>
-      </div>
-      <div class="intro-meta">
-        <span>Tauri</span>
-        <span>Node.js Sidecar</span>
+	        <div class="intro-item">
+	          <div class="intro-item-icon">▤</div>
+	          <div>
+	            <strong>Git 周报</strong>
+	            <span>基于 GitLab 提交记录生成日报、周报并支持导出。</span>
+	          </div>
+	        </div>
+	        <div class="intro-item">
+	          <div class="intro-item-icon">◉</div>
+	          <div>
+	            <strong>系统通知</strong>
+	            <span>本地服务启动、构建完成和编译异常会通过桌面通知提醒。</span>
+	          </div>
+	        </div>
+	        <div class="intro-item">
+	          <div class="intro-item-icon">⌗</div>
+	          <div>
+	            <strong>历史追踪</strong>
+	            <span>保留构建和部署日志，方便回看结果和排查问题。</span>
+	          </div>
+	        </div>
+	      </div>
+	      <div class="intro-workflow">
+	        <div class="intro-section-title">日常流程</div>
+	        <div class="intro-flow">
+	          <span>选择项目</span>
+	          <span>本地运行</span>
+	          <span>构建部署</span>
+	          <span>生成周报</span>
+	        </div>
+	      </div>
+	      <div class="intro-system-grid">
+	        <div class="intro-system-item">
+	          <span>版本</span>
+	          <strong id="introVersion">读取中</strong>
+	        </div>
+	        <div class="intro-system-item">
+	          <span>Sidecar</span>
+	          <strong id="introSidecarStatus">读取中</strong>
+	        </div>
+	        <div class="intro-system-item">
+	          <span>通知</span>
+	          <strong id="introNotificationStatus">读取中</strong>
+	        </div>
+	        <div class="intro-system-item">
+	          <span>数据目录</span>
+	          <strong id="introDataDir">读取中</strong>
+	        </div>
+	      </div>
+	      <div class="intro-meta">
+	        <span>Tauri</span>
+	        <span>Node.js Sidecar</span>
         <span>macOS</span>
       </div>
     </div>
