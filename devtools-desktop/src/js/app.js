@@ -18,6 +18,8 @@ let runModalMode = 'start';
 let selectedRunModuleNames = new Set();
 let notifiedRunIds = new Set();
 let notifiedRunCompileErrors = new Set();
+let pendingRunCompileErrorTimers = {};
+const RUN_COMPILE_ERROR_NOTIFY_DELAY = 15000;
 
 // ========== 桌面通知 ==========
 const NOTIFICATION_ENABLED_KEY = 'devtools-notifications-enabled';
@@ -449,21 +451,48 @@ function setupWSHandlers() {
       const urlText = data.url ? `\n${data.url}` : '';
       sendDesktopNotification('本地运行成功', `${data.projectName}${modulesText} 已启动${urlText}`, true, { target: 'log' });
     }
-    if (data.compileStatus === 'error' && data.compileErrorSeq) {
-      const errorKey = `${data.id}:${data.compileErrorSeq}`;
-      if (!notifiedRunCompileErrors.has(errorKey)) {
-        notifiedRunCompileErrors.add(errorKey);
-        const modulesText = (data.moduleNames || []).length ? ` · ${(data.moduleNames || []).join(', ')}` : '';
-        sendDesktopNotification('本地项目编译报错', `${data.projectName}${modulesText}\n${data.compileError || '请查看运行日志'}`, false, { target: 'log' });
-        showToast('❌ 本地项目编译报错', data.projectName, { clickable: true });
-      }
+    handleRunCompileErrorNotification(data);
+    if (!isActive && data.id) {
+      notifiedRunIds.delete(data.id);
+      clearRunCompileErrorTimers(data.id);
     }
-    if (!isActive && data.id) notifiedRunIds.delete(data.id);
 
     if (data.id === currentRunId) updateRunLogStatus(data);
     renderProjects();
     renderRunPage();
   });
+}
+
+function clearRunCompileErrorTimers(jobId) {
+  Object.keys(pendingRunCompileErrorTimers)
+    .filter(key => key.startsWith(`${jobId}:`))
+    .forEach(key => {
+      clearTimeout(pendingRunCompileErrorTimers[key]);
+      delete pendingRunCompileErrorTimers[key];
+    });
+}
+
+function handleRunCompileErrorNotification(data) {
+  if (!data.id) return;
+  if (data.compileStatus !== 'error') {
+    clearRunCompileErrorTimers(data.id);
+    return;
+  }
+  if (!data.compileErrorSeq) return;
+
+  const errorKey = `${data.id}:${data.compileErrorSeq}`;
+  if (notifiedRunCompileErrors.has(errorKey) || pendingRunCompileErrorTimers[errorKey]) return;
+
+  pendingRunCompileErrorTimers[errorKey] = setTimeout(() => {
+    delete pendingRunCompileErrorTimers[errorKey];
+    const latest = runningProjects[data.projectName];
+    if (!latest || latest.id !== data.id || latest.compileStatus !== 'error' || latest.compileErrorSeq !== data.compileErrorSeq) return;
+
+    notifiedRunCompileErrors.add(errorKey);
+    const modulesText = (latest.moduleNames || []).length ? ` · ${(latest.moduleNames || []).join(', ')}` : '';
+    sendDesktopNotification('本地项目编译报错', `${latest.projectName}${modulesText}\n${latest.compileError || '请查看运行日志'}`, false, { target: 'log' });
+    showToast('❌ 本地项目编译报错', latest.projectName, { clickable: true });
+  }, RUN_COMPILE_ERROR_NOTIFY_DELAY);
 }
 
 // ========== Navigation ==========

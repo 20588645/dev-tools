@@ -218,7 +218,7 @@ function isRunCompileStartLine(text) {
 }
 
 function isRunCompileErrorLine(text) {
-  return /(?:failed to compile|module (?:build )?error|syntax error|typeerror:|referenceerror:|eslint-loader|npm err!|error in \.\/|^\s*error\s+in\s+|^\s*error\s{2,}|^\s*errors?:\s*$|^\s*[✖×]\s+\d+\s+problems?)/i.test(String(text || ''));
+  return /(?:failed to compile|module (?:build )?error|syntax error|typeerror:|referenceerror:|eslint-loader|npm err!|error in \.\/|^\s*error\s+in\s+|^\s*error\s{2,}|^\s*errors?:\s*$|^\s*[✖×]\s+\d+\s+problems?|^\s*[✘✖×]\s+.+|^\s*\^\s*$)/i.test(String(text || ''));
 }
 
 function addPendingReadyLine(job, line) {
@@ -396,7 +396,7 @@ function processPlainRunOutputLine(app, job, line, fallbackType = 'info') {
 
   if (isRunCompileStartLine(line)) markCompileStarting(app, job);
   const isWarningLine = /(?:\bwarn(?:ing)?\b|deprecated|deprecation)/i.test(line);
-  const isErrorLine = isRunCompileErrorLine(line) || job.compileErrorActive || (fallbackType === 'error' && !isWarningLine);
+  const isErrorLine = isRunCompileErrorLine(line) || (fallbackType === 'error' && !isWarningLine);
   if (isErrorLine) markCompileError(app, job, line);
   const type = isErrorLine
     ? 'error'
