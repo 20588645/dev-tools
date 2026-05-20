@@ -1,5 +1,2862 @@
 [
   {
+    "id": "build-1779177321245",
+    "timestamp": "2026-05-19T07:55:40.923Z",
+    "projectName": "moutai-web-portal",
+    "modules": [
+      "整体构建"
+    ],
+    "serverId": null,
+    "serverName": "—",
+    "remotePath": "—",
+    "status": "success",
+    "type": "build-only",
+    "duration": "19s",
+    "logs": [
+      {
+        "type": "info",
+        "text": "╔══════════════════════════════════════════╗",
+        "time": 1779177321245
+      },
+      {
+        "type": "info",
+        "text": "║           🚀 构建任务启动                ║",
+        "time": 1779177321245
+      },
+      {
+        "type": "info",
+        "text": "╚══════════════════════════════════════════╝",
+        "time": 1779177321245
+      },
+      {
+        "type": "info",
+        "text": "📋 项目: moutai-web-portal",
+        "time": 1779177321245
+      },
+      {
+        "type": "info",
+        "text": "📦 模块: 整体构建",
+        "time": 1779177321245
+      },
+      {
+        "type": "info",
+        "text": "🔧 Node: v14.1.0",
+        "time": 1779177321245
+      },
+      {
+        "type": "info",
+        "text": "⏰ 开始时间: 2026/5/19 15:55:21",
+        "time": 1779177321245
+      },
+      {
+        "type": "info",
+        "text": "",
+        "time": 1779177321245
+      },
+      {
+        "type": "info",
+        "text": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+        "time": 1779177321245
+      },
+      {
+        "type": "info",
+        "text": "📥 阶段一：拉取最新代码",
+        "time": 1779177321245
+      },
+      {
+        "type": "info",
+        "text": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+        "time": 1779177321245
+      },
+      {
+        "type": "info",
+        "text": "📂 工作目录: /Users/ldy/project/moutai-jt/moutai-web-portal",
+        "time": 1779177321264
+      },
+      {
+        "type": "info",
+        "text": "🌿 当前分支: production",
+        "time": 1779177321264
+      },
+      {
+        "type": "cmd",
+        "text": "$ git pull origin production",
+        "time": 1779177321264
+      },
+      {
+        "type": "info",
+        "text": "",
+        "time": 1779177321264
+      },
+      {
+        "type": "info",
+        "text": "  Already up to date.",
+        "time": 1779177321871
+      },
+      {
+        "type": "info",
+        "text": "✅ 代码拉取完成",
+        "time": 1779177321878
+      },
+      {
+        "type": "info",
+        "text": "",
+        "time": 1779177321878
+      },
+      {
+        "type": "info",
+        "text": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+        "time": 1779177321878
+      },
+      {
+        "type": "info",
+        "text": "🔨 阶段二：执行构建",
+        "time": 1779177321878
+      },
+      {
+        "type": "info",
+        "text": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+        "time": 1779177321878
+      },
+      {
+        "type": "info",
+        "text": "🔧 Node 版本: v14.1.0",
+        "time": 1779177321878
+      },
+      {
+        "type": "info",
+        "text": "   路径: /Users/ldy/.nvm/versions/node/v14.1.0/bin",
+        "time": 1779177321878
+      },
+      {
+        "type": "cmd",
+        "text": "$ npm run build",
+        "time": 1779177321878
+      },
+      {
+        "type": "info",
+        "text": "📂 工作目录: /Users/ldy/project/moutai-jt/moutai-web-portal",
+        "time": 1779177321878
+      },
+      {
+        "type": "info",
+        "text": "",
+        "time": 1779177321878
+      },
+      {
+        "type": "info",
+        "text": "> @0.1.0 build /Users/ldy/project/moutai-jt/moutai-web-portal",
+        "time": 1779177322335
+      },
+      {
+        "type": "info",
+        "text": "> vue-cli-service build --mode prod",
+        "time": 1779177322335
+      },
+      {
+        "type": "error",
+        "text": "Browserslist: caniuse-lite is outdated. Please run:",
+        "time": 1779177323046
+      },
+      {
+        "type": "error",
+        "text": "  npx browserslist@latest --update-db",
+        "time": 1779177323047
+      },
+      {
+        "type": "error",
+        "text": "  Why you should do it regularly: https://github.com/browserslist/browserslist#browsers-data-updating",
+        "time": 1779177323047
+      },
+      {
+        "type": "error",
+        "text": "-  Building for prod...",
+        "time": 1779177323078
+      },
+      {
+        "type": "error",
+        "text": "Browserslist: caniuse-lite is outdated. Please run:",
+        "time": 1779177327579
+      },
+      {
+        "type": "error",
+        "text": "  npx browserslist@latest --update-db",
+        "time": 1779177327579
+      },
+      {
+        "type": "error",
+        "text": "  Why you should do it regularly: https://github.com/browserslist/browserslist#browsers-data-updating",
+        "time": 1779177327579
+      },
+      {
+        "type": "error",
+        "text": "Browserslist: caniuse-lite is outdated. Please run:",
+        "time": 1779177327579
+      },
+      {
+        "type": "error",
+        "text": "  npx browserslist@latest --update-db",
+        "time": 1779177327579
+      },
+      {
+        "type": "error",
+        "text": "  Why you should do it regularly: https://github.com/browserslist/browserslist#browsers-data-updating",
+        "time": 1779177327579
+      },
+      {
+        "type": "error",
+        "text": "Browserslist: caniuse-lite is outdated. Please run:",
+        "time": 1779177331163
+      },
+      {
+        "type": "error",
+        "text": "  npx browserslist@latest --update-db",
+        "time": 1779177331163
+      },
+      {
+        "type": "error",
+        "text": "  Why you should do it regularly: https://github.com/browserslist/browserslist#browsers-data-updating",
+        "time": 1779177331163
+      },
+      {
+        "type": "info",
+        "text": " DONE  Compiled successfully in 16499ms3:55:40 PM",
+        "time": 1779177340336
+      },
+      {
+        "type": "info",
+        "text": "  File                                      Size             Gzipped",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/npm.echarts~2672066a.db747010.    1020.37 KiB      333.57 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  js",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/7b69d10d8c2c3e675c05.worker.js       870.49 KiB       250.08 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-2d238141.a19c9437.js        798.12 KiB       261.91 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/npm.element-ui~6ed3fd28.a3bf63    505.57 KiB       124.74 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  75.js",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/npm.xlsx~8b33879e.ebd27c4f.js     432.00 KiB       169.82 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/npm.xlsx~b916e1a4.1f17750c.js     392.64 KiB       128.12 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/npm.vue-pdf~60865ef7.a26cefab.    372.56 KiB       101.75 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  js",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/npm.html2canvas~cbc997cd.dadb7    198.72 KiB       46.10 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  1ab.js",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/npm.swiper~58f90152.9caf3007.j    136.70 KiB       35.59 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  s",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/npm.vue-pdf~5b89451b.79b62e49.    110.84 KiB       30.02 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  js",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/npm.element-china-area-data~db    104.19 KiB       35.07 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  9574d9.d0218794.js",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-1d1d1c90.bb718ed9.js        94.26 KiB        22.09 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-f881215e.7cfb479b.js        93.13 KiB        44.09 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-3dd9c372.b2ccc1f7.js        87.17 KiB        46.90 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-5c2e3439.e5604bff.js        83.82 KiB        26.74 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-62e156b0.202b4362.js        80.37 KiB        20.20 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-30395c97.dcec3d57.js        76.01 KiB        13.53 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-49027646.d396d5fe.js        75.87 KiB        19.18 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/npm.xlsx~e806364e.9d647e1e.js     74.44 KiB        22.68 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/npm.lodash~77bf5e45.5169c4bd.j    71.76 KiB        25.30 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  s",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-ac3cdb1c.0d2a5434.js        67.95 KiB        19.10 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-2057a403.8d7155eb.js        67.46 KiB        19.14 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-25c570ce.ee635f94.js        65.83 KiB        18.61 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-7cc6f920.cfcf1be7.js        65.58 KiB        19.86 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-6f94ab8a.4f4712fa.js        65.57 KiB        19.45 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-7f94d5f6.a1d390b8.js        65.55 KiB        19.44 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/npm.vue~d2305125.e1a9fa7e.js      64.83 KiB        23.27 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-55b1590a.a7850daa.js        63.73 KiB        17.95 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-73b1d6a0.876493cc.js        62.85 KiB        14.77 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/npm.element-ui~9ad0f35b.a32488    61.78 KiB        14.70 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  20.js",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-5eb0d753.3a3757a7.js        60.28 KiB        12.38 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-3f49159a.7b3899b7.js        60.20 KiB        17.12 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-8e030b82.4164eaa8.js        59.93 KiB        17.40 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-42e96e52.fbbf0015.js        53.56 KiB        15.00 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/npm.core-js~93acefaf.171cc37e.    53.38 KiB        19.39 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  js",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/npm.element-ui~fe785c75.68db77    53.35 KiB        15.76 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  b4.js",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/npm.element-ui~59f3426a.8e2f62    52.18 KiB        11.90 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  b5.js",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/app~748942c6.8a4fe578.js          50.74 KiB        14.39 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/npm.core-js~31c671ca.b0cb390a.    50.25 KiB        17.42 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  js",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-643035ae.e53071ff.js        49.37 KiB        20.00 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-418ef38e.563a62e1.js        47.57 KiB        13.94 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-38a9d49f.52cf450b.js        43.58 KiB        20.12 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-c5238544.ec623414.js        42.99 KiB        19.92 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/npm.sortablejs~a2767193.634149    42.75 KiB        14.10 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  3d.js",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-2ef65154.4b17a0a5.js        41.45 KiB        11.60 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-34ec83fc.69829f1d.js        40.05 KiB        13.04 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-3459e7e6.32c422aa.js        38.21 KiB        12.74 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-5c7d80c7.b8de7ba6.js        37.97 KiB        12.39 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/npm.viewerjs~cc922c5b.9e51d004    37.07 KiB        11.49 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  .js",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-5102e978.dae451be.js        36.42 KiB        10.64 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/npm.hash-base~bd772472.ae34b5e    35.34 KiB        10.32 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  2.js",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-vendors~253ae210.7bfb029    34.22 KiB        11.72 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  a.js",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-1364d821.e86d5898.js        32.80 KiB        11.67 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/npm.vue~4ae9fe63.f3b67931.js      30.51 KiB        10.89 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-67bb4a20.bd75ced0.js        30.13 KiB        10.70 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-e38309ee.744580e9.js        29.58 KiB        18.03 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-1fc6d444.d18d5671.js        29.54 KiB        10.54 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-2e9bef0f.c2f57e33.js        28.97 KiB        11.10 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/npm.vue-router~d2584e25.f771b6    28.96 KiB        9.95 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  b9.js",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-2a8d449e.3e9e960a.js        27.73 KiB        8.65 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/npm.vuedraggable~8f1297db.a77c    27.12 KiB        9.83 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  e8b0.js",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-c1df5b76.6cb3f584.js        23.33 KiB        7.95 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-e842d9b2.7a0bf791.js        22.36 KiB        7.28 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/npm.axios~e4173fa2.9c771e10.js    19.99 KiB        7.08 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/npm.buffer~7e5e8261.c09ac250.j    19.72 KiB        5.85 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  s",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-4e418a37.048113fd.js        19.56 KiB        4.77 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-4d7d6622.dca9c3c4.js        19.56 KiB        4.70 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/npm.async-validator~36a31624.8    19.54 KiB        4.63 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  d0ab2c7.js",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-3461cfe2.1a547559.js        18.15 KiB        6.42 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-073ea86b.218a1621.js        17.28 KiB        4.27 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-098f8097.f068de5a.js        17.09 KiB        5.08 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-360694be.0ecf0611.js        16.95 KiB        3.76 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/npm.babel-runtime~7da828cd.d56    16.83 KiB        6.20 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  aa8f0.js",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-0caac4c1.ab9dc4ec.js        16.44 KiB        6.62 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-7d149b39.ca63618b.js        16.19 KiB        4.43 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-dbcb8bb6.09154e98.js        15.07 KiB        6.36 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-56b7919e.7ecc872e.js        14.79 KiB        10.84 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-b10e3e64.25034f66.js        14.33 KiB        4.08 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-613448f4.a09864ed.js        14.07 KiB        4.62 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-c6d279aa.5a422fe3.js        12.88 KiB        4.11 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-6f8c651a.c35dd840.js        12.63 KiB        7.82 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-28f3b1e6.cfd5a05f.js        12.42 KiB        9.11 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-26700987.082edb12.js        12.40 KiB        9.05 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-46989700.f8a2e5c1.js        12.37 KiB        8.94 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-18c447b8.16fe8e78.js        12.23 KiB        3.27 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/runtime.b709c5b6.js               11.72 KiB        4.17 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-53257613.a114da62.js        11.42 KiB        3.55 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/npm.qs~bc261e74.21fbf2ef.js       11.11 KiB        3.97 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/npm.vuex~321ef3be.0e4f0ec2.js     10.14 KiB        3.14 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-884d7642.ea1538a2.js        9.46 KiB         2.44 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-7ae66950.41b30f93.js        9.03 KiB         2.89 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-74124668.ddf379e7.js        8.83 KiB         3.18 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-c7997a44.ff2cf039.js        8.71 KiB         2.64 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-ccc702ea.584ca804.js        8.63 KiB         3.86 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-22c93a64.91836928.js        8.52 KiB         2.60 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/npm.util~1bf52c65.ac236c00.js     8.30 KiB         3.18 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-2fa05896.17e3689d.js        8.18 KiB         2.75 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/npm.v-viewer~75a787b4.ea4f85af    7.90 KiB         2.97 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  .js",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/npm.resize-observer-polyfill~f    7.85 KiB         2.53 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  5f53f7b.95e54816.js",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-0d041216.92ec0d73.js        7.20 KiB         4.93 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-ea0d246e.ce083efd.js        7.01 KiB         2.84 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/npm.vue-pdf~a81ddc12.19ff4ee2.    6.90 KiB         2.72 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  js",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-13c2c1ba.8e2660d3.js        6.69 KiB         2.77 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/npm.regenerator-runtime~ccfd30    6.48 KiB         2.42 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  e1.4f357a1b.js",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-f8613eec.09291885.js        6.24 KiB         2.05 KiB",
+        "time": 1779177340624
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-35772f9a.52cdb9a9.js        6.22 KiB         2.19 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-3f3f41d6.aedab8f7.js        5.83 KiB         3.22 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-370cbf60.4c494801.js        5.33 KiB         1.52 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-9a9d78b8.1a97b992.js        5.10 KiB         1.93 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-39601c4d.d1f9eb94.js        5.06 KiB         1.91 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-20fe6d4b.bcd90ba2.js        4.49 KiB         2.84 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-338059da.29f47e94.js        4.18 KiB         1.77 K",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "iB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-7e41fa00.2c9f12b3.js        3.75 KiB         1.70 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-51de9d76.c9937a43.js        3.60 KiB         1.54 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-fbec8cee.67668276.js        3.58 KiB         1.55 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-f984663e.9e682369.js        3.51 KiB         1.52 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-4a667f62.d85ae412.js        3.51 KiB         1.51 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-d7fd588c.2f3d7380.js        3.22 KiB         1.29 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-d60053f6.d2735ccf.js        2.66 KiB         1.38 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-4b3876b5.5d0bbf35.js        2.03 KiB         0.98 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-73e506f0.98ab09f3.js        1.90 KiB         0.89 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-69aa53b2.3b1afea7.js        1.90 KiB         0.91 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-1ca242a5.b4629e51.js        1.83 KiB         0.87 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-5cd9bafb.671910a8.js        1.81 KiB         0.89 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-71415bb0.9503a3ed.js        1.55 KiB         0.79 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/app~f4f19b33.bcec626a.js          0.65 KiB         0.37 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-d8f5de38.8207ed01.js        0.55 KiB         0.37 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-2d0e1a1f.b472833f.js        0.46 KiB         0.33 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/chunk-2d215c28.c155735e.js        0.21 KiB         0.18 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/js/npm.element-ui~bb397a47.f7c3e5    0.11 KiB         0.11 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  7c.js",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/app~f4f19b33.a7db2d77.css        245.21 KiB       35.85 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/npm.element-ui~bb397a47.95855    241.28 KiB       36.42 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  a7b.css",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-f881215e.43e7efca.css      29.54 KiB        3.95 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-5c2e3439.24c2ce6e.css      28.49 KiB        4.27 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-7cc6f920.262725de.css      25.82 KiB        4.59 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-6f94ab8a.288f2c74.css      25.77 KiB        4.59 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-7f94d5f6.e18c8aa3.css      25.71 KiB        4.59 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-25c570ce.96dca9e5.css      25.66 KiB        4.58 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-ac3cdb1c.75a154d2.css      25.35 KiB        4.40 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-c1df5b76.80153ede.css      24.34 KiB        4.46 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-49027646.d0ffebbe.css      18.23 KiB        3.17 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-62e156b0.56b0ffd5.css      18.23 KiB        3.17 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-1364d821.45fe2bc5.css      17.73 KiB        3.30 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-643035ae.27e760dc.css      17.70 KiB        2.73 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/npm.swiper~58f90152.78b2fff1.    13.17 KiB        3.90 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  css",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-3dd9c372.d0593e79.css      12.74 KiB        2.51 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-2a8d449e.3e6b2ac2.css      12.36 KiB        2.20 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-3f3f41d6.15234289.css      11.93 KiB        1.58 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-7ae66950.3248aaa3.css      11.35 KiB        1.59 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-2ef65154.281fc3eb.css      10.72 KiB        1.99 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-5eb0d753.ce1c2b74.css      10.36 KiB        1.78 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-5102e978.71a6cd93.css      10.18 KiB        1.85 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-2057a403.b66af3b8.css      9.81 KiB         1.86 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-55b1590a.2f667a6a.css      8.67 KiB         1.74 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-3f49159a.a974bbfa.css      8.59 KiB         1.72 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-73b1d6a0.b10ec7af.css      8.56 KiB         1.48 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-38a9d49f.5efe2de7.css      8.51 KiB         1.46 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-c5238544.acc5cf4f.css      8.51 KiB         1.46 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-e38309ee.f86cfd7d.css      8.38 KiB         1.23 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/npm.viewerjs~cc922c5b.83c8e9d    7.94 KiB         3.06 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  2.css",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-8e030b82.b3f790db.css      7.85 KiB         1.59 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-1d1d1c90.d6813e96.css      7.42 KiB         1.65 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-370cbf60.5e18bdb2.css      6.93 KiB         1.17 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-39601c4d.c1a44ab9.css      6.87 KiB         1.52 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-9a9d78b8.c1a44ab9.css      6.87 KiB         1.52 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-30395c97.edf472e0.css      6.15 KiB         1.45 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-35772f9a.fd686e6d.css      5.73 KiB         1.26 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-418ef38e.37beb7c6.css      5.67 KiB         1.29 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-f8613eec.be9dc868.css      5.59 KiB         2.38 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-42e96e52.aa489005.css      4.36 KiB         1.03 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-3459e7e6.d3f494ae.css      4.30 KiB         1.00 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-e842d9b2.ba05213e.css      4.28 KiB         0.90 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-34ec83fc.35c571b1.css      4.27 KiB         0.99 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-c6d279aa.4fb8aef3.css      3.91 KiB         0.94 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-0caac4c1.3428634a.css      3.46 KiB         0.90 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-4d7d6622.57c23dca.css      3.44 KiB         0.93 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-1ca242a5.10098824.css      3.39 KiB         0.75 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-5c7d80c7.e724c4f1.css      3.27 KiB         0.80 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-7d149b39.d4638f5c.css      3.08 KiB         0.88 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-3461cfe2.f3975971.css      2.96 KiB         0.72 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/npm.vue-pdf~a81ddc12.c5c406ea    2.90 KiB         0.81 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  .css",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-74124668.93e8e584.css      2.81 KiB         0.80 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-1fc6d444.f706c8f5.css      2.76 KiB         0.73 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-67bb4a20.c87cde29.css      2.76 KiB         0.73 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-6f8c651a.d6ac4ce7.css      2.65 KiB         0.66 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-18c447b8.4f73a486.css      2.54 KiB         0.63 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-ccc702ea.b76acf37.css      2.44 KiB         0.72 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-2fa05896.a6c16dec.css      2.36 KiB         0.65 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-2e9bef0f.01ef9721.css      2.21 KiB         0.57 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-4e418a37.9f936cb2.css      2.13 KiB         0.64 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-073ea86b.54a4dd1e.css      2.12 KiB         0.61 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-884d7642.782b583b.css      2.04 KiB         0.52 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-4a667f62.9be0b8c0.css      2.01 KiB         0.60 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-51de9d76.036a5b56.css      2.01 KiB         0.60 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-f984663e.0faf5cb9.css      2.01 KiB         0.60 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-fbec8cee.f76863df.css      2.01 KiB         0.60 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-b10e3e64.7ecaf554.css      1.99 KiB         0.60 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-ea0d246e.c1eaf544.css      1.95 KiB         0.64 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-338059da.507c0400.css      1.88 KiB         0.57 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-d7fd588c.78edbfa2.css      1.59 KiB         0.51 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-73e506f0.fad06c7a.css      1.49 KiB         0.46 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-71415bb0.054433c3.css      1.48 KiB         0.46 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-4b3876b5.4a6885f9.css      1.44 KiB         0.45 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-5cd9bafb.67ae879b.css      1.44 KiB         0.45 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-69aa53b2.a06734e8.css      1.44 KiB         0.45 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-098f8097.6f20e95d.css      1.42 KiB         0.49 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/app~748942c6.7cb65437.css        1.36 KiB         0.54 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-360694be.d09a837f.css      1.20 KiB         0.46 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-53257613.d9cb9616.css      1.17 KiB         0.43 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-7e41fa00.cc0cee00.css      1.12 KiB         0.39 KiB",
+        "time": 1779177340625
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-22c93a64.757bee73.css      1.05 KiB         0.39 KiB",
+        "time": 1779177340626
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-c7997a44.b6a937f1.css      1.04 KiB         0.40 KiB",
+        "time": 1779177340626
+      },
+      {
+        "type": "info",
+        "text": "  dist/css/chunk-d8f5de38.1d12d430.css      0.05 KiB         0.07 KiB",
+        "time": 1779177340626
+      },
+      {
+        "type": "info",
+        "text": "  Images and other types of assets omitted.",
+        "time": 1779177340626
+      },
+      {
+        "type": "info",
+        "text": " DONE  Build complete. The dist directory is ready to be deployed.",
+        "time": 1779177340626
+      },
+      {
+        "type": "info",
+        "text": " INFO  Check out deployment instructions at https://cli.vuejs.org/guide/deployment.html",
+        "time": 1779177340626
+      },
+      {
+        "type": "success",
+        "text": "\n✓ 构建完成 (19s)",
+        "time": 1779177340923
+      }
+    ]
+  },
+  {
+    "id": "build-1779175748927",
+    "timestamp": "2026-05-19T07:29:42.073Z",
+    "projectName": "moutai-shuanglong",
+    "modules": [
+      "WMSstoreModule"
+    ],
+    "serverId": null,
+    "serverName": "—",
+    "remotePath": "—",
+    "status": "success",
+    "type": "build-only",
+    "duration": "33s",
+    "logs": [
+      {
+        "type": "info",
+        "text": "╔══════════════════════════════════════════╗",
+        "time": 1779175748928
+      },
+      {
+        "type": "info",
+        "text": "║           🚀 构建任务启动                ║",
+        "time": 1779175748928
+      },
+      {
+        "type": "info",
+        "text": "╚══════════════════════════════════════════╝",
+        "time": 1779175748928
+      },
+      {
+        "type": "info",
+        "text": "📋 项目: moutai-shuanglong",
+        "time": 1779175748928
+      },
+      {
+        "type": "info",
+        "text": "📦 模块: WMSstoreModule",
+        "time": 1779175748928
+      },
+      {
+        "type": "info",
+        "text": "🔧 Node: v12.22.12",
+        "time": 1779175748928
+      },
+      {
+        "type": "info",
+        "text": "⏰ 开始时间: 2026/5/19 15:29:08",
+        "time": 1779175748928
+      },
+      {
+        "type": "info",
+        "text": "",
+        "time": 1779175748928
+      },
+      {
+        "type": "info",
+        "text": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+        "time": 1779175748928
+      },
+      {
+        "type": "info",
+        "text": "📥 阶段一：拉取最新代码",
+        "time": 1779175748928
+      },
+      {
+        "type": "info",
+        "text": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+        "time": 1779175748928
+      },
+      {
+        "type": "info",
+        "text": "📂 工作目录: /Users/ldy/project/maotou-sl/moutai-shuanglong",
+        "time": 1779175748948
+      },
+      {
+        "type": "info",
+        "text": "🌿 当前分支: production",
+        "time": 1779175748948
+      },
+      {
+        "type": "cmd",
+        "text": "$ git pull origin production",
+        "time": 1779175748948
+      },
+      {
+        "type": "info",
+        "text": "",
+        "time": 1779175748948
+      },
+      {
+        "type": "info",
+        "text": "  Already up to date.",
+        "time": 1779175749514
+      },
+      {
+        "type": "info",
+        "text": "✅ 代码拉取完成",
+        "time": 1779175749520
+      },
+      {
+        "type": "info",
+        "text": "",
+        "time": 1779175749520
+      },
+      {
+        "type": "info",
+        "text": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+        "time": 1779175749520
+      },
+      {
+        "type": "info",
+        "text": "🔨 阶段二：执行构建",
+        "time": 1779175749520
+      },
+      {
+        "type": "info",
+        "text": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+        "time": 1779175749520
+      },
+      {
+        "type": "info",
+        "text": "🔧 Node 版本: v12.22.12",
+        "time": 1779175749520
+      },
+      {
+        "type": "info",
+        "text": "   路径: /Users/ldy/.nvm/versions/node/v12.22.12/bin",
+        "time": 1779175749520
+      },
+      {
+        "type": "cmd",
+        "text": "$ npm run build WMSstoreModule",
+        "time": 1779175749520
+      },
+      {
+        "type": "info",
+        "text": "📂 工作目录: /Users/ldy/project/maotou-sl/moutai-shuanglong",
+        "time": 1779175749520
+      },
+      {
+        "type": "info",
+        "text": "",
+        "time": 1779175749520
+      },
+      {
+        "type": "info",
+        "text": "> jzyc@1.0.0 build /Users/ldy/project/maotou-sl/moutai-shuanglong",
+        "time": 1779175749905
+      },
+      {
+        "type": "info",
+        "text": "> node build/build.js \"WMSstoreModule\"",
+        "time": 1779175749905
+      },
+      {
+        "type": "info",
+        "text": "{",
+        "time": 1779175750531
+      },
+      {
+        "type": "info",
+        "text": "  'style-vendor': 'StyleVendor',",
+        "time": 1779175750531
+      },
+      {
+        "type": "info",
+        "text": "  vue: 'Vue',",
+        "time": 1779175750531
+      },
+      {
+        "type": "info",
+        "text": "  'vue-router': 'VueRouter',",
+        "time": 1779175750531
+      },
+      {
+        "type": "info",
+        "text": "  vuex: 'Vuex',",
+        "time": 1779175750531
+      },
+      {
+        "type": "info",
+        "text": "  axios: 'axios',",
+        "time": 1779175750531
+      },
+      {
+        "type": "info",
+        "text": "  lodash: '_',",
+        "time": 1779175750531
+      },
+      {
+        "type": "info",
+        "text": "  GCONF: 'GCONF',",
+        "time": 1779175750531
+      },
+      {
+        "type": "info",
+        "text": "  'element-ui': 'ELEMENT'",
+        "time": 1779175750531
+      },
+      {
+        "type": "info",
+        "text": "}",
+        "time": 1779175750531
+      },
+      {
+        "type": "info",
+        "text": "Hash: \u001b[1mc7d7c71ffbbd5d1b35c6\u001b[39m\u001b[22m",
+        "time": 1779175781943
+      },
+      {
+        "type": "info",
+        "text": "Version: webpack \u001b[1m4.46.0\u001b[39m\u001b[22m",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "Time: \u001b[1m30737\u001b[39m\u001b[22mms",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "Built at: 05/19/2026 \u001b[1m3:29:41 PM\u001b[39m\u001b[22m",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                                     \u001b[1mAsset\u001b[39m\u001b[22m        \u001b[1mSize\u001b[39m\u001b[22m   \u001b[1mChunks\u001b[39m\u001b[22m  \u001b[1m\u001b[39m\u001b[22m                       \u001b[1m\u001b[39m\u001b[22m       \u001b[1mChunk Names\u001b[39m\u001b[22m",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "            \u001b[1m\u001b[33m0f90ea971b62a1e81337.worker.js\u001b[39m\u001b[22m     \u001b[1m\u001b[33m817 KiB\u001b[39m\u001b[22m         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m  \u001b[1m\u001b[33m[big]\u001b[39m\u001b[22m  ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "\u001b[1m\u001b[32m0f90ea971b62a1e81337.worker.js.LICENSE.txt\u001b[39m\u001b[22m  1020 bytes         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "         \u001b[1m\u001b[32m0f90ea971b62a1e81337.worker.js.gz\u001b[39m\u001b[22m     236 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                             \u001b[1m\u001b[33mcss.worker.js\u001b[39m\u001b[22m     \u001b[1m\u001b[33m805 KiB\u001b[39m\u001b[22m         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m              \u001b[1m\u001b[33m[big]\u001b[39m\u001b[22m  ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                          \u001b[1m\u001b[32mcss.worker.js.gz\u001b[39m\u001b[22m     170 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                                 \u001b[1m\u001b[32mcss/0.css\u001b[39m\u001b[22m    45 bytes        \u001b[1m0\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     common",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                                \u001b[1m\u001b[32mcss/14.css\u001b[39m\u001b[22m    57 bytes       \u001b[1m14\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                                \u001b[1m\u001b[32mcss/19.css\u001b[39m\u001b[22m    57 bytes       \u001b[1m19\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                                 \u001b[1m\u001b[32mcss/3.css\u001b[39m\u001b[22m    63.8 KiB        \u001b[1m3\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     entry",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                              \u001b[1m\u001b[32mcss/3.css.gz\u001b[39m\u001b[22m    8.33 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                                \u001b[1m\u001b[32mcss/30.css\u001b[39m\u001b[22m   125 bytes       \u001b[1m30\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                                \u001b[1m\u001b[32mcss/31.css\u001b[39m\u001b[22m   134 bytes       \u001b[1m31\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                                \u001b[1m\u001b[32mcss/48.css\u001b[39m\u001b[22m    77 bytes       \u001b[1m48\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                          \u001b[1m\u001b[32meditor.worker.js\u001b[39m\u001b[22m     122 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                       \u001b[1m\u001b[32meditor.worker.js.gz\u001b[39m\u001b[22m    38.4 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                            \u001b[1m\u001b[33mhtml.worker.js\u001b[39m\u001b[22m     \u001b[1m\u001b[33m528 KiB\u001b[39m\u001b[22m         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m              \u001b[1m\u001b[33m[big]\u001b[39m\u001b[22m  ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mhtml.worker.js.gz\u001b[39m\u001b[22m     131 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                               \u001b[1m\u001b[32mimg/box.png\u001b[39m\u001b[22m    12.8 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                \u001b[1m\u001b[32mimg/lengthconveyorline.png\u001b[39m\u001b[22m     109 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                             \u001b[1m\u001b[32mimg/nobox.png\u001b[39m\u001b[22m    11.4 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                                \u001b[1m\u001b[32mindex.html\u001b[39m\u001b[22m    1.17 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                          \u001b[1m\u001b[33mjs/1.5a801990.js\u001b[39m\u001b[22m    \u001b[1m\u001b[33m1.02 MiB\u001b[39m\u001b[22m        \u001b[1m1\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m  \u001b[1m\u001b[33m[big]\u001b[39m\u001b[22m  ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "              \u001b[1m\u001b[32mjs/1.5a801990.js.LICENSE.txt\u001b[39m\u001b[22m   996 bytes         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                       \u001b[1m\u001b[33mjs/1.5a801990.js.gz\u001b[39m\u001b[22m     \u001b[1m\u001b[33m329 KiB\u001b[39m\u001b[22m         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m              \u001b[1m\u001b[33m[big]\u001b[39m\u001b[22m  ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/10.68953277.js\u001b[39m\u001b[22m    16.8 KiB       \u001b[1m10\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/10.68953277.js.gz\u001b[39m\u001b[22m    4.48 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/100.c8c7bc95.js\u001b[39m\u001b[22m    8.76 KiB      \u001b[1m100\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/101.9a354fe0.js\u001b[39m\u001b[22m    8.85 KiB      \u001b[1m101\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/102.8965d0de.js\u001b[39m\u001b[22m    11.5 KiB      \u001b[1m102\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                     \u001b[1m\u001b[32mjs/102.8965d0de.js.gz\u001b[39m\u001b[22m     3.1 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/103.12427c04.js\u001b[39m\u001b[22m    5.07 KiB      \u001b[1m103\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/104.139d002f.js\u001b[39m\u001b[22m     7.3 KiB      \u001b[1m104\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/105.2950a063.js\u001b[39m\u001b[22m    13.5 KiB      \u001b[1m105\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                     \u001b[1m\u001b[32mjs/105.2950a063.js.gz\u001b[39m\u001b[22m    3.45 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/106.453ec277.js\u001b[39m\u001b[22m    4.93 KiB      \u001b[1m106\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/107.7f67e9ec.js\u001b[39m\u001b[22m     2.6 KiB      \u001b[1m107\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/108.cda9aca1.js\u001b[39m\u001b[22m    3.08 KiB      \u001b[1m108\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/109.90120754.js\u001b[39m\u001b[22m    3.88 KiB      \u001b[1m109\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/11.92f01396.js\u001b[39m\u001b[22m    23.4 KiB       \u001b[1m11\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/11.92f01396.js.gz\u001b[39m\u001b[22m    5.13 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/110.fa422918.js\u001b[39m\u001b[22m     3.8 KiB      \u001b[1m110\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/111.f0dee0f4.js\u001b[39m\u001b[22m    3.03 KiB      \u001b[1m111\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/112.52034929.js\u001b[39m\u001b[22m    12.8 KiB      \u001b[1m112\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                     \u001b[1m\u001b[32mjs/112.52034929.js.gz\u001b[39m\u001b[22m    3.06 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/113.c14bea28.js\u001b[39m\u001b[22m    3.22 KiB      \u001b[1m113\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/114.ce2b3b16.js\u001b[39m\u001b[22m    5.13 KiB      \u001b[1m114\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/115.02514648.js\u001b[39m\u001b[22m    13.3 KiB      \u001b[1m115\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                     \u001b[1m\u001b[32mjs/115.02514648.js.gz\u001b[39m\u001b[22m    3.32 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/116.17654aff.js\u001b[39m\u001b[22m    4.24 KiB      \u001b[1m116\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/117.e7bddf54.js\u001b[39m\u001b[22m    2.98 KiB      \u001b[1m117\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/118.afc1e7ce.js\u001b[39m\u001b[22m       6 KiB      \u001b[1m118\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/119.dc3f19a3.js\u001b[39m\u001b[22m    2.69 KiB      \u001b[1m119\u001b[39m\u001b[22m  \u001b",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/12.dd823caf.js\u001b[39m\u001b[22m    22.8 KiB       \u001b[1m12\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/12.dd823caf.js.gz\u001b[39m\u001b[22m    5.09 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/120.b5ccbe33.js\u001b[39m\u001b[22m    7.88 KiB      \u001b[1m120\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/121.1b884cbd.js\u001b[39m\u001b[22m    1.97 KiB      \u001b[1m121\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/122.102b84d8.js\u001b[39m\u001b[22m    1.85 KiB      \u001b[1m122\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/123.50e4fe75.js\u001b[39m\u001b[22m    1.82 KiB      \u001b[1m123\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                        \u001b[1m\u001b[32mjs/124.04e4d7c6.js\u001b[39m\u001b[22m    3.07 KiB      \u001b[1m124\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/13.f391b8c4.js\u001b[39m\u001b[22m    22.3 KiB       \u001b[1m13\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/13.f391b8c4.js.gz\u001b[39m\u001b[22m    5.03 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/14.e62ae09b.js\u001b[39m\u001b[22m    21.1 KiB       \u001b[1m14\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/14.e62ae09b.js.gz\u001b[39m\u001b[22m    4.35 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/15.1b473474.js\u001b[39m\u001b[22m    15.3 KiB       \u001b[1m15\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/15.1b473474.js.gz\u001b[39m\u001b[22m    4.03 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/16.aca448c5.js\u001b[39m\u001b[22m    25.1 KiB       \u001b[1m16\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/16.aca448c5.js.gz\u001b[39m\u001b[22m    5.64 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/17.f55d0bf2.js\u001b[39m\u001b[22m    13.5 KiB       \u001b[1m17\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/17.f55d0bf2.js.gz\u001b[39m\u001b[22m    3.66 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/18.8d9e5789.js\u001b[39m\u001b[22m    22.6 KiB       \u001b[1m18\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/18.8d9e5789.js.gz\u001b[39m\u001b[22m    5.37 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/19.4b21685a.js\u001b[39m\u001b[22m    12.6 KiB       \u001b[1m19\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/19.4b21685a.js.gz\u001b[39m\u001b[22m    3.67 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                          \u001b[1m\u001b[32mjs/2.22c9f61c.js\u001b[39m\u001b[22m    50.9 KiB        \u001b[1m2\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "              \u001b[1m\u001b[32mjs/2.22c9f61c.js.LICENSE.txt\u001b[39m\u001b[22m    85 bytes         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                       \u001b[1m\u001b[32mjs/2.22c9f61c.js.gz\u001b[39m\u001b[22m    14.5 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/20.ce03532f.js\u001b[39m\u001b[22m    5.38 KiB       \u001b[1m20\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/21.92aab894.js\u001b[39m\u001b[22m    7.18 KiB       \u001b[1m21\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/22.4636033d.js\u001b[39m\u001b[22m    7.18 KiB       \u001b[1m22\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/23.8653ba8a.js\u001b[39m\u001b[22m    26.6 KiB       \u001b[1m23\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/23.8653ba8a.js.gz\u001b[39m\u001b[22m    6.43 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/24.e7b96e74.js\u001b[39m\u001b[22m    24.3 KiB       \u001b[1m24\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/24.e7b96e74.js.gz\u001b[39m\u001b[22m    5.72 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/25.968240df.js\u001b[39m\u001b[22m    10.5 KiB       \u001b[1m25\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/25.968240df.js.gz\u001b[39m\u001b[22m    3.15 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/26.8b6bb58c.js\u001b[39m\u001b[22m    12.2 KiB       \u001b[1m26\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/26.8b6bb58c.js.gz\u001b[39m\u001b[22m    3.71 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/27.ec714522.js\u001b[39m\u001b[22m      11 KiB       \u001b[1m27\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/27.ec714522.js.gz\u001b[39m\u001b[22m    3.17 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/28.11fc8107.js\u001b[39m\u001b[22m    39.9 KiB  \u001b[1m28, 105\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/28.11fc8107.js.gz\u001b[39m\u001b[22m    6.28 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781944
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/29.f2072fe5.js\u001b[39m\u001b[22m    3.76 KiB       \u001b[1m29\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/30.4fc5d274.js\u001b[39m\u001b[22m    7.94 KiB       \u001b[1m30\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/31.e851d4a6.js\u001b[39m\u001b[22m    12.6 KiB       \u001b[1m31\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/31.e851d4a6.js.gz\u001b[39m\u001b[22m    3.34 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/32.8dce7d5d.js\u001b[39m\u001b[22m     9.6 KiB       \u001b[1m32\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/33.fe1bcbac.js\u001b[39m\u001b[22m    9.28 KiB       \u001b[1m33\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/34.268d1324.js\u001b[39m\u001b[22m    8.04 KiB       \u001b[1m34\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/35.590f87db.js\u001b[39m\u001b[22m    12.9 KiB       \u001b[1m35\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/35.590f87db.js.gz\u001b[39m\u001b[22m    3.84 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/36.88d82e67.js\u001b[39m\u001b[22m    18.7 KiB       \u001b[1m36\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/36.88d82e67.js.gz\u001b[39m\u001b[22m    4.98 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/37.6d86f6a1.js\u001b[39m\u001b[22m      10 KiB       \u001b[1m37\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/37.6d86f6a1.js.gz\u001b[39m\u001b[22m    2.54 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/38.2c432154.js\u001b[39m\u001b[22m    10.2 KiB       \u001b[1m38\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/38.2c432154.js.gz\u001b[39m\u001b[22m    3.73 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/39.69a0cd70.js\u001b[39m\u001b[22m    7.99 KiB       \u001b[1m39\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/40.7c2a18fa.js\u001b[39m\u001b[22m    5.08 KiB       \u001b[1m40\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/41.62c595d6.js\u001b[39m\u001b[22m    5.66 KiB       \u001b[1m41\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/42.dccb1c82.js\u001b[39m\u001b[22m    12.3 KiB       \u001b[1m42\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/42.dccb1c82.js.gz\u001b[39m\u001b[22m    3.41 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/43.c89a0222.js\u001b[39m\u001b[22m    5.23 KiB       \u001b[1m43\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/44.d3bd6aad.js\u001b[39m\u001b[22m    5.02 KiB       \u001b[1m44\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/45.c0516661.js\u001b[39m\u001b[22m    6.29 KiB       \u001b[1m45\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/46.4729f89e.js\u001b[39m\u001b[22m    10.3 KiB       \u001b[1m46\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/46.4729f89e.js.gz\u001b[39m\u001b[22m    3.13 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/47.323a4d75.js\u001b[39m\u001b[22m    16.9 KiB       \u001b[1m47\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/47.323a4d75.js.gz\u001b[39m\u001b[22m    4.35 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/48.abddaf4a.js\u001b[39m\u001b[22m     9.2 KiB       \u001b[1m48\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/49.91fc558a.js\u001b[39m\u001b[22m    9.85 KiB       \u001b[1m49\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                          \u001b[1m\u001b[32mjs/5.fd2d91c1.js\u001b[39m\u001b[22m    73.7 KiB        \u001b[1m5\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                       \u001b[1m\u001b[32mjs/5.fd2d91c1.js.gz\u001b[39m\u001b[22m    13.9 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/50.aaddb619.js\u001b[39m\u001b[22m    5.23 KiB       \u001b[1m50\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/51.8f842ae9.js\u001b[39m\u001b[22m    7.83 KiB       \u001b[1m51\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/52.2c6de231.js\u001b[39m\u001b[22m    41.5 KiB       \u001b[1m52\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/52.2c6de231.js.gz\u001b[39m\u001b[22m    6.47 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/53.de7b53c7.js\u001b[39m\u001b[22m    21.9 KiB       \u001b[1m53\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/53.de7b53c7.js.gz\u001b[39m\u001b[22m    4.92 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/54.476e5a8d.js\u001b[39m\u001b[22m    12.4 KiB       \u001b[1m54\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/54.476e5a8d.js.gz\u001b[39m\u001b[22m    3.39 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/55.580d0a64.js\u001b[39m\u001b[22m    7.28 KiB       \u001b[1m55\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/56.ce287d34.js\u001b[39m\u001b[22m    9.62 KiB       \u001b[1m56\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/57.b236f27c.js\u001b[39m\u001b[22m    7.44 KiB       \u001b[1m57\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/58.f570f5ac.js\u001b[39m\u001b[22m    9.83 KiB       \u001b[1m58\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/59.0d8007fd.js\u001b[39m\u001b[22m    6.18 KiB       \u001b[1m59\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                          \u001b[1m\u001b[32mjs/6.3270c62f.js\u001b[39m\u001b[22m    51.9 KiB        \u001b[1m6\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                       \u001b[1m\u001b[32mjs/6.3270c62f.js.gz\u001b[39m\u001b[22m    13.7 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/60.d633da61.js\u001b[39m\u001b[22m    11.1 KiB       \u001b[1m60\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/60.d633da61.js.gz\u001b[39m\u001b[22m    3.31 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/61.3439216e.js\u001b[39m\u001b[22m    11.1 KiB       \u001b[1m61\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/61.3439216e.js.gz\u001b[39m\u001b[22m    3.31 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/62.b473bd12.js\u001b[39m\u001b[22m    13.5 KiB       \u001b[1m62\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/62.b473bd12.js.gz\u001b[39m\u001b[22m    4.14 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/63.fbd545d9.js\u001b[39m\u001b[22m    9.49 KiB       \u001b[1m63\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/64.09201e1e.js\u001b[39m\u001b[22m    8.95 KiB       \u001b[1m64\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/65.2e156b60.js\u001b[39m\u001b[22m    4.14 KiB       \u001b[1m65\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/66.c6da397a.js\u001b[39m\u001b[22m    9.28 KiB       \u001b[1m66\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/67.d6a601bc.js\u001b[39m\u001b[22m    4.04 KiB       \u001b[1m67\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/68.11abe144.js\u001b[39m\u001b[22m    3.61 KiB       \u001b[1m68\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/69.7505ea46.js\u001b[39m\u001b[22m    10.2 KiB       \u001b[1m69\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/69.7505ea46.js.gz\u001b[39m\u001b[22m     3.2 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                          \u001b[1m\u001b[32mjs/7.ddff2271.js\u001b[39m\u001b[22m    59.4 KiB        \u001b[1m7\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                       \u001b[1m\u001b[32mjs/7.ddff2271.js.gz\u001b[39m\u001b[22m    15.3 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/70.5ad4e980.js\u001b[39m\u001b[22m    3.58 KiB       \u001b[1m70\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/71.c564414c.js\u001b[39m\u001b[22m    6.04 KiB       \u001b[1m71\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/72.f71140f7.js\u001b[39m\u001b[22m    8.41 KiB       \u001b[1m72\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/73.8cd6209b.js\u001b[39m\u001b[22m    4.91 KiB       \u001b[1m73\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/74.f53a3257.js\u001b[39m\u001b[22m    5.07 KiB       \u001b[1m74\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/75.5228312c.js\u001b[39m\u001b[22m    3.79 KiB       \u001b[1m75\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/76.669ea2a8.js\u001b[39m\u001b[22m    2.12 KiB       \u001b[1m76\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/77.0fd90109.js\u001b[39m\u001b[22m    2.57 KiB       \u001b[1m77\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/78.779295e3.js\u001b[39m\u001b[22m    11.1 KiB       \u001b[1m78\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/78.779295e3.js.gz\u001b[39",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "m\u001b[22m    3.19 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/79.fb2d83bf.js\u001b[39m\u001b[22m    2.32 KiB       \u001b[1m79\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                          \u001b[1m\u001b[32mjs/8.3c5df8ba.js\u001b[39m\u001b[22m      28 KiB        \u001b[1m8\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                       \u001b[1m\u001b[32mjs/8.3c5df8ba.js.gz\u001b[39m\u001b[22m    6.69 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/80.ac84becb.js\u001b[39m\u001b[22m    9.66 KiB       \u001b[1m80\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/81.416ad0f3.js\u001b[39m\u001b[22m    7.42 KiB       \u001b[1m81\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/82.2aaec838.js\u001b[39m\u001b[22m    8.18 KiB       \u001b[1m82\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/83.99aea043.js\u001b[39m\u001b[22m    9.85 KiB       \u001b[1m83\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/84.2bcbd073.js\u001b[39m\u001b[22m    3.24 KiB       \u001b[1m84\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/85.d5947fa8.js\u001b[39m\u001b[22m    5.93 KiB       \u001b[1m85\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/86.0d8589a0.js\u001b[39m\u001b[22m    10.9 KiB       \u001b[1m86\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/86.0d8589a0.js.gz\u001b[39m\u001b[22m     3.7 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/87.bd8c093b.js\u001b[39m\u001b[22m    2.45 KiB       \u001b[1m87\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/88.1181958a.js\u001b[39m\u001b[22m    8.37 KiB       \u001b[1m88\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/89.5326b8f8.js\u001b[39m\u001b[22m    10.6 KiB       \u001b[1m89\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[32mjs/89.5326b8f8.js.gz\u001b[39m\u001b[22m    2.91 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                          \u001b[1m\u001b[32mjs/9.1effed99.js\u001b[39m\u001b[22m    70.5 KiB        \u001b[1m9\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                       \u001b[1m\u001b[32mjs/9.1effed99.js.gz\u001b[39m\u001b[22m    21.6 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/90.6ec436ce.js\u001b[39m\u001b[22m    7.82 KiB       \u001b[1m90\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/91.0d0cf903.js\u001b[39m\u001b[22m    5.95 KiB       \u001b[1m91\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/92.52d6de44.js\u001b[39m\u001b[22m    5.67 KiB       \u001b[1m92\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/93.efe6b1d6.js\u001b[39m\u001b[22m    3.07 KiB       \u001b[1m93\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/94.c75e4f37.js\u001b[39m\u001b[22m    6.68 KiB       \u001b[1m94\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/95.ca26f589.js\u001b[39m\u001b[22m       3 KiB       \u001b[1m95\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/96.37783044.js\u001b[39m\u001b[22m    2.97 KiB       \u001b[1m96\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/97.bd1dd822.js\u001b[39m\u001b[22m    5.96 KiB       \u001b[1m97\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/98.3e8c6bc7.js\u001b[39m\u001b[22m     5.6 KiB       \u001b[1m98\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjs/99.c3e02f92.js\u001b[39m\u001b[22m    5.82 KiB       \u001b[1m99\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                     \u001b[1m\u001b[33mjs/common.7794bffb.js\u001b[39m\u001b[22m     \u001b[1m\u001b[33m355 KiB\u001b[39m\u001b[22m        \u001b[1m0\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m  \u001b[1m\u001b[33m[big]\u001b[39m\u001b[22m  common",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                  \u001b[1m\u001b[32mjs/common.7794bffb.js.gz\u001b[39m\u001b[22m    91.1 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                      \u001b[1m\u001b[33mjs/entry.0bde87ab.js\u001b[39m\u001b[22m    \u001b[1m\u001b[33m1.77 MiB\u001b[39m\u001b[22m        \u001b[1m3\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m  \u001b[1m\u001b[33m[big]\u001b[39m\u001b[22m  entry",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "          \u001b[1m\u001b[32mjs/entry.0bde87ab.js.LICENSE.txt\u001b[39m\u001b[22m    3.12 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                   \u001b[1m\u001b[33mjs/entry.0bde87ab.js.gz\u001b[39m\u001b[22m     \u001b[1m\u001b[33m573 KiB\u001b[39m\u001b[22m         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m              \u001b[1m\u001b[33m[big]\u001b[39m\u001b[22m  ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                            \u001b[1m\u001b[32mjson.worker.js\u001b[39m\u001b[22m     229 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                         \u001b[1m\u001b[32mjson.worker.js.gz\u001b[39m\u001b[22m    66.1 KiB         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                       \u001b[1m\u001b[32mruntime.43935ec6.js\u001b[39m\u001b[22m    4.67 KiB        \u001b[1m4\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted] [immutable]\u001b[39m\u001b[22m         runtime",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                              \u001b[1m\u001b[33mts.worker.js\u001b[39m\u001b[22m    \u001b[1m\u001b[33m4.49 MiB\u001b[39m\u001b[22m         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m              \u001b[1m\u001b[33m[big]\u001b[39m\u001b[22m  ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                  \u001b[1m\u001b[32mts.worker.js.LICENSE.txt\u001b[39m\u001b[22m   818 bytes         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m                     ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "                           \u001b[1m\u001b[33mts.worker.js.gz\u001b[39m\u001b[22m     \u001b[1m\u001b[33m938 KiB\u001b[39m\u001b[22m         \u001b[1m\u001b[39m\u001b[22m  \u001b[1m\u001b[32m[emitted]\u001b[39m\u001b[22m              \u001b[1m\u001b[33m[big]\u001b[39m\u001b[22m  ",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "Entrypoint \u001b[1mentry\u001b[39m\u001b[22m \u001b[1m\u001b[33m[big]\u001b[39m\u001b[22m = \u001b[1m\u001b[32mruntime.43935ec6.js\u001b[39m\u001b[22m \u001b[1m\u001b[32mcss/0.css\u001b[39m\u001b[22m \u001b[1m\u001b[32mjs/common.7794bffb.js\u001b[39m\u001b[22m \u001b[1m\u001b[32mcss/3.css\u001b[39m\u001b[22m \u001b[1m\u001b[32mjs/entry.0bde87ab.js\u001b[39m\u001b[22m",
+        "time": 1779175781945
+      },
+      {
+        "type": "info",
+        "text": "\u001b[1m\u001b[33mWARNING in asset size limit: The following asset(s) exceed the recommended size limit (244 KiB).",
+        "time": 1779175781946
+      },
+      {
+        "type": "info",
+        "text": "This can impact web performance.",
+        "time": 1779175781946
+      },
+      {
+        "type": "info",
+        "text": "Assets: ",
+        "time": 1779175781946
+      },
+      {
+        "type": "info",
+        "text": "  html.worker.js (528 KiB)",
+        "time": 1779175781946
+      },
+      {
+        "type": "info",
+        "text": "  css.worker.js (805 KiB)",
+        "time": 1779175781946
+      },
+      {
+        "type": "info",
+        "text": "  ts.worker.js (4.49 MiB)",
+        "time": 1779175781946
+      },
+      {
+        "type": "info",
+        "text": "  0f90ea971b62a1e81337.worker.js (817 KiB)",
+        "time": 1779175781946
+      },
+      {
+        "type": "info",
+        "text": "  js/common.7794bffb.js (355 KiB)",
+        "time": 1779175781946
+      },
+      {
+        "type": "info",
+        "text": "  js/1.5a801990.js (1.02 MiB)",
+        "time": 1779175781946
+      },
+      {
+        "type": "info",
+        "text": "  js/entry.0bde87ab.js (1.77 MiB)",
+        "time": 1779175781946
+      },
+      {
+        "type": "info",
+        "text": "  js/1.5a801990.js.gz (329 KiB)",
+        "time": 1779175781946
+      },
+      {
+        "type": "info",
+        "text": "  js/entry.0bde87ab.js.gz (573 KiB)",
+        "time": 1779175781946
+      },
+      {
+        "type": "info",
+        "text": "  ts.worker.js.gz (938 KiB)\u001b[39m\u001b[22m",
+        "time": 1779175781946
+      },
+      {
+        "type": "info",
+        "text": "\u001b[1m\u001b[33mWARNING in entrypoint size limit: The following entrypoint(s) combined asset size exceeds the recommended limit (244 KiB). This can impact web performance.",
+        "time": 1779175781946
+      },
+      {
+        "type": "info",
+        "text": "Entrypoints:",
+        "time": 1779175781946
+      },
+      {
+        "type": "info",
+        "text": "  entry (2.18 MiB)",
+        "time": 1779175781946
+      },
+      {
+        "type": "info",
+        "text": "      runtime.43935ec6.js",
+        "time": 1779175781946
+      },
+      {
+        "type": "info",
+        "text": "      css/0.css",
+        "time": 1779175781946
+      },
+      {
+        "type": "info",
+        "text": "      js/common.7794bffb.js",
+        "time": 1779175781946
+      },
+      {
+        "type": "info",
+        "text": "      css/3.css",
+        "time": 1779175781946
+      },
+      {
+        "type": "info",
+        "text": "      js/entry.0bde87ab.js",
+        "time": 1779175781946
+      },
+      {
+        "type": "info",
+        "text": "\u001b[39m\u001b[22m",
+        "time": 1779175781946
+      },
+      {
+        "type": "info",
+        "text": "  Build complete.",
+        "time": 1779175781947
+      },
+      {
+        "type": "info",
+        "text": "  Tip: built files are meant to be served over an HTTP server.",
+        "time": 1779175781947
+      },
+      {
+        "type": "info",
+        "text": "  Opening index.html over file:// won't work.",
+        "time": 1779175781947
+      },
+      {
+        "type": "success",
+        "text": "\n✓ 构建完成 (33s)",
+        "time": 1779175782073
+      }
+    ]
+  },
+  {
     "id": "build-1779174641542",
     "timestamp": "2026-05-19T07:11:14.908Z",
     "projectName": "moutai-shuanglong",

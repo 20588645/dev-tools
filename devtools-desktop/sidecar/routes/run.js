@@ -9,8 +9,48 @@ const os = require('os');
 const { spawn, execFile } = require('child_process');
 
 const PROJECTS_FILE = path.join(__dirname, '../data/projects.json');
+const RUN_HISTORY_FILE = path.join(__dirname, '../data/run-history.json');
 
 const runJobs = new Map();
+
+// ========== Run History ==========
+function readRunHistory() {
+  try { return JSON.parse(fs.readFileSync(RUN_HISTORY_FILE, 'utf8')); } catch { return []; }
+}
+
+function writeRunHistory(history) {
+  fs.writeFileSync(RUN_HISTORY_FILE, JSON.stringify(history, null, 2), 'utf8');
+}
+
+function recordRunHistory(job) {
+  const history = readRunHistory();
+  history.unshift({
+    id: job.id,
+    projectName: job.projectName,
+    moduleNames: job.moduleNames || [],
+    command: job.command,
+    nodeVersion: job.nodeVersion,
+    port: job.port,
+    url: job.url,
+    status: job.status === 'stopped' ? 'success' : job.status,
+    startedAt: job.startedAt,
+    stoppedAt: job.stoppedAt,
+    duration: job.stoppedAt && job.startedAt ? formatDuration(job.stoppedAt - job.startedAt) : '',
+    exitCode: job.exitCode,
+    error: job.error || '',
+  });
+  // 保留最近 100 条
+  if (history.length > 100) history.length = 100;
+  writeRunHistory(history);
+}
+
+function formatDuration(ms) {
+  const s = Math.floor(ms / 1000);
+  if (s < 60) return `${s}s`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ${s % 60}s`;
+  return `${Math.floor(m / 60)}h ${m % 60}m`;
+}
 
 function readJSON(file) {
   try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return []; }
@@ -179,6 +219,9 @@ function publicJob(job) {
     compileError: job.compileError || '',
     compileErrorAt: job.compileErrorAt || null,
     compileErrorSeq: job.compileErrorSeq || 0,
+    autoRestart: job.autoRestart || false,
+    autoRestartCount: job.autoRestartCount || 0,
+    autoRestartMax: job.autoRestartMax || 3,
   };
 }
 
@@ -489,6 +532,7 @@ function spawnRunProcess(app, job, project, launchCommand, env, moduleArgs) {
     if (job.status === 'stopping') {
       job.status = 'stopped';
       pushLog(app, job, 'warn', '已停止本地运行服务');
+      recordRunHistory(job);
       broadcastStatus(app, job);
       return;
     }
@@ -517,7 +561,21 @@ function spawnRunProcess(app, job, project, launchCommand, env, moduleArgs) {
       job.status = 'error';
       job.error = signal ? `进程被信号终止: ${signal}` : `退出码: ${code}`;
       pushLog(app, job, 'error', `本地运行服务异常退出 (${job.error})`);
+
+      // 自动重启逻辑
+      if (job.autoRestart && (job.autoRestartCount || 0) < (job.autoRestartMax || 3)) {
+        job.autoRestartCount = (job.autoRestartCount || 0) + 1;
+        pushLog(app, job, 'warn', `自动重启 (${job.autoRestartCount}/${job.autoRestartMax || 3})...`);
+        broadcastStatus(app, job);
+        setTimeout(() => {
+          job.retryCount = (job.retryCount || 0) + 1;
+          spawnRunProcess(app, job, project, launchCommand, env, moduleArgs);
+        }, 2000);
+        return;
+      }
     }
+    // 记录运行历史
+    recordRunHistory(job);
     broadcastStatus(app, job);
   });
 
@@ -541,6 +599,60 @@ router.get('/status', (req, res) => {
   res.json([...runJobs.values()].map(publicJob));
 });
 
+// ========== 运行历史 ==========
+router.get('/history', (req, res) => {
+  res.json(readRunHistory());
+});
+
+router.delete('/history/:id', (req, res) => {
+  const history = readRunHistory();
+  const filtered = history.filter(h => h.id !== req.params.id);
+  writeRunHistory(filtered);
+  res.json({ ok: true });
+});
+
+router.delete('/history', (req, res) => {
+  writeRunHistory([]);
+  res.json({ ok: true });
+});
+
+// ========== 批量启动/停止 ==========
+router.post('/batch-stop', (req, res) => {
+  const { projectNames } = req.body;
+  if (!Array.isArray(projectNames) || projectNames.length === 0) {
+    return res.status(400).json({ error: 'projectNames 必填' });
+  }
+
+  const stopped = [];
+  for (const name of projectNames) {
+    const job = [...runJobs.values()].find(j => j.projectName === name && ['starting', 'running'].includes(j.status));
+    if (job) {
+      job.status = 'stopping';
+      pushLog(req.app, job, 'warn', '正在停止本地运行服务（批量操作）...');
+      broadcastStatus(req.app, job);
+      try {
+        terminateJob(job, 'SIGTERM');
+        setTimeout(() => {
+          if (['starting', 'running', 'stopping'].includes(job.status)) {
+            terminateJob(job, 'SIGKILL');
+          }
+        }, 2500);
+      } catch {}
+      stopped.push(name);
+    }
+  }
+  res.json({ stopped });
+});
+
+// ========== 端口检测 ==========
+router.get('/port-check/:port', async (req, res) => {
+  const port = parseInt(req.params.port);
+  if (!port || port < 1 || port > 65535) return res.status(400).json({ error: '无效端口号' });
+  const pids = await getPidsOnPort(port);
+  const inUse = pids.length > 0;
+  res.json({ port, inUse, pids });
+});
+
 router.get('/:id/logs', (req, res) => {
   const job = runJobs.get(req.params.id);
   if (!job) return res.status(404).json({ error: '运行任务不存在' });
@@ -548,7 +660,7 @@ router.get('/:id/logs', (req, res) => {
 });
 
 router.post('/start', async (req, res) => {
-  const { projectName, command, moduleName = '', moduleNames = [], includeHome = false, homeModuleNames = [], nodeVersion = '', port = '' } = req.body;
+  const { projectName, command, moduleName = '', moduleNames = [], includeHome = false, homeModuleNames = [], nodeVersion = '', port = '', autoRestart = false, autoRestartMax = 3 } = req.body;
   if (!projectName) return res.status(400).json({ error: 'projectName 必填' });
 
   const existing = [...runJobs.values()].find(job => job.projectName === projectName && ['starting', 'running'].includes(job.status));
@@ -586,6 +698,9 @@ router.post('/start', async (req, res) => {
     compileErrorAt: null,
     compileErrorSeq: 0,
     compileErrorActive: false,
+    autoRestart: !!autoRestart,
+    autoRestartMax: Math.min(parseInt(autoRestartMax) || 3, 10),
+    autoRestartCount: 0,
     logs: [],
     child: null,
   };

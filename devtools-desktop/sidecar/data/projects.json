@@ -91,7 +91,12 @@
     "defaultServerIds": [
       "server-40dff92d"
     ],
-    "displayName": "同仁堂"
+    "displayName": "同仁堂",
+    "runCommand": "npm run dev",
+    "runPort": "",
+    "runHomeModule": "home",
+    "runIncludeHome": true,
+    "favoriteRunModules": []
   },
   {
     "name": "moutai-frontend",
@@ -467,9 +472,11 @@
     "distDir": "dist",
     "modules": [],
     "excludeModules": [],
-    "defaultServerId": null,
+    "defaultServerId": "",
     "remotePath": "",
-    "nodeVersion": ""
+    "nodeVersion": "v14.1.0",
+    "defaultServerIds": [],
+    "displayName": "茅台应用门户"
   },
   {
     "name": "moutai-shuanglong",

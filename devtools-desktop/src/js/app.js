@@ -1001,8 +1001,8 @@ function renderProjects() {
 
   if (currentFilter === 'multi') filtered = filtered.filter(p => p.type === 'multi-module');
   else if (currentFilter === 'single') filtered = filtered.filter(p => p.type === 'single');
-  else if (currentFilter === 'configured') filtered = filtered.filter(p => p.defaultServerId);
-  else if (currentFilter === 'unconfigured') filtered = filtered.filter(p => !p.defaultServerId);
+  else if (currentFilter === 'configured') filtered = filtered.filter(p => getProjectDefaultServerIds(p).length > 0);
+  else if (currentFilter === 'unconfigured') filtered = filtered.filter(p => getProjectDefaultServerIds(p).length === 0);
 
   const grid = document.getElementById('projectGrid');
   if (filtered.length === 0) {
@@ -1080,6 +1080,13 @@ function renderRunPage() {
   else if (currentRunFilter === 'multi') list = list.filter(p => p.type === 'multi-module');
   else if (currentRunFilter === 'single') list = list.filter(p => p.type === 'single');
 
+  // 运行中的项目置顶
+  list.sort((a, b) => {
+    const aRunning = runningProjects[a.name] ? 1 : 0;
+    const bRunning = runningProjects[b.name] ? 1 : 0;
+    return bRunning - aRunning;
+  });
+
   const runningCount = Object.values(runningProjects).filter(job => ['starting', 'running'].includes(job.status)).length;
   const configuredRunCount = projects.filter(p => p.runCommand).length;
   overview.innerHTML = `
@@ -1087,6 +1094,10 @@ function renderRunPage() {
     <div class="run-stat-card"><span>运行中</span><strong>${runningCount}</strong></div>
     <div class="run-stat-card"><span>已保存命令</span><strong>${configuredRunCount}</strong></div>
   `;
+
+  // 显示/隐藏批量停止按钮
+  const batchStopBtn = document.getElementById('btnBatchStopRun');
+  if (batchStopBtn) batchStopBtn.style.display = runningCount > 0 ? '' : 'none';
 
   if (list.length === 0) {
     grid.innerHTML = '<div class="run-empty">没有匹配的项目</div>';
@@ -1201,6 +1212,51 @@ function clearBusy(projectName) {
   busyProjects.delete(projectName);
   // 清除缓存以强制刷新最新部署信息
   delete lastDeployCache[projectName];
+}
+
+// ========== 本地运行快速启动（免弹窗） ==========
+async function quickStartRun(projectName) {
+  const project = projects.find(p => p.name === projectName);
+  if (!project || !project.runCommand) return;
+
+  // 多模块项目需要有收藏模块才能快速启动
+  const moduleNames = project.type === 'multi-module' ? getRunFavoriteModules(project) : [];
+  if (project.type === 'multi-module' && moduleNames.length === 0) {
+    // 没有收藏模块，回退到弹窗模式
+    openRunModal(projectName, 'start');
+    return;
+  }
+
+  // 端口冲突检测（使用项目配置的端口）
+  const port = project.runPort || '';
+  if (port) {
+    try {
+      const check = await API.get(`/api/run/port-check/${port}`);
+      if (check.inUse) {
+        const action = await showConfirm(`端口 ${port} 已被占用（PID: ${check.pids.join(', ')}）。\n是否自动释放端口并启动？`, {
+          icon: '⚠️',
+          confirmText: '释放并启动',
+          cancelText: '取消',
+        });
+        if (!action) return;
+      }
+    } catch { /* 检测失败不阻塞启动 */ }
+  }
+
+  try {
+    const data = await API.post('/api/run/start', {
+      projectName: project.name,
+      command: project.runCommand,
+      moduleNames,
+      nodeVersion: project.nodeVersion || '',
+    });
+    runningProjects[project.name] = data;
+    showRunLogShell(data);
+    showToast('▶ 快速启动', project.displayName || project.name);
+    renderRunPage();
+  } catch (e) {
+    showAlert('启动失败: ' + e.message, { icon: '❌' });
+  }
 }
 
 // ========== 一键快速复用（支持构建/部署） ==========
@@ -1554,7 +1610,8 @@ async function startLocalRunFromModal() {
 
   try {
     document.getElementById('runStartBtn').disabled = true;
-    const data = await API.post('/api/run/start', { projectName: project.name, command, moduleNames, nodeVersion });
+    const autoRestart = !!document.getElementById('runAutoRestart')?.checked;
+    const data = await API.post('/api/run/start', { projectName: project.name, command, moduleNames, nodeVersion, autoRestart });
     runningProjects[project.name] = data;
     closeModal('runModal');
     showRunLogShell(data);
@@ -1658,6 +1715,74 @@ async function stopLocalRun(projectName) {
     showToast('正在停止本地服务', projectName);
   } catch (e) {
     showAlert('停止失败: ' + e.message, { icon: '❌' });
+  }
+}
+
+// ========== 批量停止 ==========
+async function batchStopAllRun() {
+  const runningNames = Object.keys(runningProjects);
+  if (runningNames.length === 0) {
+    showToast('没有正在运行的服务');
+    return;
+  }
+  if (!await showConfirm(`确定停止全部 ${runningNames.length} 个运行中的服务？`, { icon: '⚠️', confirmText: '全部停止', danger: true })) return;
+  try {
+    await API.post('/api/run/batch-stop', { projectNames: runningNames });
+    showToast(`正在停止 ${runningNames.length} 个服务`);
+  } catch (e) {
+    showAlert('批量停止失败: ' + e.message, { icon: '❌' });
+  }
+}
+
+// ========== 运行历史 ==========
+async function showRunHistory() {
+  document.getElementById('runHistoryModal').classList.add('active');
+  try {
+    const history = await API.get('/api/run/history');
+    const list = document.getElementById('runHistoryList');
+    if (!history || history.length === 0) {
+      list.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:40px">暂无运行历史记录</div>';
+      return;
+    }
+    list.innerHTML = `<table class="ha-table">
+      <thead><tr><th>时间</th><th>项目</th><th>模块</th><th>状态</th><th>运行时长</th><th>操作</th></tr></thead>
+      <tbody>${history.map(h => {
+        const time = new Date(h.startedAt).toLocaleString('zh-CN', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+        const statusCls = h.status === 'success' || h.status === 'stopped' ? 'status-success' : 'status-fail';
+        const statusText = h.status === 'success' || h.status === 'stopped' ? '正常退出' : '异常退出';
+        const mods = (h.moduleNames || []).join(', ') || '—';
+        return `<tr>
+          <td class="ha-time">${time}</td>
+          <td class="ha-project">${escapeHtml(h.projectName)}</td>
+          <td>${escapeHtml(mods)}</td>
+          <td class="${statusCls}">${statusText}</td>
+          <td>${h.duration || '—'}</td>
+          <td><button class="btn-icon danger" onclick="deleteRunHistoryItem('${h.id}')" title="删除">⌫</button></td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>`;
+  } catch (e) {
+    document.getElementById('runHistoryList').innerHTML = `<div style="color:var(--danger);padding:20px">加载失败: ${e.message}</div>`;
+  }
+}
+
+async function deleteRunHistoryItem(id) {
+  try {
+    await API.del(`/api/run/history/${id}`);
+    showRunHistory();
+  } catch (e) {
+    showAlert('删除失败: ' + e.message, { icon: '❌' });
+  }
+}
+
+async function clearRunHistory() {
+  if (!await showConfirm('确定清空所有运行历史记录？', { icon: '🗑️', danger: true, confirmText: '清空' })) return;
+  try {
+    await API.del('/api/run/history');
+    showRunHistory();
+    showToast('🗑 运行历史已清空');
+  } catch (e) {
+    showAlert('清空失败: ' + e.message, { icon: '❌' });
   }
 }
 
@@ -3408,7 +3533,10 @@ function rptApplyPreset(preset) {
   if (event && event.currentTarget) event.currentTarget.classList.add('active');
 }
 
-// 仓库列表
+// 仓库列表（支持分组折叠 + 拖拽排序）
+let rptCollapsedGroups = new Set();
+let rptSortableInstance = null;
+
 function rptRenderRepos() {
   const el = document.getElementById('rptRepoList');
   const search = (document.getElementById('rptRepoSearch')?.value || '').toLowerCase();
@@ -3416,16 +3544,84 @@ function rptRenderRepos() {
   const filtered = rptRepos.map((r, i) => ({...r, idx: i})).filter(r =>
     !search || r.repo.toLowerCase().includes(search) || (r.branch||'').toLowerCase().includes(search) || (r.group||'').toLowerCase().includes(search)
   );
-  el.innerHTML = filtered.map(r => `
-    <div class="rpt-repo-item">
-      ${rptRepos.length > 1 ? `<button class="rpt-repo-del" onclick="rptDelRepo(${r.idx})">×</button>` : ''}
-      <div class="rfield"><label>仓库地址</label><input value="${rptEsc(r.repo)}" onchange="rptRepos[${r.idx}].repo=this.value" placeholder="http://.../group/project.git"></div>
-      <div class="rfield-row">
-        <div class="rfield"><label>分支</label><input value="${rptEsc(r.branch||'')}" onchange="rptRepos[${r.idx}].branch=this.value" placeholder="默认主分支"></div>
-        <div class="rfield"><label>分组</label><input value="${rptEsc(r.group||'')}" onchange="rptRepos[${r.idx}].group=this.value" placeholder="可选"></div>
-      </div>
-    </div>
-  `).join('') || '<div style="text-align:center;color:var(--text-muted);padding:20px">暂无仓库</div>';
+
+  // 按 group 分组
+  const groups = new Map(); // group -> items[]
+  filtered.forEach(r => {
+    const g = (r.group || '').trim() || '__ungrouped__';
+    if (!groups.has(g)) groups.set(g, []);
+    groups.get(g).push(r);
+  });
+
+  let html = '';
+  for (const [group, items] of groups) {
+    const isUngrouped = group === '__ungrouped__';
+    const isCollapsed = rptCollapsedGroups.has(group);
+
+    if (!isUngrouped && groups.size > 1) {
+      html += `<div class="rpt-group-header" onclick="rptToggleGroup('${rptEsc(group)}')">
+        <span class="rpt-group-arrow">${isCollapsed ? '▶' : '▼'}</span>
+        <span class="rpt-group-name">${rptEsc(group)}</span>
+        <span class="rpt-group-count">${items.length}</span>
+      </div>`;
+    }
+
+    if (!isCollapsed || isUngrouped || groups.size <= 1) {
+      html += items.map(r => `
+        <div class="rpt-repo-item" data-idx="${r.idx}">
+          <div class="rpt-repo-drag-handle" title="拖拽排序">⠿</div>
+          ${rptRepos.length > 1 ? `<button class="rpt-repo-del" onclick="rptDelRepo(${r.idx})">×</button>` : ''}
+          <div class="rfield"><label>仓库地址</label><input value="${rptEsc(r.repo)}" onchange="rptRepos[${r.idx}].repo=this.value" placeholder="http://.../group/project.git"></div>
+          <div class="rfield-row">
+            <div class="rfield"><label>分支</label><input value="${rptEsc(r.branch||'')}" onchange="rptRepos[${r.idx}].branch=this.value" placeholder="默认主分支"></div>
+            <div class="rfield"><label>分组</label><input value="${rptEsc(r.group||'')}" onchange="rptRepos[${r.idx}].group=this.value" placeholder="可选"></div>
+          </div>
+        </div>
+      `).join('');
+    }
+  }
+
+  el.innerHTML = html || '<div style="text-align:center;color:var(--text-muted);padding:20px">暂无仓库</div>';
+
+  // 初始化 SortableJS
+  rptInitSortable();
+}
+
+function rptInitSortable() {
+  if (rptSortableInstance) {
+    rptSortableInstance.destroy();
+    rptSortableInstance = null;
+  }
+  const el = document.getElementById('rptRepoList');
+  if (!el || !window.Sortable) return;
+
+  rptSortableInstance = Sortable.create(el, {
+    handle: '.rpt-repo-drag-handle',
+    animation: 150,
+    ghostClass: 'rpt-repo-ghost',
+    chosenClass: 'rpt-repo-chosen',
+    dragClass: 'rpt-repo-drag',
+    filter: '.rpt-group-header',
+    onEnd: (evt) => {
+      // 获取拖拽前后的真实索引
+      const items = el.querySelectorAll('.rpt-repo-item[data-idx]');
+      const newOrder = [...items].map(item => parseInt(item.dataset.idx));
+      // 重建 rptRepos 数组
+      const reordered = newOrder.map(idx => rptRepos[idx]).filter(Boolean);
+      // 补上未显示的（被搜索过滤掉的）
+      const shown = new Set(newOrder);
+      rptRepos.forEach((r, i) => { if (!shown.has(i)) reordered.push(r); });
+      rptRepos.splice(0, rptRepos.length, ...reordered);
+      // 重新渲染以更新 data-idx
+      rptRenderRepos();
+    },
+  });
+}
+
+function rptToggleGroup(group) {
+  if (rptCollapsedGroups.has(group)) rptCollapsedGroups.delete(group);
+  else rptCollapsedGroups.add(group);
+  rptRenderRepos();
 }
 
 function rptFilterRepos() { rptRenderRepos(); }
@@ -3692,8 +3888,34 @@ function reportShowHistory() {
 
 // 批量导入
 function rptShowBatchImport() {
-  const text = prompt('批量导入仓库\n每行一个地址，格式：地址 或 地址,分支');
-  if (!text) return;
+  document.getElementById('batchImportTextarea').value = '';
+  document.getElementById('batchImportPreview').innerHTML = '';
+  document.getElementById('batchImportModal').classList.add('active');
+}
+
+function batchImportPreview() {
+  const text = document.getElementById('batchImportTextarea').value;
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  const preview = document.getElementById('batchImportPreview');
+  if (lines.length === 0) {
+    preview.innerHTML = '<div style="color:var(--text-muted);font-size:13px">输入仓库地址后自动预览</div>';
+    return;
+  }
+  const items = lines.map(line => {
+    const parts = line.split(',').map(s => s.trim());
+    const repo = parts[0], branch = parts[1] || '';
+    const exists = rptRepos.some(r => r.repo === repo);
+    return `<div class="batch-preview-item ${exists ? 'exists' : ''}">
+      <span class="batch-preview-repo">${escapeHtml(repo)}</span>
+      ${branch ? `<span class="batch-preview-branch">${escapeHtml(branch)}</span>` : ''}
+      ${exists ? '<span class="batch-preview-tag">已存在</span>' : '<span class="batch-preview-tag new">新增</span>'}
+    </div>`;
+  });
+  preview.innerHTML = items.join('');
+}
+
+function confirmBatchImport() {
+  const text = document.getElementById('batchImportTextarea').value;
   const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
   let count = 0;
   lines.forEach(line => {
@@ -3701,8 +3923,50 @@ function rptShowBatchImport() {
     const repo = parts[0], branch = parts[1] || '';
     if (repo && !rptRepos.some(r => r.repo === repo)) { rptRepos.push({ repo, branch, group: '' }); count++; }
   });
+  closeModal('batchImportModal');
   rptRenderRepos();
-  showToast(`✅ 已导入 ${count} 个仓库`);
+  if (count > 0) showToast(`✅ 已导入 ${count} 个仓库`);
+  else showToast('没有新增仓库（全部已存在）');
+}
+
+// ========== 周报配置导入/导出 ==========
+function rptExportConfig() {
+  const config = {
+    token: document.getElementById('rptToken').value,
+    author: document.getElementById('rptAuthor').value,
+    repos: rptRepos.filter(r => r.repo.trim()),
+  };
+  const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `devtools-report-config.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('📄 配置已导出');
+}
+
+function rptImportConfig() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const config = JSON.parse(text);
+      if (config.token) document.getElementById('rptToken').value = config.token;
+      if (config.author) document.getElementById('rptAuthor').value = config.author;
+      if (Array.isArray(config.repos) && config.repos.length > 0) {
+        rptRepos = config.repos.map(r => ({ repo: r.repo || '', branch: r.branch || '', group: r.group || '' }));
+        rptRenderRepos();
+      }
+      showToast(`✅ 配置已导入（${config.repos?.length || 0} 个仓库）`);
+    } catch (err) {
+      showAlert('导入失败：文件格式不正确', { icon: '❌' });
+    }
+  };
+  input.click();
 }
 
 
