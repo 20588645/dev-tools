@@ -4011,6 +4011,10 @@ async function loadSettings() {
   // Live2D 看板娘开关同步
   const live2dCb = document.getElementById('settingLive2dEnabled');
   if (live2dCb) live2dCb.checked = isLive2dEnabled();
+
+  // 点击粒子特效开关同步
+  const clickEffectCb = document.getElementById('settingClickEffectEnabled');
+  if (clickEffectCb) clickEffectCb.checked = isClickEffectEnabled();
 }
 
 async function updateNotificationSettingsUI() {
@@ -4157,5 +4161,78 @@ function removeLive2dWidget() {
   if (isLive2dEnabled()) {
     // 延迟加载，等主 UI 渲染完
     setTimeout(loadLive2dWidget, 1500);
+  }
+})();
+
+// ========== 点击粒子特效 ==========
+const CLICK_EFFECT_ENABLED_KEY = 'devtools-click-effect-enabled';
+let clickEffectActive = false;
+
+function isClickEffectEnabled() {
+  return localStorage.getItem(CLICK_EFFECT_ENABLED_KEY) === 'true';
+}
+
+function toggleClickEffect(enabled) {
+  localStorage.setItem(CLICK_EFFECT_ENABLED_KEY, enabled ? 'true' : 'false');
+  if (enabled) {
+    enableClickEffect();
+  } else {
+    disableClickEffect();
+  }
+}
+
+function enableClickEffect() {
+  if (clickEffectActive) return;
+  clickEffectActive = true;
+  document.addEventListener('click', handleClickParticle, true);
+}
+
+function disableClickEffect() {
+  clickEffectActive = false;
+  document.removeEventListener('click', handleClickParticle, true);
+}
+
+function handleClickParticle(e) {
+  const colors = [
+    'rgba(167, 139, 250, 0.9)',  // 紫色（主题色）
+    'rgba(129, 140, 248, 0.9)',  // 靛蓝
+    'rgba(96, 165, 250, 0.85)',  // 蓝色
+    'rgba(52, 211, 153, 0.85)',  // 绿色
+    'rgba(251, 191, 36, 0.85)',  // 琥珀
+    'rgba(244, 114, 182, 0.9)',  // 粉色
+    'rgba(248, 113, 113, 0.85)', // 红色
+  ];
+  const particleCount = 7;
+
+  for (let i = 0; i < particleCount; i++) {
+    const particle = document.createElement('div');
+    particle.className = 'click-particle';
+    particle.style.left = e.clientX + 'px';
+    particle.style.top = e.clientY + 'px';
+    particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+
+    // 随机方向和距离
+    const angle = (Math.PI * 2 * i) / particleCount + (Math.random() - 0.5) * 0.8;
+    const distance = 30 + Math.random() * 40;
+    const tx = Math.cos(angle) * distance;
+    const ty = Math.sin(angle) * distance;
+    const size = 4 + Math.random() * 4;
+
+    particle.style.width = size + 'px';
+    particle.style.height = size + 'px';
+    particle.style.setProperty('--tx', tx + 'px');
+    particle.style.setProperty('--ty', ty + 'px');
+
+    document.body.appendChild(particle);
+
+    // 动画结束后移除
+    particle.addEventListener('animationend', () => particle.remove());
+  }
+}
+
+// 页面加载时恢复点击特效状态
+(function initClickEffect() {
+  if (isClickEffectEnabled()) {
+    enableClickEffect();
   }
 })();
