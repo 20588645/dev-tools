@@ -4007,6 +4007,10 @@ async function loadSettings() {
     document.getElementById('settingAuthor').value = cfg.author || '';
     renderSettingRepos(cfg.repos || []);
   } catch (e) {}
+
+  // Live2D 看板娘开关同步
+  const live2dCb = document.getElementById('settingLive2dEnabled');
+  if (live2dCb) live2dCb.checked = isLive2dEnabled();
 }
 
 async function updateNotificationSettingsUI() {
@@ -4104,3 +4108,54 @@ async function saveAllSettings() {
     showAlert('保存失败: ' + e.message, { icon: '❌' });
   }
 }
+
+// ========== Live2D 看板娘 ==========
+const LIVE2D_ENABLED_KEY = 'devtools-live2d-enabled';
+
+function isLive2dEnabled() {
+  return localStorage.getItem(LIVE2D_ENABLED_KEY) === 'true';
+}
+
+function toggleLive2d(enabled) {
+  localStorage.setItem(LIVE2D_ENABLED_KEY, enabled ? 'true' : 'false');
+  if (enabled) {
+    loadLive2dWidget();
+  } else {
+    removeLive2dWidget();
+  }
+}
+
+function loadLive2dWidget() {
+  // 如果已经加载过就不重复加载
+  if (document.getElementById('live2d-widget-script')) return;
+
+  const script = document.createElement('script');
+  script.id = 'live2d-widget-script';
+  script.src = 'https://fastly.jsdelivr.net/npm/live2d-widgets@1.0.0/dist/autoload.js';
+  script.onerror = () => {
+    console.warn('Live2D 看板娘加载失败，请检查网络连接');
+    showToast('⚠️ 看板娘加载失败', '请检查网络连接');
+  };
+  document.body.appendChild(script);
+}
+
+function removeLive2dWidget() {
+  // 移除脚本
+  const script = document.getElementById('live2d-widget-script');
+  if (script) script.remove();
+
+  // 移除看板娘 DOM 元素
+  const waifu = document.getElementById('waifu');
+  if (waifu) waifu.remove();
+
+  // 移除动态加载的样式
+  document.querySelectorAll('link[href*="waifu"], style[data-live2d]').forEach(el => el.remove());
+}
+
+// 页面加载时恢复 Live2D 状态
+(function initLive2d() {
+  if (isLive2dEnabled()) {
+    // 延迟加载，等主 UI 渲染完
+    setTimeout(loadLive2dWidget, 1500);
+  }
+})();
