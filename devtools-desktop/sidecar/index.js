@@ -49,6 +49,9 @@ app.use('/api/deploy', require('./routes/deploy'));
 app.use('/api/run', require('./routes/run'));
 app.use('/api/history', require('./routes/history'));
 app.use('/api/report', require('./routes/report'));
+app.use('/api/todos', require('./routes/todos'));
+app.use('/api/commands', require('./routes/commands'));
+app.use('/api/notes', require('./routes/notes'));
 
 // 健康检查
 app.get('/api/health', (req, res) => {

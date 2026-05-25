@@ -213,6 +213,42 @@ function showAlert(msg, opts = {}) {
   });
 }
 
+/**
+ * 自定义输入弹窗 (替代 window.prompt)
+ * @param {string} msg - 提示消息
+ * @param {object} opts - { icon, placeholder, defaultValue, confirmText, cancelText }
+ * @returns {Promise<string|null>}
+ */
+function showPrompt(msg, opts = {}) {
+  return new Promise(resolve => {
+    const overlay = document.getElementById('sysDialog');
+    document.getElementById('sysDialogIcon').textContent = opts.icon || '✏️';
+    document.getElementById('sysDialogMsg').textContent = msg;
+    document.getElementById('sysDialogBtns').innerHTML = `
+      <input type="text" id="sysPromptInput" class="sys-prompt-input" placeholder="${opts.placeholder || ''}" value="${opts.defaultValue || ''}">
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+        <button class="sys-btn-cancel" id="sysCancel">${opts.cancelText || '取消'}</button>
+        <button class="sys-btn-confirm" id="sysOk">${opts.confirmText || '确定'}</button>
+      </div>
+    `;
+    overlay.classList.add('active');
+    const input = document.getElementById('sysPromptInput');
+    setTimeout(() => input?.focus(), 50);
+
+    const cleanup = (val) => {
+      overlay.classList.remove('active');
+      activeSysDialogClose = null;
+      resolve(val);
+    };
+    activeSysDialogClose = () => cleanup(null);
+    document.getElementById('sysCancel').onclick = () => cleanup(null);
+    document.getElementById('sysOk').onclick = () => cleanup(input?.value || '');
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') cleanup(input?.value || '');
+    });
+  });
+}
+
 // ========== Init ==========
 document.addEventListener('DOMContentLoaded', async () => {
   // 主题初始化
@@ -255,7 +291,7 @@ function updateThemeIcon(theme) {
 
 function initSidebarState() {
   const saved = sessionStorage.getItem('devtools-sidebar-collapsed');
-  const collapsed = saved === null ? true : saved === 'true';
+  const collapsed = saved === null ? false : saved === 'true';
   document.body.classList.toggle('sidebar-collapsed', collapsed);
   updateSidebarCollapseIcon(collapsed);
 }
@@ -578,6 +614,12 @@ function switchPage(page, el) {
   if (page === 'report') initReport();
   // 切换到设置时加载
   if (page === 'settings') loadSettings();
+  // 切换到待办时加载
+  if (page === 'todo') loadTodos();
+  // 切换到日志时加载
+  if (page === 'notes') loadNotes();
+  // 切换到快捷命令时加载
+  if (page === 'terminal') loadCommands();
 }
 
 // ========== 子 Tab 切换 ==========
@@ -597,10 +639,17 @@ function switchSubTab(sub, btn) {
 
 // ========== 首页 ==========
 function initHomePage() {
-  // 日期
+  updateHomeDateTime();
+  // 每秒更新一次时间
+  setInterval(updateHomeDateTime, 1000);
+  loadHomeData();
+}
+
+function updateHomeDateTime() {
   const now = new Date();
   const weekdays = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
-  document.getElementById('homeDate').textContent = `今天是 ${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日，${weekdays[now.getDay()]}`;
+  const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+  document.getElementById('homeDate').textContent = `今天是 ${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日，${weekdays[now.getDay()]} ${timeStr}`;
 
   // 问候语
   const hour = now.getHours();
@@ -610,8 +659,6 @@ function initHomePage() {
   else if (hour < 14) greeting = '中午好 🌤';
   else if (hour < 18) greeting = '下午好 👋';
   document.getElementById('homeGreeting').textContent = greeting;
-
-  loadHomeData();
 }
 
 async function loadHomeData() {
@@ -4236,3 +4283,590 @@ function handleClickParticle(e) {
     enableClickEffect();
   }
 })();
+
+// ========== 待办看板 ==========
+let todosData = [];
+let todoLoaded = false;
+
+async function loadTodos() {
+  try {
+    todosData = await API.get('/api/todos');
+  } catch (e) {
+    todosData = [];
+  }
+  renderTodoBoard();
+}
+
+function renderTodoBoard() {
+  const groups = { todo: [], doing: [], done: [] };
+  todosData.forEach(t => {
+    if (groups[t.status]) groups[t.status].push(t);
+  });
+
+  ['todo', 'doing', 'done'].forEach(status => {
+    const list = document.getElementById('todoList' + status.charAt(0).toUpperCase() + status.slice(1));
+    const count = document.getElementById('todoCount' + status.charAt(0).toUpperCase() + status.slice(1));
+    if (count) count.textContent = groups[status].length;
+    if (list) {
+      list.innerHTML = groups[status].map(t => renderTodoCard(t)).join('');
+    }
+  });
+}
+
+function renderTodoCard(todo) {
+  const timeAgo = getTimeAgo(todo.createdAt);
+  const statusClass = 'todo-card-' + todo.status;
+
+  // 不同状态不同操作按钮
+  let actions = '';
+  if (todo.status === 'todo') {
+    actions = `
+      <button class="todo-btn-move todo-btn-start" onclick="moveTodo('${todo.id}','next')" title="开始">▶ 开始</button>
+      <button class="todo-btn-delete" onclick="deleteTodo('${todo.id}')" title="删除">✕</button>
+    `;
+  } else if (todo.status === 'doing') {
+    actions = `
+      <button class="todo-btn-move todo-btn-back" onclick="moveTodo('${todo.id}','prev')" title="退回待办">↩</button>
+      <button class="todo-btn-move todo-btn-done" onclick="moveTodo('${todo.id}','next')" title="完成">✓ 完成</button>
+      <button class="todo-btn-delete" onclick="deleteTodo('${todo.id}')" title="删除">✕</button>
+    `;
+  } else {
+    actions = `
+      <button class="todo-btn-move todo-btn-back" onclick="moveTodo('${todo.id}','prev')" title="退回进行中">↩</button>
+      <button class="todo-btn-delete" onclick="deleteTodo('${todo.id}')" title="删除">✕</button>
+    `;
+  }
+
+  const titleClass = 'todo-card-title';
+  const doneIcon = todo.status === 'done' ? '<span class="todo-done-icon">✓</span>' : '';
+  const contentHtml = todo.content
+    ? `<div class="todo-card-content">${escapeHtml(todo.content)}</div>`
+    : '';
+
+  return `
+    <div class="todo-card ${statusClass}" data-id="${todo.id}">
+      <div class="${titleClass}">${doneIcon}${escapeHtml(todo.title)}</div>
+      ${contentHtml}
+      <div class="todo-card-footer">
+        <span class="todo-card-time">${timeAgo}</span>
+        <div class="todo-card-actions">${actions}</div>
+      </div>
+    </div>
+  `;
+}
+
+async function moveTodo(id, direction) {
+  const todo = todosData.find(t => t.id === id);
+  if (!todo) return;
+
+  const flow = ['todo', 'doing', 'done'];
+  const currentIdx = flow.indexOf(todo.status);
+  const nextIdx = direction === 'next' ? currentIdx + 1 : currentIdx - 1;
+  if (nextIdx < 0 || nextIdx >= flow.length) return;
+
+  const newStatus = flow[nextIdx];
+  try {
+    await API.put('/api/todos/' + id, { status: newStatus });
+    todo.status = newStatus;
+    todo.updatedAt = new Date().toISOString();
+    renderTodoBoard();
+  } catch (err) {
+    showToast('⚠️ 移动失败', err.message);
+  }
+}
+
+function getTimeAgo(dateStr) {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return '刚刚';
+  if (mins < 60) return `${mins}分钟前`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}小时前`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}天前`;
+  return new Date(dateStr).toLocaleDateString('zh-CN');
+}
+
+function showAddTodo() {
+  return new Promise(resolve => {
+    const overlay = document.getElementById('sysDialog');
+    document.getElementById('sysDialogIcon').textContent = '📌';
+    document.getElementById('sysDialogMsg').textContent = '新建任务';
+    document.getElementById('sysDialogBtns').innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:10px;width:100%">
+        <input type="text" id="addTodoTitle" class="sys-prompt-input" placeholder="任务标题">
+        <textarea id="addTodoContent" class="sys-prompt-textarea" placeholder="详细内容（可选）" rows="4"></textarea>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+        <button class="sys-btn-cancel" id="sysCancel">取消</button>
+        <button class="sys-btn-confirm" id="sysOk">创建</button>
+      </div>
+    `;
+    overlay.classList.add('active');
+    setTimeout(() => document.getElementById('addTodoTitle')?.focus(), 50);
+
+    const cleanup = (result) => {
+      overlay.classList.remove('active');
+      activeSysDialogClose = null;
+      resolve(result);
+    };
+    activeSysDialogClose = () => cleanup(null);
+    document.getElementById('sysCancel').onclick = () => cleanup(null);
+    document.getElementById('sysOk').onclick = () => {
+      const title = document.getElementById('addTodoTitle')?.value?.trim();
+      const content = document.getElementById('addTodoContent')?.value?.trim();
+      if (!title) {
+        showToast('⚠️ 标题不能为空');
+        return;
+      }
+      cleanup({ title, content });
+    };
+    document.getElementById('addTodoTitle').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') document.getElementById('sysOk').click();
+    });
+  }).then(result => {
+    if (!result) return;
+    createTodo(result.title, result.content);
+  });
+}
+
+async function createTodo(title, content = '') {
+  try {
+    const todo = await API.post('/api/todos', { title, content, status: 'todo' });
+    todosData.unshift(todo);
+    renderTodoBoard();
+    showToast('✅ 任务已创建');
+  } catch (err) {
+    showToast('⚠️ 创建失败', err.message);
+  }
+}
+
+async function deleteTodo(id) {
+  const confirmed = await showConfirm('确定删除这个任务？', { icon: '🗑', confirmText: '删除', danger: true });
+  if (!confirmed) return;
+
+  try {
+    await API.del('/api/todos/' + id);
+    todosData = todosData.filter(t => t.id !== id);
+    renderTodoBoard();
+  } catch (err) {
+    showToast('⚠️ 删除失败', err.message);
+  }
+}
+
+async function clearDoneTodos() {
+  const doneCount = todosData.filter(t => t.status === 'done').length;
+  if (doneCount === 0) {
+    showToast('ℹ️ 没有已完成的任务');
+    return;
+  }
+  const confirmed = await showConfirm(`确定清除 ${doneCount} 条已完成任务？`, { icon: '🗑', confirmText: '清除', danger: true });
+  if (!confirmed) return;
+
+  try {
+    await API.delete('/api/todos');
+    todosData = todosData.filter(t => t.status !== 'done');
+    renderTodoBoard();
+    showToast('✅ 已清除完成任务');
+  } catch (err) {
+    showToast('⚠️ 清除失败', err.message);
+  }
+}
+
+// ========== 快捷命令面板 ==========
+let commandsData = [];
+
+async function loadCommands() {
+  try {
+    commandsData = await API.get('/api/commands');
+  } catch (e) {
+    commandsData = [];
+  }
+  renderCommandGrid();
+  loadSudoStatus();
+}
+
+async function loadSudoStatus() {
+  try {
+    const result = await API.get('/api/commands/sudo-status');
+    const status = document.getElementById('cmdSudoStatus');
+    if (status) {
+      status.textContent = result.configured ? '✅ 已配置' : '⚠️ 未配置';
+      status.style.color = result.configured ? 'var(--success)' : 'var(--warning)';
+    }
+  } catch (e) {}
+}
+
+async function saveSudoPassword() {
+  const input = document.getElementById('cmdSudoPassword');
+  const password = input?.value || '';
+
+  try {
+    await API.post('/api/commands/sudo-password', { password });
+    input.value = '';
+    showToast(password ? '✅ sudo 密码已保存' : '✅ sudo 密码已清除');
+    loadSudoStatus();
+  } catch (err) {
+    showToast('⚠️ 保存失败', err.message);
+  }
+}
+
+function renderCommandGrid() {
+  const grid = document.getElementById('cmdGrid');
+  if (!grid) return;
+
+  if (commandsData.length === 0) {
+    grid.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:40px;grid-column:1/-1">暂无命令，点击「+ 添加命令」开始</div>';
+    return;
+  }
+
+  grid.innerHTML = commandsData.map(cmd => {
+    const paramInput = cmd.hasParam
+      ? `<div class="cmd-card-param"><input type="text" id="param-${cmd.id}" placeholder="${escapeAttr(cmd.paramPlaceholder || cmd.paramName || '参数')}" value="${escapeAttr(cmd.paramDefault || '')}"></div>`
+      : '<div class="cmd-card-param cmd-card-param-spacer"></div>';
+
+    return `
+      <div class="cmd-card" data-id="${cmd.id}">
+        <button class="cmd-card-delete" onclick="deleteCommand('${cmd.id}')" title="删除">✕</button>
+        <div class="cmd-card-header">
+          <div class="cmd-card-icon">${cmd.icon || '⚡'}</div>
+          <div class="cmd-card-name">${escapeHtml(cmd.name)}</div>
+        </div>
+        <div class="cmd-card-command" title="${escapeAttr(cmd.command)}">${escapeHtml(cmd.command)}</div>
+        ${paramInput}
+        <div class="cmd-card-actions">
+          <button class="cmd-run-btn" onclick="executeCommand('${cmd.id}')">▶ 执行</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function executeCommand(cmdId) {
+  const cmd = commandsData.find(c => c.id === cmdId);
+  if (!cmd) return;
+
+  let finalCommand = cmd.command;
+
+  // 替换参数
+  if (cmd.hasParam && cmd.paramName) {
+    const input = document.getElementById('param-' + cmdId);
+    const paramValue = input?.value?.trim() || cmd.paramDefault || '';
+    if (!paramValue) {
+      showToast('⚠️ 请填写参数', cmd.paramPlaceholder || cmd.paramName);
+      input?.focus();
+      return;
+    }
+    finalCommand = finalCommand.replace(new RegExp('\\$\\{' + cmd.paramName + '\\}', 'g'), paramValue);
+  }
+
+  // 显示输出区
+  const section = document.getElementById('cmdOutputSection');
+  const output = document.getElementById('cmdOutput');
+  const title = document.getElementById('cmdOutputTitle');
+  section.style.display = 'block';
+  title.textContent = `执行: ${cmd.name}`;
+  output.textContent = '⏳ 执行中...';
+
+  // 禁用按钮
+  const card = document.querySelector(`.cmd-card[data-id="${cmdId}"]`);
+  const btn = card?.querySelector('.cmd-run-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ 执行中...'; }
+
+  try {
+    const result = await API.post('/api/commands/exec', { command: finalCommand });
+    output.textContent = result.output || '(无输出)';
+    if (!result.success) {
+      output.textContent = '❌ ' + (result.output || '执行失败');
+    }
+  } catch (err) {
+    output.textContent = '❌ 请求失败: ' + err.message;
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '▶ 执行'; }
+  }
+}
+
+function closeCmdOutput() {
+  document.getElementById('cmdOutputSection').style.display = 'none';
+}
+
+async function showAddCommand() {
+  // 使用自定义弹窗，一次性收集所有字段
+  return new Promise(resolve => {
+    const overlay = document.getElementById('sysDialog');
+    document.getElementById('sysDialogIcon').textContent = '⚡';
+    document.getElementById('sysDialogMsg').textContent = '添加快捷命令';
+    document.getElementById('sysDialogBtns').innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:10px;width:100%">
+        <input type="text" id="addCmdName" class="sys-prompt-input" placeholder="命令名称（如：杀端口进程）">
+        <input type="text" id="addCmdCommand" class="sys-prompt-input" placeholder="Shell 命令（支持 \${param} 占位符）">
+        <input type="text" id="addCmdIcon" class="sys-prompt-input" placeholder="图标 emoji（默认 ⚡）" value="⚡">
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+        <button class="sys-btn-cancel" id="sysCancel">取消</button>
+        <button class="sys-btn-confirm" id="sysOk">添加</button>
+      </div>
+    `;
+    overlay.classList.add('active');
+    setTimeout(() => document.getElementById('addCmdName')?.focus(), 50);
+
+    const cleanup = (result) => {
+      overlay.classList.remove('active');
+      activeSysDialogClose = null;
+      resolve(result);
+    };
+    activeSysDialogClose = () => cleanup(null);
+    document.getElementById('sysCancel').onclick = () => cleanup(null);
+    document.getElementById('sysOk').onclick = () => {
+      const name = document.getElementById('addCmdName')?.value?.trim();
+      const command = document.getElementById('addCmdCommand')?.value?.trim();
+      const icon = document.getElementById('addCmdIcon')?.value?.trim() || '⚡';
+      if (!name || !command) {
+        showToast('⚠️ 名称和命令不能为空');
+        return;
+      }
+      cleanup({ name, command, icon });
+    };
+  }).then(result => {
+    if (!result) return;
+    const { name, command, icon } = result;
+    const hasParam = command.includes('${');
+    let paramName = '';
+    let paramPlaceholder = '';
+    if (hasParam) {
+      const match = command.match(/\$\{(\w+)\}/);
+      paramName = match ? match[1] : 'param';
+      paramPlaceholder = paramName;
+    }
+    createCommand({ name, command, icon, hasParam, paramName, paramPlaceholder });
+  });
+}
+
+async function createCommand(data) {
+  try {
+    const cmd = await API.post('/api/commands', data);
+    commandsData.push(cmd);
+    renderCommandGrid();
+    showToast('✅ 命令已添加');
+  } catch (err) {
+    showToast('⚠️ 添加失败', err.message);
+  }
+}
+
+async function deleteCommand(id) {
+  const confirmed = await showConfirm('确定删除这个命令？', { icon: '🗑', confirmText: '删除', danger: true });
+  if (!confirmed) return;
+
+  try {
+    await API.del('/api/commands/' + id);
+    commandsData = commandsData.filter(c => c.id !== id);
+    renderCommandGrid();
+  } catch (err) {
+    showToast('⚠️ 删除失败', err.message);
+  }
+}
+
+// ========== 工作日志 ==========
+let notesWeekOffset = 0; // 0 = 本周, -1 = 上周, 1 = 下周
+let notesWeekData = {}; // date -> content
+let notesWeekTitles = {}; // date -> title
+let noteSaveTimers = {};
+
+async function loadNotes() {
+  await loadWeekNotes();
+}
+
+function getWeekDates(offset = 0) {
+  const now = new Date();
+  const dayOfWeek = now.getDay(); // 0=周日
+  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  const monday = new Date(now);
+  monday.setDate(now.getDate() + mondayOffset + offset * 7);
+  monday.setHours(0, 0, 0, 0);
+
+  const dates = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    dates.push(formatDate(d));
+  }
+  return dates;
+}
+
+function formatDate(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+async function loadWeekNotes() {
+  const dates = getWeekDates(notesWeekOffset);
+  notesWeekData = {};
+
+  // 恢复周末开关状态
+  const weekendCb = document.getElementById('notesShowWeekend');
+  if (weekendCb) weekendCb.checked = localStorage.getItem('devtools-notes-show-weekend') === 'true';
+
+  // 加载每天的数据
+  await Promise.all(dates.map(async date => {
+    try {
+      const note = await API.get('/api/notes/' + date);
+      notesWeekData[date] = note.content || '';
+      notesWeekTitles[date] = note.title || '';
+    } catch {
+      notesWeekData[date] = '';
+      notesWeekTitles[date] = '';
+    }
+  }));
+
+  renderWeekGrid();
+  updateWeekLabel();
+}
+
+function updateWeekLabel() {
+  const dates = getWeekDates(notesWeekOffset);
+  const label = document.getElementById('notesWeekLabel');
+  if (!label) return;
+
+  const start = dates[0].slice(5); // MM-DD
+  const end = dates[6].slice(5);
+  const prefix = notesWeekOffset === 0 ? '本周 · ' : notesWeekOffset === -1 ? '上周 · ' : '';
+  label.textContent = `${prefix}${start} ~ ${end}`;
+}
+
+function renderWeekGrid() {
+  const grid = document.getElementById('notesWeekGrid');
+  if (!grid) return;
+
+  const dates = getWeekDates(notesWeekOffset);
+  const dayNames = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+  const today = formatDate(new Date());
+  const showWeekend = document.getElementById('notesShowWeekend')?.checked;
+
+  grid.classList.toggle('show-weekend', !!showWeekend);
+
+  grid.innerHTML = dates.map((date, i) => {
+    const isToday = date === today;
+    const isWeekend = i >= 5;
+    const content = notesWeekData[date] || '';
+    const title = notesWeekTitles[date] || '';
+    const todayBadge = isToday ? '<span class="notes-day-today-badge">今天</span>' : '';
+    const extraClass = [isToday ? 'is-today' : '', isWeekend ? 'day-weekend' : ''].filter(Boolean).join(' ');
+
+    return `
+      <div class="notes-day-card ${extraClass}">
+        <div class="notes-day-label">
+          <span class="notes-day-name">${dayNames[i]}</span>
+          <span class="notes-day-date">${date.slice(5)}</span>
+          ${todayBadge}
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;min-width:0">
+          <input type="text" class="notes-day-title-input" data-date="${date}" value="${escapeAttr(title)}" placeholder="项目/标题..." oninput="onWeekNoteInput('${date}')">
+          <textarea class="notes-day-textarea" data-date="${date}" placeholder="记录${dayNames[i]}的工作..." oninput="onWeekNoteInput('${date}')">${escapeHtml(content)}</textarea>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function toggleWeekend(show) {
+  localStorage.setItem('devtools-notes-show-weekend', show ? 'true' : 'false');
+  renderWeekGrid();
+}
+
+function onWeekNoteInput(date) {
+  const saveStatus = document.getElementById('notesSaveStatus');
+  if (saveStatus) saveStatus.textContent = '';
+
+  if (noteSaveTimers[date]) clearTimeout(noteSaveTimers[date]);
+  noteSaveTimers[date] = setTimeout(() => {
+    delete noteSaveTimers[date];
+    saveWeekNote(date);
+  }, 800);
+}
+
+async function saveWeekNote(date) {
+  const textarea = document.querySelector(`.notes-day-textarea[data-date="${date}"]`);
+  const titleInput = document.querySelector(`.notes-day-title-input[data-date="${date}"]`);
+  if (!textarea) return;
+  const content = textarea.value;
+  const title = titleInput?.value || '';
+  const saveStatus = document.getElementById('notesSaveStatus');
+
+  try {
+    await API.post('/api/notes', { date, content, title });
+    notesWeekData[date] = content;
+    notesWeekTitles[date] = title;
+    if (saveStatus) saveStatus.textContent = '✓ 已保存';
+  } catch (e) {
+    if (saveStatus) saveStatus.textContent = '⚠️ 保存失败';
+  }
+}
+
+function notesPrevWeek() {
+  notesWeekOffset--;
+  loadWeekNotes();
+}
+
+function notesNextWeek() {
+  notesWeekOffset++;
+  loadWeekNotes();
+}
+
+function toggleNotesReference() {
+  const panel = document.getElementById('notesReference');
+  if (!panel) return;
+  const isVisible = panel.style.display !== 'none';
+  panel.style.display = isVisible ? 'none' : 'flex';
+
+  if (!isVisible) {
+    loadNotesReference();
+  }
+}
+
+async function loadNotesReference() {
+  const content = document.getElementById('notesRefContent');
+  if (!content) return;
+  content.innerHTML = '<div style="color:var(--text-muted);padding:20px;text-align:center">加载中...</div>';
+
+  const resultArea = document.getElementById('rptResultArea');
+  if (resultArea && resultArea.innerHTML.trim() && !resultArea.querySelector('.rpt-empty-state')) {
+    // 精简周报：只保留分组标题 + 仓库名 + 提交内容列
+    const sections = resultArea.querySelectorAll('.rpt-result-section, .rpt-group-header');
+    if (sections.length > 0) {
+      let html = '';
+      sections.forEach(el => {
+        if (el.classList.contains('rpt-group-header')) {
+          // 分组标题
+          const name = el.querySelector('.rpt-group-name');
+          const count = el.querySelector('.rpt-group-count');
+          html += `<div class="notes-ref-group-title">📁 ${name ? name.textContent : ''} <span>${count ? count.textContent : ''}</span></div>`;
+        } else {
+          // 仓库 section
+          const h3 = el.querySelector('h3');
+          const repoName = h3 ? h3.textContent.replace(/\d+\s*(仓|提交)/g, '').trim() : '';
+          html += `<div class="notes-ref-repo">${repoName}</div>`;
+
+          // 提取每行的提交内容（最后一列）
+          const rows = el.querySelectorAll('tbody tr');
+          if (rows.length > 0) {
+            html += '<ul class="notes-ref-commits">';
+            rows.forEach(row => {
+              const cells = row.querySelectorAll('td');
+              if (cells.length >= 4) {
+                const dateStr = cells[0].textContent.trim().slice(5); // MM-DD
+                const commitContent = cells[3].textContent.trim();
+                html += `<li><span class="notes-ref-date">${dateStr}</span>${escapeHtml(commitContent)}</li>`;
+              }
+            });
+            html += '</ul>';
+          }
+        }
+      });
+      content.innerHTML = html || '<div style="color:var(--text-muted);padding:20px;text-align:center">无提交记录</div>';
+    } else {
+      content.innerHTML = resultArea.innerHTML;
+    }
+    return;
+  }
+
+  content.innerHTML = '<div style="color:var(--text-muted);padding:20px;text-align:center">暂无周报数据。<br><br>请先到「Git 周报」页面生成本周报告，<br>然后回来点击此按钮即可加载。</div>';
+}

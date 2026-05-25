@@ -11,6 +11,7 @@ devtools-desktop/src-tauri/target/
 
 # Data files (contain sensitive info)
 devtools-desktop/sidecar/data/.secret
+devtools-desktop/sidecar/data/sudo-pwd.json
 deploy-panel/server/data/.secret
 
 # Temp files
