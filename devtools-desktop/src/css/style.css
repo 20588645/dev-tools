@@ -9444,3 +9444,83 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
   opacity: 0.4;
   background: var(--primary-light) !important;
 }
+
+.todo-card-remind {
+  font-size: 10px;
+  color: var(--warning);
+  background: var(--warning-subtle);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+/* ========== 自定义提醒时间选择器 ========== */
+.remind-picker {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.remind-quick-btns {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.remind-quick-btn {
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.remind-quick-btn:hover {
+  background: var(--primary-light);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.remind-clear-btn:hover {
+  background: var(--danger-subtle) !important;
+  border-color: var(--danger) !important;
+  color: var(--danger) !important;
+}
+
+.remind-time-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.remind-hour,
+.remind-minute {
+  width: 52px;
+  height: 28px;
+  padding: 0 6px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 12px;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  text-align: center;
+}
+
+.remind-hour:focus,
+.remind-minute:focus {
+  border-color: var(--primary);
+}
+
+.remind-date-display {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-left: 8px;
+}
