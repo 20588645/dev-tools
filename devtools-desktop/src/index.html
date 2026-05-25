@@ -45,32 +45,76 @@
   <div class="home-header">
     <h1 class="home-greeting" id="homeGreeting">下午好 👋</h1>
     <p class="home-date" id="homeDate"></p>
-	  </div>
-	  <div class="home-stats" id="homeStats"></div>
-	  <div class="home-running-card" id="homeRunningCard">
-	    <div class="home-card-header compact">
-	      <span class="home-card-title">当前运行服务</span>
-	      <button class="btn-text" onclick="switchPage('run', document.querySelector('.sidebar-item[data-page=run]'))">管理运行</button>
-	    </div>
-	    <div class="home-running-list" id="homeRunningList"></div>
-	  </div>
-	  <div class="home-insights" id="homeInsights"></div>
-	  <div class="home-body">
-	    <div class="home-activity-card">
-      <div class="home-card-header">
-        <span class="home-card-title">最近活动</span>
-        <button class="btn-text" onclick="switchPage('deploy', document.querySelector('.sidebar-item[data-page=deploy]'));setTimeout(()=>switchSubTab('history',document.querySelector('.sub-tab[data-sub=history]')),100)">查看全部</button>
+  </div>
+
+  <div class="home-workspace">
+    <!-- 左列：待办 + 工时 + 动态 -->
+    <div class="home-main">
+      <!-- 待办提醒 -->
+      <div class="home-section-card">
+        <div class="home-card-header">
+          <span class="home-card-title">📌 进行中的任务</span>
+          <button class="btn-text" onclick="switchPage('todo', document.querySelector('.sidebar-item[data-page=todo]'))">查看全部</button>
+        </div>
+        <div class="home-todo-list" id="homeTodoList">
+          <div class="home-empty-hint">暂无进行中的任务</div>
+        </div>
       </div>
-      <div class="home-activity-table" id="homeActivity"></div>
+
+      <!-- 今日工时 -->
+      <div class="home-section-card">
+        <div class="home-card-header">
+          <span class="home-card-title">✏️ 今日工时</span>
+          <button class="btn-text" onclick="switchPage('notes', document.querySelector('.sidebar-item[data-page=notes]'))">前往填写</button>
+        </div>
+        <div class="home-timesheet" id="homeTimesheet">
+          <div class="home-empty-hint">今天尚未填写工时</div>
+        </div>
+      </div>
+
+      <!-- 最近动态 -->
+      <div class="home-section-card">
+        <div class="home-card-header">
+          <span class="home-card-title">📋 最近动态</span>
+          <button class="btn-text" onclick="switchPage('deploy', document.querySelector('.sidebar-item[data-page=deploy]'));setTimeout(()=>switchSubTab('history',document.querySelector('.sub-tab[data-sub=history]')),100)">查看全部</button>
+        </div>
+        <div class="home-activity-table" id="homeActivity"></div>
+      </div>
     </div>
-    <aside class="home-quick-card">
-      <div class="home-card-header right-header">
-        <span class="home-card-title">快捷操作</span>
+
+    <!-- 右列：状态 + 快捷入口 -->
+    <aside class="home-side">
+      <!-- 运行状态 -->
+      <div class="home-section-card compact">
+        <div class="home-card-header">
+          <span class="home-card-title">▶ 运行状态</span>
+        </div>
+        <div class="home-running-list" id="homeRunningList">
+          <div class="home-empty-hint">无运行中的服务</div>
+        </div>
       </div>
-      <div class="home-quick" id="homeQuick"></div>
-      <div class="home-mini-report">
-        <span>Git 周报</span>
-        <button class="btn-primary" onclick="switchPage('report', document.querySelector('.sidebar-item[data-page=report]'))">生成周报</button>
+
+      <!-- 快捷入口 -->
+      <div class="home-section-card compact">
+        <div class="home-card-header">
+          <span class="home-card-title">⚡ 快捷入口</span>
+        </div>
+        <div class="home-shortcuts" id="homeShortcuts">
+          <button class="home-shortcut-btn" onclick="switchPage('run', document.querySelector('.sidebar-item[data-page=run]'))"><span class="shortcut-icon green">▶</span>本地运行</button>
+          <button class="home-shortcut-btn" onclick="switchPage('deploy', document.querySelector('.sidebar-item[data-page=deploy]'))"><span class="shortcut-icon blue">↗</span>部署</button>
+          <button class="home-shortcut-btn" onclick="switchPage('terminal', document.querySelector('.sidebar-item[data-page=terminal]'))"><span class="shortcut-icon orange">⚡</span>命令</button>
+          <button class="home-shortcut-btn" onclick="switchPage('todo', document.querySelector('.sidebar-item[data-page=todo]'))"><span class="shortcut-icon purple">✓</span>待办</button>
+          <button class="home-shortcut-btn" onclick="switchPage('report', document.querySelector('.sidebar-item[data-page=report]'))"><span class="shortcut-icon teal">📋</span>周报</button>
+          <button class="home-shortcut-btn" onclick="switchPage('notebook', document.querySelector('.sidebar-item[data-page=notebook]'))"><span class="shortcut-icon amber">📒</span>笔记</button>
+        </div>
+      </div>
+
+      <!-- 本周概览 -->
+      <div class="home-section-card compact">
+        <div class="home-card-header">
+          <span class="home-card-title">📊 本周概览</span>
+        </div>
+        <div class="home-week-stats" id="homeWeekStats"></div>
       </div>
     </aside>
   </div>
