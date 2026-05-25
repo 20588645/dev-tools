@@ -17,15 +17,15 @@ router.get('/', (req, res) => {
 
 // POST /api/todos
 router.post('/', (req, res) => {
-  const { title, content = '', status = 'todo' } = req.body;
+  const { title, content = '', status = 'todo', remindAt = '' } = req.body;
   if (!title || !title.trim()) return res.status(400).json({ error: '标题不能为空' });
 
   const id = genId();
   const now = new Date().toISOString();
-  db.prepare('INSERT INTO todos (id, title, content, status, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?)')
-    .run(id, title.trim(), content.trim(), status, now, now);
+  db.prepare('INSERT INTO todos (id, title, content, status, remindAt, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?)')
+    .run(id, title.trim(), content.trim(), status, remindAt, now, now);
 
-  res.json({ id, title: title.trim(), content: content.trim(), status, createdAt: now, updatedAt: now });
+  res.json({ id, title: title.trim(), content: content.trim(), status, remindAt, createdAt: now, updatedAt: now });
 });
 
 // PUT /api/todos/:id
@@ -33,12 +33,18 @@ router.put('/:id', (req, res) => {
   const todo = db.prepare('SELECT * FROM todos WHERE id = ?').get(req.params.id);
   if (!todo) return res.status(404).json({ error: '任务不存在' });
 
-  const { title, content, status } = req.body;
+  const { title, content, status, remindAt } = req.body;
   const now = new Date().toISOString();
-  db.prepare('UPDATE todos SET title = ?, content = ?, status = ?, updatedAt = ? WHERE id = ?')
-    .run(title !== undefined ? title.trim() : todo.title, content !== undefined ? content.trim() : todo.content, status !== undefined ? status : todo.status, now, req.params.id);
+  db.prepare('UPDATE todos SET title = ?, content = ?, status = ?, remindAt = ?, updatedAt = ? WHERE id = ?')
+    .run(
+      title !== undefined ? title.trim() : todo.title,
+      content !== undefined ? content.trim() : todo.content,
+      status !== undefined ? status : todo.status,
+      remindAt !== undefined ? remindAt : (todo.remindAt || ''),
+      now, req.params.id
+    );
 
-  res.json({ ...todo, title: title !== undefined ? title.trim() : todo.title, content: content !== undefined ? content.trim() : todo.content, status: status !== undefined ? status : todo.status, updatedAt: now });
+  res.json({ ...todo, title: title !== undefined ? title.trim() : todo.title, content: content !== undefined ? content.trim() : todo.content, status: status !== undefined ? status : todo.status, remindAt: remindAt !== undefined ? remindAt : (todo.remindAt || ''), updatedAt: now });
 });
 
 // DELETE /api/todos/:id

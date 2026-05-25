@@ -83,6 +83,7 @@ db.exec(`
     title TEXT NOT NULL,
     content TEXT DEFAULT '',
     status TEXT DEFAULT 'todo',
+    remindAt TEXT DEFAULT '',
     createdAt TEXT DEFAULT (datetime('now')),
     updatedAt TEXT DEFAULT (datetime('now'))
   );
@@ -134,6 +135,13 @@ try {
   db.prepare("SELECT sortOrder FROM notebook_notes LIMIT 1").get();
 } catch {
   db.exec("ALTER TABLE notebook_notes ADD COLUMN sortOrder INTEGER DEFAULT 0");
+}
+
+// 确保 remindAt 列存在
+try {
+  db.prepare("SELECT remindAt FROM todos LIMIT 1").get();
+} catch {
+  db.exec("ALTER TABLE todos ADD COLUMN remindAt TEXT DEFAULT ''");
 }
 
 module.exports = db;

@@ -15,6 +15,7 @@ devtools-desktop/sidecar/data/sudo-pwd.json
 devtools-desktop/sidecar/data/devtools.db
 devtools-desktop/sidecar/data/devtools.db-shm
 devtools-desktop/sidecar/data/devtools.db-wal
+devtools-desktop/sidecar/data/notebook-images/
 deploy-panel/server/data/.secret
 
 # Temp files
