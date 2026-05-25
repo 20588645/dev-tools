@@ -20,7 +20,7 @@ let notifiedRunIds = new Set();
 let notifiedRunCompileErrors = new Set();
 let pendingRunCompileErrorTimers = {};
 const RUN_COMPILE_ERROR_NOTIFY_DELAY = 15000;
-const APP_VERSION = '0.1.1';
+const APP_VERSION = '0.1.3';
 
 // ========== 托盘菜单同步 ==========
 function syncTrayMenu() {
@@ -547,8 +547,102 @@ function handleRunCompileErrorNotification(data) {
   }, RUN_COMPILE_ERROR_NOTIFY_DELAY);
 }
 
+// ========== 侧边栏菜单配置（动态渲染 + 排序） ==========
+const SIDEBAR_MENU_ITEMS = [
+  { page: 'home', label: '首页', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>', fixed: 'first' },
+  { page: 'run', label: '本地运行', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/><line x1="19" y1="5" x2="19" y2="19"/></svg>' },
+  { page: 'deploy', label: '部署面板', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>' },
+  { page: 'terminal', label: '快捷命令', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>' },
+  { page: 'todo', label: '待办', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>' },
+  { page: 'report', label: 'Git 周报', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>' },
+  { page: 'notes', label: '工时内容', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>' },
+  { page: 'notebook', label: '笔记本', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>' },
+  { page: 'settings', label: '设置', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68 1.65 1.65 0 0 0 9 3.17V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>', fixed: 'last' }
+];
+
+const MENU_ORDER_KEY = 'devtools-menu-order';
+const DEFAULT_MENU_ORDER = ['run', 'deploy', 'terminal', 'todo', 'report', 'notes', 'notebook'];
+
+function getMenuOrder() {
+  try {
+    const saved = localStorage.getItem(MENU_ORDER_KEY);
+    if (saved) {
+      const order = JSON.parse(saved);
+      // 校验：确保保存的排序包含所有可排序项
+      const sortablePages = SIDEBAR_MENU_ITEMS.filter(m => !m.fixed).map(m => m.page);
+      const valid = order.every(p => sortablePages.includes(p)) && order.length === sortablePages.length;
+      if (valid) return order;
+    }
+  } catch (e) {}
+  return DEFAULT_MENU_ORDER;
+}
+
+function saveMenuOrder(order) {
+  localStorage.setItem(MENU_ORDER_KEY, JSON.stringify(order));
+}
+
+function getSortedMenuItems() {
+  const order = getMenuOrder();
+  const first = SIDEBAR_MENU_ITEMS.find(m => m.fixed === 'first');
+  const last = SIDEBAR_MENU_ITEMS.find(m => m.fixed === 'last');
+  const middle = order.map(page => SIDEBAR_MENU_ITEMS.find(m => m.page === page)).filter(Boolean);
+  return [first, ...middle, last];
+}
+
+function renderSidebar() {
+  const nav = document.getElementById('sidebarNav');
+  if (!nav) return;
+  const activePage = nav.querySelector('.sidebar-item.active')?.dataset.page || 'home';
+  const items = getSortedMenuItems();
+  nav.innerHTML = items.map(item => {
+    const isActive = item.page === activePage ? ' active' : '';
+    return `<button class="sidebar-item${isActive}" data-page="${item.page}" onclick="switchPage('${item.page}', this)"><span class="nav-icon">${item.icon}</span><span>${item.label}</span></button>`;
+  }).join('');
+}
+
+function renderMenuOrderSettings() {
+  const container = document.getElementById('menuOrderList');
+  if (!container) return;
+  const order = getMenuOrder();
+  container.innerHTML = order.map((page, idx) => {
+    const item = SIDEBAR_MENU_ITEMS.find(m => m.page === page);
+    if (!item) return '';
+    const isFirst = idx === 0;
+    const isLast = idx === order.length - 1;
+    return `<div class="menu-order-item" data-page="${page}">
+      <span class="menu-order-icon">${item.icon}</span>
+      <span class="menu-order-label">${item.label}</span>
+      <span class="menu-order-actions">
+        <button class="menu-order-btn" ${isFirst ? 'disabled' : ''} onclick="moveMenuItem('${page}','up')" title="上移">↑</button>
+        <button class="menu-order-btn" ${isLast ? 'disabled' : ''} onclick="moveMenuItem('${page}','down')" title="下移">↓</button>
+      </span>
+    </div>`;
+  }).join('');
+}
+
+function moveMenuItem(page, direction) {
+  const order = getMenuOrder();
+  const idx = order.indexOf(page);
+  if (idx === -1) return;
+  if (direction === 'up' && idx > 0) {
+    [order[idx - 1], order[idx]] = [order[idx], order[idx - 1]];
+  } else if (direction === 'down' && idx < order.length - 1) {
+    [order[idx], order[idx + 1]] = [order[idx + 1], order[idx]];
+  }
+  saveMenuOrder(order);
+  renderSidebar();
+  renderMenuOrderSettings();
+}
+
+function resetMenuOrder() {
+  localStorage.removeItem(MENU_ORDER_KEY);
+  renderSidebar();
+  renderMenuOrderSettings();
+}
+
 // ========== Navigation ==========
 function setupNavigation() {
+  renderSidebar();
   initSidebarState();
   const collapseBtn = document.querySelector('.sidebar-collapse-toggle');
   if (collapseBtn) {
@@ -3866,6 +3960,9 @@ function rptImportConfig() {
 let settingsLoaded = false;
 
 async function loadSettings() {
+  // 菜单排序每次都刷新
+  renderMenuOrderSettings();
+
   if (settingsLoaded) return;
   settingsLoaded = true;
 
