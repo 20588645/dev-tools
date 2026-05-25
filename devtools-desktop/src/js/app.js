@@ -4320,19 +4320,23 @@ function renderTodoCard(todo) {
 
   // 不同状态不同操作按钮
   let actions = '';
+  const editBtn = `<button class="todo-btn-move todo-btn-back" onclick="event.stopPropagation();editTodo('${todo.id}')" title="编辑">✎</button>`;
   if (todo.status === 'todo') {
     actions = `
+      ${editBtn}
       <button class="todo-btn-move todo-btn-start" onclick="moveTodo('${todo.id}','next')" title="开始">▶ 开始</button>
       <button class="todo-btn-delete" onclick="deleteTodo('${todo.id}')" title="删除">✕</button>
     `;
   } else if (todo.status === 'doing') {
     actions = `
+      ${editBtn}
       <button class="todo-btn-move todo-btn-back" onclick="moveTodo('${todo.id}','prev')" title="退回待办">↩</button>
       <button class="todo-btn-move todo-btn-done" onclick="moveTodo('${todo.id}','next')" title="完成">✓ 完成</button>
       <button class="todo-btn-delete" onclick="deleteTodo('${todo.id}')" title="删除">✕</button>
     `;
   } else {
     actions = `
+      ${editBtn}
       <button class="todo-btn-move todo-btn-back" onclick="moveTodo('${todo.id}','prev')" title="退回进行中">↩</button>
       <button class="todo-btn-delete" onclick="deleteTodo('${todo.id}')" title="删除">✕</button>
     `;
@@ -4440,6 +4444,53 @@ async function createTodo(title, content = '') {
   } catch (err) {
     showToast('⚠️ 创建失败', err.message);
   }
+}
+
+async function editTodo(id) {
+  const todo = todosData.find(t => t.id === id);
+  if (!todo) return;
+
+  return new Promise(resolve => {
+    const overlay = document.getElementById('sysDialog');
+    document.getElementById('sysDialogIcon').textContent = '✎';
+    document.getElementById('sysDialogMsg').textContent = '编辑任务';
+    document.getElementById('sysDialogBtns').innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:10px;width:100%">
+        <input type="text" id="editTodoTitle" class="sys-prompt-input" placeholder="任务标题" value="${escapeAttr(todo.title)}">
+        <textarea id="editTodoContent" class="sys-prompt-textarea" placeholder="详细内容（可选）" rows="4">${escapeHtml(todo.content || '')}</textarea>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+        <button class="sys-btn-cancel" id="sysCancel">取消</button>
+        <button class="sys-btn-confirm" id="sysOk">保存</button>
+      </div>
+    `;
+    overlay.classList.add('active');
+    setTimeout(() => document.getElementById('editTodoTitle')?.focus(), 50);
+
+    const cleanup = (val) => {
+      overlay.classList.remove('active');
+      activeSysDialogClose = null;
+      resolve(val);
+    };
+    activeSysDialogClose = () => cleanup(null);
+    document.getElementById('sysCancel').onclick = () => cleanup(null);
+    document.getElementById('sysOk').onclick = () => {
+      const title = document.getElementById('editTodoTitle')?.value?.trim();
+      const content = document.getElementById('editTodoContent')?.value?.trim();
+      if (!title) { showToast('⚠️ 标题不能为空'); return; }
+      cleanup({ title, content });
+    };
+  }).then(async result => {
+    if (!result) return;
+    try {
+      await API.put('/api/todos/' + id, { title: result.title, content: result.content });
+      todo.title = result.title;
+      todo.content = result.content;
+      renderTodoBoard();
+    } catch (err) {
+      showToast('⚠️ 保存失败', err.message);
+    }
+  });
 }
 
 async function deleteTodo(id) {
