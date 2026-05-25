@@ -9620,6 +9620,83 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
   margin-left: 8px;
 }
 
+/* ========== 首页小组件 ========== */
+.widget-hitokoto {
+  position: relative;
+  min-height: 56px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.widget-quote {
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.6;
+  font-style: italic;
+  padding-right: 28px;
+}
+.widget-quote-source {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+.widget-refresh {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 15px;
+  cursor: pointer;
+  border-radius: var(--radius-xs);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+.widget-refresh:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  transform: rotate(180deg);
+}
+.widget-weather {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+.widget-weather-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.weather-icon {
+  font-size: 24px;
+}
+.weather-temp {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.weather-detail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+}
+.weather-loc {
+  font-size: 10px;
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
 /* ========== 首页重设计 ========== */
 .home-workspace {
   display: grid;

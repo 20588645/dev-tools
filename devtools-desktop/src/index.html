@@ -40,8 +40,14 @@
   </div>
 
   <div class="home-workspace">
-    <!-- 左列：待办 + 工时 + 动态 -->
+    <!-- 左列：每日一言 + 待办 + 工时 + 动态 -->
     <div class="home-main">
+      <!-- 每日一言 -->
+      <div class="home-section-card compact widget-hitokoto">
+        <div class="widget-quote" id="hitokotoText">正在获取...</div>
+        <div class="widget-quote-source" id="hitokotoSource"></div>
+        <button class="widget-refresh" onclick="loadHitokoto()" title="换一条">↻</button>
+      </div>
       <!-- 待办提醒 -->
       <div class="home-section-card">
         <div class="home-card-header">
@@ -74,8 +80,20 @@
       </div>
     </div>
 
-    <!-- 右列：状态 + 快捷入口 -->
+    <!-- 右列：天气 + 状态 + 快捷入口 -->
     <aside class="home-side">
+      <!-- 天气 -->
+      <div class="home-section-card compact widget-weather">
+        <div class="widget-weather-main">
+          <span class="weather-icon" id="weatherIcon">☁</span>
+          <span class="weather-temp" id="weatherTemp">--°</span>
+        </div>
+        <div class="weather-detail">
+          <span id="weatherDesc">获取中...</span>
+          <span id="weatherLocation" class="weather-loc"></span>
+        </div>
+      </div>
+
       <!-- 运行状态 -->
       <div class="home-section-card compact">
         <div class="home-card-header">

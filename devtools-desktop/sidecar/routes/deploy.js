@@ -134,6 +134,11 @@ router.get('/active', (req, res) => {
   if (activeJobs.size === 0) return res.json(null);
   // 返回第一个活跃任务（当前设计为单任务模式）
   const job = activeJobs.values().next().value;
+  // 超时保护：如果任务已经超过 10 分钟，自动清理
+  if (Date.now() - job.startTime > 10 * 60 * 1000) {
+    activeJobs.delete(job.id);
+    return res.json(null);
+  }
   res.json({
     id: job.id,
     projectName: job.projectName,

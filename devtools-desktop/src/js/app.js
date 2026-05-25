@@ -20,7 +20,7 @@ let notifiedRunIds = new Set();
 let notifiedRunCompileErrors = new Set();
 let pendingRunCompileErrorTimers = {};
 const RUN_COMPILE_ERROR_NOTIFY_DELAY = 15000;
-const APP_VERSION = '0.1.10';
+const APP_VERSION = '0.1.16';
 
 // ========== 托盘菜单同步 ==========
 function syncTrayMenu() {
@@ -738,6 +738,9 @@ function initHomePage() {
   // 每秒更新一次时间
   setInterval(updateHomeDateTime, 1000);
   loadHomeData();
+  // 加载每日一言和天气
+  loadHitokoto();
+  loadWeather();
 }
 
 function updateHomeDateTime() {
@@ -754,6 +757,60 @@ function updateHomeDateTime() {
   else if (hour < 14) greeting = '中午好 🌤';
   else if (hour < 18) greeting = '下午好 👋';
   document.getElementById('homeGreeting').textContent = greeting;
+}
+
+// ========== 首页小组件：每日一言 ==========
+async function loadHitokoto() {
+  const textEl = document.getElementById('hitokotoText');
+  const sourceEl = document.getElementById('hitokotoSource');
+  try {
+    const res = await fetch('https://v1.hitokoto.cn/?c=d&c=i&c=k&encode=json');
+    const data = await res.json();
+    textEl.textContent = `「${data.hitokoto}」`;
+    sourceEl.textContent = data.from ? `—— ${data.from}` : '';
+  } catch (e) {
+    textEl.textContent = '「保持专注，持续交付。」';
+    sourceEl.textContent = '';
+  }
+}
+
+// ========== 首页小组件：天气 ==========
+async function loadWeather() {
+  const iconEl = document.getElementById('weatherIcon');
+  const tempEl = document.getElementById('weatherTemp');
+  const descEl = document.getElementById('weatherDesc');
+  const locEl = document.getElementById('weatherLocation');
+  try {
+    const res = await fetch('https://wttr.in/Wuhan?format=j1');
+    const data = await res.json();
+    const current = data.current_condition[0];
+    const area = data.nearest_area?.[0];
+    const temp = current.temp_C;
+    const desc = current.lang_zh?.[0]?.value || current.weatherDesc?.[0]?.value || '';
+    const humidity = current.humidity;
+    const feelsLike = current.FeelsLikeC;
+    const weatherCode = parseInt(current.weatherCode);
+
+    // 根据天气代码映射图标
+    let icon = '☁';
+    if (weatherCode === 113) icon = '☀️';
+    else if (weatherCode === 116) icon = '⛅';
+    else if (weatherCode === 119 || weatherCode === 122) icon = '☁️';
+    else if ([176,263,266,293,296,299,302,305,308,311,314,317,353,356,359].includes(weatherCode)) icon = '🌧';
+    else if ([200,386,389,392,395].includes(weatherCode)) icon = '⛈';
+    else if ([227,230,323,326,329,332,335,338,350,368,371,374,377].includes(weatherCode)) icon = '❄️';
+    else if ([143,248,260].includes(weatherCode)) icon = '🌫';
+
+    iconEl.textContent = icon;
+    tempEl.textContent = `${temp}°C`;
+    descEl.textContent = `${desc} · 体感 ${feelsLike}°C · 湿度 ${humidity}%`;
+    locEl.textContent = '武汉';
+  } catch (e) {
+    iconEl.textContent = '☁';
+    tempEl.textContent = '--°';
+    descEl.textContent = '天气获取失败';
+    locEl.textContent = '';
+  }
 }
 
 async function loadHomeData() {
@@ -2765,6 +2822,12 @@ async function checkActiveJob() {
   try {
     const job = await API.get('/api/deploy/active');
     if (!job) return;
+
+    // 超时保护：如果任务已经超过 5 分钟，认为是残留状态，不弹窗
+    if (Date.now() - job.startTime > 5 * 60 * 1000) {
+      console.log('[checkActiveJob] 任务已超时，跳过恢复:', job.projectName);
+      return;
+    }
 
     // 恢复前端状态
     currentDeployId = job.id;
@@ -5352,10 +5415,16 @@ function nbAlignSelection() {
 }
 
 // ========== 待办提醒检查 ==========
-let todoRemindedIds = new Set(JSON.parse(sessionStorage.getItem('devtools-reminded-todos') || '[]'));
+let todoRemindedIds = new Set(JSON.parse(localStorage.getItem('devtools-reminded-todos') || '[]'));
 
 function saveTodoRemindedIds() {
-  sessionStorage.setItem('devtools-reminded-todos', JSON.stringify([...todoRemindedIds]));
+  // 只保留最近 200 个，防止无限增长
+  const arr = [...todoRemindedIds];
+  if (arr.length > 200) {
+    const trimmed = arr.slice(-200);
+    todoRemindedIds = new Set(trimmed);
+  }
+  localStorage.setItem('devtools-reminded-todos', JSON.stringify([...todoRemindedIds]));
 }
 
 function startTodoReminderCheck() {
