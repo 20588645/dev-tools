@@ -7,41 +7,37 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const { spawn, execFile } = require('child_process');
+const db = require('../services/database');
 
 const PROJECTS_FILE = path.join(__dirname, '../data/projects.json');
-const RUN_HISTORY_FILE = path.join(__dirname, '../data/run-history.json');
 
 const runJobs = new Map();
 
-// ========== Run History ==========
+// ========== Run History (SQLite) ==========
 function readRunHistory() {
-  try { return JSON.parse(fs.readFileSync(RUN_HISTORY_FILE, 'utf8')); } catch { return []; }
-}
-
-function writeRunHistory(history) {
-  fs.writeFileSync(RUN_HISTORY_FILE, JSON.stringify(history, null, 2), 'utf8');
+  return db.prepare('SELECT * FROM run_history ORDER BY startedAt DESC LIMIT 100').all()
+    .map(r => ({ ...r, modules: JSON.parse(r.modules || '[]') }));
 }
 
 function recordRunHistory(job) {
-  const history = readRunHistory();
-  history.unshift({
-    id: job.id,
-    projectName: job.projectName,
-    moduleNames: job.moduleNames || [],
-    command: job.command,
-    nodeVersion: job.nodeVersion,
-    port: job.port,
-    url: job.url,
-    status: job.status === 'stopped' ? 'success' : job.status,
-    startedAt: job.startedAt,
-    stoppedAt: job.stoppedAt,
-    duration: job.stoppedAt && job.startedAt ? formatDuration(job.stoppedAt - job.startedAt) : '',
-    exitCode: job.exitCode,
-    error: job.error || '',
-  });
+  db.prepare(`INSERT OR REPLACE INTO run_history (id, projectName, modules, command, nodeVersion, status, startedAt, stoppedAt, duration, exitCode) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+    .run(
+      job.id,
+      job.projectName,
+      JSON.stringify(job.moduleNames || []),
+      job.command || '',
+      job.nodeVersion || '',
+      job.status === 'stopped' ? 'success' : job.status,
+      job.startedAt ? new Date(job.startedAt).toISOString() : '',
+      job.stoppedAt ? new Date(job.stoppedAt).toISOString() : '',
+      job.stoppedAt && job.startedAt ? formatDuration(job.stoppedAt - job.startedAt) : '',
+      job.exitCode || 0
+    );
   // 保留最近 100 条
-  if (history.length > 100) history.length = 100;
-  writeRunHistory(history);
+  const count = db.prepare('SELECT COUNT(*) as c FROM run_history').get().c;
+  if (count > 100) {
+    db.prepare('DELETE FROM run_history WHERE id IN (SELECT id FROM run_history ORDER BY startedAt DESC LIMIT -1 OFFSET 100)').run();
+  }
 }
 
 function formatDuration(ms) {
@@ -53,6 +49,11 @@ function formatDuration(ms) {
 }
 
 function readJSON(file) {
+  // For projects, read from SQLite
+  if (file.includes('projects.json')) {
+    const rows = db.prepare('SELECT data FROM projects_json ORDER BY rowid').all();
+    return rows.map(r => JSON.parse(r.data));
+  }
   try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return []; }
 }
 
@@ -605,14 +606,12 @@ router.get('/history', (req, res) => {
 });
 
 router.delete('/history/:id', (req, res) => {
-  const history = readRunHistory();
-  const filtered = history.filter(h => h.id !== req.params.id);
-  writeRunHistory(filtered);
+  db.prepare('DELETE FROM run_history WHERE id = ?').run(req.params.id);
   res.json({ ok: true });
 });
 
 router.delete('/history', (req, res) => {
-  writeRunHistory([]);
+  db.prepare('DELETE FROM run_history').run();
   res.json({ ok: true });
 });
 

@@ -6,6 +6,7 @@ const express = require('express');
 const router = express.Router();
 const fs = require('fs');
 const path = require('path');
+const db = require('../services/database');
 const {
   analyzeProject,
   listAvailableProjects,
@@ -14,15 +15,21 @@ const {
   DEFAULT_SCAN_ROOT,
 } = require('../services/scanner');
 
-const DATA_FILE = path.join(__dirname, '../data/projects.json');
-
 function readProjects() {
-  try { return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8')); }
-  catch { return []; }
+  const rows = db.prepare('SELECT data FROM projects_json ORDER BY rowid').all();
+  return rows.map(r => JSON.parse(r.data));
 }
 
 function writeProjects(data) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf8');
+  const upsert = db.prepare('INSERT OR REPLACE INTO projects_json (name, data) VALUES (?, ?)');
+  const deleteAll = db.prepare('DELETE FROM projects_json');
+  const insertMany = db.transaction((projects) => {
+    deleteAll.run();
+    for (const p of projects) {
+      upsert.run(p.name, JSON.stringify(p));
+    }
+  });
+  insertMany(data);
 }
 
 // GET /api/projects — 获取已添加的项目列表

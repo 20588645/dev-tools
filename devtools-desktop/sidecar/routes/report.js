@@ -9,14 +9,20 @@ const path = require('path');
 const { fetchCommits, renderMarkdown, projectFromRepoUrl } = require('../services/gitlab');
 
 const CONFIG_FILE = path.join(__dirname, '../data/report-config.json');
+const db = require('../services/database');
 
 function readConfig() {
+  const row = db.prepare("SELECT value FROM report_config WHERE key = 'config'").get();
+  if (row) {
+    try { return JSON.parse(row.value); } catch {}
+  }
+  // Fallback: try old JSON file
   try { return JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8')); }
   catch { return { token: '', author: '', outputDir: '', repos: [] }; }
 }
 
 function writeConfig(cfg) {
-  fs.writeFileSync(CONFIG_FILE, JSON.stringify(cfg, null, 2), 'utf8');
+  db.prepare("INSERT OR REPLACE INTO report_config (key, value) VALUES ('config', ?)").run(JSON.stringify(cfg));
 }
 
 // GET /api/report/config — 读取周报配置

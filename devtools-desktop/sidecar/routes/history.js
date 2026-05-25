@@ -1,100 +1,67 @@
 /**
- * 部署历史 API
+ * 部署历史 API (SQLite)
  */
 const express = require('express');
 const router = express.Router();
-const fs = require('fs');
-const path = require('path');
+const db = require('../services/database');
 
-const DATA_FILE = path.join(__dirname, '../data/history.json');
-
-function readHistory() {
-  try { return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8')); }
-  catch { return []; }
-}
-
-function writeHistory(data) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf8');
-}
-
-// GET /api/history — 历史列表
+// GET /api/history — 历史列表（不含 logs）
 router.get('/', (req, res) => {
-  const history = readHistory();
-  // 返回列表时不包含完整日志（减少传输量）
-  const list = history.map(({ logs, ...rest }) => rest);
-  res.json(list);
+  const history = db.prepare('SELECT id, projectName, type, status, modules, serverName, nodeVersion, remotePath, duration, timestamp FROM history ORDER BY timestamp DESC').all();
+  res.json(history.map(h => ({ ...h, modules: JSON.parse(h.modules || '[]') })));
 });
 
-// GET /api/history/:id — 某次部署的详细日志
+// GET /api/history/:id — 某条记录（含 logs）
 router.get('/:id', (req, res) => {
-  const history = readHistory();
-  const record = history.find(h => h.id === req.params.id);
+  const record = db.prepare('SELECT * FROM history WHERE id = ?').get(req.params.id);
   if (!record) return res.status(404).json({ error: '记录不存在' });
+  record.modules = JSON.parse(record.modules || '[]');
   res.json(record);
 });
 
-// DELETE /api/history/:id — 删除单条记录
+// DELETE /api/history/:id
 router.delete('/:id', (req, res) => {
-  const history = readHistory();
-  const idx = history.findIndex(h => h.id === req.params.id);
-  if (idx === -1) return res.status(404).json({ error: '记录不存在' });
-  history.splice(idx, 1);
-  writeHistory(history);
-  res.json({ success: true, remaining: history.length });
+  const result = db.prepare('DELETE FROM history WHERE id = ?').run(req.params.id);
+  if (result.changes === 0) return res.status(404).json({ error: '记录不存在' });
+  const remaining = db.prepare('SELECT COUNT(*) as count FROM history').get().count;
+  res.json({ success: true, remaining });
 });
 
-// DELETE /api/history — 批量删除 (body: { ids: string[] })
+// DELETE /api/history — 批量删除
 router.delete('/', (req, res) => {
   const { ids } = req.body;
   if (!Array.isArray(ids) || ids.length === 0) {
     return res.status(400).json({ error: 'ids 必须是非空数组' });
   }
-  let history = readHistory();
-  const before = history.length;
-  const idsSet = new Set(ids);
-  history = history.filter(h => !idsSet.has(h.id));
-  writeHistory(history);
-  res.json({ success: true, deleted: before - history.length, remaining: history.length });
+  const placeholders = ids.map(() => '?').join(',');
+  const result = db.prepare(`DELETE FROM history WHERE id IN (${placeholders})`).run(...ids);
+  const remaining = db.prepare('SELECT COUNT(*) as count FROM history').get().count;
+  res.json({ success: true, deleted: result.changes, remaining });
 });
 
-// POST /api/history/cleanup — 自动整理
-// 策略: 每个项目保留最近 keepPerProject 条成功记录 + 保留 keepDays 天内的失败记录
+// POST /api/history/cleanup
 router.post('/cleanup', (req, res) => {
   const { keepDays = 30, keepPerProject = 5 } = req.body || {};
-  const history = readHistory();
-  const before = history.length;
-  const cutoff = Date.now() - keepDays * 24 * 60 * 60 * 1000;
+  const before = db.prepare('SELECT COUNT(*) as count FROM history').get().count;
+  const cutoff = new Date(Date.now() - keepDays * 24 * 60 * 60 * 1000).toISOString();
 
-  // 每个项目的成功记录计数器
-  const projectSuccessCounters = {};
-  const result = [];
+  // 删除超期的失败记录
+  db.prepare("DELETE FROM history WHERE status != 'success' AND timestamp < ?").run(cutoff);
 
-  for (const h of history) {
-    const key = h.projectName;
-    if (h.status === 'success') {
-      // 成功记录：每个项目只保留最近 keepPerProject 条
-      if (!projectSuccessCounters[key]) projectSuccessCounters[key] = 0;
-      if (projectSuccessCounters[key] < keepPerProject) {
-        result.push(h);
-        projectSuccessCounters[key]++;
-      }
-    } else {
-      // 失败记录：只保留 keepDays 天内的
-      if (new Date(h.timestamp).getTime() >= cutoff) {
-        result.push(h);
-      }
+  // 对每个项目只保留最近 N 条成功记录
+  const projects = db.prepare("SELECT DISTINCT projectName FROM history WHERE status = 'success'").all();
+  for (const { projectName } of projects) {
+    const ids = db.prepare("SELECT id FROM history WHERE projectName = ? AND status = 'success' ORDER BY timestamp DESC LIMIT -1 OFFSET ?")
+      .all(projectName, keepPerProject)
+      .map(r => r.id);
+    if (ids.length > 0) {
+      const ph = ids.map(() => '?').join(',');
+      db.prepare(`DELETE FROM history WHERE id IN (${ph})`).run(...ids);
     }
   }
 
-  writeHistory(result);
-
-  res.json({
-    success: true,
-    before,
-    after: result.length,
-    deleted: before - result.length,
-    strategy: `每项目保留 ${keepPerProject} 条成功 + ${keepDays} 天内失败记录`,
-  });
+  const after = db.prepare('SELECT COUNT(*) as count FROM history').get().count;
+  res.json({ success: true, before, after, deleted: before - after, strategy: `每项目保留 ${keepPerProject} 条成功 + ${keepDays} 天内失败记录` });
 });
 
 module.exports = router;

@@ -1,90 +1,57 @@
 /**
- * 待办/看板 CRUD API
+ * 待办/看板 CRUD API (SQLite)
  */
 const express = require('express');
 const router = express.Router();
-const fs = require('fs');
-const path = require('path');
-
-const DATA_FILE = path.join(__dirname, '../data/todos.json');
-
-function readTodos() {
-  try { return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8')); }
-  catch { return []; }
-}
-
-function writeTodos(data) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf8');
-}
+const db = require('../services/database');
 
 function genId() {
   return 'todo-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 }
 
-// GET /api/todos — 列表
+// GET /api/todos
 router.get('/', (req, res) => {
-  res.json(readTodos());
+  const todos = db.prepare('SELECT * FROM todos ORDER BY createdAt DESC').all();
+  res.json(todos);
 });
 
-// POST /api/todos — 新增
+// POST /api/todos
 router.post('/', (req, res) => {
   const { title, content = '', status = 'todo' } = req.body;
   if (!title || !title.trim()) return res.status(400).json({ error: '标题不能为空' });
 
-  const todos = readTodos();
-  const todo = {
-    id: genId(),
-    title: title.trim(),
-    content: content.trim(),
-    status, // todo | doing | done
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
-  todos.unshift(todo);
-  writeTodos(todos);
-  res.json(todo);
+  const id = genId();
+  const now = new Date().toISOString();
+  db.prepare('INSERT INTO todos (id, title, content, status, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?)')
+    .run(id, title.trim(), content.trim(), status, now, now);
+
+  res.json({ id, title: title.trim(), content: content.trim(), status, createdAt: now, updatedAt: now });
 });
 
-// PUT /api/todos/:id — 更新
+// PUT /api/todos/:id
 router.put('/:id', (req, res) => {
-  const todos = readTodos();
-  const idx = todos.findIndex(t => t.id === req.params.id);
-  if (idx === -1) return res.status(404).json({ error: '任务不存在' });
+  const todo = db.prepare('SELECT * FROM todos WHERE id = ?').get(req.params.id);
+  if (!todo) return res.status(404).json({ error: '任务不存在' });
 
   const { title, content, status } = req.body;
-  if (title !== undefined) todos[idx].title = title.trim();
-  if (content !== undefined) todos[idx].content = content.trim();
-  if (status !== undefined) todos[idx].status = status;
-  todos[idx].updatedAt = new Date().toISOString();
+  const now = new Date().toISOString();
+  db.prepare('UPDATE todos SET title = ?, content = ?, status = ?, updatedAt = ? WHERE id = ?')
+    .run(title !== undefined ? title.trim() : todo.title, content !== undefined ? content.trim() : todo.content, status !== undefined ? status : todo.status, now, req.params.id);
 
-  writeTodos(todos);
-  res.json(todos[idx]);
+  res.json({ ...todo, title: title !== undefined ? title.trim() : todo.title, content: content !== undefined ? content.trim() : todo.content, status: status !== undefined ? status : todo.status, updatedAt: now });
 });
 
-// PUT /api/todos/reorder — 批量更新排序
-router.put('/', (req, res) => {
-  const { todos: newOrder } = req.body;
-  if (!Array.isArray(newOrder)) return res.status(400).json({ error: '数据格式错误' });
-  writeTodos(newOrder);
-  res.json({ success: true });
-});
-
-// DELETE /api/todos/:id — 删除
+// DELETE /api/todos/:id
 router.delete('/:id', (req, res) => {
-  const todos = readTodos();
-  const idx = todos.findIndex(t => t.id === req.params.id);
-  if (idx === -1) return res.status(404).json({ error: '任务不存在' });
-  todos.splice(idx, 1);
-  writeTodos(todos);
+  const result = db.prepare('DELETE FROM todos WHERE id = ?').run(req.params.id);
+  if (result.changes === 0) return res.status(404).json({ error: '任务不存在' });
   res.json({ success: true });
 });
 
 // DELETE /api/todos — 清空已完成
 router.delete('/', (req, res) => {
-  const todos = readTodos();
-  const remaining = todos.filter(t => t.status !== 'done');
-  writeTodos(remaining);
-  res.json({ success: true, deleted: todos.length - remaining.length });
+  const result = db.prepare("DELETE FROM todos WHERE status = 'done'").run();
+  res.json({ success: true, deleted: result.changes });
 });
 
 module.exports = router;

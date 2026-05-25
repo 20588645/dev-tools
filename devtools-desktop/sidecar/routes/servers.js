@@ -9,16 +9,28 @@ const os = require('os');
 const { v4: uuidv4 } = require('uuid');
 const { Client } = require('ssh2');
 const { encrypt, decrypt } = require('../services/crypto');
-
-const DATA_FILE = path.join(__dirname, '../data/servers.json');
+const db = require('../services/database');
 
 function readServers() {
-  try { return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8')); }
-  catch { return []; }
+  const rows = db.prepare('SELECT * FROM servers').all();
+  return rows.map(r => ({
+    ...r,
+    password: r.password ? JSON.parse(r.password) : null,
+    deployPaths: JSON.parse(r.deployPaths || '[]'),
+    port: Number(r.port),
+  }));
 }
 
 function writeServers(data) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf8');
+  // 全量同步到数据库
+  db.prepare('DELETE FROM servers').run();
+  const stmt = db.prepare('INSERT INTO servers (id, name, host, port, username, authType, password, defaultRemotePath, deployPaths) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+  const insertMany = db.transaction((servers) => {
+    for (const s of servers) {
+      stmt.run(s.id, s.name, s.host, s.port, s.username, s.authType, s.password ? JSON.stringify(s.password) : '', s.defaultRemotePath, JSON.stringify(s.deployPaths || []));
+    }
+  });
+  insertMany(data);
 }
 
 // ========== 固定路径路由（必须在 /:id 之前） ==========
