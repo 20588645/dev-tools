@@ -20,7 +20,7 @@ let notifiedRunIds = new Set();
 let notifiedRunCompileErrors = new Set();
 let pendingRunCompileErrorTimers = {};
 const RUN_COMPILE_ERROR_NOTIFY_DELAY = 15000;
-const APP_VERSION = '0.1.0';
+const APP_VERSION = '0.1.1';
 
 // ========== 托盘菜单同步 ==========
 function syncTrayMenu() {
@@ -3875,7 +3875,7 @@ async function loadSettings() {
     const badge = document.getElementById('settingSidecarStatus');
     badge.textContent = `● 运行中 · PID ${health.pid} · 端口 ${API_BASE.split(':').pop()}`;
     badge.className = 'setting-badge online';
-    document.getElementById('settingAbout').textContent = `macOS · Sidecar PID ${health.pid}`;
+    document.getElementById('settingAbout').textContent = `v${APP_VERSION} · macOS · Sidecar PID ${health.pid}`;
   } catch (e) {
     const badge = document.getElementById('settingSidecarStatus');
     badge.textContent = '● 离线';

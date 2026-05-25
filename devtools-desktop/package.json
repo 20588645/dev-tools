@@ -1,11 +1,12 @@
 {
   "name": "devtools-desktop",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "DevTools Desktop - 轻量级开发工具集",
   "scripts": {
     "dev": "npx serve src -l 1420 -s",
     "tauri:dev": "cargo tauri dev",
-    "tauri:build": "cargo tauri build"
+    "tauri:build": "cargo tauri build",
+    "build": "node scripts/bump-version.js && cargo tauri build"
   }
 }

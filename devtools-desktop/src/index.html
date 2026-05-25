@@ -588,10 +588,22 @@
       <div class="setting-item">
         <div class="setting-info">
           <div class="setting-label">DevTools Desktop</div>
-          <div class="setting-desc">版本 0.1.0 · Tauri + Node.js Sidecar</div>
+          <div class="setting-desc">Tauri + Node.js Sidecar + SQLite</div>
         </div>
         <div class="setting-control">
           <span class="setting-value" id="settingAbout">-</span>
+        </div>
+      </div>
+      <div class="setting-item">
+        <div class="setting-info">
+          <div class="setting-label">功能模块</div>
+          <div class="setting-desc">本地运行 · 构建部署 · 快捷命令 · 待办看板 · Git 周报 · 工时内容 · 笔记本</div>
+        </div>
+      </div>
+      <div class="setting-item">
+        <div class="setting-info">
+          <div class="setting-label">数据存储</div>
+          <div class="setting-desc">本地 SQLite 数据库，图片存储在 notebook-images 目录</div>
         </div>
       </div>
     </div>
@@ -842,95 +854,101 @@
 <!-- 项目介绍弹窗 -->
 <div class="modal-overlay" id="projectIntroModal">
   <div class="modal modal-intro">
-	    <div class="modal-header">
-	      <div>
-	        <h2>DevTools Desktop</h2>
-	        <p class="modal-subtitle">前端本地运行、构建部署、Git 周报与系统通知工作台</p>
-	      </div>
-	      <button class="modal-close" onclick="closeModal('projectIntroModal')">✕</button>
-	    </div>
-	    <div class="modal-body">
-	      <div class="intro-hero">
-	        <div class="intro-mark">⌘</div>
-	        <div>
-	          <div class="intro-title">为日常前端发布流程准备的桌面工具</div>
-	          <div class="intro-desc">集中管理本地项目、Node 版本、本地开发服务、构建部署记录和 SFTP 发布配置，减少重复打开终端和手动整理记录的时间。</div>
-	        </div>
-	      </div>
-	      <div class="intro-grid">
-	        <div class="intro-item">
-	          <div class="intro-item-icon">▶</div>
-	          <div>
-	            <strong>本地运行</strong>
-	            <span>按项目保存常用模块、首页模块和启动命令，快速启动 Vue 前端服务。</span>
-	          </div>
-	        </div>
-	        <div class="intro-item">
-	          <div class="intro-item-icon">↗</div>
-	          <div>
-	            <strong>构建部署</strong>
-	            <span>支持单体与多模块项目构建，复用历史配置快速发布。</span>
-	          </div>
-	        </div>
+    <div class="modal-header">
+      <div>
+        <h2>DevTools Desktop</h2>
+        <p class="modal-subtitle">前端开发全流程效率工具</p>
+      </div>
+      <button class="modal-close" onclick="closeModal('projectIntroModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="intro-hero">
+        <div class="intro-mark">⌘</div>
+        <div>
+          <div class="intro-title">个人前端开发工作台</div>
+          <div class="intro-desc">集成本地运行、构建部署、快捷命令、任务管理、Git 周报、工时记录和笔记本，覆盖日常开发全流程。</div>
+        </div>
+      </div>
+      <div class="intro-grid">
         <div class="intro-item">
-          <div class="intro-item-icon">▣</div>
+          <div class="intro-item-icon">▶</div>
           <div>
-            <strong>默认配置</strong>
-            <span>按项目保存 Node 版本、目标服务器和常用模块选择。</span>
+            <strong>本地运行</strong>
+            <span>管理多项目开发服务，快速启动、模块选择、自动重启。</span>
           </div>
         </div>
-	        <div class="intro-item">
-	          <div class="intro-item-icon">▤</div>
-	          <div>
-	            <strong>Git 周报</strong>
-	            <span>基于 GitLab 提交记录生成日报、周报并支持导出。</span>
-	          </div>
-	        </div>
-	        <div class="intro-item">
-	          <div class="intro-item-icon">◉</div>
-	          <div>
-	            <strong>系统通知</strong>
-	            <span>本地服务启动、构建完成和编译异常会通过桌面通知提醒。</span>
-	          </div>
-	        </div>
-	        <div class="intro-item">
-	          <div class="intro-item-icon">⌗</div>
-	          <div>
-	            <strong>历史追踪</strong>
-	            <span>保留构建和部署日志，方便回看结果和排查问题。</span>
-	          </div>
-	        </div>
-	      </div>
-	      <div class="intro-workflow">
-	        <div class="intro-section-title">日常流程</div>
-	        <div class="intro-flow">
-	          <span>选择项目</span>
-	          <span>本地运行</span>
-	          <span>构建部署</span>
-	          <span>生成周报</span>
-	        </div>
-	      </div>
-	      <div class="intro-system-grid">
-	        <div class="intro-system-item">
-	          <span>版本</span>
-	          <strong id="introVersion">读取中</strong>
-	        </div>
-	        <div class="intro-system-item">
-	          <span>Sidecar</span>
-	          <strong id="introSidecarStatus">读取中</strong>
-	        </div>
-	        <div class="intro-system-item">
-	          <span>通知</span>
-	          <strong id="introNotificationStatus">读取中</strong>
-	        </div>
-	        <div class="intro-system-item">
-	          <span>数据目录</span>
-	          <strong id="introDataDir">读取中</strong>
-	        </div>
-	      </div>
-	      <div class="intro-meta">
-	        <span>Tauri</span>
-	        <span>Node.js Sidecar</span>
+        <div class="intro-item">
+          <div class="intro-item-icon">↗</div>
+          <div>
+            <strong>构建部署</strong>
+            <span>多模块构建 + SFTP 部署，服务器管理，历史记录追踪。</span>
+          </div>
+        </div>
+        <div class="intro-item">
+          <div class="intro-item-icon">⚡</div>
+          <div>
+            <strong>快捷命令</strong>
+            <span>预设 Shell 命令一键执行，VPN 路由、杀端口、查 IP。</span>
+          </div>
+        </div>
+        <div class="intro-item">
+          <div class="intro-item-icon">✓</div>
+          <div>
+            <strong>待办看板</strong>
+            <span>三列看板管理任务进度，支持定时提醒通知。</span>
+          </div>
+        </div>
+        <div class="intro-item">
+          <div class="intro-item-icon">📋</div>
+          <div>
+            <strong>Git 周报</strong>
+            <span>GitLab API 自动生成提交周报，按仓库分组，支持导出。</span>
+          </div>
+        </div>
+        <div class="intro-item">
+          <div class="intro-item-icon">✏️</div>
+          <div>
+            <strong>工时内容</strong>
+            <span>按周记录每日工作内容，参考周报快速整理。</span>
+          </div>
+        </div>
+        <div class="intro-item">
+          <div class="intro-item-icon">📒</div>
+          <div>
+            <strong>笔记本</strong>
+            <span>个人知识库，支持图片粘贴、标签分类、全文搜索。</span>
+          </div>
+        </div>
+        <div class="intro-item">
+          <div class="intro-item-icon">🔔</div>
+          <div>
+            <strong>系统通知</strong>
+            <span>构建完成、运行异常、待办到期通过桌面通知提醒。</span>
+          </div>
+        </div>
+      </div>
+      <div class="intro-system-grid">
+        <div class="intro-system-item">
+          <span>版本</span>
+          <strong id="introVersion">读取中</strong>
+        </div>
+        <div class="intro-system-item">
+          <span>Sidecar</span>
+          <strong id="introSidecarStatus">读取中</strong>
+        </div>
+        <div class="intro-system-item">
+          <span>存储</span>
+          <strong>SQLite</strong>
+        </div>
+        <div class="intro-system-item">
+          <span>平台</span>
+          <strong>macOS · Tauri</strong>
+        </div>
+      </div>
+      <div class="intro-meta">
+        <span>Tauri 2.x</span>
+        <span>Node.js Sidecar</span>
+        <span>SQLite</span>
         <span>macOS</span>
       </div>
     </div>
