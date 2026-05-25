@@ -20,7 +20,7 @@ let notifiedRunIds = new Set();
 let notifiedRunCompileErrors = new Set();
 let pendingRunCompileErrorTimers = {};
 const RUN_COMPILE_ERROR_NOTIFY_DELAY = 15000;
-const APP_VERSION = '0.1.16';
+const APP_VERSION = '0.1.19';
 
 // ========== 托盘菜单同步 ==========
 function syncTrayMenu() {
@@ -775,21 +775,40 @@ async function loadHitokoto() {
 }
 
 // ========== 首页小组件：天气 ==========
+const WEATHER_ZH_MAP = {
+  'sunny': '晴', 'clear': '晴', 'partly cloudy': '多云', 'cloudy': '阴',
+  'overcast': '阴', 'mist': '薄雾', 'fog': '雾', 'freezing fog': '冻雾',
+  'patchy rain possible': '可能有小雨', 'patchy rain nearby': '附近有小雨',
+  'light rain': '小雨', 'light rain shower': '小阵雨',
+  'moderate rain': '中雨', 'moderate rain at times': '时有中雨',
+  'heavy rain': '大雨', 'heavy rain at times': '时有大雨',
+  'moderate or heavy rain shower': '中到大阵雨',
+  'moderate or heavy rain with thunder': '雷暴雨',
+  'torrential rain shower': '暴雨', 'light drizzle': '毛毛雨',
+  'patchy light drizzle': '零星小雨', 'patchy light rain': '零星小雨',
+  'light freezing rain': '冻雨', 'thundery outbreaks possible': '可能有雷阵雨',
+  'patchy snow possible': '可能有雪', 'light snow': '小雪',
+  'moderate snow': '中雪', 'heavy snow': '大雪', 'blizzard': '暴风雪',
+  'light sleet': '小雨夹雪', 'moderate or heavy sleet': '雨夹雪',
+};
+
 async function loadWeather() {
   const iconEl = document.getElementById('weatherIcon');
   const tempEl = document.getElementById('weatherTemp');
   const descEl = document.getElementById('weatherDesc');
   const locEl = document.getElementById('weatherLocation');
   try {
-    const res = await fetch('https://wttr.in/Wuhan?format=j1');
+    const res = await fetch('https://wttr.in/Wuhan?format=j1&lang=zh');
     const data = await res.json();
     const current = data.current_condition[0];
-    const area = data.nearest_area?.[0];
     const temp = current.temp_C;
-    const desc = current.lang_zh?.[0]?.value || current.weatherDesc?.[0]?.value || '';
+    const rawDesc = current.lang_zh?.[0]?.value || current.weatherDesc?.[0]?.value || '';
     const humidity = current.humidity;
     const feelsLike = current.FeelsLikeC;
     const weatherCode = parseInt(current.weatherCode);
+
+    // 尝试中文映射
+    const desc = WEATHER_ZH_MAP[rawDesc.toLowerCase()] || rawDesc;
 
     // 根据天气代码映射图标
     let icon = '☁';
