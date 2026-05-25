@@ -20,7 +20,7 @@ let notifiedRunIds = new Set();
 let notifiedRunCompileErrors = new Set();
 let pendingRunCompileErrorTimers = {};
 const RUN_COMPILE_ERROR_NOTIFY_DELAY = 15000;
-const APP_VERSION = '0.1.3';
+const APP_VERSION = '0.1.4';
 
 // ========== 托盘菜单同步 ==========
 function syncTrayMenu() {
@@ -4004,6 +4004,78 @@ async function loadSettings() {
   // 点击粒子特效开关同步
   const clickEffectCb = document.getElementById('settingClickEffectEnabled');
   if (clickEffectCb) clickEffectCb.checked = isClickEffectEnabled();
+
+  // 检查更新
+  checkForUpgrade();
+}
+
+// ========== 应用更新 ==========
+async function checkForUpgrade() {
+  try {
+    const data = await API.get('/api/upgrade/check');
+    const item = document.getElementById('upgradeCheckItem');
+    if (data.hasUpdate && item) {
+      item.style.display = '';
+      document.getElementById('upgradeCommits').textContent = data.commits.join('\n');
+    }
+  } catch (e) {}
+}
+
+let upgradePolling = null;
+
+async function startUpgrade() {
+  const ok = await showConfirm('确定要重新打包并更新应用吗？\n\n将执行：git pull → 打包 → 安装 → 重启\n过程中应用会自动关闭并重新打开。', { confirmText: '立即更新', icon: '🔄' });
+  if (!ok) return;
+
+  const btn = document.getElementById('btnUpgrade');
+  const status = document.getElementById('upgradeStatus');
+  const logSection = document.getElementById('upgradeLogSection');
+  const logEl = document.getElementById('upgradeLog');
+
+  btn.disabled = true;
+  btn.textContent = '⏳ 更新中...';
+  status.style.display = '';
+  status.textContent = '正在打包...';
+  status.className = 'setting-badge';
+  logSection.style.display = '';
+  logEl.textContent = '正在启动更新流程...\n';
+
+  try {
+    await API.post('/api/upgrade/start');
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = '🔄 立即更新';
+    status.textContent = '启动失败';
+    status.className = 'setting-badge offline';
+    logEl.textContent = '启动失败: ' + e.message;
+    return;
+  }
+
+  // 轮询日志
+  upgradePolling = setInterval(async () => {
+    try {
+      const data = await API.get('/api/upgrade/status');
+      logEl.textContent = data.log || '等待中...';
+      logEl.scrollTop = logEl.scrollHeight;
+
+      if (data.failed) {
+        clearInterval(upgradePolling);
+        btn.disabled = false;
+        btn.textContent = '🔄 立即更新';
+        status.textContent = '打包失败';
+        status.className = 'setting-badge offline';
+      } else if (data.completed) {
+        clearInterval(upgradePolling);
+        status.textContent = '即将重启...';
+        status.className = 'setting-badge online';
+      }
+    } catch (e) {
+      // Sidecar 可能已被杀掉，说明更新进行中
+      clearInterval(upgradePolling);
+      logEl.textContent += '\n应用正在重启...\n';
+      status.textContent = '重启中...';
+    }
+  }, 2000);
 }
 
 async function updateNotificationSettingsUI() {

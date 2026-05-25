@@ -1956,6 +1956,22 @@ input:focus, select:focus { border-color: var(--accent); }
 }
 .setting-repo-row button:hover { background: var(--danger-subtle); color: var(--danger); }
 
+/* Settings Upgrade Log */
+.upgrade-log {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  max-height: 200px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
 /* Settings Menu Order */
 .menu-order-list {
   display: flex;
