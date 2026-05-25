@@ -1966,10 +1966,24 @@ input:focus, select:focus { border-color: var(--accent); }
   font-size: 11px;
   line-height: 1.6;
   color: var(--text-secondary);
-  max-height: 200px;
+  max-height: 320px;
   overflow-y: auto;
   white-space: pre-wrap;
   word-break: break-all;
+}
+.upgrade-progress-bar {
+  height: 4px;
+  background: var(--bg-input);
+  border-radius: 2px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+.upgrade-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  border-radius: 2px;
+  transition: width 0.5s ease;
 }
 
 /* Settings Menu Order */

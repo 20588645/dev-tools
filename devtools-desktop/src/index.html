@@ -598,7 +598,6 @@
           <div class="setting-desc">从 Git 拉取最新代码，重新打包安装并自动重启应用</div>
         </div>
         <div class="setting-control">
-          <span class="setting-badge" id="upgradeStatus" style="display:none"></span>
           <button class="btn-primary" id="btnUpgrade" onclick="startUpgrade()">立即更新</button>
         </div>
       </div>
@@ -607,9 +606,6 @@
           <div class="setting-label">可用更新</div>
           <div class="setting-desc" id="upgradeCommits"></div>
         </div>
-      </div>
-      <div id="upgradeLogSection" style="display:none;margin-top:12px">
-        <pre class="upgrade-log" id="upgradeLog"></pre>
       </div>
     </div>
 
@@ -1231,6 +1227,24 @@
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeModal('batchImportModal')">取消</button>
       <button class="btn-primary" onclick="confirmBatchImport()">确认导入</button>
+    </div>
+  </div>
+</div>
+
+<!-- 更新进度弹窗 -->
+<div class="modal-overlay" id="upgradeModal" style="z-index:9999">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-header">
+      <div>
+        <h2>应用更新中</h2>
+        <p class="modal-subtitle">正在重新打包并安装，请勿关闭...</p>
+      </div>
+    </div>
+    <div class="modal-body" style="padding:16px 24px">
+      <div class="upgrade-progress-bar" id="upgradeProgressBar">
+        <div class="upgrade-progress-fill" id="upgradeProgressFill"></div>
+      </div>
+      <pre class="upgrade-log" id="upgradeLog"></pre>
     </div>
   </div>
 </div>

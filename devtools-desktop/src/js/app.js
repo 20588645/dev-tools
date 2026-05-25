@@ -20,7 +20,7 @@ let notifiedRunIds = new Set();
 let notifiedRunCompileErrors = new Set();
 let pendingRunCompileErrorTimers = {};
 const RUN_COMPILE_ERROR_NOTIFY_DELAY = 15000;
-const APP_VERSION = '0.1.8';
+const APP_VERSION = '0.1.10';
 
 // ========== 托盘菜单同步 ==========
 function syncTrayMenu() {
@@ -4028,26 +4028,23 @@ async function startUpgrade() {
   if (!ok) return;
 
   const btn = document.getElementById('btnUpgrade');
-  const status = document.getElementById('upgradeStatus');
-  const logSection = document.getElementById('upgradeLogSection');
   const logEl = document.getElementById('upgradeLog');
 
   btn.disabled = true;
   btn.textContent = '更新中...';
-  status.style.display = '';
-  status.textContent = '正在打包...';
-  status.className = 'setting-badge';
-  logSection.style.display = '';
+
+  // 打开更新弹窗（不可关闭）
+  document.getElementById('upgradeModal').classList.add('active');
   logEl.textContent = '正在启动更新流程...\n';
+  document.getElementById('upgradeProgressFill').style.width = '5%';
 
   try {
     await API.post('/api/upgrade/start');
   } catch (e) {
     btn.disabled = false;
     btn.textContent = '立即更新';
-    status.textContent = '启动失败';
-    status.className = 'setting-badge offline';
-    logEl.textContent = '启动失败: ' + e.message;
+    document.getElementById('upgradeModal').classList.remove('active');
+    showAlert('启动更新失败: ' + e.message, { icon: '❌' });
     return;
   }
 
@@ -4058,22 +4055,45 @@ async function startUpgrade() {
       logEl.textContent = data.log || '等待中...';
       logEl.scrollTop = logEl.scrollHeight;
 
+      // 根据日志内容更新进度条
+      const log = data.log || '';
+      if (log.includes('[5/5]')) {
+        document.getElementById('upgradeProgressFill').style.width = '95%';
+      } else if (log.includes('[4/5]')) {
+        document.getElementById('upgradeProgressFill').style.width = '85%';
+      } else if (log.includes('[3/5]')) {
+        document.getElementById('upgradeProgressFill').style.width = '75%';
+      } else if (log.includes('Finished') && log.includes('bundle')) {
+        document.getElementById('upgradeProgressFill').style.width = '70%';
+      } else if (log.includes('Compiling app')) {
+        document.getElementById('upgradeProgressFill').style.width = '40%';
+      } else if (log.includes('[2/5]')) {
+        document.getElementById('upgradeProgressFill').style.width = '20%';
+      } else if (log.includes('[1/5]')) {
+        document.getElementById('upgradeProgressFill').style.width = '10%';
+      }
+
       if (data.failed) {
         clearInterval(upgradePolling);
+        document.getElementById('upgradeProgressFill').style.width = '100%';
+        document.getElementById('upgradeProgressFill').style.background = 'var(--danger)';
         btn.disabled = false;
         btn.textContent = '立即更新';
-        status.textContent = '打包失败';
-        status.className = 'setting-badge offline';
+        // 失败时允许关闭弹窗
+        setTimeout(() => {
+          document.getElementById('upgradeModal').classList.remove('active');
+          showAlert('打包失败，请查看日志', { icon: '❌' });
+        }, 2000);
       } else if (data.completed) {
         clearInterval(upgradePolling);
-        status.textContent = '即将重启...';
-        status.className = 'setting-badge online';
+        document.getElementById('upgradeProgressFill').style.width = '100%';
+        logEl.textContent += '\n即将重启应用...\n';
       }
     } catch (e) {
-      // Sidecar 可能已被杀掉，说明更新进行中
+      // Sidecar 已被杀掉，说明正在重启
       clearInterval(upgradePolling);
+      document.getElementById('upgradeProgressFill').style.width = '100%';
       logEl.textContent += '\n应用正在重启...\n';
-      status.textContent = '重启中...';
     }
   }, 2000);
 }
@@ -5332,9 +5352,16 @@ function nbAlignSelection() {
 }
 
 // ========== 待办提醒检查 ==========
-let todoRemindedIds = new Set();
+let todoRemindedIds = new Set(JSON.parse(sessionStorage.getItem('devtools-reminded-todos') || '[]'));
+
+function saveTodoRemindedIds() {
+  sessionStorage.setItem('devtools-reminded-todos', JSON.stringify([...todoRemindedIds]));
+}
 
 function startTodoReminderCheck() {
+  // 防止重复注册
+  if (window._todoReminderStarted) return;
+  window._todoReminderStarted = true;
   // 每 30 秒检查一次是否有到期的提醒
   setInterval(checkTodoReminders, 30000);
   // 启动时立即检查一次
@@ -5359,6 +5386,7 @@ async function checkTodoReminders() {
     if (remindTime <= now) {
       // 触发提醒
       todoRemindedIds.add(todo.id);
+      saveTodoRemindedIds();
       sendDesktopNotification('⏰ 待办提醒', todo.title + (todo.content ? '\n' + todo.content : ''), false, { target: 'log' });
       showToast('⏰ 待办提醒', todo.title);
     }
