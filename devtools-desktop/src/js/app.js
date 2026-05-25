@@ -20,7 +20,7 @@ let notifiedRunIds = new Set();
 let notifiedRunCompileErrors = new Set();
 let pendingRunCompileErrorTimers = {};
 const RUN_COMPILE_ERROR_NOTIFY_DELAY = 15000;
-const APP_VERSION = '0.1.6';
+const APP_VERSION = '0.1.8';
 
 // ========== 托盘菜单同步 ==========
 function syncTrayMenu() {
@@ -4024,7 +4024,7 @@ async function checkForUpgrade() {
 let upgradePolling = null;
 
 async function startUpgrade() {
-  const ok = await showConfirm('确定要重新打包并更新应用吗？\n\n将执行：git pull → 打包 → 安装 → 重启\n过程中应用会自动关闭并重新打开。', { confirmText: '立即更新', icon: '🔄' });
+  const ok = await showConfirm('确定要重新打包并更新应用吗？\n\n将执行：git pull → 打包 → 安装 → 重启\n过程中应用会自动关闭并重新打开。', { confirmText: '立即更新' });
   if (!ok) return;
 
   const btn = document.getElementById('btnUpgrade');
@@ -4033,7 +4033,7 @@ async function startUpgrade() {
   const logEl = document.getElementById('upgradeLog');
 
   btn.disabled = true;
-  btn.textContent = '⏳ 更新中...';
+  btn.textContent = '更新中...';
   status.style.display = '';
   status.textContent = '正在打包...';
   status.className = 'setting-badge';
@@ -4044,7 +4044,7 @@ async function startUpgrade() {
     await API.post('/api/upgrade/start');
   } catch (e) {
     btn.disabled = false;
-    btn.textContent = '🔄 立即更新';
+    btn.textContent = '立即更新';
     status.textContent = '启动失败';
     status.className = 'setting-badge offline';
     logEl.textContent = '启动失败: ' + e.message;
@@ -4061,7 +4061,7 @@ async function startUpgrade() {
       if (data.failed) {
         clearInterval(upgradePolling);
         btn.disabled = false;
-        btn.textContent = '🔄 立即更新';
+        btn.textContent = '立即更新';
         status.textContent = '打包失败';
         status.className = 'setting-badge offline';
       } else if (data.completed) {
