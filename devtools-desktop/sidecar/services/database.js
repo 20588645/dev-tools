@@ -116,6 +116,24 @@ db.exec(`
     name TEXT PRIMARY KEY,
     data TEXT NOT NULL
   );
+
+  CREATE TABLE IF NOT EXISTS notebook_notes (
+    id TEXT PRIMARY KEY,
+    title TEXT DEFAULT '',
+    content TEXT DEFAULT '',
+    pinned INTEGER DEFAULT 0,
+    tags TEXT DEFAULT '[]',
+    sortOrder INTEGER DEFAULT 0,
+    createdAt TEXT DEFAULT (datetime('now')),
+    updatedAt TEXT DEFAULT (datetime('now'))
+  );
 `);
+
+// 确保 sortOrder 列存在（兼容旧数据库）
+try {
+  db.prepare("SELECT sortOrder FROM notebook_notes LIMIT 1").get();
+} catch {
+  db.exec("ALTER TABLE notebook_notes ADD COLUMN sortOrder INTEGER DEFAULT 0");
+}
 
 module.exports = db;

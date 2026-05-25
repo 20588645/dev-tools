@@ -9210,3 +9210,237 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
 .notes-day-header {
   display: none;
 }
+
+/* ========== 笔记本 ========== */
+#page-notebook.active {
+  display: block !important;
+  height: 100%;
+  overflow: hidden;
+}
+
+.notebook-layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  height: calc(100vh - 130px);
+  overflow: hidden;
+}
+
+.nb-list-panel {
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg-card);
+}
+
+.nb-list-header {
+  display: flex;
+  gap: 8px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  flex: 0 0 auto;
+}
+
+.nb-search {
+  flex: 1;
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 12px;
+  outline: none;
+}
+
+.nb-search:focus { border-color: var(--primary); }
+
+.nb-new-btn {
+  width: 34px !important;
+  height: 34px !important;
+  padding: 0 !important;
+  font-size: 18px !important;
+  line-height: 1;
+  border-radius: var(--radius-sm) !important;
+}
+
+.nb-note-list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.nb-note-item {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nb-note-item-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.nb-sort-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.nb-note-item:hover .nb-sort-btns {
+  opacity: 1;
+}
+
+.nb-sort-btn {
+  width: 20px;
+  height: 18px;
+  border: none;
+  background: var(--bg-input);
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 10px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.nb-sort-btn:hover {
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+.nb-note-item:hover { background: var(--bg-hover); }
+.nb-note-item.active {
+  background: var(--primary-light);
+  border-left: 3px solid var(--primary);
+}
+
+.nb-note-item-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nb-note-item-preview {
+  font-size: 11px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-bottom: 5px;
+  line-height: 1.4;
+}
+
+.nb-note-item-time {
+  font-size: 10px;
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+.nb-editor-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg-elevated);
+}
+
+.nb-editor-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 48px;
+  border-bottom: 1px solid var(--border);
+  flex: 0 0 auto;
+}
+
+.nb-title-input {
+  flex: 1;
+  height: 40px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-family: 'Avenir Next', 'PingFang SC', -apple-system, sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  outline: none;
+  letter-spacing: -0.02em;
+}
+
+.nb-title-input::placeholder { color: var(--text-muted); font-weight: 400; opacity: 0.5; }
+
+.nb-editor-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nb-save-status {
+  font-size: 11px;
+  color: var(--success);
+}
+
+.nb-empty {
+  padding: 40px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+#nbEditorContainer {
+  flex: 1;
+  overflow: hidden;
+}
+
+.nb-editor-content {
+  width: 100%;
+  height: 100%;
+  padding: 36px 48px;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-family: 'Avenir Next', 'PingFang SC', -apple-system, sans-serif;
+  font-size: 15px;
+  font-weight: 420;
+  line-height: 2.1;
+  outline: none;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  tab-size: 6;
+  letter-spacing: 0.02em;
+  overflow-y: auto;
+  cursor: text;
+}
+
+.nb-editor-content:empty::before {
+  content: '开始写笔记...';
+  color: var(--text-muted);
+  opacity: 0.4;
+  font-weight: 400;
+}
+
+.nb-editor-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-sm);
+  margin: 8px 0;
+  display: block;
+}
+
+/* 笔记本编辑器结束 */
+
+.nb-note-item-ghost {
+  opacity: 0.4;
+  background: var(--primary-light) !important;
+}

@@ -31,7 +31,7 @@ function broadcast(type, data) {
 app.set('broadcast', broadcast);
 
 // 中间件
-app.use(express.json());
+app.use(express.json({ limit: '20mb' }));
 
 // CORS（允许 Tauri WebView 访问）
 app.use((req, res, next) => {
@@ -52,6 +52,7 @@ app.use('/api/report', require('./routes/report'));
 app.use('/api/todos', require('./routes/todos'));
 app.use('/api/commands', require('./routes/commands'));
 app.use('/api/notes', require('./routes/notes'));
+app.use('/api/notebook', require('./routes/notebook'));
 
 // 健康检查
 app.get('/api/health', (req, res) => {
