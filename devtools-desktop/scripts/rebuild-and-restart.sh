@@ -26,18 +26,31 @@ fi
 
 # 3. 杀掉当前正在运行的 app 和 sidecar
 echo "[3/5] 停止当前运行的 DevTools..."
-pkill -f "${APP_NAME}.app/Contents/MacOS" 2>/dev/null
-pkill -f "sidecar/index.js" 2>/dev/null
+# 先用 osascript 优雅退出 app
+osascript -e 'quit app "DevTools"' 2>/dev/null
+sleep 3
+
+# 如果还没退出，强杀
+pkill -9 -f "${APP_NAME}.app/Contents/MacOS" 2>/dev/null
+pkill -9 -f "sidecar/index.js" 2>/dev/null
 sleep 2
+
+# 等待进程完全消失
+for i in {1..10}; do
+  if ! pgrep -f "${APP_NAME}.app/Contents/MacOS" > /dev/null 2>&1; then
+    break
+  fi
+  sleep 1
+done
 
 # 4. 安装新版本
 echo "[4/5] 安装新版本..."
 rm -rf "$APP_DEST"
 cp -R "${PROJECT_DIR}/src-tauri/target/release/bundle/macos/${APP_NAME}.app" "$APP_DEST"
+sleep 1
 
 # 5. 重新启动
 echo "[5/5] 启动新版本..."
-sleep 1
 open "$APP_DEST"
 
 echo "========== 完成 $(date) =========="
