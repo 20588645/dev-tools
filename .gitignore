@@ -21,6 +21,7 @@ deploy-panel/server/data/.secret
 # Temp files
 /tmp/
 *.log
+devtools-desktop/scripts/rebuild.log
 
 # IDE
 .vscode/
