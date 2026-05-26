@@ -10,6 +10,12 @@ const { build, formatDuration } = require('../services/builder');
 const { deploy } = require('../services/deployer');
 const { decrypt } = require('../services/crypto');
 const { Client } = require('ssh2');
+const db = require('../services/database');
+
+const LOGS_DIR = path.join(__dirname, '../data/logs');
+if (!fs.existsSync(LOGS_DIR)) {
+  fs.mkdirSync(LOGS_DIR, { recursive: true });
+}
 
 /**
  * 预检：验证服务器 SSH 连通性 + 远程目录可访问性
@@ -81,15 +87,54 @@ function preflightCheck(serverConfig, remotePath) {
 
 const PROJECTS_FILE = path.join(__dirname, '../data/projects.json');
 const SERVERS_FILE = path.join(__dirname, '../data/servers.json');
-const HISTORY_FILE = path.join(__dirname, '../data/history.json');
 
 function readJSON(file) {
+  if (file.includes('projects.json')) {
+    try {
+      const rows = db.prepare('SELECT data FROM projects_json').all();
+      return rows.map(r => JSON.parse(r.data));
+    } catch (e) {
+      console.error('[DB] 读取 projects_json 失败:', e.message);
+      return [];
+    }
+  }
+  if (file.includes('servers.json')) {
+    try {
+      const rows = db.prepare('SELECT * FROM servers').all();
+      return rows.map(r => ({
+        ...r,
+        password: r.password ? JSON.parse(r.password) : null,
+        deployPaths: JSON.parse(r.deployPaths || '[]'),
+        port: Number(r.port),
+      }));
+    } catch (e) {
+      console.error('[DB] 读取 servers 失败:', e.message);
+      return [];
+    }
+  }
   try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return []; }
 }
 function appendHistory(record) {
-  const history = readJSON(HISTORY_FILE);
-  history.unshift(record);
-  fs.writeFileSync(HISTORY_FILE, JSON.stringify(history, null, 2), 'utf8');
+  try {
+    db.prepare(`
+      INSERT INTO history (id, projectName, type, status, modules, serverName, nodeVersion, remotePath, duration, timestamp, logs)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      record.id,
+      record.projectName,
+      record.type,
+      record.status,
+      JSON.stringify(record.modules),
+      record.serverName || '—',
+      record.nodeVersion || '系统默认',
+      record.remotePath || '—',
+      record.duration || '0s',
+      record.timestamp || new Date().toISOString(),
+      '' // logs字段填空，真正大日志物理文件已在每一次onLog时实时追加写盘了
+    );
+  } catch (err) {
+    console.error('[DB] 写入 history 失败:', err.message);
+  }
 }
 
 // ========== 活跃任务注册表（内存中，进程级） ==========
@@ -170,9 +215,16 @@ router.post('/build', async (req, res) => {
   res.json({ id: deployId, status: 'started' });
 
   const onLog = (type, text) => {
-    logs.push({ type, text, time: Date.now() });
+    const recordTime = Date.now();
+    logs.push({ type, text, time: recordTime });
     jobLog(deployId, type, text);
     broadcast('log', { id: deployId, type, text });
+
+    // 流式物理日志落盘，异步不阻塞
+    const logFilePath = path.join(LOGS_DIR, `${deployId}.log`);
+    fs.appendFile(logFilePath, `${new Date(recordTime).toISOString()} [${type}] ${text}\n`, 'utf8', (err) => {
+      if (err) console.error('[DeployLog] 写入日志文件失败:', err.message);
+    });
   };
 
   // 任务概览
@@ -238,9 +290,16 @@ router.post('/start', async (req, res) => {
   res.json({ id: deployId, status: 'started' });
 
   const onLog = (type, text) => {
-    logs.push({ type, text, time: Date.now() });
+    const recordTime = Date.now();
+    logs.push({ type, text, time: recordTime });
     jobLog(deployId, type, text);
     broadcast('log', { id: deployId, type, text });
+
+    // 流式物理日志落盘，异步不阻塞
+    const logFilePath = path.join(LOGS_DIR, `${deployId}.log`);
+    fs.appendFile(logFilePath, `${new Date(recordTime).toISOString()} [${type}] ${text}\n`, 'utf8', (err) => {
+      if (err) console.error('[DeployLog] 写入日志文件失败:', err.message);
+    });
   };
 
   // 任务概览
@@ -403,55 +462,58 @@ router.post('/start', async (req, res) => {
 router.get('/last/:projectName', (req, res) => {
   const { projectName } = req.params;
   const { type, status } = req.query; // 可选过滤条件
-  const history = readJSON(HISTORY_FILE);
 
-  let filtered = history.filter(r => r.projectName === projectName);
-  if (type) filtered = filtered.filter(r => r.type === type);
-  if (status) filtered = filtered.filter(r => r.status === status);
+  let sql = 'SELECT id, timestamp, status, type, duration, serverName, modules, remotePath FROM history WHERE projectName = ?';
+  const params = [projectName];
 
-  const last = filtered[0]; // 已按时间倒序存储
-  if (!last) return res.json(null);
+  if (type) {
+    sql += ' AND type = ?';
+    params.push(type);
+  }
+  if (status) {
+    sql += ' AND status = ?';
+    params.push(status);
+  }
+  sql += ' ORDER BY timestamp DESC LIMIT 1';
 
-  // 只返回摘要，不返回 logs（体积太大）
-  res.json({
-    id: last.id,
-    timestamp: last.timestamp,
-    status: last.status,
-    type: last.type,
-    duration: last.duration,
-    serverName: last.serverName,
-    serverId: last.serverId,
-    serverIds: last.serverIds || (last.serverId ? [last.serverId] : []),
-    remotePath: last.remotePath,
-    modules: last.modules,
-    fileCount: last.fileCount,
-  });
+  try {
+    const last = db.prepare(sql).get(...params);
+    if (!last) return res.json(null);
+
+    last.modules = JSON.parse(last.modules || '[]');
+    last.serverIds = []; // 兼容旧版属性
+    res.json(last);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // GET /api/deploy/recent/:projectName — 获取项目最近 N 条成功记录（用于快速复用）
 router.get('/recent/:projectName', (req, res) => {
   const { projectName } = req.params;
   const limit = Math.min(parseInt(req.query.limit) || 10, 30);
-  const history = readJSON(HISTORY_FILE);
 
-  const filtered = history
-    .filter(r => r.projectName === projectName && r.status === 'success')
-    .slice(0, limit)
-    .map(r => ({
+  try {
+    const rows = db.prepare('SELECT id, timestamp, status, type, duration, serverName, modules, remotePath FROM history WHERE projectName = ? AND status = ? ORDER BY timestamp DESC LIMIT ?')
+      .all(projectName, 'success', limit);
+
+    const filtered = rows.map(r => ({
       id: r.id,
       timestamp: r.timestamp,
       status: r.status,
       type: r.type,
       duration: r.duration,
       serverName: r.serverName,
-      serverId: r.serverId,
-      serverIds: r.serverIds || (r.serverId ? [r.serverId] : []),
+      serverIds: [],
       remotePath: r.remotePath,
-      modules: r.modules,
-      fileCount: r.fileCount,
+      modules: JSON.parse(r.modules || '[]'),
+      fileCount: 0 // 兼容元数据
     }));
 
-  res.json(filtered);
+    res.json(filtered);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 module.exports = router;

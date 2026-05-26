@@ -8,6 +8,8 @@ const path = require('path');
 const os = require('os');
 const { spawn, execFile } = require('child_process');
 const db = require('../services/database');
+const { StringDecoder } = require('string_decoder');
+const { killProcessTree } = require('../utils/process');
 
 const PROJECTS_FILE = path.join(__dirname, '../data/projects.json');
 
@@ -293,13 +295,9 @@ function markCompileError(app, job, line) {
   }
 }
 
-function terminateJob(job, signal = 'SIGTERM') {
+async function terminateJob(job, signal = 'SIGTERM') {
   if (!job || !job.pid) return;
-  try {
-    process.kill(-job.pid, signal);
-  } catch {
-    try { job.child?.kill(signal); } catch {}
-  }
+  await killProcessTree(job.pid, signal);
 }
 
 function cleanupRunJobs() {
@@ -496,26 +494,58 @@ function spawnRunProcess(app, job, project, launchCommand, env, moduleArgs) {
   job.attempt = (job.attempt || 0) + 1;
   const attempt = job.attempt;
 
-  const nodeBin = getNodeBinPath(job.nodeVersion);
-  const nodeEnvPrefix = nodeBin
-    ? `export PATH=${shellQuote(nodeBin)}:$PATH\nexport NVM_BIN=${shellQuote(nodeBin)}\nexport NVM_DIR=${shellQuote(path.join(os.homedir(), '.nvm'))}\n`
-    : '';
-  const mergedCommand = `${nodeEnvPrefix}exec 2>&1\n${launchCommand}`;
-  const child = spawn('/bin/bash', ['-c', mergedCommand], {
-    cwd: project.path,
-    env,
-    detached: true,
-  });
+  // 1. 安全无 Shell 判断与启动方式构建，避免 Shell 命令拼接注入
+  const useShell = /[\&\;\>\<\!\|\`]/g.test(launchCommand);
+  let child;
+  
+  if (useShell) {
+    child = spawn('/bin/bash', ['-c', launchCommand], {
+      cwd: project.path,
+      env,
+      detached: true,
+    });
+  } else {
+    const parts = launchCommand.trim().split(/\s+/);
+    const cmd = parts[0];
+    const args = parts.slice(1).map(arg => {
+      // 剥离因 ShellQuote 等历史转义函数遗留的首尾单双引号，还原真实原生参数
+      if ((arg.startsWith("'") && arg.endsWith("'")) || (arg.startsWith('"') && arg.endsWith('"'))) {
+        return arg.slice(1, -1);
+      }
+      return arg;
+    });
+    child = spawn(cmd, args, {
+      cwd: project.path,
+      env,
+      detached: true,
+    });
+  }
+
   job.child = child;
   job.pid = child.pid;
   job.startedAt = Date.now();
 
   logRunStart(app, job, project, launchCommand, moduleArgs);
 
-  child.stdout.on('data', (data) => handleRunOutput(app, job, data.toString(), 'info'));
-  child.stderr.on('data', (data) => handleRunOutput(app, job, data.toString(), 'error'));
+  const stdoutDecoder = new StringDecoder('utf8');
+  const stderrDecoder = new StringDecoder('utf8');
+
+  child.stdout.on('data', (data) => {
+    const text = stdoutDecoder.write(data);
+    if (text) handleRunOutput(app, job, text, 'info');
+  });
+  
+  child.stderr.on('data', (data) => {
+    const text = stderrDecoder.write(data);
+    if (text) handleRunOutput(app, job, text, 'error');
+  });
 
   child.on('error', (err) => {
+    const remainingStdout = stdoutDecoder.end();
+    if (remainingStdout) handleRunOutput(app, job, remainingStdout, 'info');
+    const remainingStderr = stderrDecoder.end();
+    if (remainingStderr) handleRunOutput(app, job, remainingStderr, 'error');
+
     job.status = 'error';
     job.error = err.message;
     job.stoppedAt = Date.now();
@@ -525,6 +555,12 @@ function spawnRunProcess(app, job, project, launchCommand, env, moduleArgs) {
 
   child.on('close', async (code, signal) => {
     if (attempt !== job.attempt) return;
+    
+    const remainingStdout = stdoutDecoder.end();
+    if (remainingStdout) handleRunOutput(app, job, remainingStdout, 'info');
+    const remainingStderr = stderrDecoder.end();
+    if (remainingStderr) handleRunOutput(app, job, remainingStderr, 'error');
+
     flushRunOutput(app, job);
     flushRunReady(app, job);
     job.exitCode = code;

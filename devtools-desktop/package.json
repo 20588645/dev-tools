@@ -1,6 +1,6 @@
 {
   "name": "devtools-desktop",
-  "version": "0.1.28",
+  "version": "0.1.29",
   "private": true,
   "description": "DevTools Desktop - 轻量级开发工具集",
   "scripts": {
