@@ -9938,3 +9938,145 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
 }
+
+/* ========== UI 优化：动画与视觉增强 ========== */
+
+/* --- 弹窗入场动画 --- */
+.modal-overlay.active .modal {
+  animation: modalIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.95) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* --- 系统对话框入场动画 --- */
+.sys-dialog-overlay.active .sys-dialog {
+  animation: dialogIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes dialogIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* --- 首页卡片错落入场 --- */
+.home-section-card {
+  animation: cardFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.home-main .home-section-card:nth-child(1) { animation-delay: 0s; }
+.home-main .home-section-card:nth-child(2) { animation-delay: 0.05s; }
+.home-main .home-section-card:nth-child(3) { animation-delay: 0.1s; }
+.home-main .home-section-card:nth-child(4) { animation-delay: 0.15s; }
+.home-side .home-section-card:nth-child(1) { animation-delay: 0.05s; }
+.home-side .home-section-card:nth-child(2) { animation-delay: 0.1s; }
+.home-side .home-section-card:nth-child(3) { animation-delay: 0.15s; }
+.home-side .home-section-card:nth-child(4) { animation-delay: 0.2s; }
+.home-side .home-section-card:nth-child(5) { animation-delay: 0.25s; }
+@keyframes cardFadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- 项目卡片悬浮增强 --- */
+.project-card {
+  transition: border-color 0.2s, box-shadow 0.25s, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+.project-card:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: 0 12px 28px rgba(0,0,0,0.12) !important;
+}
+
+/* --- 按钮点击反馈 --- */
+.btn-primary:active,
+.btn-secondary:active,
+.btn-deploy-card:active,
+.btn-build-card:active {
+  transform: scale(0.96) !important;
+  transition-duration: 0.08s !important;
+}
+
+/* --- 侧边栏当前项指示条 --- */
+.sidebar-item.active::before {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 16px;
+  border-radius: 2px;
+  background: var(--primary, #2f73f6);
+  animation: indicatorIn 0.2s ease;
+}
+@keyframes indicatorIn {
+  from { height: 0; opacity: 0; }
+  to { height: 16px; opacity: 1; }
+}
+
+/* --- 加载骨架屏 --- */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-input) !important;
+  border-radius: 6px;
+  color: transparent !important;
+}
+.skeleton * { visibility: hidden; }
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+  animation: shimmer 1.5s infinite;
+}
+@keyframes shimmer {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+
+/* --- 页面切换增强 --- */
+.page.active {
+  animation: pageEnter 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- 卡片 hover 光泽效果 --- */
+.home-section-card {
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.home-section-card:hover {
+  border-color: var(--border-strong);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+}
+
+/* --- 空状态动画 --- */
+.home-empty-state {
+  animation: emptyPulse 2s ease-in-out infinite;
+}
+@keyframes emptyPulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+/* --- 快捷入口 hover 效果 --- */
+.home-shortcut-btn {
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s !important;
+}
+.home-shortcut-btn:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.08) !important;
+}
+.home-shortcut-btn:active {
+  transform: scale(0.95) !important;
+}
+
+/* --- 统计数字动画 --- */
+.stat-num {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.home-stat-item:hover .stat-num {
+  transform: scale(1.08);
+}
