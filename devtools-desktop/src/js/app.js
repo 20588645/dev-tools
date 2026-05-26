@@ -20,7 +20,7 @@ let notifiedRunIds = new Set();
 let notifiedRunCompileErrors = new Set();
 let pendingRunCompileErrorTimers = {};
 const RUN_COMPILE_ERROR_NOTIFY_DELAY = 15000;
-const APP_VERSION = '0.1.23';
+const APP_VERSION = '0.1.27';
 
 // ========== 托盘菜单同步 ==========
 function syncTrayMenu() {
@@ -663,9 +663,18 @@ function setupNavigation() {
     });
   });
 
-  document.getElementById('searchInput').addEventListener('input', () => renderProjects());
+  // 搜索防抖
+  let _searchTimer = null;
+  document.getElementById('searchInput').addEventListener('input', () => {
+    clearTimeout(_searchTimer);
+    _searchTimer = setTimeout(renderProjects, 150);
+  });
   const runSearchInput = document.getElementById('runSearchInput');
-  if (runSearchInput) runSearchInput.addEventListener('input', () => renderRunPage());
+  let _runSearchTimer = null;
+  if (runSearchInput) runSearchInput.addEventListener('input', () => {
+    clearTimeout(_runSearchTimer);
+    _runSearchTimer = setTimeout(renderRunPage, 150);
+  });
   document.querySelectorAll('#page-run .chip[data-run-filter]').forEach(chip => {
     chip.addEventListener('click', () => {
       document.querySelectorAll('#page-run .chip[data-run-filter]').forEach(c => c.classList.remove('active'));
@@ -735,7 +744,7 @@ function switchSubTab(sub, btn) {
 // ========== 首页 ==========
 function initHomePage() {
   updateHomeDateTime();
-  // 每秒更新一次时间
+  // 每秒更新一次时间（仅首页可见时）
   setInterval(updateHomeDateTime, 1000);
   loadHomeData();
   // 加载每日一言和天气
@@ -743,11 +752,23 @@ function initHomePage() {
   loadWeather();
 }
 
+// DOM 元素缓存（避免每秒 getElementById）
+let _homeDateEl = null;
+let _homeGreetingEl = null;
+
 function updateHomeDateTime() {
+  // 非首页时跳过 DOM 操作
+  const homePage = document.getElementById('page-home');
+  if (!homePage || !homePage.classList.contains('active')) return;
+
+  if (!_homeDateEl) _homeDateEl = document.getElementById('homeDate');
+  if (!_homeGreetingEl) _homeGreetingEl = document.getElementById('homeGreeting');
+  if (!_homeDateEl || !_homeGreetingEl) return;
+
   const now = new Date();
   const weekdays = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
   const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
-  document.getElementById('homeDate').textContent = `今天是 ${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日，${weekdays[now.getDay()]} ${timeStr}`;
+  _homeDateEl.textContent = `今天是 ${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日，${weekdays[now.getDay()]} ${timeStr}`;
 
   // 问候语
   const hour = now.getHours();
@@ -756,7 +777,7 @@ function updateHomeDateTime() {
   else if (hour < 12) greeting = '上午好 ☀️';
   else if (hour < 14) greeting = '中午好 🌤';
   else if (hour < 18) greeting = '下午好 👋';
-  document.getElementById('homeGreeting').textContent = greeting;
+  _homeGreetingEl.textContent = greeting;
 }
 
 // ========== 首页小组件：每日一言 ==========
@@ -862,7 +883,7 @@ async function loadHomeData() {
           }).join('');
         }
       }
-    } catch (e) {}
+    } catch (e) { console.warn('[Home] 加载待办失败:', e.message); }
 
     // ===== 今日工时 =====
     try {
@@ -876,7 +897,7 @@ async function loadHomeData() {
           timesheet.innerHTML = '<div class="home-empty-state"><span class="home-empty-icon">✏️</span><span>今天尚未填写工时</span></div>';
         }
       }
-    } catch (e) {}
+    } catch (e) { console.warn("[Home] 加载工时失败:", e.message); }
 
     // ===== 运行状态 =====
     const activeRuns = Object.values(runningProjects || {}).filter(job => ['starting', 'running'].includes(job.status));
@@ -1058,7 +1079,8 @@ async function loadRunStatuses() {
 }
 
 function renderProjects() {
-  const search = document.getElementById('searchInput').value.toLowerCase();
+  const searchEl = document.getElementById('searchInput');
+  const search = searchEl ? searchEl.value.toLowerCase() : '';
   let filtered = projects.filter(p => !search || p.name.toLowerCase().includes(search) || (p.displayName && p.displayName.toLowerCase().includes(search)));
 
   if (currentFilter === 'multi') filtered = filtered.filter(p => p.type === 'multi-module');
@@ -1067,6 +1089,7 @@ function renderProjects() {
   else if (currentFilter === 'unconfigured') filtered = filtered.filter(p => getProjectDefaultServerIds(p).length === 0);
 
   const grid = document.getElementById('projectGrid');
+  if (!grid) return;
   if (filtered.length === 0) {
     grid.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:60px;grid-column:1/-1">暂无项目，点击右上角「+ 添加项目」开始</div>';
     return;
@@ -4065,7 +4088,7 @@ async function loadSettings() {
   try {
     const data = await API.get('/api/projects/node-versions/list');
     document.getElementById('settingNodeVersion').textContent = data.current || data.versions?.[0] || '-';
-  } catch (e) {}
+  } catch (e) { console.warn("[Settings] Node版本获取失败"); }
 
   // 扫描目录
   document.getElementById('settingScanDir').textContent = '/Users/ldy/project/';
@@ -4077,7 +4100,7 @@ async function loadSettings() {
     document.getElementById('settingToken').value = cfg.token || '';
     document.getElementById('settingAuthor').value = cfg.author || '';
     renderSettingRepos(cfg.repos || []);
-  } catch (e) {}
+  } catch (e) { console.warn("[Settings] GitLab配置加载失败"); }
 
   // Live2D 看板娘开关同步
   const live2dCb = document.getElementById('settingLive2dEnabled');
@@ -4293,7 +4316,14 @@ function toggleLive2d(enabled) {
 }
 
 function loadLive2dWidget() {
-  // 如果已经加载过就不重复加载
+  // 如果之前只是隐藏了，直接显示
+  const waifu = document.getElementById('waifu');
+  if (waifu) {
+    waifu.style.display = '';
+    return;
+  }
+
+  // 如果已经加载过脚本就不重复加载
   if (document.getElementById('live2d-widget-script')) return;
 
   const script = document.createElement('script');
@@ -4307,16 +4337,9 @@ function loadLive2dWidget() {
 }
 
 function removeLive2dWidget() {
-  // 移除脚本
-  const script = document.getElementById('live2d-widget-script');
-  if (script) script.remove();
-
-  // 移除看板娘 DOM 元素
+  // 只隐藏不移除，方便重新开启
   const waifu = document.getElementById('waifu');
-  if (waifu) waifu.remove();
-
-  // 移除动态加载的样式
-  document.querySelectorAll('link[href*="waifu"], style[data-live2d]').forEach(el => el.remove());
+  if (waifu) waifu.style.display = 'none';
 }
 
 // 页面加载时恢复 Live2D 状态
@@ -5140,7 +5163,7 @@ async function nbLoadTags() {
         </div>
       `).join('');
     }
-  } catch (e) {}
+  } catch (e) { console.warn("[Notebook] 加载笔记失败:", e.message); }
 }
 
 function nbRenderNoteList() {
@@ -5183,7 +5206,7 @@ async function nbMoveNote(id, direction) {
   const ids = nbNotes.map(n => n.id);
   try {
     await API.put('/api/notebook/reorder', { ids });
-  } catch (e) {}
+  } catch (e) { console.warn("[Notebook] 排序保存失败"); }
 
   // 重新渲染列表
   nbRenderNoteList();
@@ -5268,7 +5291,7 @@ async function nbTogglePin() {
     await API.put('/api/notebook/' + nbCurrentId, { pinned: newPinned });
     document.getElementById('nbPinBtn').textContent = newPinned ? '📌' : '📍';
     await nbLoadNotes();
-  } catch (e) {}
+  } catch (e) { console.warn("[Notebook] 置顶操作失败"); }
 }
 
 async function nbDeleteNote() {

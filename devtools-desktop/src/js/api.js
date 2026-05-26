@@ -4,6 +4,8 @@
  */
 let API_BASE = '';
 
+const API_TIMEOUT = 15000; // 15秒超时
+
 async function initAPI() {
   if (window.__TAURI__) {
     try {
@@ -15,67 +17,89 @@ async function initAPI() {
       API_BASE = 'http://127.0.0.1:13456';
     }
   } else {
-    // 浏览器开发模式
     API_BASE = 'http://127.0.0.1:13456';
   }
 }
 
+/**
+ * 带超时的 fetch 封装
+ */
+function fetchWithTimeout(url, options = {}, timeout = API_TIMEOUT) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeout);
+  return fetch(url, { ...options, signal: controller.signal })
+    .finally(() => clearTimeout(timer));
+}
+
+/**
+ * 统一处理响应
+ */
+async function handleResponse(res) {
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(err.error || res.statusText);
+  }
+  return res.json();
+}
+
 const API = {
   async get(url) {
-    const res = await fetch(API_BASE + url);
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: res.statusText }));
-      throw new Error(err.error || res.statusText);
+    try {
+      const res = await fetchWithTimeout(API_BASE + url);
+      return handleResponse(res);
+    } catch (e) {
+      if (e.name === 'AbortError') throw new Error('请求超时，请检查 Sidecar 状态');
+      if (e.message === 'Failed to fetch') throw new Error('无法连接 Sidecar 服务');
+      throw e;
     }
-    return res.json();
   },
 
   async post(url, data) {
-    const res = await fetch(API_BASE + url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: res.statusText }));
-      throw new Error(err.error || res.statusText);
+    try {
+      const res = await fetchWithTimeout(API_BASE + url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      return handleResponse(res);
+    } catch (e) {
+      if (e.name === 'AbortError') throw new Error('请求超时，请检查 Sidecar 状态');
+      if (e.message === 'Failed to fetch') throw new Error('无法连接 Sidecar 服务');
+      throw e;
     }
-    return res.json();
   },
 
   async put(url, data) {
-    const res = await fetch(API_BASE + url, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: res.statusText }));
-      throw new Error(err.error || res.statusText);
+    try {
+      const res = await fetchWithTimeout(API_BASE + url, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      return handleResponse(res);
+    } catch (e) {
+      if (e.name === 'AbortError') throw new Error('请求超时，请检查 Sidecar 状态');
+      if (e.message === 'Failed to fetch') throw new Error('无法连接 Sidecar 服务');
+      throw e;
     }
-    return res.json();
   },
 
-  async del(url) {
-    const res = await fetch(API_BASE + url, { method: 'DELETE' });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: res.statusText }));
-      throw new Error(err.error || res.statusText);
+  async del(url, data) {
+    try {
+      const opts = { method: 'DELETE' };
+      if (data) {
+        opts.headers = { 'Content-Type': 'application/json' };
+        opts.body = JSON.stringify(data);
+      }
+      const res = await fetchWithTimeout(API_BASE + url, opts);
+      return handleResponse(res);
+    } catch (e) {
+      if (e.name === 'AbortError') throw new Error('请求超时，请检查 Sidecar 状态');
+      if (e.message === 'Failed to fetch') throw new Error('无法连接 Sidecar 服务');
+      throw e;
     }
-    return res.json();
-  },
-
-  async delete(url, data) {
-    const opts = { method: 'DELETE' };
-    if (data) {
-      opts.headers = { 'Content-Type': 'application/json' };
-      opts.body = JSON.stringify(data);
-    }
-    const res = await fetch(API_BASE + url, opts);
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: res.statusText }));
-      throw new Error(err.error || res.statusText);
-    }
-    return res.json();
   }
 };
+
+// 保持向后兼容：API.delete 指向 API.del
+API.delete = API.del;
