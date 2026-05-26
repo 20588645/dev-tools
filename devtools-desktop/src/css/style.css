@@ -10080,3 +10080,142 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
 .home-stat-item:hover .stat-num {
   transform: scale(1.08);
 }
+
+/* ========== 视觉一致性统一规范 ========== */
+
+/* --- 1. 统一页面标题字号 --- */
+.page-title,
+.home-greeting,
+#page-todo .page-title,
+#page-terminal .page-title,
+#page-notes .page-title,
+#page-run .page-title,
+#page-deploy .page-title,
+#page-report .page-title,
+#page-notebook .page-title,
+#page-settings .page-title {
+  font-size: 17px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.01em;
+}
+
+/* --- 2. 统一页面副标题字号 --- */
+.page-subtitle,
+.home-date,
+#page-todo .page-subtitle,
+#page-terminal .page-subtitle,
+#page-notes .page-subtitle,
+#page-run .page-subtitle,
+#page-deploy .page-subtitle,
+#page-report .page-subtitle,
+#page-notebook .page-subtitle,
+#page-settings .page-subtitle {
+  font-size: 11px !important;
+  color: var(--text-muted) !important;
+  margin-top: 2px;
+}
+
+/* --- 3. 统一卡片圆角为 8px --- */
+.home-section-card,
+.settings-section,
+.report-panel,
+.project-card,
+.server-card,
+.server-list,
+.history-table,
+.todo-card,
+.todo-column-header,
+.cmd-card,
+.cmd-output-section,
+.run-project-card,
+.run-stat-card,
+.stat-card,
+.nb-list-panel,
+.nb-editor-panel,
+.notes-day-card {
+  border-radius: 8px !important;
+}
+
+/* --- 4. 统一工具栏间距 --- */
+.todo-toolbar,
+.cmd-toolbar,
+.notes-toolbar,
+.run-page-toolbar {
+  margin-bottom: 16px !important;
+}
+
+/* --- 5. 统一页面头部间距 --- */
+.page-header-bar {
+  margin-bottom: 16px !important;
+}
+
+/* --- 6. 统一网格间距 --- */
+.todo-board {
+  gap: 14px !important;
+}
+.cmd-grid {
+  gap: 12px !important;
+}
+.project-grid {
+  gap: 12px !important;
+}
+.run-project-grid {
+  gap: 12px !important;
+}
+
+/* --- 7. 统一卡片内边距 --- */
+.todo-card,
+.cmd-card,
+.run-project-card {
+  padding: 14px 16px !important;
+}
+.project-card {
+  padding: 14px 16px !important;
+}
+
+/* --- 8. 统一 section title 字号 --- */
+.home-card-title,
+.report-panel-title,
+.settings-section h3,
+.todo-column-header span,
+.cmd-output-header,
+.section-title {
+  font-size: 12px !important;
+  font-weight: 650 !important;
+}
+
+/* --- 9. 统一首页与其他页面的页头间距 --- */
+.home-header {
+  margin-bottom: 16px;
+}
+.home-greeting {
+  margin-bottom: 0 !important;
+}
+
+/* --- 10. 统一 chip/filter 样式 --- */
+.chip,
+.qf-btn,
+.rpt-preset,
+.seg-btn {
+  border-radius: 6px !important;
+  font-size: 11px !important;
+  padding: 4px 10px !important;
+}
+
+/* --- 11. 统一输入框高度 --- */
+.search-bar,
+.cmd-sudo-config input,
+.todo-toolbar select,
+.setting-input {
+  height: 34px !important;
+}
+
+/* --- 12. 统一空状态样式 --- */
+.home-empty-hint,
+.home-empty-state,
+.rpt-empty-state,
+.run-status-empty,
+.nb-empty {
+  font-size: 12px !important;
+  color: var(--text-muted) !important;
+}
