@@ -10219,3 +10219,51 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
   font-size: 12px !important;
   color: var(--text-muted) !important;
 }
+
+/* ========== 方案A：统一两行式页头 ========== */
+
+/* --- 第一行：标题+描述 左 | 主操作按钮 右 --- */
+.page-header-bar.page-header-simple {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  min-height: 48px !important;
+  margin-bottom: 12px !important;
+  padding: 0 !important;
+}
+
+/* 覆盖旧的 page-specific justify-content: flex-start */
+#page-deploy > .page-header-simple,
+#page-run > .page-header-simple,
+#page-report .page-header-simple,
+#page-settings > .page-header-simple,
+#page-todo > .page-header-simple,
+#page-terminal > .page-header-simple,
+#page-notes .page-header-simple,
+#page-notebook > .page-header-simple {
+  justify-content: space-between !important;
+  min-height: 48px !important;
+  margin-bottom: 12px !important;
+}
+
+.page-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* --- 第二行：工具栏（搜索/筛选/导航） --- */
+.page-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 36px;
+  margin-bottom: 14px !important;
+  flex-wrap: wrap;
+}
+
+/* 部署面板子Tabs在toolbar内时去掉外边距 */
+.page-toolbar .sub-tabs {
+  margin-bottom: 0 !important;
+}

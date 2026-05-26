@@ -137,13 +137,18 @@
       <div class="page-title">🚀 部署面板</div>
       <div class="page-subtitle">项目构建与 SFTP 部署管理</div>
     </div>
+    <div class="page-header-actions">
+      <button class="btn-primary" onclick="showAddProject()">+ 添加项目</button>
+    </div>
   </div>
 
   <!-- 子 Tab 栏 -->
-  <div class="sub-tabs">
-    <button class="sub-tab active" data-sub="dashboard" onclick="switchSubTab('dashboard', this)">📦 项目总览</button>
-    <button class="sub-tab" data-sub="servers" onclick="switchSubTab('servers', this)">🖥 服务器管理</button>
-    <button class="sub-tab" data-sub="history" onclick="switchSubTab('history', this)">📋 部署历史</button>
+  <div class="page-toolbar">
+    <div class="sub-tabs">
+      <button class="sub-tab active" data-sub="dashboard" onclick="switchSubTab('dashboard', this)">📦 项目总览</button>
+      <button class="sub-tab" data-sub="servers" onclick="switchSubTab('servers', this)">🖥 服务器管理</button>
+      <button class="sub-tab" data-sub="history" onclick="switchSubTab('history', this)">📋 部署历史</button>
+    </div>
   </div>
 
   <!-- 项目总览 -->
@@ -151,7 +156,6 @@
     <div class="page-sticky-header">
       <div class="page-header">
         <div class="header-actions">
-          <button class="btn-primary" onclick="showAddProject()">+ 添加项目</button>
           <div class="search-bar">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
             <input type="text" placeholder="搜索项目..." id="searchInput" autocomplete="off">
@@ -214,10 +218,12 @@
       <div class="page-title">▶ 本地运行</div>
       <div class="page-subtitle">快速启动前端开发服务，管理模块、日志和本地地址</div>
     </div>
+    <div class="page-header-actions">
+      <button class="btn-primary" onclick="showAddProject()" style="white-space:nowrap">+ 添加项目</button>
+    </div>
   </div>
 
-  <div class="run-page-toolbar">
-    <button class="btn-primary" onclick="showAddProject()" style="white-space:nowrap">+ 添加项目</button>
+  <div class="page-toolbar run-page-toolbar">
     <div class="run-page-search search-bar">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
       <input type="text" placeholder="搜索可运行项目..." id="runSearchInput" autocomplete="off">
@@ -333,10 +339,12 @@
       <div class="page-title">📌 待办看板</div>
       <div class="page-subtitle">轻量任务管理，按项目分组记录待办事项</div>
     </div>
+    <div class="page-header-actions">
+      <button class="btn-primary" onclick="showAddTodo()">+ 新建任务</button>
+    </div>
   </div>
 
-  <div class="todo-toolbar">
-    <button class="btn-primary" onclick="showAddTodo()">+ 新建任务</button>
+  <div class="page-toolbar todo-toolbar">
     <button class="btn-secondary" onclick="clearDoneTodos()">🗑 清除已完成</button>
   </div>
 
@@ -378,7 +386,7 @@
       </div>
     </div>
 
-    <div class="notes-toolbar">
+    <div class="page-toolbar notes-toolbar">
       <button class="btn-secondary" onclick="notesPrevWeek()">← 上一周</button>
       <span class="notes-week-label" id="notesWeekLabel">本周</span>
       <button class="btn-secondary" onclick="notesNextWeek()">下一周 →</button>
@@ -441,10 +449,12 @@
       <div class="page-title">⚡ 快捷命令</div>
       <div class="page-subtitle">预设常用 Shell 命令，一键执行</div>
     </div>
+    <div class="page-header-actions">
+      <button class="btn-primary" onclick="showAddCommand()">+ 添加命令</button>
+    </div>
   </div>
 
-  <div class="cmd-toolbar">
-    <button class="btn-primary" onclick="showAddCommand()">+ 添加命令</button>
+  <div class="page-toolbar cmd-toolbar">
     <div class="cmd-sudo-config">
       <input type="password" id="cmdSudoPassword" placeholder="sudo 密码（用于自动执行需要权限的命令）">
       <button class="btn-secondary" onclick="saveSudoPassword()">💾 保存</button>
