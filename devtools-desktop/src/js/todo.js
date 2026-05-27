@@ -105,15 +105,25 @@ function getTimeAgo(dateStr) {
 function showAddTodo() {
   return new Promise(resolve => {
     const overlay = document.getElementById('sysDialog');
-    document.getElementById('sysDialogIcon').textContent = '📌';
+    const dialogIcon = document.getElementById('sysDialogIcon');
+    if (dialogIcon) {
+      dialogIcon.innerHTML = `<svg class="todo-modal-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>`;
+    }
     document.getElementById('sysDialogMsg').textContent = '新建任务';
     document.getElementById('sysDialogBtns').innerHTML = `
-      <div style="display:flex;flex-direction:column;gap:10px;width:100%">
-        <input type="text" id="addTodoTitle" class="sys-prompt-input" placeholder="任务标题">
-        <textarea id="addTodoContent" class="sys-prompt-textarea" placeholder="详细内容（可选）" rows="3"></textarea>
-        <div style="display:flex;align-items:center;gap:8px">
-          <span style="font-size:12px;color:var(--text-muted);white-space:nowrap">⏰ 提醒</span>
-          <input type="datetime-local" id="addTodoRemind" class="sys-prompt-input" style="flex:1;display:none">
+      <div class="todo-form-container">
+        <input type="text" id="addTodoTitle" class="todo-title-input" placeholder="任务标题">
+        <textarea id="addTodoContent" class="todo-content-textarea" placeholder="详细内容（可选）" rows="3"></textarea>
+        
+        <div class="todo-remind-section">
+          <div class="todo-remind-title-row">
+            <span class="todo-remind-label">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="remind-bell-icon"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+              任务提醒
+            </span>
+            <span class="remind-date-display" id="addRemindDisplay">未设置</span>
+          </div>
+          
           <div class="remind-picker" id="addRemindPicker">
             <div class="remind-quick-btns">
               <button type="button" class="remind-quick-btn" onclick="setRemindQuick('addRemindPicker',0)">今天</button>
@@ -123,24 +133,31 @@ function showAddTodo() {
               <button type="button" class="remind-quick-btn remind-clear-btn" onclick="clearRemind('addRemindPicker')">清除</button>
             </div>
             <div class="remind-time-row">
-              <select class="remind-hour" id="addRemindHour"></select>
-              <span style="color:var(--text-muted)">:</span>
-              <select class="remind-minute" id="addRemindMinute"></select>
-              <span class="remind-date-display" id="addRemindDisplay">未设置</span>
+              <div class="remind-date-wrapper">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="remind-calendar-icon"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                <input type="date" class="remind-date-input" id="addRemindDateInput">
+              </div>
+              <div class="remind-select-wrapper">
+                <select class="remind-hour" id="addRemindHour"></select>
+                <span class="remind-time-sep">:</span>
+                <select class="remind-minute" id="addRemindMinute"></select>
+              </div>
             </div>
           </div>
         </div>
       </div>
-      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+      <div class="todo-dialog-footer">
         <button class="sys-btn-cancel" id="sysCancel">取消</button>
         <button class="sys-btn-confirm" id="sysOk">创建</button>
       </div>
     `;
     overlay.classList.add('active');
+    overlay.classList.add('todo-dialog-overlay');
     setTimeout(() => { document.getElementById('addTodoTitle')?.focus(); initRemindPicker('addRemindPicker', ''); }, 50);
 
     const cleanup = (result) => {
       overlay.classList.remove('active');
+      overlay.classList.remove('todo-dialog-overlay');
       activeSysDialogClose = null;
       resolve(result);
     };
@@ -149,7 +166,7 @@ function showAddTodo() {
     document.getElementById('sysOk').onclick = () => {
       const title = document.getElementById('addTodoTitle')?.value?.trim();
       const content = document.getElementById('addTodoContent')?.value?.trim();
-      const remindAt = document.getElementById('addTodoRemind')?.value || getRemindValue('addRemindPicker');
+      const remindAt = getRemindValue('addRemindPicker');
       if (!title) { showToast('⚠️ 标题不能为空'); return; }
       cleanup({ title, content, remindAt: remindAt ? new Date(remindAt).toISOString() : '' });
     };
@@ -177,23 +194,27 @@ async function editTodo(id) {
   const todo = todosData.find(t => t.id === id);
   if (!todo) return;
 
-  let remindValue = '';
-  if (todo.remindAt) {
-    const d = new Date(todo.remindAt);
-    remindValue = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}T${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-  }
-
   return new Promise(resolve => {
     const overlay = document.getElementById('sysDialog');
-    document.getElementById('sysDialogIcon').textContent = '✎';
+    const dialogIcon = document.getElementById('sysDialogIcon');
+    if (dialogIcon) {
+      dialogIcon.innerHTML = `<svg class="todo-modal-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`;
+    }
     document.getElementById('sysDialogMsg').textContent = '编辑任务';
     document.getElementById('sysDialogBtns').innerHTML = `
-      <div style="display:flex;flex-direction:column;gap:10px;width:100%">
-        <input type="text" id="editTodoTitle" class="sys-prompt-input" placeholder="任务标题" value="${escapeAttr(todo.title)}">
-        <textarea id="editTodoContent" class="sys-prompt-textarea" placeholder="详细内容（可选）" rows="3">${escapeHtml(todo.content || '')}</textarea>
-        <div style="display:flex;align-items:center;gap:8px">
-          <span style="font-size:12px;color:var(--text-muted);white-space:nowrap">⏰ 提醒</span>
-          <input type="datetime-local" id="editTodoRemind" class="sys-prompt-input" style="flex:1;display:none" value="${remindValue}">
+      <div class="todo-form-container">
+        <input type="text" id="editTodoTitle" class="todo-title-input" placeholder="任务标题" value="${escapeAttr(todo.title)}">
+        <textarea id="editTodoContent" class="todo-content-textarea" placeholder="详细内容（可选）" rows="3">${escapeHtml(todo.content || '')}</textarea>
+        
+        <div class="todo-remind-section">
+          <div class="todo-remind-title-row">
+            <span class="todo-remind-label">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="remind-bell-icon"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+              任务提醒
+            </span>
+            <span class="remind-date-display" id="editRemindDisplay">未设置</span>
+          </div>
+          
           <div class="remind-picker" id="editRemindPicker">
             <div class="remind-quick-btns">
               <button type="button" class="remind-quick-btn" onclick="setRemindQuick('editRemindPicker',0)">今天</button>
@@ -203,24 +224,31 @@ async function editTodo(id) {
               <button type="button" class="remind-quick-btn remind-clear-btn" onclick="clearRemind('editRemindPicker')">清除</button>
             </div>
             <div class="remind-time-row">
-              <select class="remind-hour" id="editRemindHour"></select>
-              <span style="color:var(--text-muted)">:</span>
-              <select class="remind-minute" id="editRemindMinute"></select>
-              <span class="remind-date-display" id="editRemindDisplay">未设置</span>
+              <div class="remind-date-wrapper">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="remind-calendar-icon"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                <input type="date" class="remind-date-input" id="editRemindDateInput">
+              </div>
+              <div class="remind-select-wrapper">
+                <select class="remind-hour" id="editRemindHour"></select>
+                <span class="remind-time-sep">:</span>
+                <select class="remind-minute" id="editRemindMinute"></select>
+              </div>
             </div>
           </div>
         </div>
       </div>
-      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+      <div class="todo-dialog-footer">
         <button class="sys-btn-cancel" id="sysCancel">取消</button>
         <button class="sys-btn-confirm" id="sysOk">保存</button>
       </div>
     `;
     overlay.classList.add('active');
+    overlay.classList.add('todo-dialog-overlay');
     setTimeout(() => { document.getElementById('editTodoTitle')?.focus(); initRemindPicker('editRemindPicker', todo.remindAt || ''); }, 50);
 
     const cleanup = (val) => {
       overlay.classList.remove('active');
+      overlay.classList.remove('todo-dialog-overlay');
       activeSysDialogClose = null;
       resolve(val);
     };
@@ -327,6 +355,7 @@ function initRemindPicker(pickerId, existingDate) {
   const hourSelect = picker.querySelector('.remind-hour');
   const minuteSelect = picker.querySelector('.remind-minute');
   const display = picker.querySelector('.remind-date-display');
+  const dateInput = picker.querySelector('.remind-date-input');
 
   hourSelect.innerHTML = Array.from({length: 24}, (_, i) => 
     `<option value="${i}">${String(i).padStart(2,'0')}</option>`
@@ -338,7 +367,9 @@ function initRemindPicker(pickerId, existingDate) {
 
   if (existingDate) {
     const d = new Date(existingDate);
-    picker.dataset.date = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    picker.dataset.date = dateStr;
+    if (dateInput) dateInput.value = dateStr;
     hourSelect.value = d.getHours();
     minuteSelect.value = Math.round(d.getMinutes() / 5) * 5;
     updateRemindDisplay(pickerId);
@@ -347,11 +378,18 @@ function initRemindPicker(pickerId, existingDate) {
     hourSelect.value = Math.min(now.getHours() + 1, 23);
     minuteSelect.value = 0;
     picker.dataset.date = '';
+    if (dateInput) dateInput.value = '';
     display.textContent = '未设置';
   }
 
   hourSelect.onchange = () => updateRemindDisplay(pickerId);
   minuteSelect.onchange = () => updateRemindDisplay(pickerId);
+  if (dateInput) {
+    dateInput.onchange = () => {
+      picker.dataset.date = dateInput.value;
+      updateRemindDisplay(pickerId);
+    };
+  }
 }
 
 function setRemindQuick(pickerId, daysFromNow) {
@@ -359,7 +397,12 @@ function setRemindQuick(pickerId, daysFromNow) {
   if (!picker) return;
   const d = new Date();
   d.setDate(d.getDate() + daysFromNow);
-  picker.dataset.date = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  picker.dataset.date = dateStr;
+  
+  const dateInput = picker.querySelector('.remind-date-input');
+  if (dateInput) dateInput.value = dateStr;
+  
   updateRemindDisplay(pickerId);
 }
 
@@ -367,6 +410,10 @@ function clearRemind(pickerId) {
   const picker = document.getElementById(pickerId);
   if (!picker) return;
   picker.dataset.date = '';
+  
+  const dateInput = picker.querySelector('.remind-date-input');
+  if (dateInput) dateInput.value = '';
+  
   const display = picker.querySelector('.remind-date-display');
   if (display) display.textContent = '未设置';
 }
