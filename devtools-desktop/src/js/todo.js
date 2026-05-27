@@ -239,10 +239,6 @@ function showAddTodo() {
     if (!result) return;
     createTodo(result.title, result.content, result.remindAt);
   });
-  }).then(result => {
-    if (!result) return;
-    createTodo(result.title, result.content, result.remindAt);
-  });
 }
 
 async function createTodo(title, content = '', remindAt = '') {
