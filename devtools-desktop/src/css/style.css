@@ -11515,12 +11515,12 @@ body[data-theme="dark"] .sys-progress-circle::before {
 
 .todo-card-checklist-item {
   display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  padding: 4px 6px !important;
-  border-radius: 4px !important;
+  align-items: flex-start !important;
+  gap: 10px !important;
+  padding: 5px 8px !important;
+  border-radius: 6px !important;
   cursor: pointer !important;
-  transition: background 0.2s !important;
+  transition: all 0.2s ease !important;
 }
 
 .todo-card-checklist-item:hover {
@@ -11528,10 +11528,10 @@ body[data-theme="dark"] .sys-progress-circle::before {
 }
 
 .todo-item-check-icon {
-  width: 12px !important;
-  height: 12px !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
-  border-radius: 3px !important;
+  width: 13px !important;
+  height: 13px !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.25) !important;
+  border-radius: 4px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -11539,29 +11539,30 @@ body[data-theme="dark"] .sys-progress-circle::before {
   color: #fff !important;
   background: transparent !important;
   flex-shrink: 0 !important;
-  transition: all 0.2s !important;
+  margin-top: 2px !important;
+  transition: all 0.2s ease !important;
 }
 
 .todo-card-checklist-item.done .todo-item-check-icon {
   background: var(--primary) !important;
   border-color: var(--primary) !important;
-  box-shadow: 0 0 4px rgba(59, 130, 246, 0.4) !important;
+  box-shadow: 0 0 6px rgba(59, 130, 246, 0.4) !important;
 }
 
 .todo-item-text {
-  font-size: 11px !important;
+  font-size: 11.5px !important;
   color: var(--text-secondary) !important;
   text-decoration: none !important;
-  transition: all 0.2s !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  white-space: nowrap !important;
+  transition: all 0.2s ease !important;
+  line-height: 1.4 !important;
+  word-break: break-word !important;
+  white-space: normal !important;
 }
 
 .todo-card-checklist-item.done .todo-item-text {
   color: var(--text-muted) !important;
   text-decoration: line-through !important;
-  opacity: 0.5 !important;
+  opacity: 0.55;
 }
 
 .todo-card-desc-text {
@@ -11576,8 +11577,8 @@ body[data-theme="dark"] .sys-progress-circle::before {
   font-size: 10px !important;
   color: var(--text-muted) !important;
   opacity: 0.7 !important;
-  padding-left: 6px !important;
-  margin-top: 2px !important;
+  padding-left: 8px !important;
+  margin-top: 3px !important;
 }
 
 /* 弹窗 Checklist 编辑器样式 */
@@ -11592,14 +11593,14 @@ body[data-theme="dark"] .sys-progress-circle::before {
   display: flex !important;
   justify-content: space-between !important;
   align-items: center !important;
-  margin-bottom: 4px !important;
+  margin-bottom: 6px !important;
 }
 
 .todo-add-item-btn {
   background: transparent !important;
   border: none !important;
   color: var(--primary) !important;
-  font-size: 11px !important;
+  font-size: 11.5px !important;
   font-weight: 700 !important;
   cursor: pointer !important;
   padding: 4px 8px !important;
@@ -11617,7 +11618,7 @@ body[data-theme="dark"] .sys-progress-circle::before {
   overflow-y: auto !important;
   display: flex !important;
   flex-direction: column !important;
-  gap: 6px !important;
+  gap: 8px !important;
   padding: 4px 2px !important;
 }
 
@@ -11635,70 +11636,91 @@ body[data-theme="dark"] .sys-progress-circle::before {
 
 .todo-editor-checklist-item {
   display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  background: rgba(255, 255, 255, 0.02) !important;
-  border: 1px solid rgba(255, 255, 255, 0.04) !important;
-  border-radius: 6px !important;
-  padding: 6px 10px !important;
+  align-items: flex-start !important;
+  gap: 10px !important;
+  background: rgba(255, 255, 255, 0.01) !important;
+  border: 1px solid rgba(255, 255, 255, 0.03) !important;
+  border-radius: 8px !important;
+  padding: 8px 12px !important;
   box-sizing: border-box !important;
-  transition: all 0.2s !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 .todo-editor-checklist-item:focus-within {
-  background: rgba(255, 255, 255, 0.04) !important;
-  border-color: rgba(255, 255, 255, 0.08) !important;
+  background: rgba(255, 255, 255, 0.03) !important;
+  border-color: rgba(59, 130, 246, 0.3) !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.05) !important;
 }
 
 .todo-editor-item-checkbox {
-  width: 14px !important;
-  height: 14px !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  width: 16px !important;
+  height: 16px !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.25) !important;
   border-radius: 4px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  font-size: 9px !important;
+  font-size: 10px !important;
   color: #fff !important;
   cursor: pointer !important;
   flex-shrink: 0 !important;
-  transition: all 0.2s !important;
+  margin-top: 6px !important;
+  transition: all 0.2s ease !important;
+}
+
+.todo-editor-item-checkbox:hover {
+  border-color: var(--primary) !important;
+  background: rgba(59, 130, 246, 0.05) !important;
 }
 
 .todo-editor-item-checkbox.checked {
   background: var(--primary) !important;
   border-color: var(--primary) !important;
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.4) !important;
 }
 
-.todo-editor-item-input {
+.todo-editor-item-textarea {
   flex: 1 !important;
   border: none !important;
   background: transparent !important;
   color: var(--text-primary) !important;
-  font-size: 12px !important;
+  font-size: 13px !important;
+  line-height: 1.6 !important;
   outline: none !important;
-  padding: 0 !important;
-  height: 20px !important;
+  padding: 4px 0 !important;
+  min-height: 24px !important;
+  height: 24px;
+  resize: none !important;
+  overflow-y: hidden !important;
   font-family: inherit !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
 }
 
 .todo-editor-item-delete {
   background: transparent !important;
   border: none !important;
   color: var(--text-muted) !important;
-  font-size: 11px !important;
+  font-size: 13px !important;
   cursor: pointer !important;
-  opacity: 0.3 !important;
-  transition: all 0.2s !important;
-  padding: 2px 6px !important;
+  opacity: 0 !important;
+  transition: all 0.2s ease !important;
+  padding: 4px 6px !important;
+  margin-top: 2px !important;
+  flex-shrink: 0 !important;
 }
 
 .todo-editor-checklist-item:hover .todo-editor-item-delete {
-  opacity: 0.8 !important;
+  opacity: 0.5 !important;
+}
+
+.todo-editor-checklist-item:focus-within .todo-editor-item-delete {
+  opacity: 0.5 !important;
 }
 
 .todo-editor-item-delete:hover {
   color: #ef4444 !important;
   opacity: 1 !important;
+  transform: scale(1.1) !important;
 }
 

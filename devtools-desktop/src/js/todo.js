@@ -817,6 +817,13 @@ function serializeTodoContent(desc, checklist) {
     .join('\n');
 }
 
+// 自动伸缩文本域高度
+function autoGrowTextarea(el) {
+  if (!el) return;
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+}
+
 // 渲染弹窗中的子项配置区
 function renderChecklistEditor(containerId, checklist) {
   const container = document.getElementById(containerId);
@@ -827,28 +834,35 @@ function renderChecklistEditor(containerId, checklist) {
       <div class="todo-editor-item-checkbox ${item.done ? 'checked' : ''}" onclick="toggleEditorChecklistItem(this)">
         ${item.done ? '✓' : ''}
       </div>
-      <input type="text" class="todo-editor-item-input" value="${escapeAttr(item.text)}" placeholder="输入任务项内容... (按回车添加新行)" onkeydown="handleChecklistInputKey(event, this)">
+      <textarea class="todo-editor-item-textarea" placeholder="输入任务项内容... (按回车添加新行，Shift+Enter换行)" onkeydown="handleChecklistInputKey(event, this)" oninput="autoGrowTextarea(this)">${escapeHtml(item.text || '')}</textarea>
       <button type="button" class="todo-editor-item-delete" onclick="deleteChecklistItemDOM(this)" title="删除">✕</button>
     </div>
   `).join('');
+
+  // 延时自适应高度，确保DOM重绘后可获得scrollHeight
+  setTimeout(() => {
+    container.querySelectorAll('.todo-editor-item-textarea').forEach(el => autoGrowTextarea(el));
+  }, 50);
 }
 
 // 处理回车新建下一个子任务输入并聚焦
-function handleChecklistInputKey(event, inputEl) {
-  if (event.key === 'Enter') {
+function handleChecklistInputKey(event, textareaEl) {
+  if (event.key === 'Enter' && !event.shiftKey) {
     event.preventDefault();
-    const itemEl = inputEl.closest('.todo-editor-checklist-item');
+    const itemEl = textareaEl.closest('.todo-editor-checklist-item');
     
     const newItem = document.createElement('div');
     newItem.className = 'todo-editor-checklist-item';
     newItem.innerHTML = `
       <div class="todo-editor-item-checkbox" onclick="toggleEditorChecklistItem(this)"></div>
-      <input type="text" class="todo-editor-item-input" value="" placeholder="输入任务项内容... (按回车添加新行)" onkeydown="handleChecklistInputKey(event, this)">
+      <textarea class="todo-editor-item-textarea" placeholder="输入任务项内容... (按回车添加新行，Shift+Enter换行)" onkeydown="handleChecklistInputKey(event, this)" oninput="autoGrowTextarea(this)"></textarea>
       <button type="button" class="todo-editor-item-delete" onclick="deleteChecklistItemDOM(this)" title="删除">✕</button>
     `;
     
     itemEl.after(newItem);
-    newItem.querySelector('.todo-editor-item-input').focus();
+    const newTextarea = newItem.querySelector('.todo-editor-item-textarea');
+    newTextarea.focus();
+    autoGrowTextarea(newTextarea);
   }
 }
 
@@ -863,11 +877,13 @@ function addChecklistItemDOM(pickerId) {
   newItem.className = 'todo-editor-checklist-item';
   newItem.innerHTML = `
     <div class="todo-editor-item-checkbox" onclick="toggleEditorChecklistItem(this)"></div>
-    <input type="text" class="todo-editor-item-input" value="" placeholder="输入任务项内容... (按回车添加新行)" onkeydown="handleChecklistInputKey(event, this)">
+    <textarea class="todo-editor-item-textarea" placeholder="输入任务项内容... (按回车添加新行，Shift+Enter换行)" onkeydown="handleChecklistInputKey(event, this)" oninput="autoGrowTextarea(this)"></textarea>
     <button type="button" class="todo-editor-item-delete" onclick="deleteChecklistItemDOM(this)" title="删除">✕</button>
   `;
   listEl.appendChild(newItem);
-  newItem.querySelector('.todo-editor-item-input').focus();
+  const newTextarea = newItem.querySelector('.todo-editor-item-textarea');
+  newTextarea.focus();
+  autoGrowTextarea(newTextarea);
 }
 
 // 编辑弹窗内点击勾选框切换
@@ -893,10 +909,13 @@ function getChecklistValues(listId) {
   
   const items = [];
   listEl.querySelectorAll('.todo-editor-checklist-item').forEach(itemEl => {
-    const text = itemEl.querySelector('.todo-editor-item-input').value.trim();
-    if (text) {
-      const done = itemEl.querySelector('.todo-editor-item-checkbox').classList.contains('checked');
-      items.push({ text, done });
+    const textarea = itemEl.querySelector('.todo-editor-item-textarea');
+    if (textarea) {
+      const text = textarea.value.trim();
+      if (text) {
+        const done = itemEl.querySelector('.todo-editor-item-checkbox').classList.contains('checked');
+        items.push({ text, done });
+      }
     }
   });
   return items;
