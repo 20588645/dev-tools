@@ -7,6 +7,12 @@ APP_NAME="DevTools"
 APP_DEST="/Applications/${APP_NAME}.app"
 LOG_FILE="${PROJECT_DIR}/scripts/rebuild.log"
 
+# 载入环境变量以防在非交互 shell 下命令丢失
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+[ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
+export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
+
 exec > "$LOG_FILE" 2>&1
 echo "========== 开始重新打包 $(date) =========="
 
