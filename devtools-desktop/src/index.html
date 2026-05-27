@@ -553,8 +553,13 @@
   <div class="notebook-layout">
     <div class="nb-list-panel">
       <div class="nb-list-header">
-        <input type="text" class="nb-search" id="nbSearch" placeholder="搜索笔记..." oninput="nbSearchNotes()">
-        <button class="btn-primary nb-new-btn" onclick="nbCreateNote()">+</button>
+        <div class="nb-search-wrapper">
+          <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input type="text" class="nb-search" id="nbSearch" placeholder="搜索笔记..." oninput="nbSearchNotes()">
+        </div>
+        <button class="btn-primary nb-new-btn" onclick="nbCreateNote()" title="新建笔记">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        </button>
       </div>
       <div class="nb-note-list" id="nbNoteList"></div>
     </div>
@@ -562,10 +567,16 @@
       <div class="nb-editor-header" id="nbEditorHeader">
         <input type="text" class="nb-title-input" id="nbTitleInput" placeholder="笔记标题..." oninput="nbOnTitleInput()">
         <div class="nb-editor-actions">
-          <button class="btn-text" onclick="nbAlignSelection()" title="对齐选中文本 (⌘⇧L)">≡</button>
-          <button class="btn-text" id="nbPinBtn" onclick="nbTogglePin()" title="置顶">📌</button>
-          <button class="btn-text" onclick="nbDeleteNote()" title="删除">🗑</button>
           <span class="nb-save-status" id="nbSaveStatus"></span>
+          <button class="nb-action-btn" onclick="nbAlignSelection()" title="对齐选中文本 (⌘⇧L)">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="10" x2="3" y2="10"></line><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="21" y1="18" x2="3" y2="18"></line></svg>
+          </button>
+          <button class="nb-action-btn" id="nbPinBtn" onclick="nbTogglePin()" title="置顶">
+            <svg class="icon-pin" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5M9 8h6M12 8V2M5 8h14c0 4.5-3 6-7 9-4-3-7-4.5-7-9z"/></svg>
+          </button>
+          <button class="nb-action-btn btn-danger-hover" onclick="nbDeleteNote()" title="删除">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+          </button>
         </div>
       </div>
       <div id="nbEditorContainer"><div class="nb-editor-content" id="nbEditorContent" contenteditable="true" oninput="nbOnContentChange()"></div></div>

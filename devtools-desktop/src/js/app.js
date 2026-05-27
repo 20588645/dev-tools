@@ -22,7 +22,7 @@ let notifiedRunIds = new Set();
 let notifiedRunCompileErrors = new Set();
 let pendingRunCompileErrorTimers = {};
 const RUN_COMPILE_ERROR_NOTIFY_DELAY = 15000;
-const APP_VERSION = '0.1.34';
+const APP_VERSION = '0.1.35';
 
 // ========== 托盘菜单同步 ==========
 function syncTrayMenu() {

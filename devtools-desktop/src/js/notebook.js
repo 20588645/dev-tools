@@ -54,15 +54,15 @@ function nbRenderNoteList() {
   }
   list.innerHTML = nbNotes.map((n, idx) => {
     const isActive = n.id === nbCurrentId;
-    const pinIcon = n.pinned ? '📌 ' : '';
+    const pinIcon = n.pinned ? '<svg class="nb-item-pin-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5M9 8h6M12 8V2M5 8h14c0 4.5-3 6-7 9-4-3-7-4.5-7-9z"/></svg>' : '';
     const time = new Date(n.createdAt).toLocaleDateString('zh-CN');
-    const upBtn = idx > 0 ? `<button class="nb-sort-btn" onclick="event.stopPropagation();nbMoveNote('${n.id}',-1)" title="上移">↑</button>` : '';
-    const downBtn = idx < nbNotes.length - 1 ? `<button class="nb-sort-btn" onclick="event.stopPropagation();nbMoveNote('${n.id}',1)" title="下移">↓</button>` : '';
+    const upBtn = idx > 0 ? `<button class="nb-sort-btn" onclick="event.stopPropagation();nbMoveNote('${n.id}',-1)" title="上移"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg></button>` : '';
+    const downBtn = idx < nbNotes.length - 1 ? `<button class="nb-sort-btn" onclick="event.stopPropagation();nbMoveNote('${n.id}',1)" title="下移"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg></button>` : '';
 
     return `
-      <div class="nb-note-item ${isActive ? 'active' : ''}" data-id="${n.id}" onclick="nbSelectNote('${n.id}')">
+      <div class="nb-note-item ${isActive ? 'active' : ''} ${n.pinned ? 'pinned' : ''}" data-id="${n.id}" onclick="nbSelectNote('${n.id}')">
         <div class="nb-note-item-body">
-          <div class="nb-note-item-title">${pinIcon}${n.title || '无标题'}</div>
+          <div class="nb-note-item-title">${pinIcon}<span class="nb-note-title-text">${n.title || '无标题'}</span></div>
           <div class="nb-note-item-preview">${n.preview || ''}</div>
           <div class="nb-note-item-time">${time}</div>
         </div>
@@ -100,8 +100,18 @@ async function nbSelectNote(id) {
     const note = await API.get('/api/notebook/' + id);
     document.getElementById('nbTitleInput').value = note.title || '';
     document.getElementById('nbEditorContent').innerHTML = note.content || '';
-    document.getElementById('nbPinBtn').textContent = note.pinned ? '📌' : '📍';
-    document.getElementById('nbSaveStatus').textContent = '';
+    
+    const pinBtn = document.getElementById('nbPinBtn');
+    if (pinBtn) {
+      if (note.pinned) {
+        pinBtn.classList.add('active');
+        pinBtn.setAttribute('title', '取消置顶');
+      } else {
+        pinBtn.classList.remove('active');
+        pinBtn.setAttribute('title', '置顶');
+      }
+    }
+    document.getElementById('nbSaveStatus').innerHTML = '';
     nbRenderNoteList();
   } catch (e) {
     showToast('⚠️ 加载笔记失败');
@@ -125,14 +135,14 @@ async function nbCreateNote() {
 function nbOnTitleInput() {
   if (nbSaveTimer) clearTimeout(nbSaveTimer);
   nbSaveTimer = setTimeout(() => { nbSaveTimer = null; nbSaveCurrentNote(); }, 800);
-  document.getElementById('nbSaveStatus').textContent = '';
+  document.getElementById('nbSaveStatus').innerHTML = '<span class="save-dot warning loading"></span>正在编辑';
 }
 
 function nbOnContentChange() {
   if (!nbCurrentId) return;
   if (nbSaveTimer) clearTimeout(nbSaveTimer);
   nbSaveTimer = setTimeout(() => { nbSaveTimer = null; nbSaveCurrentNote(); }, 800);
-  document.getElementById('nbSaveStatus').textContent = '';
+  document.getElementById('nbSaveStatus').innerHTML = '<span class="save-dot warning loading"></span>正在编辑';
 }
 
 async function nbSaveCurrentNote() {
@@ -141,7 +151,7 @@ async function nbSaveCurrentNote() {
   const content = document.getElementById('nbEditorContent')?.innerHTML || '';
   try {
     await API.put('/api/notebook/' + nbCurrentId, { title, content });
-    document.getElementById('nbSaveStatus').textContent = '✓ 已保存';
+    document.getElementById('nbSaveStatus').innerHTML = '<span class="save-dot success"></span>已保存';
     // 只更新本地列表中当前笔记的标题和预览，不重新加载和渲染
     const note = nbNotes.find(n => n.id === nbCurrentId);
     if (note) {
@@ -150,14 +160,14 @@ async function nbSaveCurrentNote() {
       // 更新列表中对应项的显示
       const item = document.querySelector(`.nb-note-item[data-id="${nbCurrentId}"]`);
       if (item) {
-        const titleEl = item.querySelector('.nb-note-item-title');
+        const titleTextEl = item.querySelector('.nb-note-title-text');
         const previewEl = item.querySelector('.nb-note-item-preview');
-        if (titleEl) titleEl.textContent = (note.pinned ? '📌 ' : '') + (title || '无标题');
+        if (titleTextEl) titleTextEl.textContent = title || '无标题';
         if (previewEl) previewEl.textContent = note.preview || '';
       }
     }
   } catch (e) {
-    document.getElementById('nbSaveStatus').textContent = '⚠️ 保存失败';
+    document.getElementById('nbSaveStatus').innerHTML = '<span class="save-dot danger"></span>保存失败';
   }
 }
 
@@ -168,7 +178,16 @@ async function nbTogglePin() {
   const newPinned = !note.pinned;
   try {
     await API.put('/api/notebook/' + nbCurrentId, { pinned: newPinned });
-    document.getElementById('nbPinBtn').textContent = newPinned ? '📌' : '📍';
+    const pinBtn = document.getElementById('nbPinBtn');
+    if (pinBtn) {
+      if (newPinned) {
+        pinBtn.classList.add('active');
+        pinBtn.setAttribute('title', '取消置顶');
+      } else {
+        pinBtn.classList.remove('active');
+        pinBtn.setAttribute('title', '置顶');
+      }
+    }
     await nbLoadNotes();
   } catch (e) { console.warn("[Notebook] 置顶操作失败"); }
 }
