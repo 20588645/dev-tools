@@ -30,7 +30,7 @@
   </aside>
   <div class="app-main">
     <div class="window-drag-region" data-tauri-drag-region aria-hidden="true"></div>
-    <main class="main-content">
+    <main class="main-content home-active">
 
 <!-- 首页 -->
 <section class="page active" id="page-home">
@@ -49,9 +49,9 @@
         <button class="widget-refresh" onclick="loadHitokoto()" title="换一条">↻</button>
       </div>
       <!-- 待办提醒 -->
-      <div class="home-section-card">
+      <div class="home-section-card home-todo-card">
         <div class="home-card-header">
-          <span class="home-card-title">📌 进行中的任务</span>
+          <span class="home-card-title"><span class="title-icon">📌</span>进行中的任务</span>
           <button class="btn-text" onclick="switchPage('todo', document.querySelector('.sidebar-item[data-page=todo]'))">查看全部</button>
         </div>
         <div class="home-todo-list" id="homeTodoList">
@@ -60,9 +60,9 @@
       </div>
 
       <!-- 今日工时 -->
-      <div class="home-section-card">
+      <div class="home-section-card home-timesheet-card">
         <div class="home-card-header">
-          <span class="home-card-title">✏️ 今日工时</span>
+          <span class="home-card-title"><span class="title-icon">✏️</span>今日工时</span>
           <button class="btn-text" onclick="switchPage('notes', document.querySelector('.sidebar-item[data-page=notes]'))">前往填写</button>
         </div>
         <div class="home-timesheet" id="homeTimesheet">
@@ -70,13 +70,96 @@
         </div>
       </div>
 
-      <!-- 最近动态 -->
-      <div class="home-section-card">
+      <!-- 极客时空与今日运势 -->
+      <div class="home-section-card geek-fortune-card">
         <div class="home-card-header">
-          <span class="home-card-title">📋 最近动态</span>
-          <button class="btn-text" onclick="switchPage('deploy', document.querySelector('.sidebar-item[data-page=deploy]'));setTimeout(()=>switchSubTab('history',document.querySelector('.sub-tab[data-sub=history]')),100)">查看全部</button>
+          <span class="home-card-title"><span class="title-icon">🔮</span>极客时空与今日运势</span>
+          <button class="btn-text" onclick="refreshGeekFortune()">刷新运势</button>
         </div>
-        <div class="home-activity-table" id="homeActivity"></div>
+        <div class="geek-fortune-body">
+          <!-- 左侧：时钟 -->
+          <div class="geek-clock-panel">
+            <div class="geek-time" id="geekTime">00:00</div>
+            <div class="geek-time-label">本地时间</div>
+            <div class="geek-sun-arc">
+              <div class="geek-arc-line"></div>
+              <div class="geek-sun-dot" id="geekSunDot">☀️</div>
+              <div class="geek-arc-labels">
+                <span>06:00 日出</span>
+                <span>18:00 日落</span>
+              </div>
+            </div>
+            <div class="geek-timezone-row">
+              <div class="geek-tz-box">
+                <span class="tz-name">UTC 协调时</span>
+                <span class="tz-val" id="geekTzUtc">00:00</span>
+              </div>
+              <div class="geek-tz-box">
+                <span class="tz-name">PDT 太平洋</span>
+                <span class="tz-val" id="geekTzPdt">00:00</span>
+              </div>
+            </div>
+          </div>
+          <!-- 右侧：详细运势 -->
+          <div class="geek-detail-panel">
+            <div class="geek-fortune-header">
+              <span class="geek-date-text" id="geekDateText">--月--日 星期-</span>
+              <div class="geek-progress-wrap">
+                <span class="geek-progress-label">灵感活跃度 <strong id="geekInspireRate">98%</strong></span>
+                <div class="geek-progress-bar">
+                  <div class="geek-progress-fill" id="geekInspireFill" style="width: 98%;"></div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="geek-yi-ji-row">
+              <div class="geek-box yi">
+                <div class="label yi">宜</div>
+                <div class="content" id="geekYiContent">写单元测试</div>
+              </div>
+              <div class="geek-box ji">
+                <div class="label ji">忌</div>
+                <div class="content" id="geekJiContent">相信“只改一行”</div>
+              </div>
+              <div class="geek-box yi">
+                <div class="label yi">宜</div>
+                <div class="content" id="geekYiContent2">Review 别人的代码</div>
+              </div>
+              <div class="geek-box ji">
+                <div class="label ji">忌</div>
+                <div class="content" id="geekJiContent2">在主分支 Force Push</div>
+              </div>
+            </div>
+
+            <!-- 最佳时段 -->
+            <div class="geek-section coding-window">
+              <div class="section-title">🧠 编译活跃度预测与吉时推荐 (Peak Productivity Window)</div>
+              <div class="coding-timeline" id="codingTimeline">
+                <!-- 由 JS 渲染 24 小时块 -->
+              </div>
+              <div class="section-desc">预计今日最佳编程时区为：<strong id="geekBestHours">10:00~12:00</strong> 和 <strong id="geekBestHours2">14:00~16:00</strong></div>
+            </div>
+
+            <!-- 今日箴言 -->
+            <div class="geek-tip-row">
+              <span class="tip-icon">🔮</span>
+              <span class="tip-text"><strong>今日箴言：</strong><span id="geekMotto">运势平稳，多写注释可逢凶化吉。</span></span>
+            </div>
+
+            <!-- 底部守护与哈希 -->
+            <div class="geek-bottom-row">
+              <div class="health-guard">
+                <span class="health-icon">🚶</span>
+                <span id="geekHealth">健康守护：今日大脑处于高速运转模型，建议小憩片刻补充创造能量。</span>
+              </div>
+              <div class="geek-hash">
+                <span class="hash-icon">🔑</span>
+                <span>哈希标识：<code id="geekHashVal">SHA256:541268</code></span>
+              </div>
+            </div>
+
+          </div>
+        </div>
       </div>
     </div>
 
@@ -96,8 +179,8 @@
 
       <!-- 运行状态 -->
       <div class="home-section-card compact">
-        <div class="home-card-header">
-          <span class="home-card-title">▶ 运行状态</span>
+        <div class="home-card-header compact">
+          <span class="home-card-title"><span class="title-icon">▶</span>运行状态</span>
         </div>
         <div class="home-running-list" id="homeRunningList">
           <div class="home-empty-hint">无运行中的服务</div>
@@ -106,8 +189,8 @@
 
       <!-- 快捷入口 -->
       <div class="home-section-card compact">
-        <div class="home-card-header">
-          <span class="home-card-title">⚡ 快捷入口</span>
+        <div class="home-card-header compact">
+          <span class="home-card-title"><span class="title-icon">⚡</span>快捷入口</span>
         </div>
         <div class="home-shortcuts" id="homeShortcuts">
           <button class="home-shortcut-btn" onclick="switchPage('run', document.querySelector('.sidebar-item[data-page=run]'))"><span class="shortcut-icon green">▶</span>本地运行</button>
@@ -119,12 +202,60 @@
         </div>
       </div>
 
+      <!-- 系统状态监控 -->
+      <div class="home-section-card compact widget-system-monitor">
+        <div class="home-card-header compact">
+          <span class="home-card-title"><span class="title-icon">💻</span>系统状态</span>
+          <span class="system-status-dot"></span>
+        </div>
+        <div class="system-monitor-body">
+          <div class="sys-item">
+            <div class="sys-label">CPU</div>
+            <div class="sys-progress-circle" id="sysCpuCircle" style="--percent: 0%">
+              <div class="circle-val" id="sysCpuVal">--%</div>
+            </div>
+          </div>
+          <div class="sys-item">
+            <div class="sys-label">内存</div>
+            <div class="sys-progress-circle" id="sysMemCircle" style="--percent: 0%">
+              <div class="circle-val" id="sysMemVal">--%</div>
+            </div>
+          </div>
+          <div class="sys-item">
+            <div class="sys-label">磁盘</div>
+            <div class="sys-progress-circle" id="sysDiskCircle" style="--percent: 0%">
+              <div class="circle-val" id="sysDiskVal">--%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 番茄工作法 -->
+      <div class="home-section-card compact widget-pomodoro">
+        <div class="home-card-header compact">
+          <span class="home-card-title"><span class="title-icon">⏱️</span>番茄专注</span>
+          <span class="pomo-status" id="pomoStatus">Ready</span>
+        </div>
+        <div class="pomodoro-body">
+          <div class="pomo-timer-display" id="pomoDisplay">25:00</div>
+          <div class="pomo-controls">
+            <button class="pomo-btn" id="pomoPlayBtn" onclick="togglePomodoro()" title="开始/暂停">▶</button>
+            <button class="pomo-btn reset" onclick="resetPomodoro()" title="重置">↺</button>
+          </div>
+        </div>
+      </div>
+
       <!-- 本周概览 -->
-      <div class="home-section-card compact">
-        <div class="home-card-header">
-          <span class="home-card-title">📊 本周概览</span>
+      <div class="home-section-card compact home-week-card">
+        <div class="home-card-header compact">
+          <span class="home-card-title"><span class="title-icon">📊</span>本周概览</span>
+          <span class="chart-demo-badge" id="chartDemoBadge" style="display: none;">DEMO</span>
         </div>
         <div class="home-week-stats" id="homeWeekStats"></div>
+        <div class="home-week-chart-container">
+          <div class="chart-title">构建趋势 (周一 ~ 周日)</div>
+          <div id="homeWeekChart"></div>
+        </div>
       </div>
     </aside>
   </div>

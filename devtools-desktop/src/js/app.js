@@ -22,7 +22,7 @@ let notifiedRunIds = new Set();
 let notifiedRunCompileErrors = new Set();
 let pendingRunCompileErrorTimers = {};
 const RUN_COMPILE_ERROR_NOTIFY_DELAY = 15000;
-const APP_VERSION = '0.1.29';
+const APP_VERSION = '0.1.32';
 
 // ========== 托盘菜单同步 ==========
 function syncTrayMenu() {
@@ -654,7 +654,15 @@ function switchPage(page, el) {
   const navEl = el || document.querySelector(`.sidebar-item[data-page="${page}"], .dock-item[data-page="${page}"]`);
   if (navEl) navEl.classList.add('active');
   const main = document.querySelector('.main-content');
-  if (main) { main.scrollTop = 0; main.scrollLeft = 0; }
+  if (main) {
+    main.scrollTop = 0;
+    main.scrollLeft = 0;
+    if (page === 'home') {
+      main.classList.add('home-active');
+    } else {
+      main.classList.remove('home-active');
+    }
+  }
   const activePage = document.getElementById('page-' + page);
   if (activePage) { activePage.scrollTop = 0; activePage.scrollLeft = 0; }
   if (page === 'deploy') {
