@@ -11469,3 +11469,236 @@ body[data-theme="dark"] .sys-progress-circle::before {
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4) !important;
 }
 
+/* 看板卡片 Checklist 进度与项展示 */
+.todo-card-checklist-container {
+  margin-top: 10px !important;
+  background: rgba(255, 255, 255, 0.01) !important;
+  border: 1px solid rgba(255, 255, 255, 0.03) !important;
+  border-radius: 6px !important;
+  padding: 8px !important;
+}
+
+.todo-card-checklist-progress {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  background: rgba(255, 255, 255, 0.03) !important;
+  border-radius: 10px !important;
+  height: 6px !important;
+  position: relative !important;
+  margin-bottom: 8px !important;
+  overflow: visible !important;
+}
+
+.todo-progress-bar {
+  background: linear-gradient(90deg, var(--primary) 0%, rgba(59, 130, 246, 0.6) 100%) !important;
+  height: 100% !important;
+  border-radius: 10px !important;
+  transition: width 0.3s ease !important;
+  box-shadow: 0 0 6px rgba(59, 130, 246, 0.4) !important;
+}
+
+.todo-progress-text {
+  font-size: 9px !important;
+  font-weight: 700 !important;
+  color: var(--text-muted) !important;
+  position: absolute !important;
+  right: 0 !important;
+  top: -12px !important;
+}
+
+.todo-card-checklist-items {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+}
+
+.todo-card-checklist-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 4px 6px !important;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+  transition: background 0.2s !important;
+}
+
+.todo-card-checklist-item:hover {
+  background: rgba(255, 255, 255, 0.03) !important;
+}
+
+.todo-item-check-icon {
+  width: 12px !important;
+  height: 12px !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 3px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 8px !important;
+  color: #fff !important;
+  background: transparent !important;
+  flex-shrink: 0 !important;
+  transition: all 0.2s !important;
+}
+
+.todo-card-checklist-item.done .todo-item-check-icon {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 4px rgba(59, 130, 246, 0.4) !important;
+}
+
+.todo-item-text {
+  font-size: 11px !important;
+  color: var(--text-secondary) !important;
+  text-decoration: none !important;
+  transition: all 0.2s !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.todo-card-checklist-item.done .todo-item-text {
+  color: var(--text-muted) !important;
+  text-decoration: line-through !important;
+  opacity: 0.5 !important;
+}
+
+.todo-card-desc-text {
+  font-size: 12px !important;
+  color: var(--text-secondary) !important;
+  line-height: 1.5 !important;
+  margin-bottom: 6px !important;
+  white-space: pre-wrap !important;
+}
+
+.todo-checklist-more-hint {
+  font-size: 10px !important;
+  color: var(--text-muted) !important;
+  opacity: 0.7 !important;
+  padding-left: 6px !important;
+  margin-top: 2px !important;
+}
+
+/* 弹窗 Checklist 编辑器样式 */
+.checklist-group {
+  flex: 1.2 !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.todo-checklist-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  margin-bottom: 4px !important;
+}
+
+.todo-add-item-btn {
+  background: transparent !important;
+  border: none !important;
+  color: var(--primary) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  padding: 4px 8px !important;
+  border-radius: 4px !important;
+  transition: all 0.2s !important;
+}
+
+.todo-add-item-btn:hover {
+  background: var(--primary-light) !important;
+  box-shadow: 0 0 6px rgba(59, 130, 246, 0.15) !important;
+}
+
+.todo-checklist-items-list {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+  padding: 4px 2px !important;
+}
+
+/* 滚动条 */
+.todo-checklist-items-list::-webkit-scrollbar {
+  width: 4px !important;
+}
+.todo-checklist-items-list::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+.todo-checklist-items-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-radius: 2px !important;
+}
+
+.todo-editor-checklist-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  background: rgba(255, 255, 255, 0.02) !important;
+  border: 1px solid rgba(255, 255, 255, 0.04) !important;
+  border-radius: 6px !important;
+  padding: 6px 10px !important;
+  box-sizing: border-box !important;
+  transition: all 0.2s !important;
+}
+
+.todo-editor-checklist-item:focus-within {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.todo-editor-item-checkbox {
+  width: 14px !important;
+  height: 14px !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 4px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 9px !important;
+  color: #fff !important;
+  cursor: pointer !important;
+  flex-shrink: 0 !important;
+  transition: all 0.2s !important;
+}
+
+.todo-editor-item-checkbox.checked {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+}
+
+.todo-editor-item-input {
+  flex: 1 !important;
+  border: none !important;
+  background: transparent !important;
+  color: var(--text-primary) !important;
+  font-size: 12px !important;
+  outline: none !important;
+  padding: 0 !important;
+  height: 20px !important;
+  font-family: inherit !important;
+}
+
+.todo-editor-item-delete {
+  background: transparent !important;
+  border: none !important;
+  color: var(--text-muted) !important;
+  font-size: 11px !important;
+  cursor: pointer !important;
+  opacity: 0.3 !important;
+  transition: all 0.2s !important;
+  padding: 2px 6px !important;
+}
+
+.todo-editor-checklist-item:hover .todo-editor-item-delete {
+  opacity: 0.8 !important;
+}
+
+.todo-editor-item-delete:hover {
+  color: #ef4444 !important;
+  opacity: 1 !important;
+}
+

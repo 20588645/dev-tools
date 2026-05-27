@@ -51,9 +51,38 @@ function renderTodoCard(todo) {
 
   const titleClass = 'todo-card-title';
   const doneIcon = todo.status === 'done' ? '<span class="todo-done-icon">✓</span>' : '';
-  const contentHtml = todo.content
-    ? `<div class="todo-card-content">${escapeHtml(todo.content)}</div>`
+  
+  const { desc, checklist } = parseTodoContent(todo.content);
+  let innerContentHtml = '';
+  if (desc) {
+    innerContentHtml += `<div class="todo-card-desc-text">${escapeHtml(desc)}</div>`;
+  }
+  if (checklist.length > 0) {
+    const doneCount = checklist.filter(item => item.done).length;
+    const progressPercent = Math.round((doneCount / checklist.length) * 100);
+    innerContentHtml += `
+      <div class="todo-card-checklist-container">
+        <div class="todo-card-checklist-progress">
+          <div class="todo-progress-bar" style="width: ${progressPercent}%"></div>
+          <span class="todo-progress-text">${doneCount}/${checklist.length}</span>
+        </div>
+        <div class="todo-card-checklist-items">
+          ${checklist.slice(0, 5).map((item, idx) => `
+            <div class="todo-card-checklist-item ${item.done ? 'done' : ''}" onclick="event.stopPropagation(); toggleSubtask('${todo.id}', ${idx})">
+              <span class="todo-item-check-icon">${item.done ? '✓' : ''}</span>
+              <span class="todo-item-text">${escapeHtml(item.text)}</span>
+            </div>
+          `).join('')}
+          ${checklist.length > 5 ? `<div class="todo-checklist-more-hint">还有 ${checklist.length - 5} 项...</div>` : ''}
+        </div>
+      </div>
+    `;
+  }
+  
+  const contentHtml = innerContentHtml
+    ? `<div class="todo-card-content">${innerContentHtml}</div>`
     : '';
+    
   const remindHtml = todo.remindAt
     ? `<span class="todo-card-remind">⏰ ${new Date(todo.remindAt).toLocaleString('zh-CN', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' })}</span>`
     : '';
@@ -119,7 +148,14 @@ function showAddTodo() {
           </div>
           <div class="todo-form-group content-group">
             <label class="todo-field-label">详细描述 (可选)</label>
-            <textarea id="addTodoContent" class="todo-content-textarea" placeholder="在此填写详细内容，支持换行和多行输入..." rows="6"></textarea>
+            <textarea id="addTodoContent" class="todo-content-textarea" placeholder="在此填写详细内容，支持换行和多行输入..." rows="3"></textarea>
+          </div>
+          <div class="todo-form-group checklist-group">
+            <div class="todo-checklist-header">
+              <label class="todo-field-label">子任务清单</label>
+              <button type="button" class="todo-add-item-btn" onclick="addChecklistItemDOM('addRemindPicker')">+ 添加子项</button>
+            </div>
+            <div class="todo-checklist-items-list" id="addTodoChecklistList"></div>
           </div>
         </div>
         
@@ -178,7 +214,11 @@ function showAddTodo() {
     `;
     overlay.classList.add('active');
     overlay.classList.add('todo-dialog-overlay');
-    setTimeout(() => { document.getElementById('addTodoTitle')?.focus(); initRemindPicker('addRemindPicker', ''); }, 50);
+    setTimeout(() => { 
+      document.getElementById('addTodoTitle')?.focus(); 
+      initRemindPicker('addRemindPicker', ''); 
+      renderChecklistEditor('addTodoChecklistList', []);
+    }, 50);
 
     const cleanup = (result) => {
       overlay.classList.remove('active');
@@ -190,9 +230,11 @@ function showAddTodo() {
     document.getElementById('sysCancel').onclick = () => cleanup(null);
     document.getElementById('sysOk').onclick = () => {
       const title = document.getElementById('addTodoTitle')?.value?.trim();
-      const content = document.getElementById('addTodoContent')?.value?.trim();
+      const desc = document.getElementById('addTodoContent')?.value?.trim();
+      const checklist = getChecklistValues('addTodoChecklistList');
       const remindAt = getRemindValue('addRemindPicker');
       if (!title) { showToast('⚠️ 标题不能为空'); return; }
+      const content = serializeTodoContent(desc, checklist);
       cleanup({ title, content, remindAt: remindAt ? new Date(remindAt).toISOString() : '' });
     };
     document.getElementById('addTodoTitle').addEventListener('keydown', (e) => {
@@ -235,7 +277,14 @@ async function editTodo(id) {
           </div>
           <div class="todo-form-group content-group">
             <label class="todo-field-label">详细描述 (可选)</label>
-            <textarea id="editTodoContent" class="todo-content-textarea" placeholder="在此填写详细内容，支持换行和多行输入..." rows="6">${escapeHtml(todo.content || '')}</textarea>
+            <textarea id="editTodoContent" class="todo-content-textarea" placeholder="在此填写详细内容，支持换行和多行输入..." rows="3"></textarea>
+          </div>
+          <div class="todo-form-group checklist-group">
+            <div class="todo-checklist-header">
+              <label class="todo-field-label">子任务清单</label>
+              <button type="button" class="todo-add-item-btn" onclick="addChecklistItemDOM('editRemindPicker')">+ 添加子项</button>
+            </div>
+            <div class="todo-checklist-items-list" id="editTodoChecklistList"></div>
           </div>
         </div>
         
@@ -294,7 +343,14 @@ async function editTodo(id) {
     `;
     overlay.classList.add('active');
     overlay.classList.add('todo-dialog-overlay');
-    setTimeout(() => { document.getElementById('editTodoTitle')?.focus(); initRemindPicker('editRemindPicker', todo.remindAt || ''); }, 50);
+    setTimeout(() => { 
+      document.getElementById('editTodoTitle')?.focus(); 
+      initRemindPicker('editRemindPicker', todo.remindAt || ''); 
+      const parsed = parseTodoContent(todo.content || '');
+      const descEl = document.getElementById('editTodoContent');
+      if (descEl) descEl.value = parsed.desc;
+      renderChecklistEditor('editTodoChecklistList', parsed.checklist);
+    }, 50);
 
     const cleanup = (val) => {
       overlay.classList.remove('active');
@@ -306,9 +362,11 @@ async function editTodo(id) {
     document.getElementById('sysCancel').onclick = () => cleanup(null);
     document.getElementById('sysOk').onclick = () => {
       const title = document.getElementById('editTodoTitle')?.value?.trim();
-      const content = document.getElementById('editTodoContent')?.value?.trim();
+      const desc = document.getElementById('editTodoContent')?.value?.trim();
+      const checklist = getChecklistValues('editTodoChecklistList');
       const remindAt = getRemindValue('editRemindPicker');
       if (!title) { showToast('⚠️ 标题不能为空'); return; }
+      const content = serializeTodoContent(desc, checklist);
       cleanup({ title, content, remindAt: remindAt ? new Date(remindAt).toISOString() : '' });
     };
   }).then(async result => {
@@ -703,3 +761,167 @@ function closeAllPopovers() {
 document.addEventListener('click', () => {
   closeAllPopovers();
 });
+
+// ========== 子项目清单 (Checklist / Subtasks) 核心机制 ==========
+
+// 解析 content 中的普通描述和子任务
+function parseTodoContent(contentStr) {
+  if (!contentStr) return { desc: '', checklist: [] };
+  
+  const parts = contentStr.split('\n[checklist]\n');
+  const desc = parts[0] || '';
+  const checklistStr = parts[1] || '';
+  
+  const checklist = [];
+  if (checklistStr) {
+    const lines = checklistStr.split('\n');
+    lines.forEach(line => {
+      const match = line.match(/^-\s*\[([ xX])\]\s*(.*)$/);
+      if (match) {
+        checklist.push({
+          done: match[1].toLowerCase() === 'x',
+          text: match[2].trim()
+        });
+      }
+    });
+  } else {
+    // 兼容可能直接在正文中写 markdown 列表的老数据
+    const lines = contentStr.split('\n');
+    const newLines = [];
+    lines.forEach(line => {
+      const match = line.match(/^-\s*\[([ xX])\]\s*(.*)$/);
+      if (match) {
+        checklist.push({
+          done: match[1].toLowerCase() === 'x',
+          text: match[2].trim()
+        });
+      } else {
+        newLines.push(line);
+      }
+    });
+    if (checklist.length > 0) {
+      return { desc: newLines.join('\n').trim(), checklist };
+    }
+  }
+  
+  return { desc: desc.trim(), checklist };
+}
+
+// 序列化普通描述和子任务为 content 字符串
+function serializeTodoContent(desc, checklist) {
+  const cleanDesc = (desc || '').trim();
+  if (!checklist || checklist.length === 0) return cleanDesc;
+  
+  const checklistStr = checklist
+    .map(item => `- [${item.done ? 'x' : ' '}] ${(item.text || '').trim()}`)
+    .filter(line => line.length > 0) // 过滤掉空内容的子项
+    .join('\n');
+    
+  if (!checklistStr) return cleanDesc;
+  return `${cleanDesc}\n\n[checklist]\n${checklistStr}`;
+}
+
+// 渲染弹窗中的子项配置区
+function renderChecklistEditor(containerId, checklist) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  
+  container.innerHTML = (checklist || []).map((item, idx) => `
+    <div class="todo-editor-checklist-item">
+      <div class="todo-editor-item-checkbox ${item.done ? 'checked' : ''}" onclick="toggleEditorChecklistItem(this)">
+        ${item.done ? '✓' : ''}
+      </div>
+      <input type="text" class="todo-editor-item-input" value="${escapeAttr(item.text)}" placeholder="输入子任务内容... (按回车添加新行)" onkeydown="handleChecklistInputKey(event, this)">
+      <button type="button" class="todo-editor-item-delete" onclick="deleteChecklistItemDOM(this)" title="删除">✕</button>
+    </div>
+  `).join('');
+}
+
+// 处理回车新建下一个子任务输入并聚焦
+function handleChecklistInputKey(event, inputEl) {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    const itemEl = inputEl.closest('.todo-editor-checklist-item');
+    
+    const newItem = document.createElement('div');
+    newItem.className = 'todo-editor-checklist-item';
+    newItem.innerHTML = `
+      <div class="todo-editor-item-checkbox" onclick="toggleEditorChecklistItem(this)"></div>
+      <input type="text" class="todo-editor-item-input" value="" placeholder="输入子任务内容... (按回车添加新行)" onkeydown="handleChecklistInputKey(event, this)">
+      <button type="button" class="todo-editor-item-delete" onclick="deleteChecklistItemDOM(this)" title="删除">✕</button>
+    `;
+    
+    itemEl.after(newItem);
+    newItem.querySelector('.todo-editor-item-input').focus();
+  }
+}
+
+// 按钮点击添加子任务
+function addChecklistItemDOM(pickerId) {
+  const isAdd = pickerId.startsWith('add');
+  const listId = isAdd ? 'addTodoChecklistList' : 'editTodoChecklistList';
+  const listEl = document.getElementById(listId);
+  if (!listEl) return;
+  
+  const newItem = document.createElement('div');
+  newItem.className = 'todo-editor-checklist-item';
+  newItem.innerHTML = `
+    <div class="todo-editor-item-checkbox" onclick="toggleEditorChecklistItem(this)"></div>
+    <input type="text" class="todo-editor-item-input" value="" placeholder="输入子任务内容... (按回车添加新行)" onkeydown="handleChecklistInputKey(event, this)">
+    <button type="button" class="todo-editor-item-delete" onclick="deleteChecklistItemDOM(this)" title="删除">✕</button>
+  `;
+  listEl.appendChild(newItem);
+  newItem.querySelector('.todo-editor-item-input').focus();
+}
+
+// 编辑弹窗内点击勾选框切换
+function toggleEditorChecklistItem(checkboxEl) {
+  checkboxEl.classList.toggle('checked');
+  if (checkboxEl.classList.contains('checked')) {
+    checkboxEl.textContent = '✓';
+  } else {
+    checkboxEl.textContent = '';
+  }
+}
+
+// 删除子任务 DOM
+function deleteChecklistItemDOM(btnEl) {
+  const itemEl = btnEl.closest('.todo-editor-checklist-item');
+  if (itemEl) itemEl.remove();
+}
+
+// 从 DOM 列表中抽取数组
+function getChecklistValues(listId) {
+  const listEl = document.getElementById(listId);
+  if (!listEl) return [];
+  
+  const items = [];
+  listEl.querySelectorAll('.todo-editor-checklist-item').forEach(itemEl => {
+    const text = itemEl.querySelector('.todo-editor-item-input').value.trim();
+    if (text) {
+      const done = itemEl.querySelector('.todo-editor-item-checkbox').classList.contains('checked');
+      items.push({ text, done });
+    }
+  });
+  return items;
+}
+
+// 快速切换卡片上的子任务状态，并推送到后端
+async function toggleSubtask(todoId, index) {
+  const todo = todosData.find(t => t.id === todoId);
+  if (!todo) return;
+  
+  const { desc, checklist } = parseTodoContent(todo.content);
+  if (checklist[index]) {
+    checklist[index].done = !checklist[index].done;
+    const newContent = serializeTodoContent(desc, checklist);
+    
+    try {
+      await API.put('/api/todos/' + todoId, { content: newContent });
+      todo.content = newContent;
+      renderTodoBoard();
+    } catch (err) {
+      showToast('⚠️ 更新子任务失败', err.message);
+    }
+  }
+}
