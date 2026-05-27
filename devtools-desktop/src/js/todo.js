@@ -149,16 +149,12 @@ function showAddTodo() {
               </div>
               
               <div class="remind-time-row-vertical">
-                <div class="custom-time-picker-wrapper">
-                  <div class="custom-select-container">
-                    <div class="custom-select-trigger" onclick="toggleTimePopover('addRemindPicker','hour')">12</div>
-                    <div class="custom-select-popover custom-hour-popover" style="display:none"></div>
+                <div class="custom-time-container">
+                  <div class="custom-time-trigger" onclick="toggleTimePopover('addRemindPicker')">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="remind-clock-icon"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    <span class="custom-time-value">12:00</span>
                   </div>
-                  <span class="remind-time-sep">:</span>
-                  <div class="custom-select-container">
-                    <div class="custom-select-trigger" onclick="toggleTimePopover('addRemindPicker','minute')">00</div>
-                    <div class="custom-select-popover custom-minute-popover" style="display:none"></div>
-                  </div>
+                  <div class="custom-time-popover" style="display:none"></div>
                 </div>
                 <button type="button" class="remind-quick-btn remind-clear-btn" onclick="clearRemind('addRemindPicker')">清除</button>
               </div>
@@ -269,16 +265,12 @@ async function editTodo(id) {
               </div>
               
               <div class="remind-time-row-vertical">
-                <div class="custom-time-picker-wrapper">
-                  <div class="custom-select-container">
-                    <div class="custom-select-trigger" onclick="toggleTimePopover('editRemindPicker','hour')">12</div>
-                    <div class="custom-select-popover custom-hour-popover" style="display:none"></div>
+                <div class="custom-time-container">
+                  <div class="custom-time-trigger" onclick="toggleTimePopover('editRemindPicker')">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="remind-clock-icon"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    <span class="custom-time-value">12:00</span>
                   </div>
-                  <span class="remind-time-sep">:</span>
-                  <div class="custom-select-container">
-                    <div class="custom-select-trigger" onclick="toggleTimePopover('editRemindPicker','minute')">00</div>
-                    <div class="custom-select-popover custom-minute-popover" style="display:none"></div>
-                  </div>
+                  <div class="custom-time-popover" style="display:none"></div>
                 </div>
                 <button type="button" class="remind-quick-btn remind-clear-btn" onclick="clearRemind('editRemindPicker')">清除</button>
               </div>
@@ -414,8 +406,7 @@ function initRemindPicker(pickerId, existingDate) {
   const minuteSelect = picker.querySelector('.remind-minute');
   const display = picker.querySelector('.remind-date-display');
   const dateText = picker.querySelector('.custom-date-value');
-  const hourTrigger = picker.querySelector('.custom-hour-popover').previousElementSibling;
-  const minuteTrigger = picker.querySelector('.custom-minute-popover').previousElementSibling;
+  const timeText = picker.querySelector('.custom-time-value');
 
   hourSelect.innerHTML = Array.from({length: 24}, (_, i) => 
     `<option value="${i}">${String(i).padStart(2,'0')}</option>`
@@ -436,8 +427,7 @@ function initRemindPicker(pickerId, existingDate) {
     hourSelect.value = h;
     minuteSelect.value = m;
     
-    if (hourTrigger) hourTrigger.textContent = String(h).padStart(2,'0');
-    if (minuteTrigger) minuteTrigger.textContent = String(m).padStart(2,'0');
+    if (timeText) timeText.textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
     
     updateRemindDisplay(pickerId);
   } else {
@@ -448,8 +438,7 @@ function initRemindPicker(pickerId, existingDate) {
     hourSelect.value = h;
     minuteSelect.value = m;
     
-    if (hourTrigger) hourTrigger.textContent = String(h).padStart(2,'0');
-    if (minuteTrigger) minuteTrigger.textContent = String(m).padStart(2,'0');
+    if (timeText) timeText.textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
     if (dateText) dateText.textContent = '选择日期...';
     
     display.textContent = '未设置';
@@ -490,9 +479,16 @@ function updateRemindDisplay(pickerId) {
   if (!picker) return;
   const display = picker.querySelector('.remind-date-display');
   const dateStr = picker.dataset.date;
-  if (!dateStr) { display.textContent = '未设置'; return; }
+  
   const hour = picker.querySelector('.remind-hour').value;
   const minute = picker.querySelector('.remind-minute').value;
+  
+  const timeText = picker.querySelector('.custom-time-value');
+  if (timeText) {
+    timeText.textContent = `${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}`;
+  }
+
+  if (!dateStr) { display.textContent = '未设置'; return; }
   const d = new Date(dateStr + 'T00:00:00');
   const weekdays = ['周日','周一','周二','周三','周四','周五','周六'];
   display.textContent = `${d.getMonth()+1}/${d.getDate()} ${weekdays[d.getDay()]} ${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}`;
@@ -615,33 +611,61 @@ function selectCalDate(pickerId, dateStr) {
   updateRemindDisplay(pickerId);
 }
 
-function toggleTimePopover(pickerId, type) {
+function toggleTimePopover(pickerId) {
   event.stopPropagation();
   const picker = document.getElementById(pickerId);
   if (!picker) return;
   
-  const popover = picker.querySelector(`.custom-${type}-popover`);
+  const popover = picker.querySelector('.custom-time-popover');
   if (!popover) return;
   
   const isHidden = popover.style.display === 'none';
   closeAllPopovers();
   
   if (isHidden) {
-    const itemsCount = type === 'hour' ? 24 : 12;
-    const selectId = `${pickerId.startsWith('add') ? 'add' : 'edit'}Remind${type.charAt(0).toUpperCase() + type.slice(1)}`;
-    const currentVal = document.getElementById(selectId)?.value || '0';
+    const isAdd = pickerId.startsWith('add');
+    const hourVal = parseInt(document.getElementById(isAdd ? 'addRemindHour' : 'editRemindHour')?.value || '12');
+    const minuteVal = parseInt(document.getElementById(isAdd ? 'addRemindMinute' : 'editRemindMinute')?.value || '0');
     
-    let html = `<ul>`;
-    for (let i = 0; i < itemsCount; i++) {
-      const val = type === 'hour' ? i : i * 5;
-      const valStr = String(val).padStart(2,'0');
-      const isSelected = parseInt(currentVal) === val ? 'active' : '';
-      html += `<li class="${isSelected}" onclick="selectTimeVal('${pickerId}','${type}',${val})">${valStr}</li>`;
+    let html = `
+      <div class="time-popover-cols">
+        <div class="time-popover-col">
+          <div class="time-popover-col-title">时</div>
+          <ul>
+    `;
+    for (let h = 0; h < 24; h++) {
+      const activeClass = h === hourVal ? 'active' : '';
+      html += `<li class="${activeClass}" onclick="selectTimeVal('${pickerId}','hour',${h})">${String(h).padStart(2,'0')}</li>`;
     }
-    html += `</ul>`;
+    html += `
+          </ul>
+        </div>
+        <div class="time-popover-col">
+          <div class="time-popover-col-title">分</div>
+          <ul>
+    `;
+    for (let m = 0; m < 12; m++) {
+      const min = m * 5;
+      const activeClass = min === minuteVal ? 'active' : '';
+      html += `<li class="${activeClass}" onclick="selectTimeVal('${pickerId}','minute',${min})">${String(min).padStart(2,'0')}</li>`;
+    }
+    html += `
+          </ul>
+        </div>
+      </div>
+    `;
     
     popover.innerHTML = html;
     popover.style.display = 'block';
+    
+    setTimeout(() => {
+      popover.querySelectorAll('.time-popover-col').forEach(col => {
+        const activeItem = col.querySelector('li.active');
+        if (activeItem) {
+          col.querySelector('ul').scrollTop = activeItem.offsetTop - 50;
+        }
+      });
+    }, 20);
   }
 }
 
@@ -656,17 +680,22 @@ function selectTimeVal(pickerId, type, val) {
     select.value = val;
   }
   
-  const trigger = picker.querySelector(`.custom-select-popover.custom-${type}-popover`).previousElementSibling;
-  if (trigger) {
-    trigger.textContent = String(val).padStart(2,'0');
+  const popover = picker.querySelector('.custom-time-popover');
+  if (popover) {
+    const colIndex = type === 'hour' ? 0 : 1;
+    const col = popover.querySelectorAll('.time-popover-col')[colIndex];
+    if (col) {
+      col.querySelectorAll('li').forEach(li => li.classList.remove('active'));
+      const activeLi = Array.from(col.querySelectorAll('li')).find(li => parseInt(li.textContent) === val);
+      if (activeLi) activeLi.classList.add('active');
+    }
   }
   
-  picker.querySelector(`.custom-${type}-popover`).style.display = 'none';
   updateRemindDisplay(pickerId);
 }
 
 function closeAllPopovers() {
-  document.querySelectorAll('.custom-calendar-popover, .custom-select-popover').forEach(el => {
+  document.querySelectorAll('.custom-calendar-popover, .custom-time-popover').forEach(el => {
     el.style.display = 'none';
   });
 }
