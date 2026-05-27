@@ -111,36 +111,51 @@ function showAddTodo() {
     }
     document.getElementById('sysDialogMsg').textContent = '新建任务';
     document.getElementById('sysDialogBtns').innerHTML = `
-      <div class="todo-form-container">
-        <input type="text" id="addTodoTitle" class="todo-title-input" placeholder="任务标题">
-        <textarea id="addTodoContent" class="todo-content-textarea" placeholder="详细内容（可选）" rows="3"></textarea>
-        
-        <div class="todo-remind-section">
-          <div class="todo-remind-title-row">
-            <span class="todo-remind-label">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="remind-bell-icon"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-              任务提醒
-            </span>
-            <span class="remind-date-display" id="addRemindDisplay">未设置</span>
+      <div class="todo-form-container double-column">
+        <div class="todo-form-main">
+          <div class="todo-form-group">
+            <label class="todo-field-label">任务标题</label>
+            <input type="text" id="addTodoTitle" class="todo-title-input" placeholder="输入任务名称...">
           </div>
-          
-          <div class="remind-picker" id="addRemindPicker">
-            <div class="remind-quick-btns">
-              <button type="button" class="remind-quick-btn" onclick="setRemindQuick('addRemindPicker',0)">今天</button>
-              <button type="button" class="remind-quick-btn" onclick="setRemindQuick('addRemindPicker',1)">明天</button>
-              <button type="button" class="remind-quick-btn" onclick="setRemindQuick('addRemindPicker',2)">后天</button>
-              <button type="button" class="remind-quick-btn" onclick="setRemindQuick('addRemindPicker',7)">下周</button>
-              <button type="button" class="remind-quick-btn remind-clear-btn" onclick="clearRemind('addRemindPicker')">清除</button>
+          <div class="todo-form-group">
+            <label class="todo-field-label">详细描述 (可选)</label>
+            <textarea id="addTodoContent" class="todo-content-textarea" placeholder="在此填写详细内容，支持换行和多行输入..." rows="6"></textarea>
+          </div>
+        </div>
+        
+        <div class="todo-form-sidebar">
+          <div class="todo-remind-section">
+            <div class="todo-remind-title-row">
+              <span class="todo-remind-label">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="remind-bell-icon"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                提醒设置
+              </span>
             </div>
-            <div class="remind-time-row">
+            
+            <div class="remind-picker" id="addRemindPicker">
+              <div class="remind-quick-btns">
+                <button type="button" class="remind-quick-btn" onclick="setRemindQuick('addRemindPicker',0)">今天</button>
+                <button type="button" class="remind-quick-btn" onclick="setRemindQuick('addRemindPicker',1)">明天</button>
+                <button type="button" class="remind-quick-btn" onclick="setRemindQuick('addRemindPicker',2)">后天</button>
+                <button type="button" class="remind-quick-btn" onclick="setRemindQuick('addRemindPicker',7)">下周</button>
+              </div>
+              
               <div class="remind-date-wrapper">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="remind-calendar-icon"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                 <input type="date" class="remind-date-input" id="addRemindDateInput">
               </div>
-              <div class="remind-select-wrapper">
-                <select class="remind-hour" id="addRemindHour"></select>
-                <span class="remind-time-sep">:</span>
-                <select class="remind-minute" id="addRemindMinute"></select>
+              
+              <div class="remind-time-row-vertical">
+                <div class="remind-select-wrapper">
+                  <select class="remind-hour" id="addRemindHour"></select>
+                  <span class="remind-time-sep">:</span>
+                  <select class="remind-minute" id="addRemindMinute"></select>
+                </div>
+                <button type="button" class="remind-quick-btn remind-clear-btn" onclick="clearRemind('addRemindPicker')">清除</button>
+              </div>
+              
+              <div class="remind-display-wrapper">
+                <span class="remind-date-display" id="addRemindDisplay">未设置</span>
               </div>
             </div>
           </div>
@@ -202,36 +217,51 @@ async function editTodo(id) {
     }
     document.getElementById('sysDialogMsg').textContent = '编辑任务';
     document.getElementById('sysDialogBtns').innerHTML = `
-      <div class="todo-form-container">
-        <input type="text" id="editTodoTitle" class="todo-title-input" placeholder="任务标题" value="${escapeAttr(todo.title)}">
-        <textarea id="editTodoContent" class="todo-content-textarea" placeholder="详细内容（可选）" rows="3">${escapeHtml(todo.content || '')}</textarea>
-        
-        <div class="todo-remind-section">
-          <div class="todo-remind-title-row">
-            <span class="todo-remind-label">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="remind-bell-icon"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-              任务提醒
-            </span>
-            <span class="remind-date-display" id="editRemindDisplay">未设置</span>
+      <div class="todo-form-container double-column">
+        <div class="todo-form-main">
+          <div class="todo-form-group">
+            <label class="todo-field-label">任务标题</label>
+            <input type="text" id="editTodoTitle" class="todo-title-input" placeholder="输入任务名称..." value="${escapeAttr(todo.title)}">
           </div>
-          
-          <div class="remind-picker" id="editRemindPicker">
-            <div class="remind-quick-btns">
-              <button type="button" class="remind-quick-btn" onclick="setRemindQuick('editRemindPicker',0)">今天</button>
-              <button type="button" class="remind-quick-btn" onclick="setRemindQuick('editRemindPicker',1)">明天</button>
-              <button type="button" class="remind-quick-btn" onclick="setRemindQuick('editRemindPicker',2)">后天</button>
-              <button type="button" class="remind-quick-btn" onclick="setRemindQuick('editRemindPicker',7)">下周</button>
-              <button type="button" class="remind-quick-btn remind-clear-btn" onclick="clearRemind('editRemindPicker')">清除</button>
+          <div class="todo-form-group">
+            <label class="todo-field-label">详细描述 (可选)</label>
+            <textarea id="editTodoContent" class="todo-content-textarea" placeholder="在此填写详细内容，支持换行和多行输入..." rows="6">${escapeHtml(todo.content || '')}</textarea>
+          </div>
+        </div>
+        
+        <div class="todo-form-sidebar">
+          <div class="todo-remind-section">
+            <div class="todo-remind-title-row">
+              <span class="todo-remind-label">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="remind-bell-icon"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                提醒设置
+              </span>
             </div>
-            <div class="remind-time-row">
+            
+            <div class="remind-picker" id="editRemindPicker">
+              <div class="remind-quick-btns">
+                <button type="button" class="remind-quick-btn" onclick="setRemindQuick('editRemindPicker',0)">今天</button>
+                <button type="button" class="remind-quick-btn" onclick="setRemindQuick('editRemindPicker',1)">明天</button>
+                <button type="button" class="remind-quick-btn" onclick="setRemindQuick('editRemindPicker',2)">后天</button>
+                <button type="button" class="remind-quick-btn" onclick="setRemindQuick('editRemindPicker',7)">下周</button>
+              </div>
+              
               <div class="remind-date-wrapper">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="remind-calendar-icon"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                 <input type="date" class="remind-date-input" id="editRemindDateInput">
               </div>
-              <div class="remind-select-wrapper">
-                <select class="remind-hour" id="editRemindHour"></select>
-                <span class="remind-time-sep">:</span>
-                <select class="remind-minute" id="editRemindMinute"></select>
+              
+              <div class="remind-time-row-vertical">
+                <div class="remind-select-wrapper">
+                  <select class="remind-hour" id="editRemindHour"></select>
+                  <span class="remind-time-sep">:</span>
+                  <select class="remind-minute" id="editRemindMinute"></select>
+                </div>
+                <button type="button" class="remind-quick-btn remind-clear-btn" onclick="clearRemind('editRemindPicker')">清除</button>
+              </div>
+              
+              <div class="remind-display-wrapper">
+                <span class="remind-date-display" id="editRemindDisplay">未设置</span>
               </div>
             </div>
           </div>
