@@ -117,7 +117,7 @@ function showAddTodo() {
             <label class="todo-field-label">任务标题</label>
             <input type="text" id="addTodoTitle" class="todo-title-input" placeholder="输入任务名称...">
           </div>
-          <div class="todo-form-group">
+          <div class="todo-form-group content-group">
             <label class="todo-field-label">详细描述 (可选)</label>
             <textarea id="addTodoContent" class="todo-content-textarea" placeholder="在此填写详细内容，支持换行和多行输入..." rows="6"></textarea>
           </div>
@@ -140,18 +140,32 @@ function showAddTodo() {
                 <button type="button" class="remind-quick-btn" onclick="setRemindQuick('addRemindPicker',7)">下周</button>
               </div>
               
-              <div class="remind-date-wrapper">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="remind-calendar-icon"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                <input type="date" class="remind-date-input" id="addRemindDateInput">
+              <div class="custom-date-container">
+                <div class="custom-date-trigger" onclick="toggleCalendarPopover('addRemindPicker')">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="remind-calendar-icon"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                  <span class="custom-date-value">选择日期...</span>
+                </div>
+                <div class="custom-calendar-popover" style="display:none"></div>
               </div>
               
               <div class="remind-time-row-vertical">
-                <div class="remind-select-wrapper">
-                  <select class="remind-hour" id="addRemindHour"></select>
+                <div class="custom-time-picker-wrapper">
+                  <div class="custom-select-container">
+                    <div class="custom-select-trigger" onclick="toggleTimePopover('addRemindPicker','hour')">12</div>
+                    <div class="custom-select-popover custom-hour-popover" style="display:none"></div>
+                  </div>
                   <span class="remind-time-sep">:</span>
-                  <select class="remind-minute" id="addRemindMinute"></select>
+                  <div class="custom-select-container">
+                    <div class="custom-select-trigger" onclick="toggleTimePopover('addRemindPicker','minute')">00</div>
+                    <div class="custom-select-popover custom-minute-popover" style="display:none"></div>
+                  </div>
                 </div>
                 <button type="button" class="remind-quick-btn remind-clear-btn" onclick="clearRemind('addRemindPicker')">清除</button>
+              </div>
+              
+              <div style="display:none">
+                <select class="remind-hour" id="addRemindHour"></select>
+                <select class="remind-minute" id="addRemindMinute"></select>
               </div>
               
               <div class="remind-display-wrapper">
@@ -223,7 +237,7 @@ async function editTodo(id) {
             <label class="todo-field-label">任务标题</label>
             <input type="text" id="editTodoTitle" class="todo-title-input" placeholder="输入任务名称..." value="${escapeAttr(todo.title)}">
           </div>
-          <div class="todo-form-group">
+          <div class="todo-form-group content-group">
             <label class="todo-field-label">详细描述 (可选)</label>
             <textarea id="editTodoContent" class="todo-content-textarea" placeholder="在此填写详细内容，支持换行和多行输入..." rows="6">${escapeHtml(todo.content || '')}</textarea>
           </div>
@@ -246,18 +260,32 @@ async function editTodo(id) {
                 <button type="button" class="remind-quick-btn" onclick="setRemindQuick('editRemindPicker',7)">下周</button>
               </div>
               
-              <div class="remind-date-wrapper">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="remind-calendar-icon"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                <input type="date" class="remind-date-input" id="editRemindDateInput">
+              <div class="custom-date-container">
+                <div class="custom-date-trigger" onclick="toggleCalendarPopover('editRemindPicker')">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="remind-calendar-icon"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                  <span class="custom-date-value">选择日期...</span>
+                </div>
+                <div class="custom-calendar-popover" style="display:none"></div>
               </div>
               
               <div class="remind-time-row-vertical">
-                <div class="remind-select-wrapper">
-                  <select class="remind-hour" id="editRemindHour"></select>
+                <div class="custom-time-picker-wrapper">
+                  <div class="custom-select-container">
+                    <div class="custom-select-trigger" onclick="toggleTimePopover('editRemindPicker','hour')">12</div>
+                    <div class="custom-select-popover custom-hour-popover" style="display:none"></div>
+                  </div>
                   <span class="remind-time-sep">:</span>
-                  <select class="remind-minute" id="editRemindMinute"></select>
+                  <div class="custom-select-container">
+                    <div class="custom-select-trigger" onclick="toggleTimePopover('editRemindPicker','minute')">00</div>
+                    <div class="custom-select-popover custom-minute-popover" style="display:none"></div>
+                  </div>
                 </div>
                 <button type="button" class="remind-quick-btn remind-clear-btn" onclick="clearRemind('editRemindPicker')">清除</button>
+              </div>
+              
+              <div style="display:none">
+                <select class="remind-hour" id="editRemindHour"></select>
+                <select class="remind-minute" id="editRemindMinute"></select>
               </div>
               
               <div class="remind-display-wrapper">
@@ -385,7 +413,9 @@ function initRemindPicker(pickerId, existingDate) {
   const hourSelect = picker.querySelector('.remind-hour');
   const minuteSelect = picker.querySelector('.remind-minute');
   const display = picker.querySelector('.remind-date-display');
-  const dateInput = picker.querySelector('.remind-date-input');
+  const dateText = picker.querySelector('.custom-date-value');
+  const hourTrigger = picker.querySelector('.custom-hour-popover').previousElementSibling;
+  const minuteTrigger = picker.querySelector('.custom-minute-popover').previousElementSibling;
 
   hourSelect.innerHTML = Array.from({length: 24}, (_, i) => 
     `<option value="${i}">${String(i).padStart(2,'0')}</option>`
@@ -399,27 +429,34 @@ function initRemindPicker(pickerId, existingDate) {
     const d = new Date(existingDate);
     const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     picker.dataset.date = dateStr;
-    if (dateInput) dateInput.value = dateStr;
-    hourSelect.value = d.getHours();
-    minuteSelect.value = Math.round(d.getMinutes() / 5) * 5;
+    if (dateText) dateText.textContent = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+    
+    const h = d.getHours();
+    const m = Math.round(d.getMinutes() / 5) * 5;
+    hourSelect.value = h;
+    minuteSelect.value = m;
+    
+    if (hourTrigger) hourTrigger.textContent = String(h).padStart(2,'0');
+    if (minuteTrigger) minuteTrigger.textContent = String(m).padStart(2,'0');
+    
     updateRemindDisplay(pickerId);
   } else {
     const now = new Date();
-    hourSelect.value = Math.min(now.getHours() + 1, 23);
-    minuteSelect.value = 0;
+    const h = Math.min(now.getHours() + 1, 23);
+    const m = 0;
     picker.dataset.date = '';
-    if (dateInput) dateInput.value = '';
+    hourSelect.value = h;
+    minuteSelect.value = m;
+    
+    if (hourTrigger) hourTrigger.textContent = String(h).padStart(2,'0');
+    if (minuteTrigger) minuteTrigger.textContent = String(m).padStart(2,'0');
+    if (dateText) dateText.textContent = '选择日期...';
+    
     display.textContent = '未设置';
   }
 
   hourSelect.onchange = () => updateRemindDisplay(pickerId);
   minuteSelect.onchange = () => updateRemindDisplay(pickerId);
-  if (dateInput) {
-    dateInput.onchange = () => {
-      picker.dataset.date = dateInput.value;
-      updateRemindDisplay(pickerId);
-    };
-  }
 }
 
 function setRemindQuick(pickerId, daysFromNow) {
@@ -430,8 +467,8 @@ function setRemindQuick(pickerId, daysFromNow) {
   const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   picker.dataset.date = dateStr;
   
-  const dateInput = picker.querySelector('.remind-date-input');
-  if (dateInput) dateInput.value = dateStr;
+  const dateText = picker.querySelector('.custom-date-value');
+  if (dateText) dateText.textContent = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
   
   updateRemindDisplay(pickerId);
 }
@@ -441,8 +478,8 @@ function clearRemind(pickerId) {
   if (!picker) return;
   picker.dataset.date = '';
   
-  const dateInput = picker.querySelector('.remind-date-input');
-  if (dateInput) dateInput.value = '';
+  const dateText = picker.querySelector('.custom-date-value');
+  if (dateText) dateText.textContent = '选择日期...';
   
   const display = picker.querySelector('.remind-date-display');
   if (display) display.textContent = '未设置';
@@ -470,3 +507,170 @@ function getRemindValue(pickerId) {
   const minute = picker.querySelector('.remind-minute').value;
   return `${dateStr}T${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}`;
 }
+
+// ========== 全自定义时间日期组件交互 ==========
+let calDisplayYear = new Date().getFullYear();
+let calDisplayMonth = new Date().getMonth();
+
+function toggleCalendarPopover(pickerId) {
+  event.stopPropagation();
+  const picker = document.getElementById(pickerId);
+  if (!picker) return;
+  
+  const popover = picker.querySelector('.custom-calendar-popover');
+  if (!popover) return;
+  
+  const isHidden = popover.style.display === 'none';
+  closeAllPopovers();
+  
+  if (isHidden) {
+    let d = new Date();
+    if (picker.dataset.date) {
+      d = new Date(picker.dataset.date + 'T00:00:00');
+    }
+    calDisplayYear = d.getFullYear();
+    calDisplayMonth = d.getMonth();
+    
+    renderCalendar(pickerId);
+    popover.style.display = 'block';
+  }
+}
+
+function renderCalendar(pickerId) {
+  const picker = document.getElementById(pickerId);
+  const popover = picker.querySelector('.custom-calendar-popover');
+  if (!popover) return;
+  
+  let selectedDateStr = picker.dataset.date || '';
+  const firstDay = new Date(calDisplayYear, calDisplayMonth, 1).getDay();
+  const firstDayOfWeek = firstDay === 0 ? 6 : firstDay - 1;
+  const totalDays = new Date(calDisplayYear, calDisplayMonth + 1, 0).getDate();
+  const prevTotalDays = new Date(calDisplayYear, calDisplayMonth, 0).getDate();
+  const monthNames = ['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
+  
+  let html = `
+    <div class="cal-header">
+      <button type="button" class="cal-btn-prev" onclick="changeCalMonth('${pickerId}',-1)">←</button>
+      <span class="cal-title">${calDisplayYear}年 ${monthNames[calDisplayMonth]}</span>
+      <button type="button" class="cal-btn-next" onclick="changeCalMonth('${pickerId}',1)">→</button>
+    </div>
+    <div class="cal-weekdays">
+      <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span>
+    </div>
+    <div class="cal-days">
+  `;
+  
+  for (let i = firstDayOfWeek - 1; i >= 0; i--) {
+    const day = prevTotalDays - i;
+    html += `<span class="cal-day other-month">${day}</span>`;
+  }
+  
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  
+  for (let day = 1; day <= totalDays; day++) {
+    const dateStr = `${calDisplayYear}-${String(calDisplayMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const isSelected = dateStr === selectedDateStr ? 'active' : '';
+    const isToday = dateStr === todayStr ? 'today' : '';
+    html += `<span class="cal-day ${isSelected} ${isToday}" onclick="selectCalDate('${pickerId}','${dateStr}')">${day}</span>`;
+  }
+  
+  const remaining = 42 - (firstDayOfWeek + totalDays);
+  for (let day = 1; day <= remaining; day++) {
+    html += `<span class="cal-day other-month">${day}</span>`;
+  }
+  
+  html += `</div>`;
+  popover.innerHTML = html;
+}
+
+function changeCalMonth(pickerId, val) {
+  event.stopPropagation();
+  calDisplayMonth += val;
+  if (calDisplayMonth < 0) {
+    calDisplayMonth = 11;
+    calDisplayYear -= 1;
+  } else if (calDisplayMonth > 11) {
+    calDisplayMonth = 0;
+    calDisplayYear += 1;
+  }
+  renderCalendar(pickerId);
+}
+
+function selectCalDate(pickerId, dateStr) {
+  event.stopPropagation();
+  const picker = document.getElementById(pickerId);
+  if (!picker) return;
+  
+  picker.dataset.date = dateStr;
+  const dateText = picker.querySelector('.custom-date-value');
+  if (dateText) {
+    const d = new Date(dateStr + 'T00:00:00');
+    dateText.textContent = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+  }
+  
+  const popover = picker.querySelector('.custom-calendar-popover');
+  if (popover) popover.style.display = 'none';
+  
+  updateRemindDisplay(pickerId);
+}
+
+function toggleTimePopover(pickerId, type) {
+  event.stopPropagation();
+  const picker = document.getElementById(pickerId);
+  if (!picker) return;
+  
+  const popover = picker.querySelector(`.custom-${type}-popover`);
+  if (!popover) return;
+  
+  const isHidden = popover.style.display === 'none';
+  closeAllPopovers();
+  
+  if (isHidden) {
+    const itemsCount = type === 'hour' ? 24 : 12;
+    const selectId = `${pickerId.startsWith('add') ? 'add' : 'edit'}Remind${type.charAt(0).toUpperCase() + type.slice(1)}`;
+    const currentVal = document.getElementById(selectId)?.value || '0';
+    
+    let html = `<ul>`;
+    for (let i = 0; i < itemsCount; i++) {
+      const val = type === 'hour' ? i : i * 5;
+      const valStr = String(val).padStart(2,'0');
+      const isSelected = parseInt(currentVal) === val ? 'active' : '';
+      html += `<li class="${isSelected}" onclick="selectTimeVal('${pickerId}','${type}',${val})">${valStr}</li>`;
+    }
+    html += `</ul>`;
+    
+    popover.innerHTML = html;
+    popover.style.display = 'block';
+  }
+}
+
+function selectTimeVal(pickerId, type, val) {
+  event.stopPropagation();
+  const picker = document.getElementById(pickerId);
+  if (!picker) return;
+  
+  const selectId = `${pickerId.startsWith('add') ? 'add' : 'edit'}Remind${type.charAt(0).toUpperCase() + type.slice(1)}`;
+  const select = document.getElementById(selectId);
+  if (select) {
+    select.value = val;
+  }
+  
+  const trigger = picker.querySelector(`.custom-select-popover.custom-${type}-popover`).previousElementSibling;
+  if (trigger) {
+    trigger.textContent = String(val).padStart(2,'0');
+  }
+  
+  picker.querySelector(`.custom-${type}-popover`).style.display = 'none';
+  updateRemindDisplay(pickerId);
+}
+
+function closeAllPopovers() {
+  document.querySelectorAll('.custom-calendar-popover, .custom-select-popover').forEach(el => {
+    el.style.display = 'none';
+  });
+}
+
+document.addEventListener('click', () => {
+  closeAllPopovers();
+});

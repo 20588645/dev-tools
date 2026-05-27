@@ -10901,14 +10901,20 @@ body[data-theme="dark"] .sys-progress-circle::before {
 
 /* ========== 待办看板弹窗双栏重构与扩展 ========== */
 .todo-dialog-overlay .sys-dialog {
-  width: 680px !important;
-  max-width: 92vw !important;
+  width: 70% !important;
+  height: 70% !important;
+  min-width: 750px !important;
+  min-height: 480px !important;
+  max-width: 95vw !important;
+  max-height: 95vh !important;
   padding: 24px 28px !important;
   border-radius: 14px !important;
   backdrop-filter: blur(24px) saturate(120%) !important;
   background: rgba(20, 27, 45, 0.7) !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35) !important;
+  display: flex !important;
+  flex-direction: column !important;
 }
 
 .todo-dialog-overlay .sys-dialog-icon {
@@ -10917,6 +10923,7 @@ body[data-theme="dark"] .sys-progress-circle::before {
   color: var(--primary) !important;
   display: flex;
   justify-content: center;
+  flex-shrink: 0 !important;
 }
 
 .todo-modal-icon {
@@ -10930,6 +10937,16 @@ body[data-theme="dark"] .sys-progress-circle::before {
   text-align: center !important;
   margin-bottom: 20px !important;
   letter-spacing: 0.02em !important;
+  flex-shrink: 0 !important;
+}
+
+/* 核心表单按钮包装容器 */
+.todo-dialog-overlay #sysDialogBtns {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 !important;
+  min-height: 0 !important;
+  width: 100% !important;
 }
 
 /* 双栏容器布局 */
@@ -10939,6 +10956,8 @@ body[data-theme="dark"] .sys-progress-circle::before {
   width: 100% !important;
   box-sizing: border-box !important;
   text-align: left !important;
+  flex: 1 !important;
+  min-height: 0 !important;
 }
 
 /* 左栏：主内容区 */
@@ -10947,12 +10966,21 @@ body[data-theme="dark"] .sys-progress-circle::before {
   display: flex !important;
   flex-direction: column !important;
   gap: 14px !important;
+  min-height: 0 !important;
 }
 
 .todo-form-group {
   display: flex !important;
   flex-direction: column !important;
   gap: 6px !important;
+  flex-shrink: 0 !important;
+}
+
+.todo-form-group.content-group {
+  flex: 1 !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
 }
 
 .todo-field-label {
@@ -10970,6 +10998,7 @@ body[data-theme="dark"] .sys-progress-circle::before {
   padding: 0 12px !important;
   font-weight: 600 !important;
   box-sizing: border-box !important;
+  flex-shrink: 0 !important;
 }
 
 .todo-content-textarea {
@@ -10977,7 +11006,8 @@ body[data-theme="dark"] .sys-progress-circle::before {
   padding: 12px !important;
   resize: none !important;
   line-height: 1.6 !important;
-  min-height: 160px !important; /* 深度大书写空间 */
+  flex: 1 !important;
+  min-height: 120px !important;
   box-sizing: border-box !important;
 }
 
@@ -11069,40 +11099,146 @@ body[data-theme="dark"] .sys-progress-circle::before {
   color: var(--primary) !important;
 }
 
-.todo-form-sidebar .remind-date-wrapper {
+/* 自定义日期时间触发器样式 */
+.custom-date-container {
   position: relative !important;
-  display: flex !important;
-  align-items: center !important;
+  width: 100% !important;
 }
 
-.todo-form-sidebar .remind-calendar-icon {
-  position: absolute !important;
-  left: 10px !important;
-  color: var(--text-muted) !important;
-  opacity: 0.5 !important;
-  pointer-events: none !important;
-}
-
-.todo-form-sidebar .remind-date-input {
+.custom-date-trigger {
   width: 100% !important;
   height: 32px !important;
-  padding: 0 8px 0 28px !important;
+  padding: 0 10px !important;
   border: 1px solid var(--border) !important;
   border-radius: 6px !important;
   background: var(--bg-input) !important;
   color: var(--text-primary) !important;
   font-size: 12px !important;
-  outline: none !important;
-  font-family: inherit !important;
   cursor: pointer !important;
-  transition: all 0.2s !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
   box-sizing: border-box !important;
+  transition: all 0.2s ease !important;
 }
 
-.todo-form-sidebar .remind-date-input:focus {
+.custom-date-trigger:hover {
+  border-color: rgba(59, 130, 246, 0.5) !important;
+  background: rgba(255, 255, 255, 0.03) !important;
+}
+
+.custom-date-trigger:focus-within,
+.custom-date-trigger.active {
   border-color: var(--primary) !important;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
   background: var(--bg-card) !important;
+}
+
+.custom-date-value {
+  flex: 1 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.remind-calendar-icon {
+  color: var(--text-muted) !important;
+  opacity: 0.7 !important;
+}
+
+/* 自定义月历面板 */
+.custom-calendar-popover {
+  position: absolute !important;
+  bottom: 36px !important;
+  left: 0 !important;
+  width: 220px !important;
+  background: rgba(20, 27, 45, 0.95) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 8px !important;
+  padding: 10px !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4) !important;
+  z-index: 1000 !important;
+  box-sizing: border-box !important;
+}
+
+.cal-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  margin-bottom: 8px !important;
+}
+
+.cal-title {
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  color: var(--text-primary) !important;
+}
+
+.cal-header button {
+  background: transparent !important;
+  border: none !important;
+  color: var(--text-secondary) !important;
+  font-size: 14px !important;
+  cursor: pointer !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+  transition: all 0.2s !important;
+}
+
+.cal-header button:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: var(--text-primary) !important;
+}
+
+.cal-weekdays {
+  display: grid !important;
+  grid-template-columns: repeat(7, 1fr) !important;
+  text-align: center !important;
+  margin-bottom: 4px !important;
+}
+
+.cal-weekdays span {
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  color: var(--text-muted) !important;
+}
+
+.cal-days {
+  display: grid !important;
+  grid-template-columns: repeat(7, 1fr) !important;
+  gap: 2px !important;
+}
+
+.cal-day {
+  font-size: 11px !important;
+  text-align: center !important;
+  padding: 4px 0 !important;
+  cursor: pointer !important;
+  border-radius: 4px !important;
+  color: var(--text-primary) !important;
+  transition: all 0.15s !important;
+}
+
+.cal-day:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+.cal-day.other-month {
+  color: var(--text-muted) !important;
+  opacity: 0.3 !important;
+}
+
+.cal-day.today {
+  border: 1px solid var(--primary) !important;
+  font-weight: 700 !important;
+  color: var(--primary) !important;
+}
+
+.cal-day.active {
+  background: var(--primary) !important;
+  color: #fff !important;
+  font-weight: 700 !important;
 }
 
 /* 垂直排布的时分和清除栏 */
@@ -11112,42 +11248,103 @@ body[data-theme="dark"] .sys-progress-circle::before {
   align-items: center !important;
 }
 
-.todo-form-sidebar .remind-select-wrapper {
+/* 自定义时间选择器 wrapper */
+.custom-time-picker-wrapper {
   display: flex !important;
   align-items: center !important;
   gap: 4px !important;
+  flex: 1 !important;
+}
+
+.custom-select-container {
+  position: relative !important;
+  flex: 1 !important;
+}
+
+.custom-select-trigger {
+  width: 100% !important;
+  height: 32px !important;
   background: var(--bg-input) !important;
   border: 1px solid var(--border) !important;
   border-radius: 6px !important;
-  padding: 2px 6px !important;
-  height: 32px !important;
-  box-sizing: border-box !important;
-  transition: border-color 0.2s, box-shadow 0.2s !important;
-  flex: 1 !important;
+  color: var(--text-primary) !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  display: flex !important;
+  align-items: center !important;
   justify-content: center !important;
+  cursor: pointer !important;
+  box-sizing: border-box !important;
+  transition: all 0.2s ease !important;
 }
 
-.todo-form-sidebar .remind-select-wrapper:focus-within {
+.custom-select-trigger:hover {
+  border-color: rgba(59, 130, 246, 0.5) !important;
+  background: rgba(255, 255, 255, 0.03) !important;
+}
+
+.custom-select-trigger:focus-within,
+.custom-select-trigger.active {
   border-color: var(--primary) !important;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
   background: var(--bg-card) !important;
 }
 
-.todo-form-sidebar select.remind-hour,
-.todo-form-sidebar select.remind-minute {
-  width: 32px !important;
-  height: 24px !important;
-  padding: 0 !important;
-  border: none !important;
-  background: transparent !important;
-  color: var(--text-primary) !important;
+/* 自定义下拉面板 */
+.custom-select-popover {
+  position: absolute !important;
+  bottom: 36px !important;
+  left: 0 !important;
+  width: 100% !important;
+  min-width: 50px !important;
+  max-height: 150px !important;
+  overflow-y: auto !important;
+  background: rgba(20, 27, 45, 0.95) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4) !important;
+  z-index: 1000 !important;
+}
+
+.custom-select-popover ul {
+  list-style: none !important;
+  margin: 0 !important;
+  padding: 4px 0 !important;
+}
+
+.custom-select-popover li {
+  padding: 6px 12px !important;
   font-size: 12px !important;
-  font-weight: 700 !important;
-  outline: none !important;
-  text-align: center !important;
+  color: var(--text-secondary) !important;
   cursor: pointer !important;
-  appearance: none !important;
-  -webkit-appearance: none !important;
+  text-align: center !important;
+  transition: all 0.15s !important;
+}
+
+.custom-select-popover li:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: var(--text-primary) !important;
+}
+
+.custom-select-popover li.active {
+  background: var(--primary) !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+}
+
+.custom-select-popover::-webkit-scrollbar {
+  width: 4px !important;
+}
+.custom-select-popover::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+.custom-select-popover::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-radius: 2px !important;
+}
+.custom-select-popover::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3) !important;
 }
 
 .todo-form-sidebar .remind-time-sep {
