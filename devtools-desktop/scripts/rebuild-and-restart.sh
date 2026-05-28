@@ -66,6 +66,9 @@ rm -rf "$APP_DEST"
 cp -R "${PROJECT_DIR}/src-tauri/target/release/bundle/macos/${APP_NAME}.app" "$APP_DEST"
 sleep 1
 
+# 记录最新打包的 commit hash
+git rev-parse HEAD > "${PROJECT_DIR}/scripts/last-build-commit.txt" 2>/dev/null
+
 # 5. 重新启动
 echo "[5/5] 启动新版本..."
 open "$APP_DEST"

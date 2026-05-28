@@ -68,15 +68,50 @@ router.get('/status', (req, res) => {
 
 /**
  * GET /api/upgrade/check
- * 检查是否有新的 git 提交可用
+ * 检查是否有新的 git 提交可用（对比远程 release 分支最新 commit 与本地最后一次成功打包的 commit）
  */
 router.get('/check', async (req, res) => {
   try {
     const gitDir = path.resolve(PROJECT_DIR, '..');
-    exec('git fetch origin release && git log HEAD..origin/release --oneline', { cwd: gitDir }, (err, stdout) => {
+    exec('git fetch origin release && git rev-parse origin/release', { cwd: gitDir }, (err, stdout) => {
       if (err) return res.json({ hasUpdate: false, commits: [] });
-      const lines = stdout.trim().split('\n').filter(Boolean);
-      res.json({ hasUpdate: lines.length > 0, commits: lines });
+      const remoteHash = stdout.trim();
+
+      const hashFile = path.join(PROJECT_DIR, 'scripts/last-build-commit.txt');
+      let localHash = '';
+      if (fs.existsSync(hashFile)) {
+        localHash = fs.readFileSync(hashFile, 'utf-8').trim();
+      } else {
+        // 如果文件不存在，先获取当前 HEAD commit 并写入，做为初始对齐
+        try {
+          exec('git rev-parse HEAD', { cwd: gitDir }, (err2, stdout2) => {
+            if (!err2) {
+              localHash = stdout2.trim();
+              fs.writeFileSync(hashFile, localHash, 'utf-8');
+            }
+          });
+        } catch (e) {}
+      }
+
+      // 如果未读到本地 hash，降级使用 HEAD..origin/release 的对比
+      if (!localHash) {
+        exec('git log HEAD..origin/release --oneline', { cwd: gitDir }, (errLog, stdoutLog) => {
+          if (errLog) return res.json({ hasUpdate: false, commits: [] });
+          const lines = stdoutLog.trim().split('\n').filter(Boolean);
+          return res.json({ hasUpdate: lines.length > 0, commits: lines });
+        });
+        return;
+      }
+
+      // 对比哈希
+      if (remoteHash && localHash && remoteHash !== localHash) {
+        exec(`git log ${localHash}..${remoteHash} --oneline`, { cwd: gitDir }, (errLog, stdoutLog) => {
+          const lines = errLog ? [] : stdoutLog.trim().split('\n').filter(Boolean);
+          res.json({ hasUpdate: true, commits: lines });
+        });
+      } else {
+        res.json({ hasUpdate: false, commits: [] });
+      }
     });
   } catch (e) {
     res.json({ hasUpdate: false, commits: [] });
