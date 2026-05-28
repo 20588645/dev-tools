@@ -49,7 +49,7 @@ const API = {
       return handleResponse(res);
     } catch (e) {
       if (e.name === 'AbortError') throw new Error('请求超时，请检查 Sidecar 状态');
-      if (e.message === 'Failed to fetch') throw new Error('无法连接 Sidecar 服务');
+      if (e.message === 'Failed to fetch' || e.message === 'Load failed') throw new Error('无法连接 Sidecar 服务');
       throw e;
     }
   },
@@ -64,7 +64,7 @@ const API = {
       return handleResponse(res);
     } catch (e) {
       if (e.name === 'AbortError') throw new Error('请求超时，请检查 Sidecar 状态');
-      if (e.message === 'Failed to fetch') throw new Error('无法连接 Sidecar 服务');
+      if (e.message === 'Failed to fetch' || e.message === 'Load failed') throw new Error('无法连接 Sidecar 服务');
       throw e;
     }
   },
@@ -79,7 +79,7 @@ const API = {
       return handleResponse(res);
     } catch (e) {
       if (e.name === 'AbortError') throw new Error('请求超时，请检查 Sidecar 状态');
-      if (e.message === 'Failed to fetch') throw new Error('无法连接 Sidecar 服务');
+      if (e.message === 'Failed to fetch' || e.message === 'Load failed') throw new Error('无法连接 Sidecar 服务');
       throw e;
     }
   },
@@ -95,7 +95,7 @@ const API = {
       return handleResponse(res);
     } catch (e) {
       if (e.name === 'AbortError') throw new Error('请求超时，请检查 Sidecar 状态');
-      if (e.message === 'Failed to fetch') throw new Error('无法连接 Sidecar 服务');
+      if (e.message === 'Failed to fetch' || e.message === 'Load failed') throw new Error('无法连接 Sidecar 服务');
       throw e;
     }
   }

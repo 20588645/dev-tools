@@ -61,7 +61,7 @@ router.get('/', (req, res) => {
   } else {
     notes = db.prepare("SELECT id, title, content, pinned, tags, sortOrder, createdAt, updatedAt FROM notebook_notes ORDER BY pinned DESC, sortOrder ASC, createdAt DESC").all();
   }
-  res.json(notes.map(n => ({ ...n, tags: JSON.parse(n.tags || '[]'), preview: (n.content || '').replace(/[#*`>\-\[\]]/g, '').slice(0, 80) })));
+  res.json(notes.map(n => ({ ...n, tags: JSON.parse(n.tags || '[]'), preview: (n.content || '').replace(/<[^>]+>/g, '').replace(/[#*`>\-\[\]]/g, '').slice(0, 80) })));
 });
 
 // GET /api/notebook/:id

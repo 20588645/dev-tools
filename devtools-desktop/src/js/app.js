@@ -22,7 +22,7 @@ let notifiedRunIds = new Set();
 let notifiedRunCompileErrors = new Set();
 let pendingRunCompileErrorTimers = {};
 const RUN_COMPILE_ERROR_NOTIFY_DELAY = 15000;
-const APP_VERSION = '0.1.46';
+const APP_VERSION = '0.1.51';
 
 // ========== 托盘菜单同步 ==========
 function syncTrayMenu() {
@@ -248,6 +248,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadHomeData();
   checkActiveJob();
   updateToolbarDate();
+  initGlobalAutoUpgrade();
 });
 
 // ========== 主题切换 ==========
@@ -518,11 +519,12 @@ const SIDEBAR_MENU_ITEMS = [
   { page: 'report', label: 'Git 周报', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>' },
   { page: 'notes', label: '工时内容', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>' },
   { page: 'notebook', label: '笔记本', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>' },
+  { page: 'ipcheck', label: 'IP 纯净度', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>' },
   { page: 'settings', label: '设置', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68 1.65 1.65 0 0 0 9 3.17V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>', fixed: 'last' }
 ];
 
 const MENU_ORDER_KEY = 'devtools-menu-order';
-const DEFAULT_MENU_ORDER = ['run', 'deploy', 'terminal', 'todo', 'report', 'notes', 'notebook'];
+const DEFAULT_MENU_ORDER = ['run', 'deploy', 'terminal', 'todo', 'report', 'notes', 'notebook', 'ipcheck'];
 
 function getMenuOrder() {
   try {
@@ -556,7 +558,8 @@ function renderSidebar() {
   const items = getSortedMenuItems();
   nav.innerHTML = items.map(item => {
     const isActive = item.page === activePage ? ' active' : '';
-    return `<button class="sidebar-item${isActive}" data-page="${item.page}" onclick="switchPage('${item.page}', this)"><span class="nav-icon">${item.icon}</span><span>${item.label}</span></button>`;
+    const isUpdateDot = (item.page === 'settings' && typeof hasGlobalPendingUpdate !== 'undefined' && hasGlobalPendingUpdate) ? '<span class="badge-dot"></span>' : '';
+    return `<button class="sidebar-item${isActive}" data-page="${item.page}" onclick="switchPage('${item.page}', this)"><span class="nav-icon">${item.icon}</span><span>${item.label}</span>${isUpdateDot}</button>`;
   }).join('');
 }
 
@@ -681,6 +684,7 @@ function switchPage(page, el) {
   if (page === 'notes') loadNotes();
   if (page === 'notebook') initNotebook();
   if (page === 'terminal') loadCommands();
+  if (page === 'ipcheck') initIpCheck();
 }
 
 // ========== 子 Tab 切换 ==========
@@ -992,3 +996,76 @@ async function checkActiveJob() {
     _checkActiveJobRunning = false;
   }
 }
+
+// ========== 自动更新及全局状态管理 ==========
+let hasGlobalPendingUpdate = false;
+let globalUpdateCommits = [];
+let autoUpdateInterval = null;
+
+function initGlobalAutoUpgrade() {
+  // 1. 软件启动 5 秒后检测一次
+  if (localStorage.getItem('devtools-auto-check-update') !== 'false') {
+    setTimeout(() => {
+      checkGlobalUpgrade(true);
+    }, 5000);
+  }
+
+  // 2. 每隔 2 小时在后台轮询一次
+  if (autoUpdateInterval) clearInterval(autoUpdateInterval);
+  autoUpdateInterval = setInterval(() => {
+    if (localStorage.getItem('devtools-auto-check-update') !== 'false') {
+      checkGlobalUpgrade(true);
+    }
+  }, 2 * 60 * 60 * 1000);
+}
+
+async function checkGlobalUpgrade(silent = true) {
+  try {
+    const data = await API.get('/api/upgrade/check');
+    if (data.hasUpdate) {
+      hasGlobalPendingUpdate = true;
+      globalUpdateCommits = data.commits || [];
+      showGlobalUpgradeIndicator(true);
+      
+      // 发送一次桌面通知，防止用户错过
+      if (!silent) {
+        sendDesktopNotification('✨ 发现新版本', 'DevTools Desktop 有新的提交可用，点击侧边栏下方可一键重启升级！', true);
+      }
+    } else {
+      hasGlobalPendingUpdate = false;
+      showGlobalUpgradeIndicator(false);
+    }
+  } catch (e) {
+    console.warn('[UpgradeCheck] 自动检查更新失败:', e.message);
+  }
+}
+
+function showGlobalUpgradeIndicator(show) {
+  const badge = document.getElementById('sidebarUpdateBadge');
+  if (badge) {
+    badge.style.display = show ? 'flex' : 'none';
+  }
+  
+  // 触发一次侧边栏重新渲染，以确保设置上的红点正确显示/隐藏
+  renderSidebar();
+}
+
+async function triggerSidebarUpgrade() {
+  const commitsText = globalUpdateCommits.length > 0
+    ? `最新提交：\n${globalUpdateCommits.slice(0, 3).join('\n')}${globalUpdateCommits.length > 3 ? '\n...' : ''}`
+    : '包含性能优化及体验更新';
+
+  const ok = await showConfirm(`检测到有新版本，是否立即更新？\n\n${commitsText}\n\n更新将拉取代码，重新打包并自动重启软件。`, {
+    confirmText: '立即更新',
+    cancelText: '稍后提醒',
+    icon: '🚀'
+  });
+
+  if (!ok) return;
+
+  // 直接拉起全局升级 Modal 遮罩层并开启升级进程，免去繁琐跳转
+  if (typeof startUpgrade === 'function') {
+    startUpgrade(true);
+  }
+}
+

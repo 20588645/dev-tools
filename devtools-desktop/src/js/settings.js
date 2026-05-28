@@ -47,6 +47,10 @@ async function loadSettings() {
   const clickEffectCb = document.getElementById('settingClickEffectEnabled');
   if (clickEffectCb) clickEffectCb.checked = isClickEffectEnabled();
 
+  // 自动更新开关同步
+  const autoCheckCb = document.getElementById('settingAutoCheckUpdate');
+  if (autoCheckCb) autoCheckCb.checked = localStorage.getItem('devtools-auto-check-update') !== 'false';
+
   // 检查更新
   checkForUpgrade();
 }
@@ -59,33 +63,61 @@ async function checkForUpgrade() {
     if (data.hasUpdate && item) {
       item.style.display = '';
       document.getElementById('upgradeCommits').textContent = data.commits.join('\n');
+      
+      // 同步全局状态与侧边栏
+      hasGlobalPendingUpdate = true;
+      globalUpdateCommits = data.commits || [];
+      showGlobalUpgradeIndicator(true);
+    } else {
+      if (item) item.style.display = 'none';
+      hasGlobalPendingUpdate = false;
+      showGlobalUpgradeIndicator(false);
     }
   } catch (e) {}
 }
 
+function toggleAutoCheckUpdate(enabled) {
+  localStorage.setItem('devtools-auto-check-update', enabled ? 'true' : 'false');
+  if (enabled) {
+    if (typeof initGlobalAutoUpgrade === 'function') initGlobalAutoUpgrade();
+    if (typeof checkGlobalUpgrade === 'function') checkGlobalUpgrade(true);
+  } else {
+    if (typeof autoUpdateInterval !== 'undefined' && autoUpdateInterval) clearInterval(autoUpdateInterval);
+    if (typeof showGlobalUpgradeIndicator === 'function') showGlobalUpgradeIndicator(false);
+  }
+}
+
 let upgradePolling = null;
 
-async function startUpgrade() {
-  const ok = await showConfirm('确定要重新打包并更新应用吗？\n\n将执行：git pull → 打包 → 安装 → 重启\n过程中应用会自动关闭并重新打开。', { confirmText: '立即更新' });
-  if (!ok) return;
+async function startUpgrade(skipConfirm = false) {
+  if (!skipConfirm) {
+    const ok = await showConfirm('确定要重新打包并更新应用吗？\n\n将执行：git pull → 打包 → 安装 → 重启\n过程中应用会自动关闭并重新打开。', { confirmText: '立即更新' });
+    if (!ok) return;
+  }
 
   const btn = document.getElementById('btnUpgrade');
   const logEl = document.getElementById('upgradeLog');
+  const modal = document.getElementById('upgradeModal');
+  const fill = document.getElementById('upgradeProgressFill');
 
-  btn.disabled = true;
-  btn.textContent = '更新中...';
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '更新中...';
+  }
 
   // 打开更新弹窗（不可关闭）
-  document.getElementById('upgradeModal').classList.add('active');
-  logEl.textContent = '正在启动更新流程...\n';
-  document.getElementById('upgradeProgressFill').style.width = '5%';
+  if (modal) modal.classList.add('active');
+  if (logEl) logEl.textContent = '正在启动更新流程...\n';
+  if (fill) fill.style.width = '5%';
 
   try {
     await API.post('/api/upgrade/start');
   } catch (e) {
-    btn.disabled = false;
-    btn.textContent = '立即更新';
-    document.getElementById('upgradeModal').classList.remove('active');
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '立即更新';
+    }
+    if (modal) modal.classList.remove('active');
     showAlert('启动更新失败: ' + e.message, { icon: '❌' });
     return;
   }
@@ -94,48 +126,56 @@ async function startUpgrade() {
   upgradePolling = setInterval(async () => {
     try {
       const data = await API.get('/api/upgrade/status');
-      logEl.textContent = data.log || '等待中...';
-      logEl.scrollTop = logEl.scrollHeight;
+      if (logEl) {
+        logEl.textContent = data.log || '等待中...';
+        logEl.scrollTop = logEl.scrollHeight;
+      }
 
       // 根据日志内容更新进度条
       const log = data.log || '';
-      if (log.includes('[5/5]')) {
-        document.getElementById('upgradeProgressFill').style.width = '95%';
-      } else if (log.includes('[4/5]')) {
-        document.getElementById('upgradeProgressFill').style.width = '85%';
-      } else if (log.includes('[3/5]')) {
-        document.getElementById('upgradeProgressFill').style.width = '75%';
-      } else if (log.includes('Finished') && log.includes('bundle')) {
-        document.getElementById('upgradeProgressFill').style.width = '70%';
-      } else if (log.includes('Compiling app')) {
-        document.getElementById('upgradeProgressFill').style.width = '40%';
-      } else if (log.includes('[2/5]')) {
-        document.getElementById('upgradeProgressFill').style.width = '20%';
-      } else if (log.includes('[1/5]')) {
-        document.getElementById('upgradeProgressFill').style.width = '10%';
+      if (fill) {
+        if (log.includes('[5/5]')) {
+          fill.style.width = '95%';
+        } else if (log.includes('[4/5]')) {
+          fill.style.width = '85%';
+        } else if (log.includes('[3/5]')) {
+          fill.style.width = '75%';
+        } else if (log.includes('Finished') && log.includes('bundle')) {
+          fill.style.width = '70%';
+        } else if (log.includes('Compiling app')) {
+          fill.style.width = '40%';
+        } else if (log.includes('[2/5]')) {
+          fill.style.width = '20%';
+        } else if (log.includes('[1/5]')) {
+          fill.style.width = '10%';
+        }
       }
 
       if (data.failed) {
         clearInterval(upgradePolling);
-        document.getElementById('upgradeProgressFill').style.width = '100%';
-        document.getElementById('upgradeProgressFill').style.background = 'var(--danger)';
-        btn.disabled = false;
-        btn.textContent = '立即更新';
+        if (fill) {
+          fill.style.width = '100%';
+          fill.style.background = 'var(--danger)';
+        }
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = '立即更新';
+        }
         // 失败时允许关闭弹窗
         setTimeout(() => {
-          document.getElementById('upgradeModal').classList.remove('active');
+          if (modal) modal.classList.remove('active');
           showAlert('打包失败，请查看日志', { icon: '❌' });
         }, 2000);
       } else if (data.completed) {
         clearInterval(upgradePolling);
-        document.getElementById('upgradeProgressFill').style.width = '100%';
-        logEl.textContent += '\n即将重启应用...\n';
+        if (fill) fill.style.width = '100%';
+        if (logEl) logEl.textContent += '\n即将重启应用...\n';
       }
     } catch (e) {
       // Sidecar 已被杀掉，说明正在重启
       clearInterval(upgradePolling);
-      document.getElementById('upgradeProgressFill').style.width = '100%';
-      logEl.textContent += '\n应用正在重启...\n';
+      if (fill) fill.style.width = '100%';
+      if (logEl) logEl.textContent += '\n应用正在重启...\n';
     }
   }, 2000);
 }

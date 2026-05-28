@@ -55,6 +55,7 @@ app.use('/api/commands', require('./routes/commands'));
 app.use('/api/notes', require('./routes/notes'));
 app.use('/api/notebook', require('./routes/notebook'));
 app.use('/api/upgrade', require('./routes/upgrade'));
+app.use('/api/ipcheck', require('./routes/ipcheck'));
 
 // 健康检查
 app.get('/api/health', (req, res) => {

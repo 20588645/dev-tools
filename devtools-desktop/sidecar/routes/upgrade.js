@@ -29,13 +29,24 @@ router.post('/start', (req, res) => {
   // 清空旧日志
   try { fs.writeFileSync(LOG_FILE, ''); } catch (e) {}
 
-  // 使用 nohup 启动独立脚本，使其不随 sidecar 进程退出而终止
-  const child = spawn('nohup', ['bash', SCRIPT_PATH], {
-    detached: true,
-    stdio: 'ignore',
-    cwd: PROJECT_DIR,
-  });
-  child.unref();
+  try {
+    // 使用 nohup 启动独立脚本，使其不随 sidecar 进程退出而终止
+    const child = spawn('nohup', ['bash', SCRIPT_PATH], {
+      detached: true,
+      stdio: 'ignore',
+      cwd: PROJECT_DIR,
+    });
+    
+    child.on('error', (err) => {
+      console.error('[Upgrade] 子进程启动错误 event:', err);
+    });
+
+    child.unref();
+  } catch (err) {
+    console.error('[Upgrade] 启动子进程失败:', err);
+    upgradeInProgress = false;
+    return res.status(500).json({ error: `启动更新脚本失败: ${err.message}` });
+  }
 
   res.json({ success: true, message: '升级已启动，应用将在打包完成后自动重启' });
 });

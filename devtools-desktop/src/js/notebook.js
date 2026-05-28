@@ -1,4 +1,14 @@
 // ========== Module: Notebook (笔记本) ==========
+function escapeHTML(str) {
+  if (!str) return '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 let nbNotes = [];
 let nbCurrentId = null;
 let nbCurrentTag = null;
@@ -62,8 +72,8 @@ function nbRenderNoteList() {
     return `
       <div class="nb-note-item ${isActive ? 'active' : ''} ${n.pinned ? 'pinned' : ''}" data-id="${n.id}" onclick="nbSelectNote('${n.id}')">
         <div class="nb-note-item-body">
-          <div class="nb-note-item-title">${pinIcon}<span class="nb-note-title-text">${n.title || '无标题'}</span></div>
-          <div class="nb-note-item-preview">${n.preview || ''}</div>
+          <div class="nb-note-item-title">${pinIcon}<span class="nb-note-title-text">${escapeHTML(n.title || '无标题')}</span></div>
+          <div class="nb-note-item-preview">${escapeHTML(n.preview)}</div>
           <div class="nb-note-item-time">${time}</div>
         </div>
         <div class="nb-sort-btns">${upBtn}${downBtn}</div>
@@ -156,8 +166,8 @@ async function nbSaveCurrentNote() {
     const note = nbNotes.find(n => n.id === nbCurrentId);
     if (note) {
       note.title = title;
-      note.preview = (content || '').replace(/[#*`>\-\[\]]/g, '').slice(0, 80);
-      // 更新列表中对应项的显示
+      note.preview = (content || '').replace(/<[^>]+>/g, '').replace(/[#*`>\-\[\]]/g, '').slice(0, 80);
+      // 更新列表中对应项 of 显示
       const item = document.querySelector(`.nb-note-item[data-id="${nbCurrentId}"]`);
       if (item) {
         const titleTextEl = item.querySelector('.nb-note-title-text');
