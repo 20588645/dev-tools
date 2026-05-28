@@ -39,5 +39,14 @@
     "macOS": {
       "minimumSystemVersion": "12.0"
     }
+  },
+  "plugins": {
+    "updater": {
+      "active": true,
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDdENzI5NURFMkZDNUEyOUEKUldTYW9zVXYzcFZ5ZlVqQ1Jodk42VWduc3F5V3VGWTRaWFRzVkhOUklQWXNwZ1M1M0k3dXRXZS8K",
+      "endpoints": [
+        "https://github.com/20588645/dev-tools/releases/latest/download/latest.json"
+      ]
+    }
   }
 }

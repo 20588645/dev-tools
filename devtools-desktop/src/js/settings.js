@@ -90,8 +90,24 @@ function toggleAutoCheckUpdate(enabled) {
 let upgradePolling = null;
 
 async function startUpgrade(skipConfirm = false) {
+  if (!window.__TAURI__) return;
+
+  const { check } = window.__TAURI__.updater;
+  let update;
+  try {
+    update = await check();
+  } catch (err) {
+    showAlert('检查更新失败: ' + err.message, { icon: '❌' });
+    return;
+  }
+
+  if (!update || !update.available) {
+    showAlert('您当前已是最新版本，无需更新！', { icon: '✨' });
+    return;
+  }
+
   if (!skipConfirm) {
-    const ok = await showConfirm('确定要重新打包并更新应用吗？\n\n将执行：git pull → 打包 → 安装 → 重启\n过程中应用会自动关闭并重新打开。', { confirmText: '立即更新' });
+    const ok = await showConfirm(`确定要更新应用到 v${update.version} 吗？\n\n更新包大小：${Math.round((update.bodyLength || 0) / 1024 / 1024 * 10) / 10} MB\n升级将自动下载最新发布包并替换重启。`, { confirmText: '立即更新' });
     if (!ok) return;
   }
 
@@ -105,79 +121,54 @@ async function startUpgrade(skipConfirm = false) {
     btn.textContent = '更新中...';
   }
 
-  // 打开更新弹窗（不可关闭）
   if (modal) modal.classList.add('active');
-  if (logEl) logEl.textContent = '正在启动更新流程...\n';
-  if (fill) fill.style.width = '5%';
+  if (logEl) logEl.textContent = `开始升级至 v${update.version}...\n`;
+  if (fill) fill.style.width = '0%';
 
   try {
-    await API.post('/api/upgrade/start');
-  } catch (e) {
+    let downloaded = 0;
+    let contentLength = update.bodyLength || 0;
+
+    await update.downloadAndInstall((event) => {
+      switch (event.event) {
+        case 'Started':
+          contentLength = event.data.contentLength || contentLength;
+          if (logEl) logEl.textContent += `[1/3] 开始下载安装包...\n`;
+          if (fill) fill.style.width = '5%';
+          break;
+        case 'Progress':
+          downloaded += event.data.chunkLength;
+          const percent = contentLength > 0 ? Math.round((downloaded / contentLength) * 90) : 50;
+          if (fill) fill.style.width = `${percent}%`;
+          if (logEl) {
+            logEl.textContent = `[1/3] 正在下载新版本: ${percent}%\n`;
+          }
+          break;
+        case 'Finished':
+          if (fill) fill.style.width = '90%';
+          if (logEl) logEl.textContent += `[2/3] 下载完成，正在进行签名校验与覆盖安装...\n`;
+          break;
+      }
+    });
+
+    if (fill) fill.style.width = '100%';
+    if (logEl) logEl.textContent += `[3/3] 安装成功！即将自动重启应用...\n`;
+
+  } catch (err) {
+    if (fill) {
+      fill.style.width = '100%';
+      fill.style.background = 'var(--danger)';
+    }
     if (btn) {
       btn.disabled = false;
       btn.textContent = '立即更新';
     }
-    if (modal) modal.classList.remove('active');
-    showAlert('启动更新失败: ' + e.message, { icon: '❌' });
-    return;
+    if (logEl) logEl.textContent += `\n[ERROR] 升级失败: ${err.message}\n`;
+    setTimeout(() => {
+      if (modal) modal.classList.remove('active');
+      showAlert('升级失败，请检查网络或配置: ' + err.message, { icon: '❌' });
+    }, 3000);
   }
-
-  // 轮询日志
-  upgradePolling = setInterval(async () => {
-    try {
-      const data = await API.get('/api/upgrade/status');
-      if (logEl) {
-        logEl.textContent = data.log || '等待中...';
-        logEl.scrollTop = logEl.scrollHeight;
-      }
-
-      // 根据日志内容更新进度条
-      const log = data.log || '';
-      if (fill) {
-        if (log.includes('[5/5]')) {
-          fill.style.width = '95%';
-        } else if (log.includes('[4/5]')) {
-          fill.style.width = '85%';
-        } else if (log.includes('[3/5]')) {
-          fill.style.width = '75%';
-        } else if (log.includes('Finished') && log.includes('bundle')) {
-          fill.style.width = '70%';
-        } else if (log.includes('Compiling app')) {
-          fill.style.width = '40%';
-        } else if (log.includes('[2/5]')) {
-          fill.style.width = '20%';
-        } else if (log.includes('[1/5]')) {
-          fill.style.width = '10%';
-        }
-      }
-
-      if (data.failed) {
-        clearInterval(upgradePolling);
-        if (fill) {
-          fill.style.width = '100%';
-          fill.style.background = 'var(--danger)';
-        }
-        if (btn) {
-          btn.disabled = false;
-          btn.textContent = '立即更新';
-        }
-        // 失败时允许关闭弹窗
-        setTimeout(() => {
-          if (modal) modal.classList.remove('active');
-          showAlert('打包失败，请查看日志', { icon: '❌' });
-        }, 2000);
-      } else if (data.completed) {
-        clearInterval(upgradePolling);
-        if (fill) fill.style.width = '100%';
-        if (logEl) logEl.textContent += '\n即将重启应用...\n';
-      }
-    } catch (e) {
-      // Sidecar 已被杀掉，说明正在重启
-      clearInterval(upgradePolling);
-      if (fill) fill.style.width = '100%';
-      if (logEl) logEl.textContent += '\n应用正在重启...\n';
-    }
-  }, 2000);
 }
 
 async function updateNotificationSettingsUI() {

@@ -1021,15 +1021,18 @@ function initGlobalAutoUpgrade() {
 
 async function checkGlobalUpgrade(silent = true) {
   try {
-    const data = await API.get('/api/upgrade/check');
-    if (data.hasUpdate) {
+    if (!window.__TAURI__) return;
+
+    const { check } = window.__TAURI__.updater;
+    const update = await check();
+
+    if (update && update.available) {
       hasGlobalPendingUpdate = true;
-      globalUpdateCommits = data.commits || [];
+      globalUpdateCommits = [`最新版本为 v${update.version}`];
       showGlobalUpgradeIndicator(true);
-      
-      // 发送一次桌面通知，防止用户错过
+
       if (!silent) {
-        sendDesktopNotification('✨ 发现新版本', 'DevTools Desktop 有新的提交可用，点击侧边栏下方可一键重启升级！', true);
+        sendDesktopNotification('✨ 发现新版本', `有新版本 v${update.version} 可用，点击侧边栏下方可一键自动升级！`, true);
       }
     } else {
       hasGlobalPendingUpdate = false;
@@ -1055,34 +1058,32 @@ function showGlobalUpgradeIndicator(show) {
 }
 
 async function triggerSidebarUpgrade() {
-  // 增加实时检测防线，防止因缓存或轮询滞后导致气泡残留
   try {
-    const data = await API.get('/api/upgrade/check');
-    if (!data.hasUpdate) {
+    if (!window.__TAURI__) return;
+
+    const { check } = window.__TAURI__.updater;
+    const update = await check();
+
+    if (!update || !update.available) {
       showToast('✨ 您当前已是最新版本！', '无需重复更新');
       showGlobalUpgradeIndicator(false);
       return;
     }
-    globalUpdateCommits = data.commits || [];
+
+    const ok = await showConfirm(`检测到有新版本 v${update.version}，是否立即更新？\n\n更新包大小约 ${Math.round((update.bodyLength || 0) / 1024 / 1024 * 10) / 10} MB。\n\n点击立即更新后，程序将在下载安装后自动重启。`, {
+      confirmText: '立即更新',
+      cancelText: '稍后提醒',
+      icon: '🚀'
+    });
+
+    if (!ok) return;
+
+    if (typeof startUpgrade === 'function') {
+      startUpgrade(true);
+    }
   } catch (e) {
-    console.warn('[UpgradeCheck] 实时更新检查失败:', e.message);
-  }
-
-  const commitsText = globalUpdateCommits.length > 0
-    ? `最新提交：\n${globalUpdateCommits.slice(0, 3).join('\n')}${globalUpdateCommits.length > 3 ? '\n...' : ''}`
-    : '包含性能优化及体验更新';
-
-  const ok = await showConfirm(`检测到有新版本，是否立即更新？\n\n${commitsText}\n\n更新将拉取代码，重新打包并自动重启软件。`, {
-    confirmText: '立即更新',
-    cancelText: '稍后提醒',
-    icon: '🚀'
-  });
-
-  if (!ok) return;
-
-  // 直接拉起全局升级 Modal 遮罩层并开启升级进程，免去繁琐跳转
-  if (typeof startUpgrade === 'function') {
-    startUpgrade(true);
+    showToast('❌ 检查更新失败', e.message);
+    console.error('[Upgrade] 原生更新触发失败:', e);
   }
 }
 

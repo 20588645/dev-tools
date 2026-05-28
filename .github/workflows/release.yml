@@ -1,0 +1,57 @@
+name: "Publish Release"
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  publish-tauri:
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: 'macos-latest'
+            args: '--target universal-apple-darwin'
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-apple-darwin, aarch64-apple-darwin
+
+      - name: Install frontend dependencies
+        run: |
+          cd devtools-desktop
+          npm install
+
+      - name: Build frontend assets
+        run: |
+          cd devtools-desktop
+          npm run build
+
+      - name: Build Tauri app and publish to GitHub Releases
+        uses: tauri-apps/tauri-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+        with:
+          projectPath: devtools-desktop
+          tagName: app-v__VERSION__
+          releaseName: "DevTools v__VERSION__"
+          releaseBody: "✨ 云端自动编译发布，包含最新的更新与体验改进。"
+          releaseDraft: false
+          prerelease: false
+          args: ${{ matrix.args }}
