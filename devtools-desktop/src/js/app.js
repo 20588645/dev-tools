@@ -22,7 +22,7 @@ let notifiedRunIds = new Set();
 let notifiedRunCompileErrors = new Set();
 let pendingRunCompileErrorTimers = {};
 const RUN_COMPILE_ERROR_NOTIFY_DELAY = 15000;
-const APP_VERSION = '0.1.60';
+const APP_VERSION = '0.1.61';
 
 // ========== 托盘菜单同步 ==========
 function syncTrayMenu() {
@@ -1043,7 +1043,11 @@ async function checkGlobalUpgrade(silent = true) {
 function showGlobalUpgradeIndicator(show) {
   const badge = document.getElementById('sidebarUpdateBadge');
   if (badge) {
-    badge.style.display = show ? 'flex' : 'none';
+    if (show) {
+      badge.style.setProperty('display', 'flex', 'important');
+    } else {
+      badge.style.setProperty('display', 'none', 'important');
+    }
   }
   
   // 触发一次侧边栏重新渲染，以确保设置上的红点正确显示/隐藏

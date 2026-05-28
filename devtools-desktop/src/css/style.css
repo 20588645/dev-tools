@@ -12673,7 +12673,7 @@ body[data-theme="dark"] .sys-progress-circle::before {
 
 /* 侧栏自动更新提示气泡药丸 */
 .sidebar-update-badge {
-  display: flex !important;
+  display: flex;
   align-items: center !important;
   justify-content: center !important;
   gap: 8px !important;
