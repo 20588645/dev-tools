@@ -484,30 +484,46 @@
     <button class="btn-secondary" onclick="clearDoneTodos()">🗑 清除已完成</button>
   </div>
 
-  <div class="todo-board" id="todoBoard">
-    <div class="todo-column" data-status="todo">
-      <div class="todo-column-header">
-        <span class="todo-column-dot dot-todo"></span>
-        <span>待办</span>
-        <span class="todo-column-count" id="todoCountTodo">0</span>
+  <div class="todo-layout-container" id="todoLayoutContainer">
+    <!-- 左侧：任务列表 -->
+    <div class="todo-list-panel">
+      <!-- 待办分组 -->
+      <div class="todo-group-wrapper">
+        <div class="todo-group-header" onclick="toggleTodoGroup('todo')">
+          <span class="todo-group-dot dot-todo"></span>
+          <span>待办</span>
+          <span class="todo-group-count" id="todoCountTodo">0</span>
+        </div>
+        <div class="todo-group-items" id="todoListTodo"></div>
       </div>
-      <div class="todo-column-list" id="todoListTodo"></div>
+
+      <!-- 进行中分组 -->
+      <div class="todo-group-wrapper">
+        <div class="todo-group-header" onclick="toggleTodoGroup('doing')">
+          <span class="todo-group-dot dot-doing"></span>
+          <span>进行中</span>
+          <span class="todo-group-count" id="todoCountDoing">0</span>
+        </div>
+        <div class="todo-group-items" id="todoListDoing"></div>
+      </div>
+
+      <!-- 已完成分组 -->
+      <div class="todo-group-wrapper">
+        <div class="todo-group-header" onclick="toggleTodoGroup('done')">
+          <span class="todo-group-dot dot-done"></span>
+          <span>已完成</span>
+          <span class="todo-group-count" id="todoCountDone">0</span>
+        </div>
+        <div class="todo-group-items" id="todoListDone"></div>
+      </div>
     </div>
-    <div class="todo-column" data-status="doing">
-      <div class="todo-column-header">
-        <span class="todo-column-dot dot-doing"></span>
-        <span>进行中</span>
-        <span class="todo-column-count" id="todoCountDoing">0</span>
+
+    <!-- 右侧：详情面板 -->
+    <div class="todo-detail-panel" id="todoDetailPanel">
+      <div class="todo-detail-empty-state">
+        <span class="todo-empty-icon">📝</span>
+        <span>选择左侧列表中的待办任务以查看或编辑详情</span>
       </div>
-      <div class="todo-column-list" id="todoListDoing"></div>
-    </div>
-    <div class="todo-column" data-status="done">
-      <div class="todo-column-header">
-        <span class="todo-column-dot dot-done"></span>
-        <span>已完成</span>
-        <span class="todo-column-count" id="todoCountDone">0</span>
-      </div>
-      <div class="todo-column-list" id="todoListDone"></div>
     </div>
   </div>
 </section>
