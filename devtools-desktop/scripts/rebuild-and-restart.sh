@@ -24,7 +24,7 @@ git pull origin release
 # 2. 打包
 echo "[2/5] 开始打包..."
 cd "$PROJECT_DIR"
-npm run build
+node scripts/bump-version.js && cargo tauri build -b app
 if [ $? -ne 0 ]; then
   echo "[ERROR] 打包失败！"
   exit 1
