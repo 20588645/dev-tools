@@ -73,7 +73,7 @@ router.get('/status', (req, res) => {
 router.get('/check', async (req, res) => {
   try {
     const gitDir = path.resolve(PROJECT_DIR, '..');
-    exec('git fetch origin dev && git log HEAD..origin/dev --oneline', { cwd: gitDir }, (err, stdout) => {
+    exec('git fetch origin release && git log HEAD..origin/release --oneline', { cwd: gitDir }, (err, stdout) => {
       if (err) return res.json({ hasUpdate: false, commits: [] });
       const lines = stdout.trim().split('\n').filter(Boolean);
       res.json({ hasUpdate: lines.length > 0, commits: lines });

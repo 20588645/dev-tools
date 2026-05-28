@@ -19,7 +19,7 @@ echo "========== 开始重新打包 $(date) =========="
 # 1. 进入项目目录并拉取最新代码
 echo "[1/5] git pull..."
 cd "/Users/ldy/personalTools"
-git pull origin dev
+git pull origin release
 
 # 2. 打包
 echo "[2/5] 开始打包..."
