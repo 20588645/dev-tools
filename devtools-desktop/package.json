@@ -5,8 +5,10 @@
   "description": "DevTools Desktop - 轻量级开发工具集",
   "scripts": {
     "dev": "npx serve src -l 1420 -s",
-    "tauri:dev": "cargo tauri dev",
-    "tauri:build": "cargo tauri build",
-    "build": "cargo tauri build"
+    "tauri": "tauri",
+    "build": "tauri build"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.0.0"
   }
 }
