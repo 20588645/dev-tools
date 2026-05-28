@@ -63,13 +63,13 @@ function renderTodoRow(todo) {
     const percent = doneCount / total;
     const offset = perimeter - (percent * perimeter);
     progressHtml = `
-      <div class="todo-progress-ring-container" title="子任务进度: ${doneCount}/${total}">
-        <svg class="todo-progress-ring" width="14" height="14">
+      <div class="todo-task-progress-ring-container" title="子任务进度: ${doneCount}/${total}">
+        <svg class="todo-task-progress-ring" width="14" height="14">
           <circle stroke="rgba(255, 255, 255, 0.08)" stroke-width="1.8" fill="transparent" r="5" cx="7" cy="7"/>
-          <circle class="todo-progress-ring-circle" id="ring-circle-${todo.id}" stroke="var(--primary)" stroke-width="1.8" fill="transparent" r="5" cx="7" cy="7"
+          <circle class="todo-task-progress-ring-circle" id="ring-circle-${todo.id}" stroke="var(--primary)" stroke-width="1.8" fill="transparent" r="5" cx="7" cy="7"
                   stroke-dasharray="${perimeter}" stroke-dashoffset="${offset}"/>
         </svg>
-        <span class="todo-progress-text" id="ring-text-${todo.id}">${doneCount}/${total}</span>
+        <span class="todo-task-progress-text" id="ring-text-${todo.id}">${doneCount}/${total}</span>
       </div>
     `;
   }
@@ -283,7 +283,7 @@ async function toggleDetailSubtask(id, idx) {
 function updateLeftRowMeta(id, checklist) {
   const total = checklist.length;
   const doneCount = checklist.filter(item => item.done).length;
-  const ringContainer = document.querySelector(`#todo-task-${id} .todo-progress-ring-container`);
+  const ringContainer = document.querySelector(`#todo-task-${id} .todo-task-progress-ring-container`);
   if (total > 0) {
     if (ringContainer) {
       ringContainer.style.display = 'flex';

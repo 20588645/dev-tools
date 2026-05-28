@@ -8450,7 +8450,7 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
 }
 
 /* SVG 环形进度条 */
-.todo-progress-ring-container {
+.todo-task-progress-ring-container {
   display: flex !important;
   align-items: center !important;
   gap: 5px !important;
@@ -8460,21 +8460,23 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
   border: 1px solid var(--border) !important;
 }
 
-.todo-progress-ring {
+.todo-task-progress-ring {
   transform: rotate(-90deg) !important;
   display: block !important;
 }
 
-.todo-progress-ring-circle {
+.todo-task-progress-ring-circle {
   transition: stroke-dashoffset 0.35s !important;
   transform-origin: 50% 50% !important;
 }
 
-.todo-progress-text {
+.todo-task-progress-text {
   font-size: 9.5px !important;
   font-weight: 700 !important;
   color: var(--text-secondary) !important;
   font-family: monospace !important;
+  position: static !important;
+  opacity: 1 !important;
 }
 
 /* 高通透微光时间药丸标签 */
