@@ -9304,16 +9304,9 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
 }
 
 /* ========== 笔记本 ========== */
-#page-notebook.active {
-  display: block !important;
-  height: 100%;
-  overflow: hidden;
-}
-
 .notebook-layout {
   display: grid;
   grid-template-columns: 280px 1fr;
-  height: calc(100vh - 130px);
   overflow: hidden;
   border-radius: var(--radius-md);
   border: 1px solid var(--border);
