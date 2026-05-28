@@ -8298,6 +8298,8 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
   min-height: 200px;
   display: flex;
   flex-direction: column;
+  align-self: start !important;
+  height: fit-content !important;
 }
 
 .todo-column-header {
@@ -8340,6 +8342,7 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
   flex-direction: column;
   gap: 10px;
   min-height: 60px;
+  justify-content: flex-start !important;
 }
 
 .todo-card {
