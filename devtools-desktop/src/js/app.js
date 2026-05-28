@@ -22,7 +22,7 @@ let notifiedRunIds = new Set();
 let notifiedRunCompileErrors = new Set();
 let pendingRunCompileErrorTimers = {};
 const RUN_COMPILE_ERROR_NOTIFY_DELAY = 15000;
-const APP_VERSION = '0.1.58';
+const APP_VERSION = '0.1.60';
 
 // ========== 托盘菜单同步 ==========
 function syncTrayMenu() {
@@ -1051,6 +1051,19 @@ function showGlobalUpgradeIndicator(show) {
 }
 
 async function triggerSidebarUpgrade() {
+  // 增加实时检测防线，防止因缓存或轮询滞后导致气泡残留
+  try {
+    const data = await API.get('/api/upgrade/check');
+    if (!data.hasUpdate) {
+      showToast('✨ 您当前已是最新版本！', '无需重复更新');
+      showGlobalUpgradeIndicator(false);
+      return;
+    }
+    globalUpdateCommits = data.commits || [];
+  } catch (e) {
+    console.warn('[UpgradeCheck] 实时更新检查失败:', e.message);
+  }
+
   const commitsText = globalUpdateCommits.length > 0
     ? `最新提交：\n${globalUpdateCommits.slice(0, 3).join('\n')}${globalUpdateCommits.length > 3 ? '\n...' : ''}`
     : '包含性能优化及体验更新';
