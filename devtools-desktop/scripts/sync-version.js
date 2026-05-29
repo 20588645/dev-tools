@@ -1,0 +1,95 @@
+const fs = require('fs');
+const path = require('path');
+
+// 统一以项目根目录下的 package.json 为版本号唯一源
+const rootPackagePath = path.resolve(__dirname, '../package.json');
+const tauriConfigPath = path.resolve(__dirname, '../src-tauri/tauri.conf.json');
+const sidecarPackagePath = path.resolve(__dirname, '../sidecar/package.json');
+const cargoTomlPath = path.resolve(__dirname, '../src-tauri/Cargo.toml');
+const appJsPath = path.resolve(__dirname, '../src/js/app.js');
+
+try {
+  console.log('[SyncVersion] 开始自动同步版本号...');
+
+  // 1. 读取根 package.json 版本号
+  if (!fs.existsSync(rootPackagePath)) {
+    throw new Error(`找不到根 package.json 文件: ${rootPackagePath}`);
+  }
+  const rootPkg = JSON.parse(fs.readFileSync(rootPackagePath, 'utf8'));
+  const version = rootPkg.version;
+  if (!version) {
+    throw new Error('根 package.json 中不存在有效的 version 字段');
+  }
+  console.log(`[SyncVersion] 获取到最新版本号: ${version}`);
+
+  // 2. 同步 src-tauri/tauri.conf.json
+  if (fs.existsSync(tauriConfigPath)) {
+    const tauriConf = JSON.parse(fs.readFileSync(tauriConfigPath, 'utf8'));
+    if (tauriConf.version !== version) {
+      tauriConf.version = version;
+      fs.writeFileSync(tauriConfigPath, JSON.stringify(tauriConf, null, 2), 'utf8');
+      console.log(`✔ 已同步 tauri.conf.json 版本至 ${version}`);
+    } else {
+      console.log('○ tauri.conf.json 版本已一致，无需修改');
+    }
+  } else {
+    console.warn(`⚠ 找不到 tauri.conf.json 文件: ${tauriConfigPath}`);
+  }
+
+  // 3. 同步 sidecar/package.json
+  if (fs.existsSync(sidecarPackagePath)) {
+    const sidecarPkg = JSON.parse(fs.readFileSync(sidecarPackagePath, 'utf8'));
+    if (sidecarPkg.version !== version) {
+      sidecarPkg.version = version;
+      fs.writeFileSync(sidecarPackagePath, JSON.stringify(sidecarPkg, null, 2), 'utf8');
+      console.log(`✔ 已同步 sidecar/package.json 版本至 ${version}`);
+    } else {
+      console.log('○ sidecar/package.json 版本已一致，无需修改');
+    }
+  } else {
+    console.warn(`⚠ 找不到 sidecar/package.json 文件: ${sidecarPackagePath}`);
+  }
+
+  // 4. 同步 src-tauri/Cargo.toml
+  if (fs.existsSync(cargoTomlPath)) {
+    let cargoContent = fs.readFileSync(cargoTomlPath, 'utf8');
+    const versionRegex = /^version\s*=\s*"[^"]*"/m;
+    if (versionRegex.test(cargoContent)) {
+      const updatedCargo = cargoContent.replace(versionRegex, `version = "${version}"`);
+      if (updatedCargo !== cargoContent) {
+        fs.writeFileSync(cargoTomlPath, updatedCargo, 'utf8');
+        console.log(`✔ 已同步 Cargo.toml 版本至 ${version}`);
+      } else {
+        console.log('○ Cargo.toml 版本已一致，无需修改');
+      }
+    } else {
+      console.warn('⚠ 在 Cargo.toml 中未找到 version 属性');
+    }
+  } else {
+    console.warn(`⚠ 找不到 Cargo.toml 文件: ${cargoTomlPath}`);
+  }
+
+  // 5. 同步 src/js/app.js
+  if (fs.existsSync(appJsPath)) {
+    let appJsContent = fs.readFileSync(appJsPath, 'utf8');
+    const appVersionRegex = /let\s+APP_VERSION\s*=\s*'[^']*'/g;
+    if (appVersionRegex.test(appJsContent)) {
+      const updatedAppJs = appJsContent.replace(appVersionRegex, `let APP_VERSION = '${version}'`);
+      if (updatedAppJs !== appJsContent) {
+        fs.writeFileSync(appJsPath, updatedAppJs, 'utf8');
+        console.log(`✔ 已同步 app.js 中的 APP_VERSION 变量至 ${version}`);
+      } else {
+        console.log('○ app.js 中的 APP_VERSION 变量已一致，无需修改');
+      }
+    } else {
+      console.warn('⚠ 在 app.js 中未找到 APP_VERSION 变量声明');
+    }
+  } else {
+    console.warn(`⚠ 找不到 app.js 文件: ${appJsPath}`);
+  }
+
+  console.log('[SyncVersion] 版本号同步完成！');
+} catch (e) {
+  console.error('[SyncVersion] ❌ 版本号同步失败:', e.message);
+  process.exit(1);
+}

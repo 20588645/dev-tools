@@ -22,12 +22,7 @@
     <nav class="sidebar-nav" aria-label="主导航" id="sidebarNav">
       <!-- 由 JS 动态渲染 -->
     </nav>
-    <!-- 自动更新浮动提醒 -->
-    <div class="sidebar-update-badge" id="sidebarUpdateBadge" style="display: none;" onclick="triggerSidebarUpgrade()" title="点击一键升级 DevTools 系统">
-      <span class="badge-icon">✨</span>
-      <span class="badge-text">发现新版本</span>
-      <span class="pulse-dot"></span>
-    </div>
+
     <div class="sidebar-footer">
       <button class="theme-toggle sidebar-tool-button" onclick="openProjectIntro()" title="项目介绍"><span class="sidebar-tool-icon">i</span><span class="sidebar-tool-label">介绍</span></button>
       <button class="theme-toggle sidebar-tool-button" onclick="toggleTheme()" title="切换主题"><span class="sidebar-tool-icon" id="themeIcon">☀</span><span class="sidebar-tool-label">外观</span></button>
@@ -877,18 +872,7 @@
           </label>
         </div>
       </div>
-      <div class="setting-item">
-        <div class="setting-info">
-          <div class="setting-label">自动检查更新</div>
-          <div class="setting-desc">软件启动及运行中自动在后台检测新版本并提醒</div>
-        </div>
-        <div class="setting-control">
-          <label class="setting-switch">
-            <input type="checkbox" id="settingAutoCheckUpdate" onchange="toggleAutoCheckUpdate(this.checked)">
-            <span class="setting-switch-track"></span>
-          </label>
-        </div>
-      </div>
+
     </div>
 
     <!-- 菜单排序 -->
@@ -981,12 +965,7 @@
           <button class="btn-primary" id="btnUpgrade" onclick="startUpgrade()">立即更新</button>
         </div>
       </div>
-      <div class="setting-item" id="upgradeCheckItem" style="display:none">
-        <div class="setting-info">
-          <div class="setting-label">可用更新</div>
-          <div class="setting-desc" id="upgradeCommits"></div>
-        </div>
-      </div>
+
     </div>
 
     <!-- 关于 -->

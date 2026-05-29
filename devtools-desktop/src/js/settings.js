@@ -1,25 +1,45 @@
 // ========== Module: Settings (设置) ==========
 let settingsLoaded = false;
 
+async function refreshAboutSettingsInfo() {
+  const aboutEl = document.getElementById('settingAbout');
+  const badge = document.getElementById('settingSidecarStatus');
+  
+  // 先渲染基础版本，确保不显示 "-"
+  if (aboutEl) {
+    aboutEl.textContent = `v${APP_VERSION} · macOS`;
+  }
+  if (badge) {
+    badge.textContent = '● 检测中...';
+    badge.className = 'setting-badge';
+  }
+
+  try {
+    const health = await API.get('/api/health');
+    if (badge) {
+      badge.textContent = `● 运行中 · PID ${health.pid} · 端口 ${API_BASE.split(':').pop()}`;
+      badge.className = 'setting-badge online';
+    }
+    if (aboutEl) {
+      aboutEl.textContent = `v${APP_VERSION} · macOS · Sidecar PID ${health.pid}`;
+    }
+  } catch (e) {
+    if (badge) {
+      badge.textContent = '● 离线';
+      badge.className = 'setting-badge offline';
+    }
+  }
+}
+
 async function loadSettings() {
   // 菜单排序每次都刷新
   renderMenuOrderSettings();
 
+  // 刷新关于信息和 Sidecar 状态（每次切换设置页面都刷新，确保数据最新且不显示 "-"）
+  await refreshAboutSettingsInfo();
+
   if (settingsLoaded) return;
   settingsLoaded = true;
-
-  // Sidecar 状态
-  try {
-    const health = await API.get('/api/health');
-    const badge = document.getElementById('settingSidecarStatus');
-    badge.textContent = `● 运行中 · PID ${health.pid} · 端口 ${API_BASE.split(':').pop()}`;
-    badge.className = 'setting-badge online';
-    document.getElementById('settingAbout').textContent = `v${APP_VERSION} · macOS · Sidecar PID ${health.pid}`;
-  } catch (e) {
-    const badge = document.getElementById('settingSidecarStatus');
-    badge.textContent = '● 离线';
-    badge.className = 'setting-badge offline';
-  }
 
   // Node 版本
   try {
@@ -46,63 +66,12 @@ async function loadSettings() {
   // 点击粒子特效开关同步
   const clickEffectCb = document.getElementById('settingClickEffectEnabled');
   if (clickEffectCb) clickEffectCb.checked = isClickEffectEnabled();
-
-  // 自动更新开关同步
-  const autoCheckCb = document.getElementById('settingAutoCheckUpdate');
-  if (autoCheckCb) autoCheckCb.checked = localStorage.getItem('devtools-auto-check-update') !== 'false';
-
-  // 检查更新
-  checkForUpgrade();
 }
 
 // ========== 应用更新 ==========
-async function checkForUpgrade() {
-  try {
-    const data = await API.get('/api/upgrade/check');
-    const item = document.getElementById('upgradeCheckItem');
-    if (data.hasUpdate && item) {
-      item.style.display = '';
-      document.getElementById('upgradeCommits').textContent = data.commits.join('\n');
-      
-      // 同步全局状态与侧边栏
-      hasGlobalPendingUpdate = true;
-      globalUpdateCommits = data.commits || [];
-      showGlobalUpgradeIndicator(true);
-    } else {
-      if (item) item.style.display = 'none';
-      hasGlobalPendingUpdate = false;
-      showGlobalUpgradeIndicator(false);
-    }
-  } catch (e) {}
-}
-
-function toggleAutoCheckUpdate(enabled) {
-  localStorage.setItem('devtools-auto-check-update', enabled ? 'true' : 'false');
-  if (enabled) {
-    if (typeof initGlobalAutoUpgrade === 'function') initGlobalAutoUpgrade();
-    if (typeof checkGlobalUpgrade === 'function') checkGlobalUpgrade(true);
-  } else {
-    if (typeof autoUpdateInterval !== 'undefined' && autoUpdateInterval) clearInterval(autoUpdateInterval);
-    if (typeof showGlobalUpgradeIndicator === 'function') showGlobalUpgradeIndicator(false);
-  }
-}
-
 async function startUpgrade(skipConfirm = false) {
-  let checkData;
-  try {
-    checkData = await API.get('/api/upgrade/check');
-  } catch (err) {
-    showAlert('检查更新失败: ' + err.message, { icon: '❌' });
-    return;
-  }
-
-  if (!checkData || !checkData.hasUpdate) {
-    showAlert('您当前已是最新版本，无需更新！', { icon: '✨' });
-    return;
-  }
-
   if (!skipConfirm) {
-    const ok = await showConfirm(`确定要在本地重新编译并更新应用到 v${checkData.version} 吗？\n\n更新将自动拉取 Git 最新代码并在本地后台静默编译，完成后自动覆盖重启。`, { confirmText: '立即更新', icon: '🚀' });
+    const ok = await showConfirm(`确定要重新打包并更新应用吗？\n\n这将在本地后台重新编译最新代码，完成后静默覆盖 /Applications 目录下的旧程序并自动重启应用。`, { confirmText: '立即更新', icon: '🚀' });
     if (!ok) return;
   }
 
@@ -117,7 +86,7 @@ async function startUpgrade(skipConfirm = false) {
   }
 
   if (modal) modal.classList.add('active');
-  if (logEl) logEl.textContent = `准备开始本地热编译升级至 v${checkData.version}...\n`;
+  if (logEl) logEl.textContent = `准备开始本地热编译升级...\n`;
   if (fill) {
     fill.style.width = '0%';
     fill.style.background = 'var(--accent)';
@@ -141,7 +110,6 @@ async function startUpgrade(skipConfirm = false) {
       showAlert('启动升级失败: ' + err.message, { icon: '❌' });
     }, 3000);
   }
-}
 }
 
 async function updateNotificationSettingsUI() {

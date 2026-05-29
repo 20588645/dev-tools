@@ -1,12 +1,13 @@
 {
   "name": "devtools-desktop",
-  "version": "0.1.65",
+  "version": "0.1.73",
   "private": true,
   "description": "DevTools Desktop - 轻量级开发工具集",
   "scripts": {
     "dev": "npx serve src -l 1420 -s",
     "tauri": "tauri",
-    "build": "tauri build"
+    "build": "node scripts/sync-version.js && tauri build -b app",
+    "sync-version": "node scripts/sync-version.js"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.0.0"

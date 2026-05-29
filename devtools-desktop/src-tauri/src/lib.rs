@@ -46,6 +46,11 @@ struct RunningProject {
 }
 
 #[tauri::command]
+fn exit_app(app: tauri::AppHandle) {
+    app.exit(0);
+}
+
+#[tauri::command]
 fn update_tray_menu(app: tauri::AppHandle, projects: Vec<RunningProject>) {
     let tray = match app.tray_by_id(&TrayIconId::new("main-tray")) {
         Some(t) => t,
@@ -275,7 +280,7 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![get_sidecar_port, pick_folder, update_tray_menu])
+        .invoke_handler(tauri::generate_handler![get_sidecar_port, pick_folder, update_tray_menu, exit_app])
         .run(tauri::generate_context!())
         .unwrap_or_else(|e| eprintln!("Tauri 运行错误: {:?}", e));
 }

@@ -22,7 +22,7 @@ let notifiedRunIds = new Set();
 let notifiedRunCompileErrors = new Set();
 let pendingRunCompileErrorTimers = {};
 const RUN_COMPILE_ERROR_NOTIFY_DELAY = 15000;
-let APP_VERSION = '0.1.64';
+let APP_VERSION = '0.1.73';
 
 // ========== 托盘菜单同步 ==========
 function syncTrayMenu() {
@@ -248,7 +248,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadHomeData();
   checkActiveJob();
   updateToolbarDate();
-  initGlobalAutoUpgrade();
 });
 
 // ========== 主题切换 ==========
@@ -474,6 +473,34 @@ function setupWSHandlers() {
       logEl.textContent += data.log;
       logEl.scrollTop = logEl.scrollHeight;
     }
+
+    if (data.event === 'Finished') {
+      // 退出旧 App 与打开新 App 已完全交由后端守护脚本负责（不依赖前端 IPC）。
+      // 这里仅更新 UI 提示；同时仍尝试调用 exit_app 作为冗余兜底（失败也不影响重启）。
+      const subtitle = modal ? modal.querySelector('.modal-subtitle') : null;
+      if (subtitle) subtitle.textContent = '更新完成，应用即将自动退出并重启...';
+      if (fill) {
+        fill.style.width = '100%';
+        fill.style.background = 'var(--success, #22c55e)';
+      }
+      setTimeout(() => {
+        if (window.__TAURI__?.core?.invoke) {
+          window.__TAURI__.core.invoke('exit_app').catch((e) => {
+            console.error('退出应用失败（已由后端守护进程兜底重启）:', e);
+          });
+        }
+      }, 500);
+    }
+
+    if (data.event === 'Error') {
+      const subtitle = modal ? modal.querySelector('.modal-subtitle') : null;
+      if (subtitle) subtitle.textContent = '更新失败，请查看日志';
+      const btn = document.getElementById('btnUpgrade');
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = '立即更新';
+      }
+    }
   });
 
   WS.on('run-status', (data) => {
@@ -582,7 +609,7 @@ function renderSidebar() {
   const items = getSortedMenuItems();
   nav.innerHTML = items.map(item => {
     const isActive = item.page === activePage ? ' active' : '';
-    const isUpdateDot = (item.page === 'settings' && typeof hasGlobalPendingUpdate !== 'undefined' && hasGlobalPendingUpdate) ? '<span class="badge-dot"></span>' : '';
+    const isUpdateDot = '';
     return `<button class="sidebar-item${isActive}" data-page="${item.page}" onclick="switchPage('${item.page}', this)"><span class="nav-icon">${item.icon}</span><span>${item.label}</span>${isUpdateDot}</button>`;
   }).join('');
 }
@@ -1022,82 +1049,4 @@ async function checkActiveJob() {
 }
 
 // ========== 自动更新及全局状态管理 ==========
-let hasGlobalPendingUpdate = false;
-let globalUpdateCommits = [];
-let autoUpdateInterval = null;
-
-function initGlobalAutoUpgrade() {
-  // 1. 软件启动 5 秒后检测一次
-  if (localStorage.getItem('devtools-auto-check-update') !== 'false') {
-    setTimeout(() => {
-      checkGlobalUpgrade(true);
-    }, 5000);
-  }
-
-  // 2. 每隔 5 分钟在后台轮询一次，高频实时更新提示
-  if (autoUpdateInterval) clearInterval(autoUpdateInterval);
-  autoUpdateInterval = setInterval(() => {
-    if (localStorage.getItem('devtools-auto-check-update') !== 'false') {
-      checkGlobalUpgrade(true);
-    }
-  }, 5 * 60 * 1000);
-}
-
-async function checkGlobalUpgrade(silent = true) {
-  try {
-    if (!window.__TAURI__) return;
-
-    const checkData = await API.get('/api/upgrade/check');
-
-    if (checkData && checkData.hasUpdate) {
-      hasGlobalPendingUpdate = true;
-      globalUpdateCommits = checkData.commits || [];
-      showGlobalUpgradeIndicator(true);
-
-      if (!silent) {
-        sendDesktopNotification('✨ 发现新版本', `有新版本 v${checkData.version} 可用，点击侧边栏下方可一键自动升级！`, true);
-      }
-    } else {
-      hasGlobalPendingUpdate = false;
-      showGlobalUpgradeIndicator(false);
-    }
-  } catch (e) {
-    console.warn('[UpgradeCheck] 自动检查更新失败:', e.message);
-  }
-}
-
-function showGlobalUpgradeIndicator(show) {
-  const badge = document.getElementById('sidebarUpdateBadge');
-  if (badge) {
-    if (show) {
-      badge.style.setProperty('display', 'flex', 'important');
-    } else {
-      badge.style.setProperty('display', 'none', 'important');
-    }
-  }
-  
-  // 触发一次侧边栏重新渲染，以确保设置上的红点正确显示/隐藏
-  renderSidebar();
-}
-
-async function triggerSidebarUpgrade() {
-  try {
-    if (!window.__TAURI__) return;
-
-    const checkData = await API.get('/api/upgrade/check');
-
-    if (!checkData || !checkData.hasUpdate) {
-      showToast('✨ 您当前已是最新版本！', '无需重复更新');
-      showGlobalUpgradeIndicator(false);
-      return;
-    }
-
-    if (typeof startUpgrade === 'function') {
-      startUpgrade(false); // 触发带确认框的升级流程
-    }
-  } catch (e) {
-    showToast('❌ 检查更新失败', e.message);
-    console.error('[Upgrade] 本地更新触发失败:', e);
-  }
-}
-
+// 自动更新提示已被彻底清空，仅保留设置页面中的一键覆盖重新打包升级能力
