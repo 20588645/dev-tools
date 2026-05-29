@@ -108,7 +108,6 @@ fn update_tray_menu(app: tauri::AppHandle, projects: Vec<RunningProject>) {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_notification::init())
-        .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
             // ========== System Tray ==========
             let no_run_item = MenuItemBuilder::with_id("no_run", "暂无运行中的项目")

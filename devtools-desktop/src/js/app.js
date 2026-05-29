@@ -22,7 +22,7 @@ let notifiedRunIds = new Set();
 let notifiedRunCompileErrors = new Set();
 let pendingRunCompileErrorTimers = {};
 const RUN_COMPILE_ERROR_NOTIFY_DELAY = 15000;
-let APP_VERSION = '0.1.65';
+let APP_VERSION = '0.1.64';
 
 // ========== 托盘菜单同步 ==========
 function syncTrayMenu() {
@@ -450,6 +450,30 @@ function setupWSHandlers() {
   WS.on('run-log', (data) => {
     if (data.id !== currentRunId) return;
     appendLog(data.text, data.type);
+  });
+
+  WS.on('upgrade-progress', (data) => {
+    const logEl = document.getElementById('upgradeLog');
+    const fill = document.getElementById('upgradeProgressFill');
+    const modal = document.getElementById('upgradeModal');
+    
+    if (modal && !modal.classList.contains('active')) {
+      modal.classList.add('active');
+    }
+
+    if (fill && data.percent !== undefined) {
+      fill.style.width = `${data.percent}%`;
+      if (data.event === 'Error') {
+        fill.style.background = 'var(--danger)';
+      } else {
+        fill.style.background = 'var(--accent)';
+      }
+    }
+
+    if (logEl && data.log) {
+      logEl.textContent += data.log;
+      logEl.scrollTop = logEl.scrollHeight;
+    }
   });
 
   WS.on('run-status', (data) => {
@@ -1010,29 +1034,28 @@ function initGlobalAutoUpgrade() {
     }, 5000);
   }
 
-  // 2. 每隔 2 小时在后台轮询一次
+  // 2. 每隔 5 分钟在后台轮询一次，高频实时更新提示
   if (autoUpdateInterval) clearInterval(autoUpdateInterval);
   autoUpdateInterval = setInterval(() => {
     if (localStorage.getItem('devtools-auto-check-update') !== 'false') {
       checkGlobalUpgrade(true);
     }
-  }, 2 * 60 * 60 * 1000);
+  }, 5 * 60 * 1000);
 }
 
 async function checkGlobalUpgrade(silent = true) {
   try {
     if (!window.__TAURI__) return;
 
-    const { check } = window.__TAURI__.updater;
-    const update = await check();
+    const checkData = await API.get('/api/upgrade/check');
 
-    if (update && update.available) {
+    if (checkData && checkData.hasUpdate) {
       hasGlobalPendingUpdate = true;
-      globalUpdateCommits = [`最新版本为 v${update.version}`];
+      globalUpdateCommits = checkData.commits || [];
       showGlobalUpgradeIndicator(true);
 
       if (!silent) {
-        sendDesktopNotification('✨ 发现新版本', `有新版本 v${update.version} 可用，点击侧边栏下方可一键自动升级！`, true);
+        sendDesktopNotification('✨ 发现新版本', `有新版本 v${checkData.version} 可用，点击侧边栏下方可一键自动升级！`, true);
       }
     } else {
       hasGlobalPendingUpdate = false;
@@ -1061,29 +1084,20 @@ async function triggerSidebarUpgrade() {
   try {
     if (!window.__TAURI__) return;
 
-    const { check } = window.__TAURI__.updater;
-    const update = await check();
+    const checkData = await API.get('/api/upgrade/check');
 
-    if (!update || !update.available) {
+    if (!checkData || !checkData.hasUpdate) {
       showToast('✨ 您当前已是最新版本！', '无需重复更新');
       showGlobalUpgradeIndicator(false);
       return;
     }
 
-    const ok = await showConfirm(`检测到有新版本 v${update.version}，是否立即更新？\n\n更新包大小约 ${Math.round((update.bodyLength || 0) / 1024 / 1024 * 10) / 10} MB。\n\n点击立即更新后，程序将在下载安装后自动重启。`, {
-      confirmText: '立即更新',
-      cancelText: '稍后提醒',
-      icon: '🚀'
-    });
-
-    if (!ok) return;
-
     if (typeof startUpgrade === 'function') {
-      startUpgrade(true);
+      startUpgrade(false); // 触发带确认框的升级流程
     }
   } catch (e) {
     showToast('❌ 检查更新失败', e.message);
-    console.error('[Upgrade] 原生更新触发失败:', e);
+    console.error('[Upgrade] 本地更新触发失败:', e);
   }
 }
 

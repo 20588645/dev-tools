@@ -87,27 +87,22 @@ function toggleAutoCheckUpdate(enabled) {
   }
 }
 
-let upgradePolling = null;
-
 async function startUpgrade(skipConfirm = false) {
-  if (!window.__TAURI__) return;
-
-  const { check } = window.__TAURI__.updater;
-  let update;
+  let checkData;
   try {
-    update = await check();
+    checkData = await API.get('/api/upgrade/check');
   } catch (err) {
     showAlert('检查更新失败: ' + err.message, { icon: '❌' });
     return;
   }
 
-  if (!update || !update.available) {
+  if (!checkData || !checkData.hasUpdate) {
     showAlert('您当前已是最新版本，无需更新！', { icon: '✨' });
     return;
   }
 
   if (!skipConfirm) {
-    const ok = await showConfirm(`确定要更新应用到 v${update.version} 吗？\n\n更新包大小：${Math.round((update.bodyLength || 0) / 1024 / 1024 * 10) / 10} MB\n升级将自动下载最新发布包并替换重启。`, { confirmText: '立即更新' });
+    const ok = await showConfirm(`确定要在本地重新编译并更新应用到 v${checkData.version} 吗？\n\n更新将自动拉取 Git 最新代码并在本地后台静默编译，完成后自动覆盖重启。`, { confirmText: '立即更新', icon: '🚀' });
     if (!ok) return;
   }
 
@@ -122,38 +117,15 @@ async function startUpgrade(skipConfirm = false) {
   }
 
   if (modal) modal.classList.add('active');
-  if (logEl) logEl.textContent = `开始升级至 v${update.version}...\n`;
-  if (fill) fill.style.width = '0%';
+  if (logEl) logEl.textContent = `准备开始本地热编译升级至 v${checkData.version}...\n`;
+  if (fill) {
+    fill.style.width = '0%';
+    fill.style.background = 'var(--accent)';
+  }
 
   try {
-    let downloaded = 0;
-    let contentLength = update.bodyLength || 0;
-
-    await update.downloadAndInstall((event) => {
-      switch (event.event) {
-        case 'Started':
-          contentLength = event.data.contentLength || contentLength;
-          if (logEl) logEl.textContent += `[1/3] 开始下载安装包...\n`;
-          if (fill) fill.style.width = '5%';
-          break;
-        case 'Progress':
-          downloaded += event.data.chunkLength;
-          const percent = contentLength > 0 ? Math.round((downloaded / contentLength) * 90) : 50;
-          if (fill) fill.style.width = `${percent}%`;
-          if (logEl) {
-            logEl.textContent = `[1/3] 正在下载新版本: ${percent}%\n`;
-          }
-          break;
-        case 'Finished':
-          if (fill) fill.style.width = '90%';
-          if (logEl) logEl.textContent += `[2/3] 下载完成，正在进行签名校验与覆盖安装...\n`;
-          break;
-      }
-    });
-
-    if (fill) fill.style.width = '100%';
-    if (logEl) logEl.textContent += `[3/3] 安装成功！即将自动重启应用...\n`;
-
+    // 调用本地后台开始编译打包
+    await API.post('/api/upgrade/start');
   } catch (err) {
     if (fill) {
       fill.style.width = '100%';
@@ -163,12 +135,13 @@ async function startUpgrade(skipConfirm = false) {
       btn.disabled = false;
       btn.textContent = '立即更新';
     }
-    if (logEl) logEl.textContent += `\n[ERROR] 升级失败: ${err.message}\n`;
+    if (logEl) logEl.textContent += `\n[ERROR] 启动升级失败: ${err.message}\n`;
     setTimeout(() => {
       if (modal) modal.classList.remove('active');
-      showAlert('升级失败，请检查网络或配置: ' + err.message, { icon: '❌' });
+      showAlert('启动升级失败: ' + err.message, { icon: '❌' });
     }, 3000);
   }
+}
 }
 
 async function updateNotificationSettingsUI() {
