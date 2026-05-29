@@ -157,47 +157,29 @@ function renderIpCheckDashboard(data) {
   // 经纬度
   document.getElementById('ipcValCoords').textContent = `${data.longitude || '-'}, ${data.latitude || '-'}`;
 
-  // 共享人数大卡片渲染
-  const sharedStr = data.shared_users || '';
-  const sharedMatch = sharedStr.match(/^([^\s(]+)\s*(?:\(([^)]+)\))?$/);
-  
-  let sharedScoreVal = '-';
-  let sharedLabelVal = '未知';
-  let sharedFillPercent = '0%';
+  // 共享人数大卡片渲染（基于后端真实设备观测数据）
+  const sharedText = data.shared_users || '-';
+  const sharedLevel = data.shared_users_level || '未知';
+  // 进度条百分比：值越大代表共享人数越多（越往右越差）
+  const sharedPercent = data.shared_users_percent || 0;
+
   let sharedStatusClass = 'info';
-  
-  if (sharedMatch) {
-    sharedScoreVal = sharedMatch[1];
-    sharedLabelVal = sharedMatch[2] || '未知';
-  } else {
-    sharedScoreVal = sharedStr || '-';
-  }
-  
-  if (sharedStr.includes('极好') || sharedStr.includes('1 - 5') || sharedStr.includes('1 - 10')) {
-    sharedFillPercent = '95%';
-    sharedStatusClass = 'safe';
-  } else if (sharedStr.includes('良好') || sharedStr.includes('10 - 20')) {
-    sharedFillPercent = '70%';
-    sharedStatusClass = 'clean';
-  } else if (sharedStr.includes('较差') || sharedStr.includes('50 - 100')) {
-    sharedFillPercent = '40%';
-    sharedStatusClass = 'warning';
-  } else if (sharedStr.includes('极差') || sharedStr.includes('100+') || sharedStr.includes('共享') || sharedStr.includes('1000+')) {
-    sharedFillPercent = '15%';
-    sharedStatusClass = 'danger';
-  }
+  if (sharedPercent <= 15) sharedStatusClass = 'safe';
+  else if (sharedPercent <= 40) sharedStatusClass = 'clean';
+  else if (sharedPercent <= 70) sharedStatusClass = 'warning';
+  else sharedStatusClass = 'danger';
   
   const sharedScoreEl = document.getElementById('ipcValSharedScore');
   const sharedLabelEl = document.getElementById('ipcValSharedLabel');
   const sharedFillBar = document.getElementById('ipcSharedFill');
   
-  if (sharedScoreEl) sharedScoreEl.textContent = sharedScoreVal;
+  if (sharedScoreEl) sharedScoreEl.textContent = sharedText;
   if (sharedLabelEl) {
-    sharedLabelEl.textContent = sharedLabelVal;
+    sharedLabelEl.textContent = sharedLevel;
     sharedLabelEl.className = `shared-card-status status-badge ${sharedStatusClass}`;
   }
   if (sharedFillBar) {
-    sharedFillBar.style.width = sharedFillPercent;
+    sharedFillBar.style.width = `${sharedPercent}%`;
     sharedFillBar.className = `shared-bar-fill ${sharedStatusClass}`;
   }
 
