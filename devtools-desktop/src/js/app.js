@@ -304,6 +304,8 @@ function setupModalDismissal() {
   document.addEventListener('mousedown', (event) => {
     const overlay = event.target;
     if (overlay?.classList?.contains('modal-overlay') && overlay.classList.contains('active')) {
+      // 更新弹窗不可关闭（更新过程不可中断）
+      if (overlay.id === 'upgradeModal') return;
       closeModal(overlay.id);
       return;
     }
@@ -334,6 +336,8 @@ function setupModalDismissal() {
 
     const topModal = getTopActiveModal();
     if (topModal) {
+      // 更新弹窗不可通过 Escape 关闭
+      if (topModal.id === 'upgradeModal') return;
       event.preventDefault();
       event.stopPropagation();
       closeModal(topModal.id);
