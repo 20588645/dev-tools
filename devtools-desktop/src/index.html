@@ -623,12 +623,16 @@
 
   <div class="cmd-grid" id="cmdGrid"></div>
 
-  <div class="cmd-output-section" id="cmdOutputSection" style="display:none">
-    <div class="cmd-output-header">
-      <span id="cmdOutputTitle">执行结果</span>
-      <button class="btn-text" onclick="closeCmdOutput()">✕ 关闭</button>
+  <div class="cmd-output-section modal-overlay" id="cmdOutputSection">
+    <div class="modal modal-quick">
+      <div class="modal-header">
+        <h2 id="cmdOutputTitle">执行结果</h2>
+        <button class="modal-close" onclick="closeCmdOutput()" title="关闭">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 0;">
+        <pre class="cmd-output" id="cmdOutput"></pre>
+      </div>
     </div>
-    <pre class="cmd-output" id="cmdOutput"></pre>
   </div>
 </section>
 

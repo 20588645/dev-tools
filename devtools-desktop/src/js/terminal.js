@@ -89,7 +89,7 @@ async function executeCommand(cmdId) {
   const section = document.getElementById('cmdOutputSection');
   const output = document.getElementById('cmdOutput');
   const title = document.getElementById('cmdOutputTitle');
-  section.style.display = 'block';
+  section.classList.add('active');
   title.textContent = `执行: ${cmd.name}`;
   output.textContent = '⏳ 执行中...';
 
@@ -112,7 +112,7 @@ async function executeCommand(cmdId) {
 }
 
 function closeCmdOutput() {
-  document.getElementById('cmdOutputSection').style.display = 'none';
+  document.getElementById('cmdOutputSection').classList.remove('active');
 }
 
 async function showAddCommand() {

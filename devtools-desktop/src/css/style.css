@@ -8992,37 +8992,65 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
   color: var(--danger);
 }
 
-/* 命令输出区 */
+/* 命令输出区（重构为模态弹窗样式） */
 .cmd-output-section {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
+  display: none; /* 默认隐藏 */
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: var(--bg-overlay) !important;
+  backdrop-filter: blur(6px) !important;
+  -webkit-backdrop-filter: blur(6px) !important;
+  z-index: 10000 !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: none !important;
+  border-radius: 0 !important;
 }
 
-.cmd-output-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 16px;
-  border-bottom: 1px solid var(--border);
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-primary);
+/* 激活状态使用 flex 布局呈现模态弹窗 */
+.cmd-output-section.active {
+  display: flex !important;
+  animation: fadeIn 0.15s ease-out !important;
+}
+
+/* --- 亮色模式下的快捷命令弹窗与终端样式（默认） --- */
+.cmd-output-section .modal {
+  background: var(--bg-elevated) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow-lg) !important;
 }
 
 .cmd-output {
-  padding: 14px 16px;
+  padding: 20px 24px;
   margin: 0;
   font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--text-secondary);
-  background: var(--bg-elevated);
-  max-height: 300px;
-  overflow: auto;
+  font-size: 13px;
+  color: #334155 !important;
+  background: #f8fafc !important;
+  border-top: 1px solid rgba(15, 23, 42, 0.05) !important;
+  height: 380px !important;
+  overflow-y: auto;
   white-space: pre-wrap;
   word-break: break-all;
-  line-height: 1.6;
+  line-height: 1.65;
+  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+}
+
+/* --- 深色模式下的快捷命令弹窗与终端样式 --- */
+body[data-theme="dark"] .cmd-output-section .modal {
+  background: rgba(15, 23, 42, 0.85) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+}
+
+body[data-theme="dark"] .cmd-output-section .cmd-output {
+  color: #cbd5e1 !important;
+  background: #020617 !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
 }
 
 /* ========== 各功能页面 flex 布局与滚动锁定重构 (头部固定，内容滚动) ========== */
@@ -9110,8 +9138,7 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
   align-content: start !important;
 }
 #page-terminal > .cmd-output-section {
-  flex-shrink: 0 !important;
-  max-height: 250px !important;
+  /* 已被重构为全局 Fixed 弹窗，不再占用 Flex 空间 */
 }
 
 /* 6. 笔记本 */
