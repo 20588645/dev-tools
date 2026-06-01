@@ -344,7 +344,11 @@ async function startLocalRunFromModal() {
   } catch (e) {
     const isPortInUse = e.message && (e.message.includes('已被外部进程') || e.message.includes('EADDRINUSE'));
     if (isPortInUse) {
-      const port = project.runPort || (runningProjects[project.name]?.port);
+      let port = project.runPort || (runningProjects[project.name]?.port);
+      if (!port && e.message) {
+        const match = e.message.match(/端口\s*(\d{2,5})/);
+        if (match && match[1]) port = match[1];
+      }
       if (port) {
         await checkPortOccupancyForProject(project.name, port);
         renderRunPage();
@@ -617,6 +621,29 @@ async function quickStartRun(projectName) {
     showToast('▶ 快速启动', project.displayName || project.name);
     renderRunPage();
   } catch (e) {
+    const isPortInUse = e.message && (e.message.includes('已被外部进程') || e.message.includes('EADDRINUSE'));
+    if (isPortInUse) {
+      let activePort = project.runPort || (runningProjects[project.name]?.port);
+      if (!activePort && e.message) {
+        const match = e.message.match(/端口\s*(\d{2,5})/);
+        if (match && match[1]) activePort = match[1];
+      }
+      if (activePort) {
+        await checkPortOccupancyForProject(project.name, activePort);
+        renderRunPage();
+        const alertInfo = portOccupancyAlerts[project.name];
+        if (alertInfo && alertInfo.pid) {
+          const confirmRelease = await showConfirm(
+            `启动失败：端口 ${activePort} 已被进程 ${alertInfo.command} (PID: ${alertInfo.pid}) 占用。\n是否自动释放端口并重新启动？`,
+            { icon: '⚠️', confirmText: '释放并启动', cancelText: '取消' }
+          );
+          if (confirmRelease) {
+            await forceReleaseAndStart(project.name, alertInfo.pid);
+            return;
+          }
+        }
+      }
+    }
     showAlert('启动失败: ' + e.message, { icon: '❌' });
     if (port) {
       await checkPortOccupancyForProject(project.name, port);
