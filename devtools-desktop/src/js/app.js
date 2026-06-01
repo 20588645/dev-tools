@@ -23,7 +23,7 @@ let notifiedRunIds = new Set();
 let notifiedRunCompileErrors = new Set();
 let pendingRunCompileErrorTimers = {};
 const RUN_COMPILE_ERROR_NOTIFY_DELAY = 15000;
-let APP_VERSION = '0.1.85';
+let APP_VERSION = '0.1.86';
 
 // ========== 托盘菜单同步 ==========
 function syncTrayMenu() {
@@ -528,6 +528,8 @@ function setupWSHandlers() {
       console.error('[Port Diagnosis] Failed to check port owner:', err);
     }
   }
+
+  window.checkPortOccupancyForProject = checkPortOccupancyForProject;
 
   WS.on('run-status', async (data) => {
     const isActive = ['starting', 'running'].includes(data.status);
