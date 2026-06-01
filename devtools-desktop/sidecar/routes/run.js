@@ -324,7 +324,13 @@ function markRunningFromOutput(app, job, text) {
   if (busyPort) job.addressInUsePort = busyPort;
 
   const url = inferUrl(text, job.port);
-  if (url) job.url = url;
+  if (url) {
+    job.url = url;
+    const match = url.match(/:(\d{2,5})/);
+    if (match && match[1]) {
+      job.port = parseInt(match[1]);
+    }
+  }
 }
 
 function getPidsOnPort(port) {

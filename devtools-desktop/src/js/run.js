@@ -268,6 +268,7 @@ function openRunModal(projectName, mode = 'start') {
   renderRunModulePicker(project, mode);
 
   document.getElementById('runCommand').value = project.runCommand || inferRunCommand(project);
+  document.getElementById('runPortInput').value = project.runPort || '';
   if (mode === 'start') {
     const favorites = getRunFavoriteModules(project);
     const homeModuleName = (project.runHomeModule || 'home').trim() || 'home';
@@ -376,19 +377,20 @@ async function persistLocalRunConfig(project) {
     return null;
   }
 
+  const runPort = document.getElementById('runPortInput')?.value.trim() || '';
   const nodeVersion = document.getElementById('runNodeVersion').value;
   const favoriteRunModules = runModalMode === 'config' ? getCheckedRunFavoriteModules() : normalizeModuleList(project.favoriteRunModules);
   const runIncludeHome = !!document.getElementById('runIncludeHome')?.checked;
   const homeModuleName = getRunHomeModuleName();
 
-  await API.put(`/api/projects/${project.name}`, { runCommand: command, runPort: '', runHomeModule: homeModuleName, runIncludeHome, favoriteRunModules, nodeVersion });
+  await API.put(`/api/projects/${project.name}`, { runCommand: command, runPort, runHomeModule: homeModuleName, runIncludeHome, favoriteRunModules, nodeVersion });
   project.runCommand = command;
-  project.runPort = '';
+  project.runPort = runPort;
   project.runHomeModule = homeModuleName;
   project.runIncludeHome = runIncludeHome;
   project.favoriteRunModules = favoriteRunModules;
   project.nodeVersion = nodeVersion;
-  return { command, nodeVersion, favoriteRunModules, runIncludeHome, homeModuleName };
+  return { command, nodeVersion, favoriteRunModules, runIncludeHome, homeModuleName, runPort };
 }
 
 function showRunLogShell(job) {
