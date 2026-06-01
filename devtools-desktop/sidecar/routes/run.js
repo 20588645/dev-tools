@@ -374,7 +374,24 @@ async function ensurePortAvailable(app, job, port) {
     .filter(pid => pid !== process.pid && pid !== job.pid);
   if (!pids.length) return [];
 
-  pushLog(app, job, 'warn', `检测到端口 ${port} 已被旧服务占用，正在先停止旧服务...`);
+  // 获取所有由本系统启动管理的正在运行的本地任务进程 PID
+  const devtoolsPids = new Set();
+  for (const j of runJobs.values()) {
+    if (j.pid && ['starting', 'running', 'stopping'].includes(j.status)) {
+      devtoolsPids.add(j.pid);
+    }
+  }
+
+  // 区分是否为外部进程占用
+  const externalPids = pids.filter(pid => !devtoolsPids.has(pid));
+  if (externalPids.length > 0) {
+    const err = new Error(`端口 ${port} 已被外部进程占用 (PIDs: ${externalPids.join(', ')})`);
+    err.code = 'EADDRINUSE';
+    err.port = port;
+    throw err;
+  }
+
+  pushLog(app, job, 'warn', `检测到端口 ${port} 已被当前应用的其他本地服务占用，正在停止旧服务...`);
   const stoppedPids = await stopProcessesOnPort(port, job.pid);
   if (stoppedPids.length) {
     pushLog(app, job, 'success', `已停止占用端口 ${port} 的旧进程: ${stoppedPids.join(', ')}`);
@@ -753,11 +770,19 @@ router.post('/start', async (req, res) => {
 
   runJobs.set(id, job);
   const env = buildRunEnv(job.nodeVersion, job.port);
-  await ensurePortAvailable(req.app, job, job.port);
-  spawnRunProcess(req.app, job, project, launchCommand, env, moduleArgs);
-
-  res.json(publicJob(job));
-  broadcastStatus(req.app, job);
+  
+  try {
+    await ensurePortAvailable(req.app, job, job.port);
+    spawnRunProcess(req.app, job, project, launchCommand, env, moduleArgs);
+    res.json(publicJob(job));
+    broadcastStatus(req.app, job);
+  } catch (err) {
+    job.status = 'error';
+    job.error = err.message;
+    job.addressInUsePort = err.code === 'EADDRINUSE' ? err.port : '';
+    runJobs.delete(id);
+    res.status(400).json({ error: err.message, code: err.code, port: err.port });
+  }
 });
 
 router.post('/:id/stop', (req, res) => {
