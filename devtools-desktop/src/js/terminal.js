@@ -212,19 +212,6 @@ function createNewTerminalTab(tabId = null, name = null, initialCwd = '') {
 
   term.open(tabWrapper);
 
-  // 挂载 WebGL 硬件加速渲染，提高高吞吐日志渲染性能，并提供 context lost 降级降阻逻辑
-  try {
-    const webgl = new WebglAddon.WebglAddon();
-    term.loadAddon(webgl);
-    webgl.onContextLoss(() => {
-      console.warn('[WebGL Terminal] WebGL context lost, disposing addon and falling back to 2D canvas.');
-      try { webgl.dispose(); } catch {}
-    });
-    console.log('[WebGL Terminal] Enabled hardware acceleration successfully for terminal tab:', finalTabId);
-  } catch (err) {
-    console.log('[WebGL Terminal] WebGL not supported, falling back to 2D Canvas renderer:', err);
-  }
-
   // 3. 监听输入数据发送给后端
   term.onData(data => {
     sendWSMessage('terminal-input', { terminalId: finalTabId, data });
@@ -242,6 +229,26 @@ function createNewTerminalTab(tabId = null, name = null, initialCwd = '') {
     container: tabWrapper
   };
   terminalTabs.push(newTab);
+
+  // 挂载 WebGL 硬件加速渲染，提高高吞吐日志渲染性能，并提供 context lost 降级降阻逻辑
+  try {
+    const webgl = new WebglAddon.WebglAddon();
+    term.loadAddon(webgl);
+    webgl.onContextLoss(() => {
+      console.warn('[WebGL Terminal] WebGL context lost, disposing addon and falling back to 2D canvas.');
+      try { webgl.dispose(); } catch {}
+      showToast('WebGL 降级：WebGL context 丢失，已回退至 2D 渲染器', finalName, { icon: '⚠️' });
+    });
+    console.log('[WebGL Terminal] Enabled hardware acceleration successfully for terminal tab:', finalTabId);
+    if (!tabId) {
+      showToast('已启用 WebGL 终端硬件加速', finalName);
+    }
+  } catch (err) {
+    console.log('[WebGL Terminal] WebGL not supported, falling back to 2D Canvas renderer:', err);
+    if (!tabId) {
+      showToast('WebGL 不支持，已回退至 2D 渲染', finalName, { icon: 'ℹ️' });
+    }
+  }
 
   // 如果是新建而非恢复，则同步保存该会话至后端 SQLite 数据库中
   if (!tabId) {
