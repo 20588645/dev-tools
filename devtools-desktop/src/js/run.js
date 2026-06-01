@@ -342,12 +342,27 @@ async function startLocalRunFromModal() {
     showToast('▶ 本地运行已启动', project.displayName || project.name);
     renderRunPage();
   } catch (e) {
-    showAlert('启动失败: ' + e.message, { icon: '❌' });
-    const port = project.runPort || (runningProjects[project.name]?.port);
-    if (port) {
-      await checkPortOccupancyForProject(project.name, port);
-      renderRunPage();
+    const isPortInUse = e.message && (e.message.includes('已被外部进程') || e.message.includes('EADDRINUSE'));
+    if (isPortInUse) {
+      const port = project.runPort || (runningProjects[project.name]?.port);
+      if (port) {
+        await checkPortOccupancyForProject(project.name, port);
+        renderRunPage();
+        const alertInfo = portOccupancyAlerts[project.name];
+        if (alertInfo && alertInfo.pid) {
+          closeModal('runModal');
+          const confirmRelease = await showConfirm(
+            `启动失败：端口 ${port} 已被进程 ${alertInfo.command} (PID: ${alertInfo.pid}) 占用。\n是否自动释放端口并重新启动？`,
+            { icon: '⚠️', confirmText: '释放并启动', cancelText: '取消' }
+          );
+          if (confirmRelease) {
+            await forceReleaseAndStart(project.name, alertInfo.pid);
+            return;
+          }
+        }
+      }
     }
+    showAlert('启动失败: ' + e.message, { icon: '❌' });
   } finally {
     document.getElementById('runStartBtn').disabled = false;
   }
