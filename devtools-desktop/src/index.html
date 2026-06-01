@@ -11,6 +11,7 @@
   }
 </script>
 <link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/xterm.css">
 </head>
 <body data-theme="light" class="sidebar-collapsed">
 <div class="app-shell">
@@ -621,17 +622,49 @@
     </div>
   </div>
 
-  <div class="cmd-grid" id="cmdGrid"></div>
+  <div class="cmd-grid-wrapper">
+    <div class="cmd-grid" id="cmdGrid"></div>
+  </div>
 
-  <div class="cmd-output-section modal-overlay" id="cmdOutputSection">
-    <div class="modal modal-quick">
-      <div class="modal-header">
-        <h2 id="cmdOutputTitle">执行结果</h2>
-        <button class="modal-close" onclick="closeCmdOutput()" title="关闭">✕</button>
+  <div class="terminal-splitter"></div>
+
+  <div class="terminal-panel-area">
+    <div class="terminal-panel-header">
+      <div class="terminal-tabs-wrapper">
+        <div class="terminal-tabs" id="terminalTabs"></div>
+        <button class="terminal-add-tab-btn" onclick="createNewTerminalTab()" title="新建标签页 (Cmd+T)">
+          <svg class="action-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </button>
       </div>
-      <div class="modal-body" style="padding: 0;">
-        <pre class="cmd-output" id="cmdOutput"></pre>
+      <div class="terminal-panel-actions">
+        <span class="terminal-status-dot" id="termStatusDot"></span>
+        <button class="terminal-action-btn btn-clear" onclick="clearTerminal()" title="清除屏幕">
+          <svg class="action-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+          <span>清除</span>
+        </button>
+        <button class="terminal-action-btn btn-reset" onclick="reconnectTerminal()" title="重启终端">
+          <svg class="action-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+          <span>重置</span>
+        </button>
+        <button class="terminal-action-btn btn-fullscreen" onclick="toggleTerminalFullscreen()" title="切换全屏">
+          <svg class="action-icon icon-fullscreen" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+          <span class="btn-fullscreen-text">全屏</span>
+        </button>
       </div>
+    </div>
+    <div class="terminal-container-wrapper">
+      <!-- 终端全屏搜索框 -->
+      <div class="terminal-search-bar" id="terminalSearchBar">
+        <input type="text" id="termSearchInput" placeholder="查找日志..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" onkeydown="handleTerminalSearchKeydown(event)" oninput="performTerminalSearch('next', true)">
+        <span class="term-search-count" id="termSearchCount">0/0</span>
+        <button class="term-search-nav-btn" onclick="performTerminalSearch('prev')" title="上一个 (Shift+Enter)">▲</button>
+        <button class="term-search-nav-btn" onclick="performTerminalSearch('next')" title="下一个 (Enter)">▼</button>
+        <button class="term-search-close-btn" onclick="closeTerminalSearch()" title="关闭搜索 (Esc)">✕</button>
+      </div>
+      <div id="terminal-container"></div>
     </div>
   </div>
 </section>
@@ -1632,8 +1665,23 @@
 <script src="js/report.js"></script>
 <script src="js/notes.js"></script>
 <script src="js/notebook.js"></script>
+<script src="js/xterm.js"></script>
+<script src="js/xterm-addon-fit.js"></script>
+<script src="js/xterm-addon-search.js"></script>
 <script src="js/terminal.js"></script>
 <script src="js/settings.js"></script>
 <script src="js/ipcheck.js"></script>
+<script>
+  window.addEventListener('error', function(e) {
+    try {
+      if (window.WS && WS.socket && WS.socket.readyState === 1) {
+        WS.socket.send(JSON.stringify({
+          type: 'frontend-error',
+          data: { message: e.message, stack: e.error ? e.error.stack : '' }
+        }));
+      }
+    } catch (err) {}
+  });
+</script>
 </body>
 </html>

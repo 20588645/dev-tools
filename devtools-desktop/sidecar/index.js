@@ -4,13 +4,32 @@
  * 
  * 启动后输出端口号到 stdout，供 Tauri 读取
  */
+process.stdout.on('error', (err) => {
+  if (err.code === 'EPIPE') {
+    // 忽略 stdout 管道破裂（Tauri 在读取端口后可能关闭 stdout 管道）
+  }
+});
+process.stderr.on('error', (err) => {
+  if (err.code === 'EPIPE') {
+    // 同样忽略 stderr 管道破裂
+  }
+});
+
 const express = require('express');
 const http = require('http');
 const { WebSocketServer } = require('ws');
 const path = require('path');
 const net = require('net');
+const fs = require('fs');
 const sidecarPackage = require('./package.json');
 const { exec } = require('child_process');
+
+let pty = null;
+try {
+  pty = require('node-pty');
+} catch (e) {
+  console.error('[Sidecar] 无法加载 node-pty，将启用 child_process.spawn 管道降级模式:', e.message);
+}
 
 const app = express();
 const server = http.createServer(app);
@@ -76,7 +95,154 @@ wss.on('connection', (ws) => {
   });
 
   console.log('[WS] 客户端已连接');
-  ws.on('close', () => console.log('[WS] 客户端已断开'));
+
+  const ptyProcesses = new Map();
+
+  ws.on('message', (message) => {
+    try {
+      const msg = JSON.parse(message);
+      if (!msg.data) return;
+      const { terminalId } = msg.data;
+
+      if (msg.type === 'terminal-init') {
+        if (!terminalId) return;
+
+        let ptyProcess = ptyProcesses.get(terminalId);
+        if (ptyProcess) {
+          try { ptyProcess.kill(); } catch (e) {}
+          ptyProcesses.delete(terminalId);
+        }
+
+        const shell = process.platform === 'win32'
+          ? 'powershell.exe'
+          : (process.env.SHELL || '/bin/bash');
+        const shellArgs = process.platform === 'win32' ? [] : ['-l'];
+        const defaultCwd = process.env.HOME || process.env.USERPROFILE || __dirname;
+        const cwd = msg.data.cwd && fs.existsSync(msg.data.cwd) ? msg.data.cwd : defaultCwd;
+
+        if (pty) {
+          const currentPty = pty.spawn(shell, shellArgs, {
+            name: 'xterm-color',
+            cols: msg.data.cols || 80,
+            rows: msg.data.rows || 24,
+            cwd: cwd,
+            env: {
+              ...process.env,
+              TERM: 'xterm-256color'
+            }
+          });
+          ptyProcess = currentPty;
+
+          currentPty.onData((data) => {
+            if (ws.readyState === 1) {
+              ws.send(JSON.stringify({ type: 'terminal-output', data: { terminalId, data } }));
+            }
+          });
+
+          currentPty.onExit(({ exitCode, signal }) => {
+            if (ws.readyState === 1) {
+              ws.send(JSON.stringify({ type: 'terminal-exit', data: { terminalId, exitCode, signal } }));
+            }
+            if (ptyProcesses.get(terminalId) === currentPty) {
+              ptyProcesses.delete(terminalId);
+            }
+          });
+        } else {
+          // 降级模式：使用 standard child_process spawn
+          const { spawn } = require('child_process');
+          const child = spawn(shell, shellArgs, {
+            cwd: cwd,
+            env: {
+              ...process.env,
+              TERM: 'xterm-color'
+            }
+          });
+
+          const currentPty = {
+            pid: child.pid,
+            write: (data) => {
+              if (child.stdin && child.stdin.writable) {
+                try {
+                  child.stdin.write(data);
+                } catch (e) {
+                  console.error(`[PTY] Child stdin write error:`, e.message);
+                }
+              }
+            },
+            resize: () => {}, // 降级模式不支持 resize
+            kill: () => child.kill()
+          };
+          ptyProcess = currentPty;
+
+          child.stdout.on('data', (data) => {
+            if (ws.readyState === 1) {
+              ws.send(JSON.stringify({ type: 'terminal-output', data: { terminalId, data: data.toString() } }));
+            }
+          });
+          child.stderr.on('data', (data) => {
+            if (ws.readyState === 1) {
+              ws.send(JSON.stringify({ type: 'terminal-output', data: { terminalId, data: data.toString() } }));
+            }
+          });
+          child.on('close', (exitCode, signal) => {
+            if (ws.readyState === 1) {
+              ws.send(JSON.stringify({ type: 'terminal-exit', data: { terminalId, exitCode, signal } }));
+            }
+            if (ptyProcesses.get(terminalId) === currentPty) {
+              ptyProcesses.delete(terminalId);
+            }
+          });
+        }
+
+        ptyProcesses.set(terminalId, ptyProcess);
+        console.log(`[PTY] Created shell with pid ${ptyProcess.pid} for terminal ${terminalId} at ${cwd}`);
+      } else if (msg.type === 'terminal-input') {
+        if (!terminalId) return;
+        const ptyProcess = ptyProcesses.get(terminalId);
+        if (ptyProcess) {
+          try {
+            ptyProcess.write(msg.data.data);
+          } catch (e) {
+            console.error(`[PTY] Write error for ${terminalId}:`, e.message);
+          }
+        }
+      } else if (msg.type === 'terminal-resize') {
+        if (!terminalId) return;
+        const ptyProcess = ptyProcesses.get(terminalId);
+        if (ptyProcess && pty) {
+          try {
+            ptyProcess.resize(msg.data.cols, msg.data.rows);
+          } catch (e) {
+            console.error(`[PTY] Resize error for ${terminalId}:`, e.message);
+          }
+        }
+      } else if (msg.type === 'terminal-close') {
+        if (!terminalId) return;
+        const ptyProcess = ptyProcesses.get(terminalId);
+        if (ptyProcess) {
+          try { ptyProcess.kill(); } catch (e) {}
+          ptyProcesses.delete(terminalId);
+          console.log(`[PTY] Closed terminal ${terminalId}`);
+        }
+      } else if (msg.type === 'frontend-error') {
+        console.error('\n[BROWSER FATAL]', msg.data.message, '\nStack:', msg.data.stack);
+      } else if (msg.type === 'frontend-log') {
+        console.log('[FRONTEND LOG]', msg.data);
+      }
+    } catch (err) {
+      console.error('[WS] Message parsing error:', err);
+    }
+  });
+
+  ws.on('close', () => {
+    console.log('[WS] 客户端已断开');
+    for (const [tid, ptyProc] of ptyProcesses.entries()) {
+      console.log(`[PTY] Killing shell process ${ptyProc.pid} for terminal ${tid}`);
+      try { ptyProc.kill(); } catch (e) {}
+    }
+    ptyProcesses.clear();
+  });
+
   ws.on('error', (err) => console.error('[WS] 客户端连接错误:', err.message));
 });
 
@@ -176,7 +342,7 @@ main();
 
 // 全局异常兜底
 process.on('uncaughtException', (err) => {
-  console.error('[FATAL] 未捕获异常:', err.message);
+  console.error('[FATAL] 未捕获异常:', err.stack || err.message);
 });
 
 process.on('unhandledRejection', (reason) => {

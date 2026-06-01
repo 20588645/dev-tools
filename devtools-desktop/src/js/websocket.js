@@ -35,6 +35,12 @@ const WS = {
       console.log('[WS] 已连接');
       this.reconnectAttempts = 0; // 连接成功，重置计数
       if (typeof checkActiveJob === 'function') checkActiveJob();
+      
+      // Dispatch open event to handlers
+      const fns = this.handlers['open'] || [];
+      fns.forEach(fn => {
+        try { fn(); } catch (e) { console.error('[WS] Open handler error:', e); }
+      });
     };
 
     this.socket.onclose = () => {
