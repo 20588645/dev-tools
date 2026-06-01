@@ -87,8 +87,8 @@ function renderCommandGrid() {
   }).join('');
 }
 
-// 多标签终端初始化与管理
-function initTerminalTabs() {
+// 多标签终端初始化与管理（支持会话恢复）
+async function initTerminalTabs() {
   const container = document.getElementById('terminal-container');
   if (!container) return;
 
@@ -97,8 +97,21 @@ function initTerminalTabs() {
   terminalTabs = [];
   activeTabId = null;
 
-  // 新建默认标签页
-  createNewTerminalTab();
+  try {
+    const sessions = await API.get('/api/terminal/sessions');
+    if (sessions && sessions.length > 0) {
+      // 恢复全部历史会话
+      for (const s of sessions) {
+        createNewTerminalTab(s.id, s.name, s.cwd);
+      }
+    } else {
+      // 如果没有历史记录，创建一个默认标签
+      createNewTerminalTab();
+    }
+  } catch (err) {
+    console.error('[Terminal] Restore sessions error, creating default tab:', err);
+    createNewTerminalTab();
+  }
 
   // 绑定全局 Command+T 键盘快捷键
   window.removeEventListener('keydown', handleGlobalKeydown);
@@ -135,15 +148,15 @@ function handleGlobalKeydown(e) {
   }
 }
 
-// 创建新终端标签页
-function createNewTerminalTab() {
-  const tabId = 'term-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+// 创建新终端标签页（支持会话恢复）
+function createNewTerminalTab(tabId = null, name = null, initialCwd = '') {
+  const finalTabId = tabId || 'term-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   const container = document.getElementById('terminal-container');
   if (!container) return;
 
   // 1. 创建终端实例包装容器
   const tabWrapper = document.createElement('div');
-  tabWrapper.id = 'term-wrapper-' + tabId;
+  tabWrapper.id = 'term-wrapper-' + finalTabId;
   tabWrapper.className = 'terminal-instance-wrapper';
   tabWrapper.style.width = '100%';
   tabWrapper.style.height = '100%';
@@ -185,7 +198,7 @@ function createNewTerminalTab() {
 
   // 监听搜索结果变化，更新计数器 DOM
   search.onDidChangeResults(results => {
-    if (activeTabId === tabId) {
+    if (activeTabId === finalTabId) {
       const countSpan = document.getElementById('termSearchCount');
       if (countSpan) {
         if (results && results.resultCount > 0) {
@@ -201,14 +214,15 @@ function createNewTerminalTab() {
 
   // 3. 监听输入数据发送给后端
   term.onData(data => {
-    sendWSMessage('terminal-input', { terminalId: tabId, data });
+    sendWSMessage('terminal-input', { terminalId: finalTabId, data });
   });
 
   // 4. 保存到列表
   const newTabNumber = terminalTabs.length + 1;
+  const finalName = name || `Terminal ${newTabNumber}`;
   const newTab = {
-    id: tabId,
-    name: `Terminal ${newTabNumber}`,
+    id: finalTabId,
+    name: finalName,
     term,
     fitAddon: fit,
     searchAddon: search,
@@ -216,19 +230,28 @@ function createNewTerminalTab() {
   };
   terminalTabs.push(newTab);
 
+  // 如果是新建而非恢复，则同步保存该会话至后端 SQLite 数据库中
+  if (!tabId) {
+    API.post('/api/terminal/sessions', {
+      id: finalTabId,
+      name: finalName,
+      cwd: initialCwd
+    }).catch(err => console.error('[Terminal] Save session failed:', err));
+  }
+
   // 5. 渲染标签栏并切换到新标签
   renderTabsUI();
-  switchTerminalTab(tabId);
+  switchTerminalTab(finalTabId);
 
   // 6. 初始化后端 Shell
   setTimeout(() => {
     try {
       fit.fit();
       sendWSMessage('terminal-init', {
-        terminalId: tabId,
+        terminalId: finalTabId,
         cols: term.cols,
         rows: term.rows,
-        cwd: ''
+        cwd: initialCwd
       });
     } catch (e) {
       console.error('[Terminal] Init fit error:', e);
@@ -276,6 +299,7 @@ function closeTerminalTab(tabId, event) {
 
   // 1. 发送关闭指令并销毁实例
   sendWSMessage('terminal-close', { terminalId: tabId });
+  API.del('/api/terminal/sessions/' + tabId).catch(err => console.error('[Terminal] Delete session failed:', err));
   try {
     targetTab.term.dispose();
   } catch (e) {}

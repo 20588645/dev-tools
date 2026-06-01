@@ -128,6 +128,15 @@ db.exec(`
     createdAt TEXT DEFAULT (datetime('now')),
     updatedAt TEXT DEFAULT (datetime('now'))
   );
+
+  CREATE TABLE IF NOT EXISTS terminal_sessions (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    cwd TEXT NOT NULL,
+    nodeVersion TEXT DEFAULT '',
+    createdAt TEXT DEFAULT (datetime('now')),
+    sortOrder INTEGER DEFAULT 0
+  );
 `);
 
 // 确保 sortOrder 列存在（兼容旧数据库）

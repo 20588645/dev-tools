@@ -4842,6 +4842,74 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
   background: color-mix(in srgb, var(--danger-subtle) 70%, var(--danger) 10%);
 }
 
+.btn-warning {
+  height: 32px;
+  min-width: 74px;
+  padding: 0 12px;
+  border: 1px solid color-mix(in srgb, var(--warning) 28%, transparent);
+  border-radius: 7px;
+  background: var(--warning-subtle);
+  color: var(--warning);
+  font-size: 12px;
+  font-weight: 680;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.btn-warning:hover {
+  border-color: color-mix(in srgb, var(--warning) 48%, transparent);
+  background: color-mix(in srgb, var(--warning-subtle) 70%, var(--warning) 10%);
+}
+
+.run-card-state.port-alert {
+  border-color: color-mix(in srgb, var(--warning) 30%, transparent);
+  background: var(--warning-subtle);
+  color: var(--warning);
+  font-weight: 650;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 8px;
+  min-height: 54px;
+}
+
+.run-card-state.port-alert .alert-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.run-card-state.port-alert .alert-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  text-align: left;
+}
+
+.run-card-state.port-alert .alert-content strong {
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.run-card-state.port-alert .alert-content span {
+  font-size: 10px;
+  opacity: 0.9;
+  font-family: var(--font-mono);
+  color: var(--warning);
+}
+
+.run-card-state.port-alert .alert-content code {
+  background: rgba(245, 165, 36, 0.15);
+  color: var(--warning);
+  padding: 1px 4px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+}
+
 .run-dot {
   display: inline-block;
   width: 7px;

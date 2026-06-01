@@ -168,35 +168,63 @@ function renderRunPage() {
     const command = p.runCommand || inferRunCommand(p);
     const nodeLabel = p.nodeVersion || '系统默认';
     const url = job ? (job.url || (job.port ? `http://localhost:${job.port}` : '等待地址')) : '未启动';
+
+    const alertInfo = portOccupancyAlerts[p.name];
+    let stateHtml = '';
+    let actionHtml = '';
+
+    if (job) {
+      stateHtml = `<div><span class="run-dot"></span>${job.status === 'starting' ? '启动中' : '运行中'} · ${url}</div>
+      <span>PID ${job.pid || '—'} · ${formatRunUptime(job.startedAt)}</span>`;
+      actionHtml = `
+        <button class="btn-danger" onclick="stopLocalRun('${p.name}')">■ 停止</button>
+        <button class="btn-secondary" onclick="openRunLog('${p.name}')">查看日志</button>
+        <button class="btn-primary" onclick="openRunUrl('${p.name}')">打开地址</button>
+      `;
+    } else {
+      if (alertInfo) {
+        stateHtml = `
+          <div class="alert-icon">⚠️</div>
+          <div class="alert-content">
+            <strong>端口被占用</strong>
+            <span>端口 ${alertInfo.port} 被 <code>${escapeHtml(alertInfo.command)}</code> (PID: ${alertInfo.pid}) 占用</span>
+          </div>
+        `;
+        actionHtml = `
+          <button class="btn-warning" onclick="forceReleaseAndStart('${escapeAttr(p.name)}', ${alertInfo.pid})">⚡ 一键释放并启动</button>
+          <button class="btn-primary" onclick="openRunModal('${escapeAttr(p.name)}', 'start')">▶ 启动</button>
+          <button class="btn-secondary" onclick="openRunModal('${escapeAttr(p.name)}', 'config')">配置</button>
+        `;
+      } else {
+        stateHtml = '<div>○ 尚未运行</div><span>点击启动可配置命令和模块</span>';
+        actionHtml = `
+          <button class="btn-primary" onclick="openRunModal('${escapeAttr(p.name)}', 'start')">▶ 启动运行</button>
+          <button class="btn-secondary" onclick="openRunModal('${escapeAttr(p.name)}', 'config')">配置</button>
+        `;
+      }
+    }
+
     return `
-      <div class="run-project-card" data-project="${p.name}">
+      <div class="run-project-card" data-project="${escapeAttr(p.name)}">
         <div class="run-card-top">
-          <div class="run-card-title">${isMulti ? '📦' : '📄'} ${p.displayName || p.name}</div>
+          <div class="run-card-title">${isMulti ? '📦' : '📄'} ${escapeHtml(p.displayName || p.name)}</div>
           <span class="card-badge ${isMulti ? 'badge-multi' : 'badge-single'}">${isMulti ? '多模块' : '单体'}</span>
         </div>
-        <div class="run-card-path">${p.path || ''}</div>
+        <div class="run-card-path">${escapeHtml(p.path || '')}</div>
         <div class="run-card-meta">
-          <span>${p.tool}</span>
-          <span>${nodeLabel}</span>
+          <span>${escapeHtml(p.tool)}</span>
+          <span>${escapeHtml(nodeLabel)}</span>
           ${isMulti ? `<span>${moduleCount} 个模块</span>` : ''}
         </div>
         <div class="run-card-command">
           <span>启动命令</span>
-          <code>${command}</code>
+          <code>${escapeHtml(command)}</code>
         </div>
-        <div class="run-card-state ${job ? 'active' : ''}">
-          ${job ? `<div><span class="run-dot"></span>${job.status === 'starting' ? '启动中' : '运行中'} · ${url}</div>
-          <span>PID ${job.pid || '—'} · ${formatRunUptime(job.startedAt)}</span>` : '<div>○ 尚未运行</div><span>点击启动可配置命令和模块</span>'}
+        <div class="run-card-state ${job ? 'active' : (alertInfo ? 'port-alert' : '')}">
+          ${stateHtml}
         </div>
         <div class="run-card-actions">
-          ${job ? `
-            <button class="btn-danger" onclick="stopLocalRun('${p.name}')">■ 停止</button>
-            <button class="btn-secondary" onclick="openRunLog('${p.name}')">查看日志</button>
-            <button class="btn-primary" onclick="openRunUrl('${p.name}')">打开地址</button>
-          ` : `
-            <button class="btn-primary" onclick="openRunModal('${p.name}', 'start')">▶ 启动运行</button>
-            <button class="btn-secondary" onclick="openRunModal('${p.name}', 'config')">配置</button>
-          `}
+          ${actionHtml}
         </div>
       </div>`;
   }).join('');
@@ -314,6 +342,11 @@ async function startLocalRunFromModal() {
     renderRunPage();
   } catch (e) {
     showAlert('启动失败: ' + e.message, { icon: '❌' });
+    const port = project.runPort || (runningProjects[project.name]?.port);
+    if (port) {
+      await checkPortOccupancyForProject(project.name, port);
+      renderRunPage();
+    }
   } finally {
     document.getElementById('runStartBtn').disabled = false;
   }
@@ -539,13 +572,17 @@ async function quickStartRun(projectName) {
   if (port) {
     try {
       const check = await API.get(`/api/run/port-check/${port}`);
-      if (check.inUse) {
+      if (check.inUse && check.pids.length > 0) {
         const action = await showConfirm(`端口 ${port} 已被占用（PID: ${check.pids.join(', ')}）。\n是否自动释放端口并启动？`, {
           icon: '⚠️',
           confirmText: '释放并启动',
           cancelText: '取消',
         });
         if (!action) return;
+
+        showToast('⏳ 正在强释端口...', projectName);
+        await API.post('/api/run/force-release', { pid: check.pids[0] });
+        await new Promise(resolve => setTimeout(resolve, 800));
       }
     } catch { /* 检测失败不阻塞启动 */ }
   }
@@ -558,11 +595,16 @@ async function quickStartRun(projectName) {
       nodeVersion: project.nodeVersion || '',
     });
     runningProjects[project.name] = data;
+    delete portOccupancyAlerts[project.name];
     showRunLogShell(data);
     showToast('▶ 快速启动', project.displayName || project.name);
     renderRunPage();
   } catch (e) {
     showAlert('启动失败: ' + e.message, { icon: '❌' });
+    if (port) {
+      await checkPortOccupancyForProject(project.name, port);
+      renderRunPage();
+    }
   }
 }
 
@@ -577,5 +619,39 @@ async function loadRunStatuses() {
     });
   } catch (e) {
     runningProjects = {};
+  }
+}
+
+async function forceReleaseAndStart(projectName, pid) {
+  try {
+    showToast('⏳ 正在强释端口并重新启动...', projectName);
+    await API.post('/api/run/force-release', { pid });
+    delete portOccupancyAlerts[projectName];
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    const project = projects.find(p => p.name === projectName);
+    if (!project) {
+      showToast('项目未找到', projectName);
+      return;
+    }
+
+    const moduleNames = project.type === 'multi-module' ? getRunFavoriteModules(project) : [];
+    if (project.type === 'multi-module' && moduleNames.length === 0) {
+      openRunModal(projectName, 'start');
+      return;
+    }
+
+    const data = await API.post('/api/run/start', {
+      projectName: project.name,
+      command: project.runCommand || inferRunCommand(project),
+      moduleNames,
+      nodeVersion: project.nodeVersion || '',
+    });
+    runningProjects[project.name] = data;
+    showRunLogShell(data);
+    showToast('▶ 本地运行已成功强释并启动', project.displayName || project.name);
+    renderRunPage();
+  } catch (e) {
+    showAlert('强释启动失败: ' + e.message, { icon: '❌' });
   }
 }

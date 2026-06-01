@@ -75,6 +75,7 @@ app.use('/api/notes', require('./routes/notes'));
 app.use('/api/notebook', require('./routes/notebook'));
 app.use('/api/ipcheck', require('./routes/ipcheck'));
 app.use('/api/upgrade', require('./routes/upgrade'));
+app.use('/api/terminal', require('./routes/terminal'));
 
 // 健康检查
 app.get('/api/health', (req, res) => {
@@ -202,6 +203,12 @@ wss.on('connection', (ws) => {
         if (ptyProcess) {
           try {
             ptyProcess.write(msg.data.data);
+            // 监测回车动作，延迟抓取并保存最新的工作路径
+            if (msg.data.data.includes('\r') && ptyProcess.pid) {
+              setTimeout(() => {
+                updateTerminalCwd(terminalId, ptyProcess.pid);
+              }, 400);
+            }
           } catch (e) {
             console.error(`[PTY] Write error for ${terminalId}:`, e.message);
           }
@@ -245,6 +252,22 @@ wss.on('connection', (ws) => {
 
   ws.on('error', (err) => console.error('[WS] 客户端连接错误:', err.message));
 });
+
+function updateTerminalCwd(terminalId, pid) {
+  if (!pid) return;
+  exec(`lsof -p ${pid} -a -d cwd -Fn`, (err, stdout) => {
+    if (err || !stdout) return;
+    const lines = stdout.split('\n').filter(Boolean);
+    const cwdLine = lines.find(line => line.startsWith('n/'));
+    if (cwdLine) {
+      const cwd = cwdLine.slice(1).trim();
+      try {
+        const db = require('./services/database');
+        db.prepare('UPDATE terminal_sessions SET cwd = ? WHERE id = ?').run(cwd, terminalId);
+      } catch (e) {}
+    }
+  });
+}
 
 // 全局 30s 心跳定时探测，回收假死连接资源
 const heartbeatInterval = setInterval(() => {

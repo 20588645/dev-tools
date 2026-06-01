@@ -14,6 +14,7 @@ let checkedAvailableProjects = new Set();
 let busyProjects = new Set();       // 防重复部署锁
 let lastDeployCache = {};            // 项目最近部署记录缓存
 let runningProjects = {};            // projectName -> 本地运行任务
+let portOccupancyAlerts = {};        // projectName -> 端口占用诊断信息
 let currentRunId = null;             // 当前日志弹窗展示的本地运行任务
 let runModalProjectName = '';
 let runModalMode = 'start';
@@ -22,7 +23,7 @@ let notifiedRunIds = new Set();
 let notifiedRunCompileErrors = new Set();
 let pendingRunCompileErrorTimers = {};
 const RUN_COMPILE_ERROR_NOTIFY_DELAY = 15000;
-let APP_VERSION = '0.1.77';
+let APP_VERSION = '0.1.78';
 
 // ========== 托盘菜单同步 ==========
 function syncTrayMenu() {
@@ -507,10 +508,38 @@ function setupWSHandlers() {
     }
   });
 
-  WS.on('run-status', (data) => {
+  async function checkPortOccupancyForProject(projectName, port) {
+    if (!port) return;
+    try {
+      const res = await API.get('/api/run/port-owner/' + port);
+      if (res && res.inUse) {
+        portOccupancyAlerts[projectName] = {
+          port: port,
+          pid: res.pid,
+          pids: res.pids,
+          user: res.user,
+          command: res.command,
+          commandPath: res.commandPath
+        };
+      } else {
+        delete portOccupancyAlerts[projectName];
+      }
+    } catch (err) {
+      console.error('[Port Diagnosis] Failed to check port owner:', err);
+    }
+  }
+
+  WS.on('run-status', async (data) => {
     const isActive = ['starting', 'running'].includes(data.status);
-    if (isActive) runningProjects[data.projectName] = data;
-    else delete runningProjects[data.projectName];
+    if (isActive) {
+      runningProjects[data.projectName] = data;
+      delete portOccupancyAlerts[data.projectName];
+    } else {
+      delete runningProjects[data.projectName];
+      if (data.status === 'error' && data.port) {
+        await checkPortOccupancyForProject(data.projectName, data.port);
+      }
+    }
 
     if (data.status === 'running' && !notifiedRunIds.has(data.id)) {
       notifiedRunIds.add(data.id);

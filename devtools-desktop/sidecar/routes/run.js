@@ -795,6 +795,68 @@ router.post('/:id/open', (req, res) => {
   });
 });
 
+// 获取特定端口的进程占用详情及元数据
+router.get('/port-owner/:port', (req, res) => {
+  const port = parseInt(req.params.port);
+  if (!port || port < 1 || port > 65535) {
+    return res.status(400).json({ error: '无效端口号' });
+  }
+
+  execFile('lsof', ['-ti', `tcp:${port}`], (err, stdout) => {
+    if (err && !stdout) {
+      return res.json({ inUse: false });
+    }
+
+    const pids = String(stdout || '')
+      .split(/\s+/)
+      .map(pid => Number(pid))
+      .filter(Boolean);
+
+    if (pids.length === 0) {
+      return res.json({ inUse: false });
+    }
+
+    const targetPid = pids[0];
+    execFile('ps', ['-p', String(targetPid), '-o', 'user=,comm='], (psErr, psStdout) => {
+      const psInfo = String(psStdout || '').trim().split(/\s+/);
+      const user = psInfo[0] || 'unknown';
+      const commandPath = psInfo.slice(1).join(' ') || 'unknown';
+      const command = path.basename(commandPath);
+
+      res.json({
+        inUse: true,
+        pid: targetPid,
+        pids,
+        user,
+        command,
+        commandPath
+      });
+    });
+  });
+});
+
+// 强制释放特定 PID 的进程组以释放端口
+router.post('/force-release', (req, res) => {
+  const { pid } = req.body;
+  if (!pid) {
+    return res.status(400).json({ error: 'pid 必填' });
+  }
+
+  try {
+    // 强制强杀该 PID 的整个进程组（前置负号）
+    process.kill(-pid, 'SIGKILL');
+    res.json({ success: true, message: `已强制释放进程组 -${pid}` });
+  } catch (err) {
+    try {
+      // 兜底单独只强杀目标进程自身
+      process.kill(pid, 'SIGKILL');
+      res.json({ success: true, message: `已强制释放进程 ${pid}` });
+    } catch (e) {
+      res.status(500).json({ error: '强制释放端口失败: ' + e.message });
+    }
+  }
+});
+
 process.once('SIGTERM', cleanupRunJobsSync);
 process.once('SIGINT', cleanupRunJobsSync);
 process.once('exit', cleanupRunJobsSync);
