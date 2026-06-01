@@ -23,7 +23,7 @@ let notifiedRunIds = new Set();
 let notifiedRunCompileErrors = new Set();
 let pendingRunCompileErrorTimers = {};
 const RUN_COMPILE_ERROR_NOTIFY_DELAY = 15000;
-let APP_VERSION = '0.1.78';
+let APP_VERSION = '0.1.79';
 
 // ========== 托盘菜单同步 ==========
 function syncTrayMenu() {
@@ -840,8 +840,24 @@ function appendLog(text, type = 'info') {
   }
   const clsMap = { cmd: 'log-cmd', info: 'log-info', success: 'log-success', warn: 'log-warn', error: 'log-error' };
   const clean = text.replace(/\x1B\[[0-9;]*[a-zA-Z]/g, '').replace(/\[[\d;]*m/g, '');
+  
+  let finalType = type;
+  if (type === 'info') {
+    const hasError = /ERROR|Exception|Failed|TypeError|ReferenceError|CompileError|ValidationError/i.test(clean);
+    const hasWarning = /WARN|Warning|Deprecated|Deprecation/i.test(clean);
+    const hasSuccess = /SUCCESS|Compiled successfully|Listening at/i.test(clean);
+
+    if (hasError) {
+      finalType = 'error';
+    } else if (hasWarning) {
+      finalType = 'warn';
+    } else if (hasSuccess) {
+      finalType = 'success';
+    }
+  }
+
   const div = document.createElement('div');
-  div.className = `log-line ${clsMap[type] || 'log-info'}`;
+  div.className = `log-line ${clsMap[finalType] || 'log-info'}`;
   div.textContent = clean;
   terminal.appendChild(div);
   terminal.scrollTop = terminal.scrollHeight;

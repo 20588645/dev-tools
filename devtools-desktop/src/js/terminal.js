@@ -212,6 +212,19 @@ function createNewTerminalTab(tabId = null, name = null, initialCwd = '') {
 
   term.open(tabWrapper);
 
+  // 挂载 WebGL 硬件加速渲染，提高高吞吐日志渲染性能，并提供 context lost 降级降阻逻辑
+  try {
+    const webgl = new WebglAddon.WebglAddon();
+    term.loadAddon(webgl);
+    webgl.onContextLoss(() => {
+      console.warn('[WebGL Terminal] WebGL context lost, disposing addon and falling back to 2D canvas.');
+      try { webgl.dispose(); } catch {}
+    });
+    console.log('[WebGL Terminal] Enabled hardware acceleration successfully for terminal tab:', finalTabId);
+  } catch (err) {
+    console.log('[WebGL Terminal] WebGL not supported, falling back to 2D Canvas renderer:', err);
+  }
+
   // 3. 监听输入数据发送给后端
   term.onData(data => {
     sendWSMessage('terminal-input', { terminalId: finalTabId, data });
@@ -651,7 +664,20 @@ function handleTerminalSearchKeydown(e) {
   }
 }
 
+let terminalSearchDebounceTimer = null;
+
 function performTerminalSearch(direction = 'next', isIncremental = false) {
+  if (isIncremental) {
+    if (terminalSearchDebounceTimer) clearTimeout(terminalSearchDebounceTimer);
+    terminalSearchDebounceTimer = setTimeout(() => {
+      executeTerminalSearch(direction, isIncremental);
+    }, 250);
+  } else {
+    executeTerminalSearch(direction, isIncremental);
+  }
+}
+
+function executeTerminalSearch(direction = 'next', isIncremental = false) {
   const input = document.getElementById('termSearchInput');
   const query = input?.value || '';
   
