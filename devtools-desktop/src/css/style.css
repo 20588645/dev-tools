@@ -13475,3 +13475,23 @@ body[data-theme="light"] #page-terminal .term-search-nav-btn:hover {
   transform: scale(0.9);
 }
 
+.log-editor-link {
+  color: var(--primary);
+  text-decoration: underline;
+  cursor: pointer;
+  font-weight: 600;
+  transition: opacity 0.2s;
+}
+
+.log-editor-link:hover {
+  opacity: 0.8;
+}
+
+.log-error .log-editor-link {
+  color: #ffffff;
+}
+
+.log-warn .log-editor-link {
+  color: var(--warning);
+}
+

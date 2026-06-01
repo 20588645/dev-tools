@@ -23,7 +23,7 @@ let notifiedRunIds = new Set();
 let notifiedRunCompileErrors = new Set();
 let pendingRunCompileErrorTimers = {};
 const RUN_COMPILE_ERROR_NOTIFY_DELAY = 15000;
-let APP_VERSION = '0.1.79';
+let APP_VERSION = '0.1.80';
 
 // ========== 托盘菜单同步 ==========
 function syncTrayMenu() {
@@ -858,10 +858,48 @@ function appendLog(text, type = 'info') {
 
   const div = document.createElement('div');
   div.className = `log-line ${clsMap[finalType] || 'log-info'}`;
-  div.textContent = clean;
+  div.innerHTML = colorizeAndLinkLog(escapeHtml(clean));
   terminal.appendChild(div);
   terminal.scrollTop = terminal.scrollHeight;
 }
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function colorizeAndLinkLog(cleanText) {
+  if (/https?:\/\//i.test(cleanText)) {
+    return cleanText;
+  }
+
+  const pathRegex = /(?:^|\s|file:\/\/\/|at\s+|internal\/)([\w.\-_/\\+]+?\.(?:js|ts|jsx|tsx|vue|css|scss|less|html|json)):(\d+)(?::(\d+))?\b/gi;
+  return cleanText.replace(pathRegex, (match, filepath, line, col) => {
+    const displayPath = filepath.length > 35 ? '...' + filepath.slice(-32) : filepath;
+    const lineLabel = col ? `${line}:${col}` : line;
+    return ` <a href="#" class="log-editor-link" data-path="${encodeURIComponent(filepath)}" data-line="${line}" onclick="openFileInEditor(event, this)">${displayPath}:${lineLabel}</a>`;
+  });
+}
+
+async function openFileInEditor(e, el) {
+  e.preventDefault();
+  const filepath = decodeURIComponent(el.dataset.path);
+  const line = el.dataset.line || '1';
+  const projectName = (typeof activeTask !== 'undefined' && activeTask) ? (activeTask.projectName || '') : '';
+  try {
+    await API.post('/api/run/open-editor', { projectName, path: filepath, line: parseInt(line) });
+    showToast('正在编辑器中定位代码...', filepath);
+  } catch (err) {
+    showToast('无法定位代码: ' + err.message);
+  }
+}
+
+window.openFileInEditor = openFileInEditor;
 
 // ========== 日志搜索 ==========
 let logSearchMatches = [];

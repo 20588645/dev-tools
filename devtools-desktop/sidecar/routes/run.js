@@ -857,6 +857,47 @@ router.post('/force-release', (req, res) => {
   }
 });
 
+// 在编辑器中打开指定文件并定位到行
+router.post('/open-editor', (req, res) => {
+  const { projectName, path: filepath, line = 1 } = req.body;
+  if (!filepath) {
+    return res.status(400).json({ error: 'path 必填' });
+  }
+
+  let absolutePath = filepath;
+  // 如果是相对路径且提供了 projectName，合成为绝对路径
+  if (!path.isAbsolute(filepath) && projectName) {
+    try {
+      const projects = readJSON(PROJECTS_FILE);
+      const project = projects.find(p => p.name === projectName);
+      if (project && project.path) {
+        absolutePath = path.resolve(project.path, filepath);
+      }
+    } catch (e) {
+      console.error('[Open Editor] Failed to resolve absolute path:', e);
+    }
+  }
+
+  const { exec } = require('child_process');
+  
+  // 1. 尝试使用 VS Code 打开并定位到指定行 (-g 参数)
+  const cmd = `code -g "${absolutePath}:${line}"`;
+  exec(cmd, (err) => {
+    if (err) {
+      console.warn('[Open Editor] Failed to launch via code command, falling back to system open:', err);
+      // 2. 兜底使用 macOS 的 open 命令打开文件
+      exec(`open "${absolutePath}"`, (openErr) => {
+        if (openErr) {
+          return res.status(500).json({ error: '拉起编辑器失败: ' + openErr.message });
+        }
+        res.json({ success: true, message: '通过系统默认关联打开了文件' });
+      });
+    } else {
+      res.json({ success: true, message: '成功通过 VS Code 打开并定位' });
+    }
+  });
+});
+
 process.once('SIGTERM', cleanupRunJobsSync);
 process.once('SIGINT', cleanupRunJobsSync);
 process.once('exit', cleanupRunJobsSync);
