@@ -363,8 +363,8 @@ async function startLocalRunFromModal() {
           );
           if (confirmRelease) {
             await forceReleaseAndStart(project.name, alertInfo.pid);
-            return;
           }
+          return;
         }
       }
     }
@@ -642,8 +642,8 @@ async function quickStartRun(projectName) {
           );
           if (confirmRelease) {
             await forceReleaseAndStart(project.name, alertInfo.pid);
-            return;
           }
+          return;
         }
       }
     }
