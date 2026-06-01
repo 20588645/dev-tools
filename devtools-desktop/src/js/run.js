@@ -319,21 +319,22 @@ function renderRunModalStatus(job) {
 }
 
 async function startLocalRunFromModal() {
-  const project = projects.find(p => p.name === runModalProjectName);
-  if (!project) return;
-  const config = await persistLocalRunConfig(project);
-  if (!config) return;
-
-  const { command, nodeVersion } = config;
-  const moduleNames = project.type === 'multi-module' ? [...selectedRunModuleNames] : [];
-
-  if (project.type === 'multi-module' && moduleNames.length === 0) {
-    await showAlert('请选择要运行的模块。可以先在配置里收藏常用模块，再从启动弹窗中勾选一个或多个模块。', { icon: '⚠️' });
-    return;
-  }
-
   try {
+    const project = projects.find(p => p.name === runModalProjectName);
+    if (!project) return;
     document.getElementById('runStartBtn').disabled = true;
+
+    const config = await persistLocalRunConfig(project);
+    if (!config) return;
+
+    const { command, nodeVersion } = config;
+    const moduleNames = project.type === 'multi-module' ? [...selectedRunModuleNames] : [];
+
+    if (project.type === 'multi-module' && moduleNames.length === 0) {
+      await showAlert('请选择要运行的模块。可以先在配置里收藏常用模块，再从启动弹窗中勾选一个或多个模块。', { icon: '⚠️' });
+      return;
+    }
+
     const autoRestart = !!document.getElementById('runAutoRestart')?.checked;
     const data = await API.post('/api/run/start', { projectName: project.name, command, moduleNames, nodeVersion, autoRestart });
     runningProjects[project.name] = data;
@@ -342,8 +343,9 @@ async function startLocalRunFromModal() {
     showToast('▶ 本地运行已启动', project.displayName || project.name);
     renderRunPage();
   } catch (e) {
+    const project = projects.find(p => p.name === runModalProjectName);
     const isPortInUse = e.message && (e.message.includes('已被外部进程') || e.message.includes('EADDRINUSE'));
-    if (isPortInUse) {
+    if (isPortInUse && project) {
       let port = project.runPort || (runningProjects[project.name]?.port);
       if (!port && e.message) {
         const match = e.message.match(/端口\s*(\d{2,5})/);
@@ -368,7 +370,8 @@ async function startLocalRunFromModal() {
     }
     showAlert('启动失败: ' + e.message, { icon: '❌' });
   } finally {
-    document.getElementById('runStartBtn').disabled = false;
+    const btn = document.getElementById('runStartBtn');
+    if (btn) btn.disabled = false;
   }
 }
 
