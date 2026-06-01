@@ -300,10 +300,21 @@ async function terminateJob(job, signal = 'SIGTERM') {
   await killProcessTree(job.pid, signal);
 }
 
-function cleanupRunJobs() {
+function cleanupRunJobsSync() {
+  console.log('[Sidecar Exit] Cleaning up all active run jobs...');
   for (const job of runJobs.values()) {
     if (['starting', 'running', 'stopping'].includes(job.status)) {
-      terminateJob(job, 'SIGTERM');
+      if (job.pid) {
+        try {
+          // 向整个进程组 (PGID = pid) 发送 SIGKILL，强制且同步地杀死所有子进程（如 webpack 进程）
+          process.kill(-job.pid, 'SIGKILL');
+        } catch (e) {
+          try {
+            // 兜底杀死自身
+            process.kill(job.pid, 'SIGKILL');
+          } catch (err) {}
+        }
+      }
     }
   }
 }
@@ -784,8 +795,8 @@ router.post('/:id/open', (req, res) => {
   });
 });
 
-process.once('SIGTERM', cleanupRunJobs);
-process.once('SIGINT', cleanupRunJobs);
-process.once('exit', cleanupRunJobs);
+process.once('SIGTERM', cleanupRunJobsSync);
+process.once('SIGINT', cleanupRunJobsSync);
+process.once('exit', cleanupRunJobsSync);
 
 module.exports = router;

@@ -13,6 +13,25 @@ struct SidecarState {
     port: Mutex<u16>,
 }
 
+fn cleanup_sidecar(app: &tauri::AppHandle) {
+    if let Some(state) = app.try_state::<SidecarState>() {
+        if let Some(mut child) = state._child.lock().unwrap().take() {
+            let pid = child.id();
+            println!("[Tauri Exit] Sending SIGTERM to Sidecar PID: {}", pid);
+            #[cfg(unix)]
+            {
+                let _ = std::process::Command::new("kill")
+                    .arg("-TERM")
+                    .arg(pid.to_string())
+                    .status();
+            }
+            std::thread::sleep(std::time::Duration::from_millis(600));
+            let _ = child.kill();
+            println!("[Tauri Exit] Sidecar child process killed.");
+        }
+    }
+}
+
 #[tauri::command]
 fn get_sidecar_port(state: tauri::State<SidecarState>) -> u16 {
     *state.port.lock().unwrap()
@@ -281,6 +300,11 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![get_sidecar_port, pick_folder, update_tray_menu, exit_app])
-        .run(tauri::generate_context!())
-        .unwrap_or_else(|e| eprintln!("Tauri 运行错误: {:?}", e));
+        .build(tauri::generate_context!())
+        .unwrap_or_else(|e| panic!("Tauri 构建错误: {:?}", e))
+        .run(|app_handle, event| {
+            if let tauri::RunEvent::Exit = event {
+                cleanup_sidecar(app_handle);
+            }
+        });
 }
