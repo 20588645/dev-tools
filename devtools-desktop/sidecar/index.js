@@ -359,3 +359,12 @@ process.on('SIGINT', () => {
   console.log('[Sidecar] 收到 SIGINT，正在关闭...');
   server.close(() => process.exit(0));
 });
+
+// ========== 父进程（Tauri）存活守护定时器 ==========
+// 每 1.2 秒检查一次父进程是否依然存活。如果 Tauri 闪退或被强杀，子进程的 ppid 在 macOS 会自动变为 1（被 launchd 领养）
+setInterval(() => {
+  if (process.ppid === 1) {
+    console.error('[Guard] 检测到父进程 (Tauri) 已经非正常关闭 (ppid 变为 1)。正在执行应急清理并自动退出...');
+    process.exit(1); // 触发同步 exit 监听清理子项目进程组
+  }
+}, 1200);
