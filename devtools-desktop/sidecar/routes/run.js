@@ -91,15 +91,18 @@ function getNodeBinPath(nodeVersion) {
   return fs.existsSync(nvmNodeBin) ? nvmNodeBin : '';
 }
 
-function buildRunEnv(nodeVersion, port) {
+function buildRunEnv(nodeVersion, port, isPty = false) {
   const env = {
     ...process.env,
-    FORCE_COLOR: '0',
-    NO_COLOR: '1',
-    TERM: 'dumb',
-    COLUMNS: process.env.COLUMNS || '160',
-    LINES: process.env.LINES || '40',
   };
+  // 无论是否为 PTY，都强行伪装支持彩色的 256 色终端，以实现与 VS Code / 终端一致的彩色日志与执行特性
+  env.TERM = 'xterm-256color';
+  env.FORCE_COLOR = '1';
+  delete env.NO_COLOR;
+  
+  env.COLUMNS = process.env.COLUMNS || '160';
+  env.LINES = process.env.LINES || '40';
+
   if (port) {
     env.PORT = String(port);
     env.npm_config_port = String(port);
@@ -231,10 +234,10 @@ function publicJob(job) {
 function pushLog(app, job, type, text) {
   const cleanText = stripTerminalControl(text);
   if (!cleanText.trim()) return;
-  const line = { type, text: cleanText, time: Date.now() };
+  const line = { type, text: text, time: Date.now() };
   job.logs.push(line);
   if (job.logs.length > 5000) job.logs.splice(0, job.logs.length - 4000);
-  app.get('broadcast')('run-log', { id: job.id, projectName: job.projectName, type, text: cleanText });
+  app.get('broadcast')('run-log', { id: job.id, projectName: job.projectName, type, text: text });
 }
 
 function broadcastStatus(app, job) {
@@ -271,7 +274,9 @@ function addPendingReadyLine(job, line) {
   const clean = stripTerminalControl(line).trim();
   if (!clean) return;
   if (!job.pendingReadyLines) job.pendingReadyLines = [];
-  if (!job.pendingReadyLines.includes(clean)) job.pendingReadyLines.push(clean);
+  if (!job.pendingReadyLines.some(l => stripTerminalControl(l).trim() === clean)) {
+    job.pendingReadyLines.push(line);
+  }
 }
 
 function markCompileStarting(app, job) {
@@ -419,10 +424,10 @@ function logRunStart(app, job, project, launchCommand, moduleArgs) {
 }
 
 function handleRunOutput(app, job, text, fallbackType = 'info') {
-  job.outputBuffer = `${job.outputBuffer || ''}${stripTerminalControl(text)}`;
+  job.outputBuffer = `${job.outputBuffer || ''}${text}`;
   const lines = job.outputBuffer.split('\n');
   job.outputBuffer = lines.pop() || '';
-  lines.filter(line => line.trim()).forEach(line => processRunOutputLine(app, job, line, fallbackType));
+  lines.filter(line => stripTerminalControl(line).trim()).forEach(line => processRunOutputLine(app, job, line, fallbackType));
   scheduleRunOutputFlush(app, job);
 }
 
@@ -433,12 +438,12 @@ function flushRunOutput(app, job) {
   }
   const text = (job.outputBuffer || '').trimEnd();
   job.outputBuffer = '';
-  if (!text.trim()) return;
-  text.split('\n').filter(line => line.trim()).forEach(line => processRunOutputLine(app, job, line, 'info'));
+  if (!stripTerminalControl(text).trim()) return;
+  text.split('\n').filter(line => stripTerminalControl(line).trim()).forEach(line => processRunOutputLine(app, job, line, 'info'));
 }
 
 function scheduleRunOutputFlush(app, job) {
-  if (!job.outputBuffer?.trim()) return;
+  if (!stripTerminalControl(job.outputBuffer || '').trim()) return;
   if (job.outputFlushTimer) clearTimeout(job.outputFlushTimer);
   job.outputFlushTimer = setTimeout(() => {
     flushRunOutput(app, job);
@@ -459,21 +464,22 @@ function processRunOutputLine(app, job, line, fallbackType = 'info') {
     return;
   }
 
-  processPlainRunOutputLine(app, job, clean, fallbackType);
+  processPlainRunOutputLine(app, job, line, fallbackType);
 }
 
 function processPlainRunOutputLine(app, job, line, fallbackType = 'info') {
-  markRunningFromOutput(app, job, line);
-  if (isRunReadyLine(line)) {
+  const clean = stripTerminalControl(line).trimEnd();
+  markRunningFromOutput(app, job, clean);
+  if (isRunReadyLine(clean)) {
     addPendingReadyLine(job, line);
     scheduleRunReadyFlush(app, job);
     return;
   }
 
-  if (isRunCompileStartLine(line)) markCompileStarting(app, job);
-  const isWarningLine = /(?:\bwarn(?:ing)?\b|deprecated|deprecation)/i.test(line);
-  const isErrorLine = isRunCompileErrorLine(line) || (fallbackType === 'error' && !isWarningLine);
-  if (isErrorLine) markCompileError(app, job, line);
+  if (isRunCompileStartLine(clean)) markCompileStarting(app, job);
+  const isWarningLine = /(?:\bwarn(?:ing)?\b|deprecated|deprecation)/i.test(clean);
+  const isErrorLine = isRunCompileErrorLine(clean) || (fallbackType === 'error' && !isWarningLine);
+  if (isErrorLine) markCompileError(app, job, clean);
   const type = isErrorLine
     ? 'error'
     : isWarningLine ? 'warn' : fallbackType;
@@ -498,15 +504,16 @@ function flushRunReady(app, job) {
   const readyLines = job.pendingReadyLines || [];
   job.pendingReadyLines = [];
   const displayUrl = job.url || (job.port ? `http://localhost:${job.port}` : '');
-  if (readyLines.length && displayUrl && !readyLines.some(line => /listening at/i.test(line))) {
+  if (readyLines.length && displayUrl && !readyLines.some(line => /listening at/i.test(stripTerminalControl(line)))) {
     readyLines.push(`> Listening at ${displayUrl}`);
   }
   readyLines.forEach(line => {
-    const type = /warning/i.test(line) ? 'warn' : 'success';
+    const cleanLine = stripTerminalControl(line);
+    const type = /warning/i.test(cleanLine) ? 'warn' : 'success';
     pushLog(app, job, type, line);
   });
   if (readyLines.length) {
-    job.compileStatus = /warning/i.test(readyLines.join('\n')) ? 'warning' : 'success';
+    job.compileStatus = /warning/i.test(stripTerminalControl(readyLines.join('\n'))) ? 'warning' : 'success';
     job.compileErrorActive = false;
     job.compileError = '';
     job.compileErrorAt = null;
@@ -528,31 +535,52 @@ function spawnRunProcess(app, job, project, launchCommand, env, moduleArgs) {
   job.attempt = (job.attempt || 0) + 1;
   const attempt = job.attempt;
 
-  // 1. 安全无 Shell 判断与启动方式构建，避免 Shell 命令拼接注入
-  const useShell = /[\&\;\>\<\!\|\`]/g.test(launchCommand);
+  const ptyModule = app.get('pty');
   let child;
-  
-  if (useShell) {
-    child = spawn('/bin/bash', ['-c', launchCommand], {
-      cwd: project.path,
-      env,
-      detached: true,
-    });
-  } else {
-    const parts = launchCommand.trim().split(/\s+/);
-    const cmd = parts[0];
-    const args = parts.slice(1).map(arg => {
-      // 剥离因 ShellQuote 等历史转义函数遗留的首尾单双引号，还原真实原生参数
-      if ((arg.startsWith("'") && arg.endsWith("'")) || (arg.startsWith('"') && arg.endsWith('"'))) {
-        return arg.slice(1, -1);
-      }
-      return arg;
-    });
-    child = spawn(cmd, args, {
-      cwd: project.path,
-      env,
-      detached: true,
-    });
+  let isPty = !!ptyModule;
+  let finalEnv = buildRunEnv(job.nodeVersion, job.port, isPty);
+
+  if (isPty) {
+    const shell = process.platform === 'win32' ? 'powershell.exe' : '/bin/bash';
+    const args = process.platform === 'win32' ? ['-Command', launchCommand] : ['-c', launchCommand];
+    try {
+      child = ptyModule.spawn(shell, args, {
+        name: 'xterm-256color',
+        cols: 160,
+        rows: 40,
+        cwd: project.path,
+        env: finalEnv,
+      });
+    } catch (e) {
+      console.error('[Sidecar] pty.spawn 失败，降级到 child_process.spawn:', e.message);
+      isPty = false;
+      finalEnv = buildRunEnv(job.nodeVersion, job.port, false);
+    }
+  }
+
+  if (!isPty) {
+    const useShell = /[\&\;\>\<\!\|\`]/g.test(launchCommand);
+    if (useShell) {
+      child = spawn('/bin/bash', ['-c', launchCommand], {
+        cwd: project.path,
+        env: finalEnv,
+        detached: true,
+      });
+    } else {
+      const parts = launchCommand.trim().split(/\s+/);
+      const cmd = parts[0];
+      const args = parts.slice(1).map(arg => {
+        if ((arg.startsWith("'") && arg.endsWith("'")) || (arg.startsWith('"') && arg.endsWith('"'))) {
+          return arg.slice(1, -1);
+        }
+        return arg;
+      });
+      child = spawn(cmd, args, {
+        cwd: project.path,
+        env: finalEnv,
+        detached: true,
+      });
+    }
   }
 
   job.child = child;
@@ -561,40 +589,53 @@ function spawnRunProcess(app, job, project, launchCommand, env, moduleArgs) {
 
   logRunStart(app, job, project, launchCommand, moduleArgs);
 
-  const stdoutDecoder = new StringDecoder('utf8');
-  const stderrDecoder = new StringDecoder('utf8');
+  if (isPty) {
+    child.onData((data) => {
+      if (data) handleRunOutput(app, job, data, 'info');
+    });
 
-  child.stdout.on('data', (data) => {
-    const text = stdoutDecoder.write(data);
-    if (text) handleRunOutput(app, job, text, 'info');
-  });
-  
-  child.stderr.on('data', (data) => {
-    const text = stderrDecoder.write(data);
-    if (text) handleRunOutput(app, job, text, 'error');
-  });
+    child.onExit(async ({ exitCode, signal }) => {
+      await processJobClose(exitCode, signal);
+    });
+  } else {
+    const stdoutDecoder = new StringDecoder('utf8');
+    const stderrDecoder = new StringDecoder('utf8');
 
-  child.on('error', (err) => {
-    const remainingStdout = stdoutDecoder.end();
-    if (remainingStdout) handleRunOutput(app, job, remainingStdout, 'info');
-    const remainingStderr = stderrDecoder.end();
-    if (remainingStderr) handleRunOutput(app, job, remainingStderr, 'error');
+    child.stdout.on('data', (data) => {
+      const text = stdoutDecoder.write(data);
+      if (text) handleRunOutput(app, job, text, 'info');
+    });
+    
+    child.stderr.on('data', (data) => {
+      const text = stderrDecoder.write(data);
+      if (text) handleRunOutput(app, job, text, 'error');
+    });
 
-    job.status = 'error';
-    job.error = err.message;
-    job.stoppedAt = Date.now();
-    pushLog(app, job, 'error', `运行进程错误: ${err.message}`);
-    broadcastStatus(app, job);
-  });
+    child.on('error', (err) => {
+      const remainingStdout = stdoutDecoder.end();
+      if (remainingStdout) handleRunOutput(app, job, remainingStdout, 'info');
+      const remainingStderr = stderrDecoder.end();
+      if (remainingStderr) handleRunOutput(app, job, remainingStderr, 'error');
 
-  child.on('close', async (code, signal) => {
+      job.status = 'error';
+      job.error = err.message;
+      job.stoppedAt = Date.now();
+      pushLog(app, job, 'error', `运行进程错误: ${err.message}`);
+      broadcastStatus(app, job);
+    });
+
+    child.on('close', async (code, signal) => {
+      const remainingStdout = stdoutDecoder.end();
+      if (remainingStdout) handleRunOutput(app, job, remainingStdout, 'info');
+      const remainingStderr = stderrDecoder.end();
+      if (remainingStderr) handleRunOutput(app, job, remainingStderr, 'error');
+      await processJobClose(code, signal);
+    });
+  }
+
+  async function processJobClose(code, signal) {
     if (attempt !== job.attempt) return;
     
-    const remainingStdout = stdoutDecoder.end();
-    if (remainingStdout) handleRunOutput(app, job, remainingStdout, 'info');
-    const remainingStderr = stderrDecoder.end();
-    if (remainingStderr) handleRunOutput(app, job, remainingStderr, 'error');
-
     flushRunOutput(app, job);
     flushRunReady(app, job);
     job.exitCode = code;
@@ -648,7 +689,7 @@ function spawnRunProcess(app, job, project, launchCommand, env, moduleArgs) {
     // 记录运行历史
     recordRunHistory(job);
     broadcastStatus(app, job);
-  });
+  }
 
   setTimeout(() => {
     if (attempt === job.attempt && job.status === 'starting') {

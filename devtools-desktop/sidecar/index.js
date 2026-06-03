@@ -49,6 +49,7 @@ function broadcast(type, data) {
 
 // 挂载 broadcast 到 app 上，供路由使用
 app.set('broadcast', broadcast);
+app.set('pty', pty);
 
 // 中间件
 app.use(express.json({ limit: '20mb' }));

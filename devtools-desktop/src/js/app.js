@@ -23,7 +23,7 @@ let notifiedRunIds = new Set();
 let notifiedRunCompileErrors = new Set();
 let pendingRunCompileErrorTimers = {};
 const RUN_COMPILE_ERROR_NOTIFY_DELAY = 15000;
-let APP_VERSION = '0.1.88';
+let APP_VERSION = '0.1.89';
 
 // ========== 托盘菜单同步 ==========
 function syncTrayMenu() {
@@ -860,7 +860,7 @@ function appendLog(text, type = 'info') {
 
   const div = document.createElement('div');
   div.className = `log-line ${clsMap[finalType] || 'log-info'}`;
-  div.innerHTML = colorizeAndLinkLog(escapeHtml(clean));
+  div.innerHTML = colorizeAndLinkLog(ansiToHtml(text));
   terminal.appendChild(div);
   terminal.scrollTop = terminal.scrollHeight;
 }
@@ -873,6 +873,62 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
+}
+
+function ansiToHtml(text) {
+  const colors = {
+    30: 'var(--text-muted, #6b7280)', // black / gray
+    31: 'var(--danger, #ef4444)',      // red
+    32: 'var(--success, #10b981)',     // green
+    33: 'var(--warning, #f59e0b)',     // yellow
+    34: 'var(--accent, #6366f1)',      // blue
+    35: '#d946ef',                     // magenta
+    36: '#06b6d4',                     // cyan
+    37: '#f3f4f6',                     // white
+    90: '#9ca3af',                     // bright black (gray)
+  };
+
+  let html = escapeHtml(text);
+
+  // 把 \x1b[1m 替换成 <strong>，\x1b[22m 替换成 </strong>
+  html = html.replace(/\x1B\[1m/gi, '<strong>');
+  html = html.replace(/\x1B\[22m/gi, '</strong>');
+
+  let openSpans = 0;
+  html = html.replace(/\x1B\[([0-9;]*)m/g, (match, codeStr) => {
+    const codes = codeStr.split(';');
+    let style = '';
+    let reset = false;
+
+    for (const code of codes) {
+      const num = parseInt(code);
+      if (num === 0 || num === 39) {
+        reset = true;
+      } else if (colors[num]) {
+        style += `color: ${colors[num]};`;
+      }
+    }
+
+    if (reset) {
+      let closes = '';
+      while (openSpans > 0) {
+        closes += '</span>';
+        openSpans--;
+      }
+      return closes;
+    } else if (style) {
+      openSpans++;
+      return `<span style="${style}">`;
+    }
+    return '';
+  });
+
+  while (openSpans > 0) {
+    html += '</span>';
+    openSpans--;
+  }
+
+  return html;
 }
 
 function colorizeAndLinkLog(cleanText) {
