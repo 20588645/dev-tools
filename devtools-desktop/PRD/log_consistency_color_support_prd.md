@@ -2,14 +2,14 @@
 
 ## 1. 背景与目标
 在本地运行前端项目时，用户发现在 DevTools Desktop 的日志面板中无法显示与 VS Code / 系统终端完全一致的彩色日志，并且在非 PTY 模式下可能会触发项目配置脚本的某些不兼容编译报错（如 `TypeError: cb is not a function`）。
-
-经诊断，原因为：
-1. 后端 Sidecar 的 `pushLog` 及 `handleRunOutput` 逻辑在处理日志时，强行调用了 `stripTerminalControl` 过滤了全部终端 ANSI 控制字符（包括颜色控制码），这使得前端接收到的仅是纯文本；
-2. 当 `node-pty` 降级为普通的 `child_process.spawn` 时，环境变量配置将 `TERM` 设为了 `dumb`，并将 `FORCE_COLOR` 设为了 `0`，从而迫使子进程的 Webpack/Chalk 等模块在非 TTY 的哑终端下以无色且受限的模式运行，改变了库的钩子和参数发布行为，暴露出了编译期兼容漏洞。
+此外，对于在代理过程中由于 VPN 或网络重置产生的 HPM（`http-proxy-middleware`）代理报错（如 `[HPM] Error occurred...`），系统在捕获到这些 `stderr` 输出或 `Error` 关键字时，会错误地将其识别为“本地项目编译报错”，并触发大红色背景的高对比度报错通知、弹窗底部红色提示条以及系统通知，对开发造成了不必要的视觉和通知干扰。
 
 本项目标为：
 * **保留 ANSI 彩色字符**：修改后端过滤策略，在检测/就绪正则匹配时使用干净的文本，在存储和广播时使用原始带颜色的 ANSI 字符，从而让前端 WebGL 及 Canvas 日志终端还原出 100% 真实的彩色日志。
 * **伪装终端环境变量**：在 child_process.spawn 降级模式下也强行启用 `FORCE_COLOR=1` 及 `TERM=xterm-256color`，强制启用彩色输出，使其运行特性和日志格式与 VS Code / 标准终端保持完全一致，消除兼容报错。
+* **过滤并淡化 HPM 代理错误**：
+  * 精准匹配并屏蔽 `[HPM] Error` 类的日志触发编译报错（`compileStatus = 'error'`）状态及系统桌面通知。
+  * 将其类型由 `error` 降级为 `warn`（黄色警告）或普通展示，在日志面板中不以刺目的红色进行特殊渲染。
 
 ---
 
@@ -34,6 +34,17 @@ delete env.NO_COLOR;
    * 采用 `cleanText = stripTerminalControl(text)` 检查内容有效性。
    * 保存到 `job.logs` 及发送 Websocket 时使用原始的 `text`（保留 ANSI 颜色）。
 
+### 2.3 精准排除并淡化 HPM 代理报错（Phase 5.1）
+1. **后端过滤排除（`sidecar/routes/run.js`）**：
+   在 `processPlainRunOutputLine` 中，通过正则判定 `/\[HPM\]\s+Error/i.test(clean)` 是否属于 HPM 代理错误。
+   若为代理错误：
+   * 绝不将其判定为 `isErrorLine = true`（即不调用 `markCompileError`，不进入编译报错状态）。
+   * 将其广播类型强行修正为 `'warn'`，以黄色而非红色流向前端。
+2. **前端日志着色防护（`src/js/app.js`）**：
+   在 `appendLog` 中：
+   * 新增正则检测 `/\[HPM\]\s+Error/i.test(clean)`。
+   * 若匹配成功，直接将 `finalType` 重置为 `'warn'`，避免被后面的通用 `/Error/` 正则误判染为红色。
+
 ---
 
 ## 3. 验证计划
@@ -43,3 +54,9 @@ delete env.NO_COLOR;
 2. **非 TTY 编译报错验证**：
    * 启动先前会抛出 `TypeError: cb is not a function` 的项目（如 `kangzhan-cloud`）。
    * **预期表现**：项目正常运行启动，完全不再抛出此 `TypeError` 错误，控制台编译输出无任何警示红底报错。
+3. **HPM 代理报错静默与淡化测试**：
+   * 在断开 VPN 或者项目后端服务未开启时，触发一次前端接口请求，使终端流出 `[HPM] Error occurred while trying to proxy...` 日志。
+   * **预期表现**：
+     * 终端日志中该行以黄色（warn）警告颜色字呈现，而不是大红色特殊展示；
+     * 弹窗底部的“编译报错”错误提示条**不被唤醒**，小标签状态保持为“运行中”；
+     * **不弹出**任何关于“本地项目编译报错”的系统桌面通知或 Toast 气泡。

@@ -477,12 +477,19 @@ function processPlainRunOutputLine(app, job, line, fallbackType = 'info') {
   }
 
   if (isRunCompileStartLine(clean)) markCompileStarting(app, job);
+  
+  // 识别并忽略 HPM 代理错误触发编译报错状态
+  const isHpmError = /\[HPM\]\s+Error/i.test(clean);
+  
   const isWarningLine = /(?:\bwarn(?:ing)?\b|deprecated|deprecation)/i.test(clean);
-  const isErrorLine = isRunCompileErrorLine(clean) || (fallbackType === 'error' && !isWarningLine);
+  const isErrorLine = !isHpmError && (isRunCompileErrorLine(clean) || (fallbackType === 'error' && !isWarningLine));
+  
   if (isErrorLine) markCompileError(app, job, clean);
-  const type = isErrorLine
-    ? 'error'
-    : isWarningLine ? 'warn' : fallbackType;
+  
+  const type = isHpmError
+    ? 'warn'
+    : (isErrorLine ? 'error' : (isWarningLine ? 'warn' : fallbackType));
+    
   pushLog(app, job, type, line);
 }
 

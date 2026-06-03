@@ -23,7 +23,7 @@ let notifiedRunIds = new Set();
 let notifiedRunCompileErrors = new Set();
 let pendingRunCompileErrorTimers = {};
 const RUN_COMPILE_ERROR_NOTIFY_DELAY = 15000;
-let APP_VERSION = '0.1.89';
+let APP_VERSION = '0.1.90';
 
 // ========== 托盘菜单同步 ==========
 function syncTrayMenu() {
@@ -844,7 +844,12 @@ function appendLog(text, type = 'info') {
   const clean = text.replace(/\x1B\[[0-9;]*[a-zA-Z]/g, '').replace(/\[[\d;]*m/g, '');
   
   let finalType = type;
-  if (type === 'info') {
+  
+  // 识别并拦截 HPM 代理报错，强行降级为 warn，不显示为红色
+  const isHpmError = /\[HPM\]\s+Error/i.test(clean);
+  if (isHpmError) {
+    finalType = 'warn';
+  } else if (type === 'info') {
     const hasError = /ERROR|Exception|Failed|TypeError|ReferenceError|CompileError|ValidationError/i.test(clean);
     const hasWarning = /WARN|Warning|Deprecated|Deprecation/i.test(clean);
     const hasSuccess = /SUCCESS|Compiled successfully|Listening at/i.test(clean);
