@@ -88,6 +88,25 @@ try {
     console.warn(`⚠ 找不到 app.js 文件: ${appJsPath}`);
   }
 
+  // 6. 同步根目录 README.md（版本徽章 + DMG 示例文件名）
+  const readmePath = path.resolve(__dirname, '../../README.md');
+  if (fs.existsSync(readmePath)) {
+    let readme = fs.readFileSync(readmePath, 'utf8');
+    const before = readme;
+    // 版本徽章：.../badge/version-<X>-green
+    readme = readme.replace(/(badge\/version-)[0-9][^-\s)]*(-green)/g, `$1${version}$2`);
+    // 构建产物示例文件名：DevTools_<X>_aarch64.dmg
+    readme = readme.replace(/(DevTools_)[0-9][0-9.]*(_aarch64\.dmg)/g, `$1${version}$2`);
+    if (readme !== before) {
+      fs.writeFileSync(readmePath, readme, 'utf8');
+      console.log(`✔ 已同步 README.md 版本至 ${version}`);
+    } else {
+      console.log('○ README.md 版本已一致，无需修改');
+    }
+  } else {
+    console.warn(`⚠ 找不到 README.md 文件: ${readmePath}`);
+  }
+
   console.log('[SyncVersion] 版本号同步完成！');
 } catch (e) {
   console.error('[SyncVersion] ❌ 版本号同步失败:', e.message);
