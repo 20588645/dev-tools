@@ -5,7 +5,9 @@ const Database = require('better-sqlite3');
 const path = require('path');
 const fs = require('fs');
 
-const DB_PATH = path.join(__dirname, '../data/devtools.db');
+// 测试沙箱用独立数据目录，绝不污染正式数据库
+const IS_TEST = process.env.DEVTOOLS_TEST === '1' || process.argv.includes('--test');
+const DB_PATH = path.join(__dirname, '..', IS_TEST ? 'data-test' : 'data', 'devtools.db');
 
 // 确保 data 目录存在
 const dataDir = path.dirname(DB_PATH);
@@ -136,6 +138,15 @@ db.exec(`
     nodeVersion TEXT DEFAULT '',
     createdAt TEXT DEFAULT (datetime('now')),
     sortOrder INTEGER DEFAULT 0
+  );
+
+  CREATE TABLE IF NOT EXISTS editor_drafts (
+    id TEXT PRIMARY KEY,
+    title TEXT DEFAULT '',
+    content TEXT DEFAULT '',
+    sortOrder INTEGER DEFAULT 0,
+    createdAt TEXT DEFAULT (datetime('now')),
+    updatedAt TEXT DEFAULT (datetime('now'))
   );
 `);
 

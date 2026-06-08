@@ -31,12 +31,88 @@ async function refreshAboutSettingsInfo() {
   }
 }
 
+// 刷新「测试沙箱进程」状态（走 HTTP，经 sidecar 检测，不依赖 Tauri 调用）
+async function refreshTestSidecarStatus() {
+  const badge = document.getElementById('settingTestSidecarStatus');
+  const btn = document.getElementById('killTestSidecarBtn');
+  if (!badge) return;
+  try {
+    const { pids } = await API.get('/api/system/test-sidecars');
+    if (!pids || pids.length === 0) {
+      badge.textContent = '● 无测试进程';
+      badge.className = 'setting-badge';
+      if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; }
+    } else {
+      badge.textContent = `● 运行中 · ${pids.length} 个 · PID ${pids.join(', ')}`;
+      badge.className = 'setting-badge online';
+      if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+    }
+  } catch (e) {
+    badge.textContent = '● 检测失败';
+    badge.className = 'setting-badge offline';
+    if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; }
+  }
+}
+
+// 一键停止所有测试沙箱后端进程
+async function killTestSidecars() {
+  const confirmed = await showConfirm('确定停止所有测试沙箱后端进程？', { icon: '🧹', confirmText: '停止' });
+  if (!confirmed) return;
+  const btn = document.getElementById('killTestSidecarBtn');
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+  try {
+    const { killed } = await API.post('/api/system/test-sidecars/kill');
+    showToast(killed > 0 ? `✅ 已停止 ${killed} 个测试沙箱进程` : '没有正在运行的测试沙箱进程');
+  } catch (e) {
+    showToast('⚠️ 停止失败: ' + (e?.message || e));
+  } finally {
+    await refreshTestSidecarStatus();
+  }
+}
+
+// 重启后端服务，并让前端自动重连到新进程
+async function restartSidecar() {
+  const btn = document.getElementById('restartSidecarBtn');
+  const badge = document.getElementById('settingSidecarStatus');
+  const invoke = getTauriInvoke();
+  if (!invoke) {
+    showToast('⚠️ 仅桌面应用内可重启后端');
+    return;
+  }
+  const confirmed = await showConfirm('确定重启后端服务？正在进行的构建/部署等任务会被中断。', { icon: '🔄', confirmText: '重启' });
+  if (!confirmed) return;
+
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+  if (badge) { badge.textContent = '● 重启中...'; badge.className = 'setting-badge'; }
+
+  try {
+    const newPort = await invoke('restart_sidecar');
+    // 1. 更新 API 基址到新端口
+    API_BASE = 'http://127.0.0.1:' + newPort;
+    // 2. 重连 WebSocket（先断开旧连接，避免触发自动重连到旧端口）
+    clearTimeout(WS.reconnectTimer);
+    if (WS.socket) { try { WS.socket.onclose = null; WS.socket.close(); } catch (e) {} }
+    WS.reconnectAttempts = 0;
+    WS.connect(newPort);
+    // 3. 稍等后端就绪，刷新状态
+    await new Promise(r => setTimeout(r, 600));
+    await refreshAboutSettingsInfo();
+    showToast('✅ 后端已重启并重新连接（端口 ' + newPort + '）');
+  } catch (e) {
+    if (badge) { badge.textContent = '● 离线'; badge.className = 'setting-badge offline'; }
+    showToast('⚠️ 重启失败: ' + (e?.message || e));
+  } finally {
+    if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+  }
+}
+
 async function loadSettings() {
   // 菜单排序每次都刷新
   renderMenuOrderSettings();
 
   // 刷新关于信息和 Sidecar 状态（每次切换设置页面都刷新，确保数据最新且不显示 "-"）
   await refreshAboutSettingsInfo();
+  refreshTestSidecarStatus();
 
   if (settingsLoaded) return;
   settingsLoaded = true;

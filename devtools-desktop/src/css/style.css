@@ -10205,8 +10205,8 @@ body[data-theme="dark"] .cmd-output-section .cmd-output {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  height: 100px;
-  overflow: hidden;
+  min-height: 100px;
+  padding: 4px 0;
 }
 .widget-weather-main {
   display: flex;
@@ -13495,3 +13495,173 @@ body[data-theme="light"] #page-terminal .term-search-nav-btn:hover {
   color: var(--warning);
 }
 
+
+/* ========== 文件编辑器 (Notepad++ 风格) ========== */
+#page-editor .page-header-bar { flex-shrink: 0; }
+.ed-toolbar { display: flex; align-items: center; gap: 10px; }
+.ed-open-btn, .ed-save-btn { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; }
+.ed-open-btn svg, .ed-save-btn svg { flex-shrink: 0; }
+
+.ed-layout {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--bg-elevated);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+/* Tab 栏 */
+.ed-tabs {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  flex-shrink: 0;
+  min-height: 38px;
+  background: var(--bg-input);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+.ed-tabs::-webkit-scrollbar { height: 0; }
+.ed-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px 0 14px;
+  max-width: 220px;
+  border-right: 1px solid var(--border);
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  position: relative;
+  transition: background 0.12s ease;
+}
+.ed-tab:hover { background: var(--bg-hover); }
+.ed-tab.active {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.ed-tab.active::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: -1px;
+  height: 2px;
+  background: var(--primary);
+}
+.ed-tab-name { overflow: hidden; text-overflow: ellipsis; }
+.ed-tab-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px; height: 18px;
+  border-radius: 5px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.ed-tab-close:hover { background: var(--danger-subtle); color: var(--danger); }
+.ed-tab-close .ed-tab-x { opacity: 0.85; }
+/* 未保存：圆点替代 X，hover 时恢复 X */
+.ed-tab-close.dirty .ed-tab-x { display: none; }
+.ed-tab-close.dirty::before {
+  content: '';
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--primary);
+}
+.ed-tab-close.dirty:hover::before { display: none; }
+.ed-tab-close.dirty:hover .ed-tab-x { display: block; }
+
+/* 编辑区 */
+.ed-body { flex: 1 1 auto; min-height: 0; position: relative; display: flex; }
+.ed-editor-host { flex: 1 1 auto; min-height: 0; width: 100%; }
+.ed-editor-host .CodeMirror {
+  height: 100%;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.ed-editor-host .CodeMirror-gutters { border-right: 1px solid var(--border); }
+
+/* 空状态 */
+.ed-empty {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: var(--text-muted);
+  gap: 4px;
+}
+.ed-empty-icon { color: var(--text-muted); opacity: 0.55; margin-bottom: 10px; }
+.ed-empty-title { font-size: 15px; font-weight: 600; color: var(--text-secondary); }
+.ed-empty-desc { font-size: 12px; color: var(--text-muted); max-width: 320px; }
+
+/* 状态栏 */
+.ed-statusbar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 28px;
+  padding: 0 14px;
+  background: var(--bg-input);
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+.ed-status-path {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 50%;
+  direction: rtl;
+  text-align: left;
+  unicode-bidi: plaintext;
+}
+.ed-status-spacer { flex: 1 1 auto; }
+.ed-status-item { flex-shrink: 0; }
+.ed-statusbar .save-dot { margin-right: 4px; }
+
+/* CodeMirror 查找框适配主题 */
+.ed-editor-host .CodeMirror-dialog {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  border-color: var(--border);
+}
+
+/* 文件编辑器 - 标签右键菜单 */
+.ed-tab-menu {
+  position: fixed;
+  z-index: 9999;
+  min-width: 160px;
+  padding: 5px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.28);
+  font-size: 13px;
+  user-select: none;
+  animation: edMenuIn 0.1s ease;
+}
+@keyframes edMenuIn { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: none; } }
+.ed-tab-menu-item {
+  padding: 7px 12px;
+  border-radius: 6px;
+  color: var(--text-primary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.1s ease;
+}
+.ed-tab-menu-item:hover { background: var(--bg-hover); }
+.ed-tab-menu-item.disabled { color: var(--text-muted); cursor: default; opacity: 0.5; }
+.ed-tab-menu-item.disabled:hover { background: none; }
+.ed-tab-menu-sep { height: 1px; margin: 5px 6px; background: var(--border); }

@@ -6,10 +6,30 @@ let API_BASE = '';
 
 const API_TIMEOUT = 15000; // 15秒超时
 
+/**
+ * 多路径探测 Tauri invoke：
+ * - withGlobalTauri 封装：window.__TAURI__.core.invoke（部分打包环境未注入）
+ * - 旧式：window.__TAURI__.invoke
+ * - 底层内部 IPC：window.__TAURI_INTERNALS__.invoke（打包环境通常都在）
+ */
+function getTauriInvoke() {
+  return (window.__TAURI__ && window.__TAURI__.core && window.__TAURI__.core.invoke)
+      || (window.__TAURI__ && window.__TAURI__.invoke)
+      || (window.__TAURI_INTERNALS__ && window.__TAURI_INTERNALS__.invoke)
+      || null;
+}
+function hasTauri() { return !!getTauriInvoke(); }
+async function tauriInvoke(cmd, args) {
+  const fn = getTauriInvoke();
+  if (!fn) throw new Error('Tauri 调用不可用');
+  return fn(cmd, args);
+}
+
 async function initAPI() {
-  if (window.__TAURI__) {
+  const invoke = getTauriInvoke();
+  if (invoke) {
     try {
-      const port = await window.__TAURI__.core.invoke('get_sidecar_port');
+      const port = await invoke('get_sidecar_port');
       API_BASE = 'http://127.0.0.1:' + port;
       console.log('[API] Sidecar 端口:', port);
     } catch (e) {

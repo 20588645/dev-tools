@@ -24,6 +24,11 @@ const fs = require('fs');
 const sidecarPackage = require('./package.json');
 const { exec } = require('child_process');
 
+// 测试沙箱模式：独立端口 + 独立数据目录 + 不清理正式后端，避免开发测试影响正在运行的 app
+const IS_TEST = process.env.DEVTOOLS_TEST === '1' || process.argv.includes('--test');
+const PORT_BASE = IS_TEST ? 13900 : 13456;
+if (IS_TEST) console.log('[Sidecar] ⚙️ 测试沙箱模式（独立端口/数据库，不影响正式后端）');
+
 let pty = null;
 try {
   pty = require('node-pty');
@@ -74,6 +79,8 @@ app.use('/api/todos', require('./routes/todos'));
 app.use('/api/commands', require('./routes/commands'));
 app.use('/api/notes', require('./routes/notes'));
 app.use('/api/notebook', require('./routes/notebook'));
+app.use('/api/editor', require('./routes/editor'));
+app.use('/api/system', require('./routes/system'));
 app.use('/api/ipcheck', require('./routes/ipcheck'));
 app.use('/api/upgrade', require('./routes/upgrade'));
 app.use('/api/terminal', require('./routes/terminal'));
@@ -323,15 +330,26 @@ function findAvailablePort(startPort) {
 function killOldSidecars() {
   return new Promise((resolve) => {
     if (process.platform === 'win32') return resolve(); // 仅作跨平台防呆
-    
+    if (IS_TEST) return resolve(); // 测试沙箱：绝不清理任何进程，保护正在运行的正式后端
+
     // 查找当前系统里除了自身 PID 之外的所有 sidecar/index.js 进程
     exec(`pgrep -f "sidecar/index.js"`, (err, stdout) => {
       if (err || !stdout) return resolve();
       const pids = stdout.split(/\s+/).map(Number).filter(pid => pid && pid !== process.pid);
-      
-      if (pids.length > 0) {
-        console.log(`[Guardian] 检测到后台存在 ${pids.length} 个残留旧 Sidecar 僵尸进程，正在自动净化...`);
-        for (const oldPid of pids) {
+      if (pids.length === 0) return resolve();
+
+      // 排除测试沙箱进程（命令行含 --test），只清理正式后端的残留僵尸
+      exec(`ps -o pid=,command= -p ${pids.join(',')}`, (e2, out2) => {
+        let targets = pids;
+        if (!e2 && out2) {
+          targets = out2.trim().split('\n')
+            .filter(l => l && !l.includes('--test'))
+            .map(l => parseInt(l.trim().split(/\s+/)[0]))
+            .filter(Boolean);
+        }
+        if (targets.length === 0) return resolve();
+        console.log(`[Guardian] 检测到后台存在 ${targets.length} 个残留旧 Sidecar 僵尸进程，正在自动净化...`);
+        for (const oldPid of targets) {
           try {
             process.kill(oldPid, 'SIGKILL');
             console.log(`[Guardian] 已强行肃清旧进程 PID: ${oldPid}`);
@@ -339,9 +357,7 @@ function killOldSidecars() {
         }
         // 稍微等待 150ms 确保端口被操作系统底层彻底释放
         setTimeout(resolve, 150);
-      } else {
-        resolve();
-      }
+      });
     });
   });
 }
@@ -351,7 +367,7 @@ async function main() {
   // 先执行一次自我净化，扫除所有残留僵尸 Sidecar，彻底杜绝端口偏移与缓存问题！
   await killOldSidecars();
 
-  const port = await findAvailablePort(13456);
+  const port = await findAvailablePort(PORT_BASE);
 
   server.listen(port, '127.0.0.1', () => {
     // 输出端口号到 stdout，Tauri 主进程会读取这一行
@@ -386,9 +402,11 @@ process.on('SIGINT', () => {
 
 // ========== 父进程（Tauri）存活守护定时器 ==========
 // 每 1.2 秒检查一次父进程是否依然存活。如果 Tauri 闪退或被强杀，子进程的 ppid 在 macOS 会自动变为 1（被 launchd 领养）
-setInterval(() => {
-  if (process.ppid === 1) {
-    console.error('[Guard] 检测到父进程 (Tauri) 已经非正常关闭 (ppid 变为 1)。正在执行应急清理并自动退出...');
-    process.exit(1); // 触发同步 exit 监听清理子项目进程组
-  }
-}, 1200);
+if (!IS_TEST) {
+  setInterval(() => {
+    if (process.ppid === 1) {
+      console.error('[Guard] 检测到父进程 (Tauri) 已经非正常关闭 (ppid 变为 1)。正在执行应急清理并自动退出...');
+      process.exit(1); // 触发同步 exit 监听清理子项目进程组
+    }
+  }, 1200);
+}

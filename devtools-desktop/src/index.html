@@ -12,6 +12,7 @@
 </script>
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/xterm.css">
+<link rel="stylesheet" href="js/vendor/codemirror/cm.bundle.css">
 </head>
 <body data-theme="light" class="sidebar-collapsed">
 <div class="app-shell">
@@ -602,6 +603,52 @@
   </div>
 </section>
 
+<!-- 文件编辑器 -->
+<section class="page" id="page-editor">
+  <div class="page-header-bar page-header-simple">
+    <div>
+      <div class="page-title">📝 文件编辑器</div>
+      <div class="page-subtitle">打开本地文件，语法高亮编辑（⌘S 保存 · ⌘F 查找）</div>
+    </div>
+    <div class="ed-toolbar">
+      <button class="btn-primary ed-open-btn" onclick="edOpenFileDialog()" title="打开文件">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        <span>打开文件</span>
+      </button>
+      <button class="btn-secondary ed-save-btn" onclick="edSaveCurrent()" title="保存 (⌘S)：草稿存入数据库 / 文件写回磁盘">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        <span>保存</span>
+      </button>
+      <button class="btn-secondary ed-saveas-btn" onclick="edSaveAsActive()" title="另存为：把当前标签导出为磁盘文件">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
+        <span>另存为</span>
+      </button>
+    </div>
+  </div>
+  <div class="ed-layout">
+    <div class="ed-tabs" id="edTabs"></div>
+    <div class="ed-body" id="edBody">
+      <div class="ed-empty" id="edEmpty">
+        <div class="ed-empty-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        </div>
+        <div class="ed-empty-title">未打开任何文件</div>
+        <div class="ed-empty-desc">点击右上角「打开文件」选择一个本地文件开始编辑</div>
+        <button class="btn-primary" onclick="edOpenFileDialog()" style="margin-top:14px;">打开文件</button>
+      </div>
+      <div class="ed-editor-host" id="edEditorHost" style="display:none;"></div>
+    </div>
+    <div class="ed-statusbar" id="edStatusbar" style="display:none;">
+      <span class="ed-status-path" id="edStatusPath"></span>
+      <span class="ed-status-spacer"></span>
+      <span class="ed-status-item" id="edStatusCursor">行 1, 列 1</span>
+      <span class="ed-status-item" id="edStatusLang">纯文本</span>
+      <span class="ed-status-item" id="edStatusEol">LF</span>
+      <span class="ed-status-item" id="edStatusSave"></span>
+    </div>
+  </div>
+</section>
+
 <!-- 快捷命令 -->
 <section class="page" id="page-terminal">
   <div class="page-header-bar page-header-simple">
@@ -863,8 +910,25 @@
           <div class="setting-label">Sidecar 状态</div>
           <div class="setting-desc">Node.js 后端服务进程</div>
         </div>
-        <div class="setting-control">
+        <div class="setting-control" style="display:flex;align-items:center;gap:10px">
           <span class="setting-badge" id="settingSidecarStatus">检测中...</span>
+          <button class="btn-secondary" id="restartSidecarBtn" onclick="restartSidecar()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px" title="重启后端服务并自动重连">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            <span>重启后端</span>
+          </button>
+        </div>
+      </div>
+      <div class="setting-item">
+        <div class="setting-info">
+          <div class="setting-label">测试沙箱进程</div>
+          <div class="setting-desc">开发测试用的独立后端（端口 13900+，独立数据库），与正式后端互不影响</div>
+        </div>
+        <div class="setting-control" style="display:flex;align-items:center;gap:10px">
+          <span class="setting-badge" id="settingTestSidecarStatus">检测中...</span>
+          <button class="btn-secondary" id="killTestSidecarBtn" onclick="killTestSidecars()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px" title="停止所有测试沙箱后端进程">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            <span>停止测试服务</span>
+          </button>
         </div>
       </div>
       <div class="setting-item">
@@ -1528,6 +1592,35 @@
   </div>
 </div>
 
+<!-- 文件编辑器 - 打开文件浏览器 -->
+<div class="modal-overlay" id="edBrowserModal">
+  <div class="modal" style="max-width:720px">
+    <div class="modal-header">
+      <div>
+        <h2 id="edBrowserTitle">📂 打开文件</h2>
+        <p class="modal-subtitle" id="edBrowserSubtitle">浏览目录，点击文件即可打开编辑</p>
+      </div>
+      <button class="modal-close" onclick="closeModal('edBrowserModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <button class="btn-text" onclick="edBrowseHome()" title="回到用户主目录">🏠 主目录</button>
+        <button class="btn-text" id="edBrowseUpBtn" onclick="edBrowseUp()" title="上一级">⬆️ 上一级</button>
+      </div>
+      <div class="browser-breadcrumb" id="edBrowseBreadcrumb"></div>
+      <div class="browser-list" id="edBrowseList" style="max-height:420px"></div>
+      <div id="edSaveRow" style="display:none;margin-top:12px;gap:8px;align-items:center">
+        <span style="font-size:13px;color:var(--text-secondary);white-space:nowrap">文件名</span>
+        <input type="text" id="edSaveFilename" class="sys-prompt-input" placeholder="例如 notes.txt" style="flex:1" onkeydown="if(event.key==='Enter')edConfirmSaveAs()">
+        <button class="btn-primary" onclick="edConfirmSaveAs()" style="white-space:nowrap">保存到此处</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('edBrowserModal')">取消</button>
+    </div>
+  </div>
+</div>
+
 <!-- FileZilla 导入弹窗 -->
 <div class="modal-overlay" id="filezillaModal">
   <div class="modal">
@@ -1669,6 +1762,8 @@
 <script src="js/report.js"></script>
 <script src="js/notes.js"></script>
 <script src="js/notebook.js"></script>
+<script src="js/vendor/codemirror/cm.bundle.js"></script>
+<script src="js/editor.js"></script>
 <script src="js/xterm.js"></script>
 <script src="js/xterm-addon-fit.js"></script>
 <script src="js/xterm-addon-search.js"></script>

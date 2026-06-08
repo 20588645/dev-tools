@@ -1,9 +1,9 @@
 #!/bin/sh
-# 清理残留 Sidecar 进程（保留当前正在服务的）
-ALL_PIDS=$(ps -Ao pid,command | grep "devtools-desktop/sidecar/index.js" | grep -v grep | awk '{print $1}')
+# 清理残留 Sidecar 进程（保留当前正在服务的；忽略测试沙箱 --test 进程）
+ALL_PIDS=$(ps -Ao pid,command | grep "devtools-desktop/sidecar/index.js" | grep -v -- "--test" | grep -v grep | awk '{print $1}')
 
 if [ -z "$ALL_PIDS" ]; then
-  echo "未发现任何 Sidecar 进程，无需清理"
+  echo "未发现任何正式 Sidecar 进程，无需清理"
   exit 0
 fi
 

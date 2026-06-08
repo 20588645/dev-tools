@@ -37,6 +37,107 @@ fn get_sidecar_port(state: tauri::State<SidecarState>) -> u16 {
     *state.port.lock().unwrap()
 }
 
+/// 启动一个 sidecar 子进程，读取其 stdout 里的 __PORT__ 行，返回 (子进程, 端口)
+fn spawn_sidecar() -> (Option<Child>, u16) {
+    let sidecar_dir = std::path::PathBuf::from("/Users/ldy/personalTools/devtools-desktop/sidecar");
+    let sidecar_entry = sidecar_dir.join("index.js");
+    if !sidecar_entry.exists() {
+        eprintln!("[Tauri] 错误：sidecar/index.js 不存在");
+        return (None, 0);
+    }
+
+    let node_paths = [
+        "/usr/local/bin/node",
+        "/opt/homebrew/bin/node",
+        "/Users/ldy/.nvm/current/bin/node",
+        "node",
+    ];
+
+    let mut child_opt: Option<Child> = None;
+    for node_path in &node_paths {
+        match Command::new(node_path)
+            .arg(&sidecar_entry)
+            .current_dir(&sidecar_dir)
+            .stdout(Stdio::piped())
+            .stderr(Stdio::inherit())
+            .spawn()
+        {
+            Ok(c) => {
+                println!("[Tauri] 使用 node: {}", node_path);
+                child_opt = Some(c);
+                break;
+            }
+            Err(e) => eprintln!("[Tauri] 尝试 {} 失败: {}", node_path, e),
+        }
+    }
+
+    let mut child = match child_opt {
+        Some(c) => c,
+        None => {
+            eprintln!("[Tauri] 错误：无法启动 Node sidecar（所有 node 路径均失败）");
+            return (None, 0);
+        }
+    };
+
+    let stdout = match child.stdout.take() {
+        Some(s) => s,
+        None => return (Some(child), 0),
+    };
+    let reader = BufReader::new(stdout);
+    let mut port: u16 = 0;
+    for line in reader.lines() {
+        if let Ok(line) = line {
+            println!("[Sidecar] {}", line);
+            if line.starts_with("__PORT__:") {
+                if let Ok(p) = line[9..].parse::<u16>() {
+                    port = p;
+                    break;
+                }
+            }
+        }
+    }
+    (Some(child), port)
+}
+
+/// 重启 sidecar：杀掉当前子进程，重新拉起一个，并更新端口。返回新端口供前端重连。
+#[tauri::command]
+fn restart_sidecar(app: tauri::AppHandle) -> Result<u16, String> {
+    // 1. 结束当前 sidecar
+    if let Some(state) = app.try_state::<SidecarState>() {
+        if let Some(mut child) = state._child.lock().unwrap().take() {
+            let pid = child.id();
+            println!("[Tauri] 重启 sidecar：结束旧进程 PID {}", pid);
+            #[cfg(unix)]
+            {
+                let _ = std::process::Command::new("kill")
+                    .arg("-TERM")
+                    .arg(pid.to_string())
+                    .status();
+            }
+            std::thread::sleep(std::time::Duration::from_millis(400));
+            let _ = child.kill();
+        }
+    }
+
+    // 2. 重新拉起
+    let (child_opt, port) = spawn_sidecar();
+    match child_opt {
+        Some(child) => {
+            if let Some(state) = app.try_state::<SidecarState>() {
+                *state._child.lock().unwrap() = Some(child);
+                *state.port.lock().unwrap() = port;
+            }
+            if port == 0 {
+                Err("sidecar 已启动但未获取到端口".into())
+            } else {
+                println!("[Tauri] sidecar 已重启，新端口: {}", port);
+                Ok(port)
+            }
+        }
+        None => Err("无法启动 sidecar".into()),
+    }
+}
+
 #[tauri::command]
 fn pick_folder() -> Option<String> {
     use std::process::Command;
@@ -217,89 +318,20 @@ pub fn run() {
             });
 
             // ========== Sidecar ==========
-            let sidecar_dir = std::path::PathBuf::from("/Users/ldy/personalTools/devtools-desktop/sidecar");
-            let sidecar_entry = sidecar_dir.join("index.js");
-
-            println!("[Tauri] Sidecar 入口: {:?}", sidecar_entry);
-
-            if !sidecar_entry.exists() {
-                eprintln!("[Tauri] 错误：sidecar/index.js 不存在");
-                app.manage(SidecarState {
-                    _child: Mutex::new(None),
-                    port: Mutex::new(0),
-                });
-                return Ok(());
-            }
-
-            let node_paths = [
-                "/usr/local/bin/node",
-                "/opt/homebrew/bin/node",
-                "/Users/ldy/.nvm/current/bin/node",
-                "node",
-            ];
-
-            let mut child_opt: Option<Child> = None;
-            for node_path in &node_paths {
-                match Command::new(node_path)
-                    .arg(&sidecar_entry)
-                    .current_dir(&sidecar_dir)
-                    .stdout(Stdio::piped())
-                    .stderr(Stdio::inherit())
-                    .spawn()
-                {
-                    Ok(c) => {
-                        println!("[Tauri] 使用 node: {}", node_path);
-                        child_opt = Some(c);
-                        break;
-                    }
-                    Err(e) => {
-                        eprintln!("[Tauri] 尝试 {} 失败: {}", node_path, e);
-                    }
-                }
-            }
-
-            let mut child = match child_opt {
-                Some(c) => c,
-                None => {
-                    eprintln!("[Tauri] 错误：无法启动 Node sidecar（所有 node 路径均失败）");
-                    app.manage(SidecarState {
-                        _child: Mutex::new(None),
-                        port: Mutex::new(0),
-                    });
-                    return Ok(());
-                }
-            };
-
-            let stdout = child.stdout.take().expect("无法获取 sidecar stdout");
-            let reader = BufReader::new(stdout);
-            let mut port: u16 = 0;
-
-            for line in reader.lines() {
-                if let Ok(line) = line {
-                    println!("[Sidecar] {}", line);
-                    if line.starts_with("__PORT__:") {
-                        if let Ok(p) = line[9..].parse::<u16>() {
-                            port = p;
-                            break;
-                        }
-                    }
-                }
-            }
-
+            let (child_opt, port) = spawn_sidecar();
             if port == 0 {
                 eprintln!("[Tauri] 错误：无法获取 sidecar 端口号");
             } else {
                 println!("[Tauri] Sidecar 已启动，端口: {}", port);
             }
-
             app.manage(SidecarState {
-                _child: Mutex::new(Some(child)),
+                _child: Mutex::new(child_opt),
                 port: Mutex::new(port),
             });
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![get_sidecar_port, pick_folder, update_tray_menu, exit_app])
+        .invoke_handler(tauri::generate_handler![get_sidecar_port, pick_folder, restart_sidecar, update_tray_menu, exit_app])
         .build(tauri::generate_context!())
         .unwrap_or_else(|e| panic!("Tauri 构建错误: {:?}", e))
         .run(|app_handle, event| {
