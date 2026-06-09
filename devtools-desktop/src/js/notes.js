@@ -207,5 +207,5 @@ async function loadNotesReference() {
     return;
   }
 
-  content.innerHTML = '<div style="color:var(--text-muted);padding:20px;text-align:center">暂无周报数据。<br><br>请先到「Git 周报」页面生成本周报告，<br>然后回来点击此按钮即可加载。</div>';
+  content.innerHTML = '<div style="color:var(--text-muted);padding:20px;text-align:center">暂无周报数据。<br><br>请先到「代码周报」页面生成本周报告，<br>然后回来点击此按钮即可加载。</div>';
 }

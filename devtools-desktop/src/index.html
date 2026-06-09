@@ -197,11 +197,11 @@
         </div>
         <div class="home-shortcuts" id="homeShortcuts">
           <button class="home-shortcut-btn" onclick="switchPage('run', document.querySelector('.sidebar-item[data-page=run]'))"><span class="shortcut-icon green">▶</span>本地运行</button>
-          <button class="home-shortcut-btn" onclick="switchPage('deploy', document.querySelector('.sidebar-item[data-page=deploy]'))"><span class="shortcut-icon blue">↗</span>部署</button>
-          <button class="home-shortcut-btn" onclick="switchPage('terminal', document.querySelector('.sidebar-item[data-page=terminal]'))"><span class="shortcut-icon orange">⚡</span>命令</button>
-          <button class="home-shortcut-btn" onclick="switchPage('todo', document.querySelector('.sidebar-item[data-page=todo]'))"><span class="shortcut-icon purple">✓</span>待办</button>
-          <button class="home-shortcut-btn" onclick="switchPage('report', document.querySelector('.sidebar-item[data-page=report]'))"><span class="shortcut-icon teal">📋</span>周报</button>
-          <button class="home-shortcut-btn" onclick="switchPage('notebook', document.querySelector('.sidebar-item[data-page=notebook]'))"><span class="shortcut-icon amber">📒</span>笔记</button>
+          <button class="home-shortcut-btn" onclick="switchPage('deploy', document.querySelector('.sidebar-item[data-page=deploy]'))"><span class="shortcut-icon blue">↗</span>部署面板</button>
+          <button class="home-shortcut-btn" onclick="switchPage('terminal', document.querySelector('.sidebar-item[data-page=terminal]'))"><span class="shortcut-icon orange">⚡</span>快捷命令</button>
+          <button class="home-shortcut-btn" onclick="switchPage('todo', document.querySelector('.sidebar-item[data-page=todo]'))"><span class="shortcut-icon purple">✓</span>待办事项</button>
+          <button class="home-shortcut-btn" onclick="switchPage('report', document.querySelector('.sidebar-item[data-page=report]'))"><span class="shortcut-icon teal">📋</span>代码周报</button>
+          <button class="home-shortcut-btn" onclick="switchPage('notebook', document.querySelector('.sidebar-item[data-page=notebook]'))"><span class="shortcut-icon amber">📒</span>个人笔记</button>
         </div>
       </div>
 
@@ -376,12 +376,12 @@
   <div class="run-project-grid" id="runProjectGrid"></div>
 </section>
 
-<!-- Git 周报 -->
+<!-- 代码周报 -->
 <section class="page" id="page-report">
   <div class="report-app">
     <div class="page-header-bar page-header-simple">
       <div>
-        <div class="page-title">📋 Git 周报</div>
+        <div class="page-title">📋 代码周报</div>
         <div class="page-subtitle">基于 GitLab API 自动生成提交周报，增量加载与自动分类</div>
       </div>
     </div>
@@ -470,7 +470,7 @@
 <section class="page" id="page-todo">
   <div class="page-header-bar page-header-simple">
     <div>
-      <div class="page-title">📌 待办看板</div>
+      <div class="page-title">📌 待办事项</div>
       <div class="page-subtitle">轻量任务管理，按项目分组记录待办事项</div>
     </div>
     <div class="page-header-actions">
@@ -553,7 +553,7 @@
     <div class="notes-week-grid" id="notesWeekGrid"></div>
     <aside class="notes-reference" id="notesReference" style="display:none">
       <div class="notes-ref-header">
-        <span>Git 周报参考</span>
+        <span>代码周报参考</span>
         <button class="btn-text" onclick="toggleNotesReference()">✕</button>
       </div>
       <div class="notes-ref-content" id="notesRefContent">点击「📋 参考周报」加载本周 Git 提交记录</div>
@@ -561,11 +561,11 @@
   </div>
 </section>
 
-<!-- 笔记本 -->
+<!-- 个人笔记 -->
 <section class="page" id="page-notebook">
   <div class="page-header-bar page-header-simple">
     <div>
-      <div class="page-title">📒 笔记本</div>
+      <div class="page-title">📒 个人笔记</div>
       <div class="page-subtitle">个人知识库，记录笔记与备忘内容</div>
     </div>
   </div>
@@ -716,11 +716,11 @@
   </div>
 </section>
 
-<!-- IP 纯净度检测 -->
+<!-- 纯净检测 -->
 <section class="page" id="page-ipcheck">
   <div class="page-header-bar page-header-simple">
     <div>
-      <div class="page-title">🌐 IP 纯净度检测</div>
+      <div class="page-title">🌐 纯净检测</div>
       <div class="page-subtitle">一键查询公网 IP 风险、原生程度及各大主流业务场景的适用评分</div>
     </div>
   </div>
@@ -896,7 +896,7 @@
 <section class="page" id="page-settings">
   <div class="page-header-bar page-header-simple">
     <div>
-      <div class="page-title">⚙️ 设置</div>
+      <div class="page-title">⚙️ 系统设置</div>
       <div class="page-subtitle">全局配置与系统信息</div>
     </div>
   </div>
@@ -982,7 +982,7 @@
       <div class="setting-item" style="border-bottom:none;padding-bottom:8px">
         <div class="setting-info">
           <div class="setting-label">侧边栏菜单顺序</div>
-          <div class="setting-desc">使用箭头调整顺序，「首页」固定在最前，「设置」固定在最后</div>
+          <div class="setting-desc">使用箭头调整顺序，「应用首页」固定在最前，「系统设置」固定在最后</div>
         </div>
       </div>
       <div class="menu-order-list" id="menuOrderList"></div>
@@ -1084,7 +1084,7 @@
       <div class="setting-item">
         <div class="setting-info">
           <div class="setting-label">功能模块</div>
-          <div class="setting-desc">本地运行 · 构建部署 · 快捷命令 · 待办看板 · Git 周报 · 工时内容 · 笔记本</div>
+          <div class="setting-desc">本地运行 · 部署面板 · 快捷命令 · 待办事项 · 代码周报 · 工时内容 · 个人笔记</div>
         </div>
       </div>
       <div class="setting-item">
@@ -1357,7 +1357,7 @@
         <div class="intro-mark">⌘</div>
         <div>
           <div class="intro-title">个人前端开发工作台</div>
-          <div class="intro-desc">集成本地运行、构建部署、快捷命令、任务管理、Git 周报、工时记录和笔记本，覆盖日常开发全流程。</div>
+          <div class="intro-desc">集成本地运行、构建部署、快捷命令、任务管理、代码周报、工时记录和个人笔记，覆盖日常开发全流程。</div>
         </div>
       </div>
       <div class="intro-grid">
@@ -1385,14 +1385,14 @@
         <div class="intro-item">
           <div class="intro-item-icon">✓</div>
           <div>
-            <strong>待办看板</strong>
+            <strong>待办事项</strong>
             <span>三列看板管理任务进度，支持定时提醒通知。</span>
           </div>
         </div>
         <div class="intro-item">
           <div class="intro-item-icon">📋</div>
           <div>
-            <strong>Git 周报</strong>
+            <strong>代码周报</strong>
             <span>GitLab API 自动生成提交周报，按仓库分组，支持导出。</span>
           </div>
         </div>
@@ -1406,7 +1406,7 @@
         <div class="intro-item">
           <div class="intro-item-icon">📒</div>
           <div>
-            <strong>笔记本</strong>
+            <strong>个人笔记</strong>
             <span>个人知识库，支持图片粘贴、标签分类、全文搜索。</span>
           </div>
         </div>
