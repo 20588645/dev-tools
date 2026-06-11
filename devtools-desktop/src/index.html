@@ -757,22 +757,33 @@
     <div class="usage-hero-main">
       <div class="usage-hero-label">⚡ 真实消耗 Tokens</div>
       <div class="usage-hero-value" id="usageTotalTokens">-</div>
-      <div class="usage-hero-sub" id="usageTotalTokensApprox"></div>
+      <div class="usage-hero-sub"><span id="usageTotalTokensApprox"></span> <span id="usageTokensDelta"></span></div>
     </div>
     <div class="usage-hero-side">
       <div class="usage-mini">
         <div class="usage-mini-label">总请求数</div>
         <div class="usage-mini-value" id="usageRequests">-</div>
+        <div class="usage-mini-sub" id="usageReqDelta"></div>
       </div>
       <div class="usage-mini">
         <div class="usage-mini-label">总成本</div>
         <div class="usage-mini-value usage-cost-text" id="usageCost">-</div>
-        <div class="usage-mini-sub" id="usageCostCny"></div>
+        <div class="usage-mini-sub"><span id="usageCostCny"></span> <span id="usageCostDelta"></span></div>
       </div>
       <div class="usage-mini">
         <div class="usage-mini-label">缓存命中率</div>
         <div class="usage-mini-value" id="usageCacheRate">-</div>
         <div class="usage-cache-bar"><div class="usage-cache-bar-fill" id="usageCacheRateBar"></div></div>
+      </div>
+      <div class="usage-mini">
+        <div class="usage-mini-label">缓存净节省</div>
+        <div class="usage-mini-value usage-cost-text" id="usageCacheSaved">-</div>
+        <div class="usage-mini-sub">对比无缓存全价输入</div>
+      </div>
+      <div class="usage-mini usage-mini-click" onclick="editSubscriptionFee()" title="点击设置月订阅费">
+        <div class="usage-mini-label">订阅回本 · 本月</div>
+        <div class="usage-mini-value" id="usageRoi">-</div>
+        <div class="usage-mini-sub" id="usageRoiSub"></div>
       </div>
     </div>
   </div>
@@ -798,8 +809,26 @@
 
   <!-- 趋势图 -->
   <div class="usage-card">
-    <div class="usage-card-title">📈 使用趋势</div>
+    <div class="usage-card-title">📈 使用趋势 <span class="usage-card-hint">按应用堆叠 · 底部滑块/滚轮可缩放时间段</span></div>
     <div id="usageTrendChart" class="usage-trend-chart"></div>
+  </div>
+
+  <!-- 项目统计 + 时段热力图 -->
+  <div class="usage-grid-2">
+    <div class="usage-card">
+      <div class="usage-card-title">📁 项目统计</div>
+      <div id="usageProjectTable"></div>
+    </div>
+    <div class="usage-card">
+      <div class="usage-card-title">🔥 时段热力图 <span class="usage-card-hint">周 × 小时 · 跟随当前筛选</span></div>
+      <div id="usageHeatmapChart" class="usage-heatmap-chart"></div>
+    </div>
+  </div>
+
+  <!-- 最贵请求 -->
+  <div class="usage-card">
+    <div class="usage-card-title">💸 最贵请求 Top 10</div>
+    <div id="usageTopTable"></div>
   </div>
 
   <!-- 单价设置（默认折叠） -->

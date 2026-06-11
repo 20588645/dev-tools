@@ -44,6 +44,33 @@ router.get('/models', (req, res) => {
   }
 });
 
+// GET /api/usage/projects?start=&end=&app= — 项目维度聚合
+router.get('/projects', (req, res) => {
+  try {
+    res.json(usage.getProjectStats(req.query.start, req.query.end, appParam(req)));
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// GET /api/usage/top?start=&end=&app=&limit= — 最贵请求
+router.get('/top', (req, res) => {
+  try {
+    res.json(usage.getTopRequests(req.query.start, req.query.end, appParam(req), req.query.limit));
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// GET /api/usage/heatmap?start=&end=&app= — 周 × 小时热力分布
+router.get('/heatmap', (req, res) => {
+  try {
+    res.json(usage.getHeatmap(req.query.start, req.query.end, appParam(req)));
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // GET /api/usage/logs?start=&end=&model=&page=&pageSize=
 router.get('/logs', (req, res) => {
   try {

@@ -1,7 +1,7 @@
 /**
- * 用量统计模块 — Claude Code 模型调用量与成本
- * 数据由 sidecar 解析 ~/.claude/projects 会话日志提供，页面激活期间每 30s 自动刷新
- * 趋势图基于 ECharts（js/vendor/echarts），颜色取自 CSS 变量并随主题切换自动重绘
+ * 用量统计模块 — Claude Code / Codex 模型调用量与成本
+ * 数据由 sidecar 解析本地会话日志提供，页面激活期间每 30s 自动刷新
+ * 图表基于 ECharts（js/vendor/echarts），颜色取自 CSS 变量并随主题切换自动重绘
  */
 const usageState = {
   range: 'today',
@@ -11,14 +11,22 @@ const usageState = {
   model: '',
   models: [],
   inited: false,
-  lastTrends: null,
-  lastBucket: 'hour',
+  lastTrendSeries: null,
+  lastBucket: 'min10',
+  lastHeatmap: null,
 };
 
 const USAGE_APP_NAMES = { claude: 'Claude Code', codex: 'Codex' };
+const USAGE_APP_SERIES = [
+  { key: 'claude', name: 'Claude Code', cssVar: '--primary' },
+  { key: 'codex', name: 'Codex', cssVar: '--success' },
+];
+const USAGE_DOW_LABELS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+const USAGE_SUBFEE_KEY = 'devtools-usage-subfee';
 
 let usageChart = null;
-let usageChartObserved = false;
+let usageHeatChart = null;
+let usageThemeObserved = false;
 
 // ========== 工具 ==========
 
@@ -77,7 +85,7 @@ function usageHexToRgba(hex, alpha) {
 function usageRangeParams() {
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  // 分桶粒度：今天 10 分钟、近 7 天/本月 按小时、全部 按天，悬浮可看精细时段明细
+  // 分桶粒度：今天 10 分钟、近 7 天/本月 按小时、全部 按天
   let start = null, end = null, bucket = 'day';
   if (usageState.range === 'today') {
     start = todayStart;
@@ -104,6 +112,29 @@ function usageQuery(extra) {
   return s ? '?' + s : '';
 }
 
+// 环比对照区间（全部范围无对照）
+function usagePrevRange() {
+  const now = new Date();
+  const t = Math.floor(new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() / 1000);
+  if (usageState.range === 'today') return { start: t - 86400, end: t, label: '较昨日' };
+  if (usageState.range === '7d') {
+    const s = t - 6 * 86400;
+    return { start: s - 7 * 86400, end: s, label: '较前 7 天' };
+  }
+  if (usageState.range === 'month') {
+    const mStart = Math.floor(new Date(now.getFullYear(), now.getMonth(), 1).getTime() / 1000);
+    const pStart = Math.floor(new Date(now.getFullYear(), now.getMonth() - 1, 1).getTime() / 1000);
+    return { start: pStart, end: mStart, label: '较上月' };
+  }
+  return null;
+}
+
+function usagePrevQuery(prev) {
+  const params = new URLSearchParams({ start: prev.start, end: prev.end });
+  if (usageState.app) params.set('app', usageState.app);
+  return '?' + params.toString();
+}
+
 // ========== 初始化与刷新 ==========
 
 function initUsage() {
@@ -119,17 +150,35 @@ function initUsage() {
 
 async function refreshUsage(silent) {
   const { bucket } = usageRangeParams();
+  const prev = usagePrevRange();
+  const seriesDefs = usageState.app
+    ? USAGE_APP_SERIES.filter(s => s.key === usageState.app)
+    : USAGE_APP_SERIES;
+  const now = new Date();
+  const monthStart = Math.floor(new Date(now.getFullYear(), now.getMonth(), 1).getTime() / 1000);
   try {
-    const [summary, trends, models, rate] = await Promise.all([
+    const results = await Promise.all([
       API.get('/api/usage/summary' + usageQuery()),
-      API.get('/api/usage/trends' + usageQuery({ bucket })),
       API.get('/api/usage/models' + usageQuery()),
+      API.get('/api/usage/projects' + usageQuery()),
+      API.get('/api/usage/top' + usageQuery({ limit: 10 })),
+      API.get('/api/usage/heatmap' + usageQuery()),
       API.get('/api/usage/rate').catch(() => null),
+      API.get('/api/usage/summary?start=' + monthStart).catch(() => null), // ROI 按全量本月
+      prev ? API.get('/api/usage/summary' + usagePrevQuery(prev)).catch(() => null) : Promise.resolve(null),
+      ...seriesDefs.map(s => API.get('/api/usage/trends' + usageQuery({ bucket, app: s.key }))),
     ]);
+    const [summary, models, projects, top, heatmap, rate, monthSummary, prevSummary] = results;
+    const trendSeries = results.slice(8).map((trends, i) => ({ ...seriesDefs[i], trends }));
     usageState.models = models;
     if (rate && rate.rate > 0) usageState.cnyRate = rate;
     renderUsageSummary(summary);
-    renderUsageTrend(trends, bucket);
+    renderUsageDeltas(summary, prevSummary, prev ? prev.label : '');
+    renderUsageRoi(monthSummary);
+    renderUsageTrend(trendSeries, bucket);
+    renderUsageProjects(projects);
+    renderUsageHeatmap(heatmap);
+    renderUsageTop(top);
     renderUsageModels(models);
     await loadUsageLogs();
   } catch (e) {
@@ -175,7 +224,41 @@ async function forceUsageSync() {
   }
 }
 
-// ========== 渲染 ==========
+// ========== 订阅回本 ==========
+
+function usageGetSubFee() {
+  return parseFloat(localStorage.getItem(USAGE_SUBFEE_KEY)) || 0;
+}
+
+async function editSubscriptionFee() {
+  const v = await showPrompt('每月订阅总费用（USD，Claude / Codex 等合计）', {
+    defaultValue: usageGetSubFee() || '',
+    placeholder: '如 220',
+    icon: '💳',
+  });
+  if (v === null || v === undefined || v === '') return;
+  const fee = parseFloat(v);
+  if (!Number.isFinite(fee) || fee <= 0) { showToast('❌ 请输入有效金额', '需要大于 0 的数字'); return; }
+  localStorage.setItem(USAGE_SUBFEE_KEY, String(fee));
+  refreshUsage();
+}
+
+function renderUsageRoi(monthSummary) {
+  const valEl = document.getElementById('usageRoi');
+  const subEl = document.getElementById('usageRoiSub');
+  if (!valEl || !subEl) return;
+  const fee = usageGetSubFee();
+  if (!fee) {
+    valEl.textContent = '--';
+    subEl.textContent = '点击设置月订阅费';
+    return;
+  }
+  const cost = monthSummary ? (monthSummary.costUsd || 0) : 0;
+  valEl.textContent = (cost / fee).toFixed(1) + 'x';
+  subEl.textContent = `本月 $${usageFmtMoney(cost)} / 订阅 $${usageFmtMoney(fee)}`;
+}
+
+// ========== 渲染：总览与环比 ==========
 
 function renderUsageSummary(s) {
   const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
@@ -183,6 +266,14 @@ function renderUsageSummary(s) {
   set('usageTotalTokensApprox', s.totalTokens >= 10000 ? '≈ ' + usageFmtWan(s.totalTokens) : '');
   set('usageRequests', usageFmtNum(s.requests));
   set('usageCost', '$' + usageFmtMoney(s.costUsd));
+  set('usageCacheRate', (s.cacheHitRate * 100).toFixed(1) + '%');
+  set('usageCacheSaved', '$' + usageFmtMoney(s.cacheSavedUsd));
+  set('usageInputTokens', usageFmtWan(s.inputTokens));
+  set('usageOutputTokens', usageFmtWan(s.outputTokens));
+  set('usageCacheCreation', usageFmtWan(s.cacheCreationTokens));
+  set('usageCacheRead', usageFmtWan(s.cacheReadTokens));
+  const bar = document.getElementById('usageCacheRateBar');
+  if (bar) bar.style.width = Math.min(100, s.cacheHitRate * 100).toFixed(1) + '%';
   const cnyEl = document.getElementById('usageCostCny');
   if (cnyEl) {
     const r = usageState.cnyRate;
@@ -193,22 +284,47 @@ function renderUsageSummary(s) {
       cnyEl.textContent = '';
     }
   }
-  set('usageCacheRate', (s.cacheHitRate * 100).toFixed(1) + '%');
-  set('usageInputTokens', usageFmtWan(s.inputTokens));
-  set('usageOutputTokens', usageFmtWan(s.outputTokens));
-  set('usageCacheCreation', usageFmtWan(s.cacheCreationTokens));
-  set('usageCacheRead', usageFmtWan(s.cacheReadTokens));
-  const bar = document.getElementById('usageCacheRateBar');
-  if (bar) bar.style.width = Math.min(100, s.cacheHitRate * 100).toFixed(1) + '%';
 }
 
-function renderUsageTrend(trends, bucket) {
+function usageDeltaHTML(cur, prevVal, label, colorize) {
+  if (!(prevVal > 0)) return '';
+  const pct = ((Number(cur) || 0) - prevVal) / prevVal * 100;
+  if (!Number.isFinite(pct)) return '';
+  const up = pct >= 0;
+  const cls = colorize ? (up ? ' usage-delta-up' : ' usage-delta-down') : '';
+  return `<span class="usage-delta${cls}">${up ? '↑' : '↓'} ${Math.abs(pct).toFixed(1)}% ${label}</span>`;
+}
+
+function renderUsageDeltas(summary, prevSummary, label) {
+  const set = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+  if (!prevSummary || !label) {
+    set('usageTokensDelta', ''); set('usageCostDelta', ''); set('usageReqDelta', '');
+    return;
+  }
+  set('usageTokensDelta', usageDeltaHTML(summary.totalTokens, prevSummary.totalTokens, label, false));
+  set('usageCostDelta', usageDeltaHTML(summary.costUsd, prevSummary.costUsd, label, true));
+  set('usageReqDelta', usageDeltaHTML(summary.requests, prevSummary.requests, label, false));
+}
+
+// ========== 渲染：趋势图（按应用堆叠 + dataZoom） ==========
+
+function ensureUsageThemeObserver() {
+  if (usageThemeObserved) return;
+  usageThemeObserved = true;
+  new MutationObserver(() => {
+    if (usageState.lastTrendSeries) renderUsageTrend(usageState.lastTrendSeries, usageState.lastBucket);
+    if (usageState.lastHeatmap) renderUsageHeatmap(usageState.lastHeatmap);
+  }).observe(document.body, { attributes: true, attributeFilter: ['data-theme'] });
+}
+
+function renderUsageTrend(seriesList, bucket) {
   const el = document.getElementById('usageTrendChart');
   if (!el) return;
-  usageState.lastTrends = trends;
+  usageState.lastTrendSeries = seriesList;
   usageState.lastBucket = bucket;
 
-  if (!trends || !trends.length) {
+  const base = seriesList.find(s => s.trends && s.trends.length);
+  if (!base) {
     if (usageChart) { usageChart.dispose(); usageChart = null; }
     el.innerHTML = '<div class="usage-empty">所选时间范围内暂无用量数据</div>';
     return;
@@ -217,31 +333,41 @@ function renderUsageTrend(trends, bucket) {
   if (!usageChart) {
     el.innerHTML = '';
     usageChart = echarts.init(el);
-    if (!usageChartObserved) {
-      usageChartObserved = true;
-      new ResizeObserver(() => { if (usageChart) usageChart.resize(); }).observe(el);
-      // 跟随明暗主题切换重绘
-      new MutationObserver(() => {
-        if (usageChart && usageState.lastTrends) renderUsageTrend(usageState.lastTrends, usageState.lastBucket);
-      }).observe(document.body, { attributes: true, attributeFilter: ['data-theme'] });
-    }
+    new ResizeObserver(() => { if (usageChart) usageChart.resize(); }).observe(el);
+    ensureUsageThemeObserver();
   }
 
-  const labels = trends.map(t => bucket === 'day' ? t.bucket.slice(5) : t.bucket.slice(11));
-  const tokens = trends.map(t => (t.inputTokens || 0) + (t.outputTokens || 0) + (t.cacheReadTokens || 0) + (t.cacheCreationTokens || 0));
-  const costs = trends.map(t => (t.costMicroUsd || 0) / 1e6);
+  const labels = base.trends.map(t => bucket === 'day' ? t.bucket.slice(5) : t.bucket.slice(11));
+  const tokensBySeries = seriesList.map(s =>
+    (s.trends || []).map(t => (t.inputTokens || 0) + (t.outputTokens || 0) + (t.cacheReadTokens || 0) + (t.cacheCreationTokens || 0)));
+  const costs = labels.map((_, i) =>
+    seriesList.reduce((acc, s) => acc + ((s.trends[i] && s.trends[i].costMicroUsd) || 0), 0) / 1e6);
 
-  const cPrimary = usageCssVar('--primary') || '#6366f1';
   const cDanger = usageCssVar('--danger') || '#ef4444';
   const cSuccess = usageCssVar('--success') || '#22c55e';
   const cMuted = usageCssVar('--text-muted') || '#94a3b8';
   const cBorder = usageCssVar('--border-strong') || 'rgba(148,163,184,.25)';
   const cBg = usageCssVar('--bg-elevated') || '#1e293b';
   const cText = usageCssVar('--text-primary') || '#e2e8f0';
+  const seriesColors = seriesList.map(s => usageCssVar(s.cssVar) || '#6366f1');
+
+  const tokenSeries = seriesList.map((s, si) => ({
+    name: s.name, type: 'line', stack: 'tokens', smooth: 0.3,
+    showSymbol: false, symbol: 'circle', symbolSize: 5,
+    lineStyle: { width: 1.5, color: seriesColors[si] },
+    itemStyle: { color: seriesColors[si] },
+    areaStyle: {
+      color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+        { offset: 0, color: usageHexToRgba(seriesColors[si], 0.4) },
+        { offset: 1, color: usageHexToRgba(seriesColors[si], 0.06) },
+      ]),
+    },
+    data: tokensBySeries[si],
+  }));
 
   usageChart.setOption({
     animationDuration: 300,
-    grid: { left: 16, right: 16, top: 24, bottom: 44, containLabel: true },
+    grid: { left: 16, right: 16, top: 24, bottom: 76, containLabel: true },
     tooltip: {
       trigger: 'axis',
       axisPointer: { type: 'line', lineStyle: { color: cBorder } },
@@ -250,22 +376,39 @@ function renderUsageTrend(trends, bucket) {
       textStyle: { color: cText, fontSize: 12 },
       formatter: (params) => {
         const i = params[0].dataIndex;
-        const t = trends[i];
         const row = (k, v) => `<div style="display:flex;justify-content:space-between;gap:22px;line-height:1.8"><span style="color:${cMuted}">${k}</span><b style="font-family:monospace">${v}</b></div>`;
-        return `<div style="font-family:monospace;font-weight:600;margin-bottom:4px">${t.bucket}</div>` +
-          row('请求数', usageFmtNum(t.requests)) +
-          row('Tokens 合计', usageFmtNum(tokens[i])) +
-          row('新增输入', usageFmtNum(t.inputTokens)) +
-          row('输出', usageFmtNum(t.outputTokens)) +
-          row('缓存创建', usageFmtNum(t.cacheCreationTokens)) +
-          row('缓存命中', usageFmtNum(t.cacheReadTokens)) +
-          row('成本', `<span style="color:${cSuccess}">$${costs[i].toFixed(4)}</span>`);
+        let html = `<div style="font-family:monospace;font-weight:600;margin-bottom:4px">${base.trends[i].bucket}</div>`;
+        let totTokens = 0, totReq = 0;
+        seriesList.forEach((s, si) => {
+          const tk = tokensBySeries[si][i] || 0;
+          totTokens += tk;
+          totReq += (s.trends[i] && s.trends[i].requests) || 0;
+          if (seriesList.length > 1) {
+            html += row(`<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${seriesColors[si]};margin-right:6px"></span>${s.name}`, usageFmtNum(tk));
+          }
+        });
+        html += row('Tokens 合计', usageFmtNum(totTokens));
+        html += row('请求数', usageFmtNum(totReq));
+        html += row('成本', `<span style="color:${cSuccess}">$${costs[i].toFixed(4)}</span>`);
+        return html;
       },
     },
     legend: {
-      data: ['Tokens', '成本'], bottom: 0,
+      data: [...seriesList.map(s => s.name), '成本'], bottom: 24,
       textStyle: { color: cMuted }, icon: 'roundRect', itemWidth: 14, itemHeight: 4,
     },
+    dataZoom: [
+      { type: 'inside', throttle: 50 },
+      {
+        type: 'slider', height: 16, bottom: 0,
+        borderColor: 'transparent',
+        backgroundColor: usageHexToRgba(cMuted, 0.06),
+        fillerColor: usageHexToRgba(seriesColors[0], 0.14),
+        handleStyle: { color: seriesColors[0] },
+        moveHandleSize: 0, showDetail: false,
+        textStyle: { color: cMuted, fontSize: 10 },
+      },
+    ],
     xAxis: {
       type: 'category', boundaryGap: false, data: labels,
       axisLine: { lineStyle: { color: cBorder } },
@@ -288,18 +431,7 @@ function renderUsageTrend(trends, bucket) {
       },
     ],
     series: [
-      {
-        name: 'Tokens', type: 'line', smooth: 0.3,
-        showSymbol: false, symbol: 'circle', symbolSize: 6,
-        lineStyle: { width: 2, color: cPrimary }, itemStyle: { color: cPrimary },
-        areaStyle: {
-          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: usageHexToRgba(cPrimary, 0.32) },
-            { offset: 1, color: usageHexToRgba(cPrimary, 0.02) },
-          ]),
-        },
-        data: tokens,
-      },
+      ...tokenSeries,
       {
         name: '成本', type: 'line', smooth: 0.3, yAxisIndex: 1,
         showSymbol: false, symbol: 'circle', symbolSize: 5,
@@ -309,6 +441,129 @@ function renderUsageTrend(trends, bucket) {
     ],
   }, true);
 }
+
+// ========== 渲染：项目统计 ==========
+
+function renderUsageProjects(projects) {
+  const el = document.getElementById('usageProjectTable');
+  if (!el) return;
+  if (!projects || !projects.length) {
+    el.innerHTML = '<div class="usage-empty">暂无数据</div>';
+    return;
+  }
+  const maxCost = Math.max(...projects.map(p => p.costMicroUsd), 1);
+  el.innerHTML = `<table class="usage-table">
+    <thead><tr><th>项目</th><th>应用</th><th>请求数</th><th>Tokens</th><th>成本</th></tr></thead>
+    <tbody>${projects.map(p => {
+      const tokens = p.inputTokens + p.outputTokens + p.cacheReadTokens + p.cacheCreationTokens;
+      const width = Math.max(2, p.costMicroUsd / maxCost * 100).toFixed(1);
+      return `<tr>
+        <td class="usage-project-cell">
+          <div class="usage-model-name">${p.project}</div>
+          <div class="usage-project-bar"><div style="width:${width}%"></div></div>
+        </td>
+        <td>${p.apps.map(a => `<span class="usage-app-badge usage-app-${a}">${USAGE_APP_NAMES[a] || a}</span>`).join('')}</td>
+        <td>${usageFmtNum(p.requests)}</td>
+        <td>${usageFmtWan(tokens)}</td>
+        <td class="usage-cost-cell">${usageFmtCost(p.costMicroUsd)}</td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table>`;
+}
+
+// ========== 渲染：时段热力图 ==========
+
+function renderUsageHeatmap(cells) {
+  const el = document.getElementById('usageHeatmapChart');
+  if (!el) return;
+  usageState.lastHeatmap = cells;
+  if (!cells || !cells.length) {
+    if (usageHeatChart) { usageHeatChart.dispose(); usageHeatChart = null; }
+    el.innerHTML = '<div class="usage-empty">暂无数据</div>';
+    return;
+  }
+  if (!usageHeatChart) {
+    el.innerHTML = '';
+    usageHeatChart = echarts.init(el);
+    new ResizeObserver(() => { if (usageHeatChart) usageHeatChart.resize(); }).observe(el);
+    ensureUsageThemeObserver();
+  }
+
+  const cPrimary = usageCssVar('--primary') || '#6366f1';
+  const cMuted = usageCssVar('--text-muted') || '#94a3b8';
+  const cBorder = usageCssVar('--border-strong') || 'rgba(148,163,184,.25)';
+  const cBg = usageCssVar('--bg-elevated') || '#1e293b';
+  const cText = usageCssVar('--text-primary') || '#e2e8f0';
+
+  // %w: 0=周日 → y 轴索引 0=周一
+  const byKey = new Map(cells.map(c => [`${c.dow}-${c.hour}`, c]));
+  const data = cells.map(c => [c.hour, (c.dow + 6) % 7, c.totalTokens]);
+  const maxV = Math.max(...cells.map(c => c.totalTokens), 1);
+
+  usageHeatChart.setOption({
+    grid: { left: 8, right: 8, top: 10, bottom: 42, containLabel: true },
+    tooltip: {
+      backgroundColor: cBg, borderColor: cBorder, textStyle: { color: cText, fontSize: 12 },
+      formatter: (p) => {
+        const hour = p.data[0];
+        const dow = (p.data[1] + 1) % 7;
+        const c = byKey.get(`${dow}-${hour}`) || { totalTokens: 0, requests: 0 };
+        return `<b>${USAGE_DOW_LABELS[p.data[1]]} ${String(hour).padStart(2, '0')}:00 - ${String(hour).padStart(2, '0')}:59</b><br/>` +
+               `Tokens：${usageFmtNum(c.totalTokens)}<br/>请求数：${usageFmtNum(c.requests)}`;
+      },
+    },
+    xAxis: {
+      type: 'category', data: [...Array(24).keys()].map(h => String(h).padStart(2, '0')),
+      splitArea: { show: false }, axisLine: { show: false }, axisTick: { show: false },
+      axisLabel: { color: cMuted, fontFamily: 'monospace', interval: 2, fontSize: 10 },
+    },
+    yAxis: {
+      type: 'category', data: USAGE_DOW_LABELS,
+      splitArea: { show: false }, axisLine: { show: false }, axisTick: { show: false },
+      axisLabel: { color: cMuted, fontSize: 11 },
+    },
+    visualMap: {
+      min: 0, max: maxV, calculable: false,
+      orient: 'horizontal', left: 'center', bottom: 0,
+      itemWidth: 10, itemHeight: 80,
+      textStyle: { color: cMuted, fontSize: 10 },
+      formatter: (v) => usageFmtWan(v),
+      inRange: { color: [usageHexToRgba(cPrimary, 0.07), usageHexToRgba(cPrimary, 0.45), cPrimary] },
+    },
+    series: [{
+      type: 'heatmap', data,
+      itemStyle: { borderRadius: 3, borderWidth: 2, borderColor: 'transparent' },
+      emphasis: { itemStyle: { shadowBlur: 8, shadowColor: usageHexToRgba(cPrimary, 0.5) } },
+    }],
+  }, true);
+}
+
+// ========== 渲染：最贵请求 Top 10 ==========
+
+function renderUsageTop(rows) {
+  const el = document.getElementById('usageTopTable');
+  if (!el) return;
+  if (!rows || !rows.length) {
+    el.innerHTML = '<div class="usage-empty">暂无数据</div>';
+    return;
+  }
+  el.innerHTML = `<table class="usage-table">
+    <thead><tr><th>#</th><th>时间</th><th>模型</th><th>项目</th><th>新增输入</th><th>输出</th><th>缓存创建</th><th>缓存命中</th><th>成本</th></tr></thead>
+    <tbody>${rows.map((r, i) => `<tr>
+      <td class="usage-mono">${i + 1}</td>
+      <td class="usage-mono">${usageFmtTime(r.createdAt)}</td>
+      <td class="usage-mono">${r.model} <span class="usage-app-badge usage-app-${r.appType}">${USAGE_APP_NAMES[r.appType] || r.appType}</span></td>
+      <td>${usageFmtProject(r.projectDir)}</td>
+      <td>${usageFmtNum(r.inputTokens)}</td>
+      <td>${usageFmtNum(r.outputTokens)}</td>
+      <td>${usageFmtNum(r.cacheCreationTokens)}</td>
+      <td>${usageFmtNum(r.cacheReadTokens)}</td>
+      <td class="usage-cost-cell">${usageFmtCost(r.costMicroUsd)}</td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+}
+
+// ========== 渲染：模型统计 ==========
 
 function renderUsageModels(models) {
   const el = document.getElementById('usageModelTable');
@@ -340,6 +595,8 @@ function renderUsageModels(models) {
       models.map(m => `<option value="${m.model}"${m.model === current ? ' selected' : ''}>${m.displayName}</option>`).join('');
   }
 }
+
+// ========== 渲染：请求日志 ==========
 
 async function loadUsageLogs() {
   const extra = { page: usageState.page, pageSize: usageState.pageSize };

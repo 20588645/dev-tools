@@ -13790,3 +13790,20 @@ body[data-theme="light"] #page-terminal .term-search-nav-btn:hover {
 }
 .page-fixed-header .page-header-bar { margin-bottom: 10px !important; }
 .page-fixed-header .page-toolbar { margin-bottom: 0 !important; }
+
+/* 用量统计 - 分析卡片增强 */
+.usage-grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 16px; margin-bottom: 16px; }
+.usage-grid-2 .usage-card { margin-bottom: 0; }
+.usage-heatmap-chart { width: 100%; height: 280px; }
+.usage-trend-chart { height: 340px; }
+
+.usage-delta { font-size: .72rem; color: var(--text-muted); white-space: nowrap; }
+.usage-delta-up { color: var(--danger); }
+.usage-delta-down { color: var(--success); }
+
+.usage-mini-click { cursor: pointer; transition: background .15s ease; }
+.usage-mini-click:hover { background: var(--bg-hover); }
+
+.usage-project-cell { min-width: 140px; }
+.usage-project-bar { height: 4px; border-radius: 2px; background: var(--bg-hover); margin-top: 5px; overflow: hidden; max-width: 160px; }
+.usage-project-bar > div { height: 100%; border-radius: 2px; background: var(--primary); }

@@ -438,7 +438,75 @@ function getSummary(start, end, app) {
   row.totalTokens = totalInput + row.outputTokens;
   row.cacheHitRate = totalInput > 0 ? row.cacheReadTokens / totalInput : 0;
   row.costUsd = row.costMicroUsd / 1e6;
+  // 缓存净节省：命中按全价输入计算省下的钱，减去缓存创建相对全价的溢价
+  const saved = db.prepare(`
+    SELECT COALESCE(SUM(cacheReadTokens * (p.inputPerM - p.cacheReadPerM)
+                      - cacheCreationTokens * (p.cacheCreationPerM - p.inputPerM)), 0) AS s
+    FROM usage_logs l JOIN model_pricing p ON p.modelId = l.pricingModel ${where}
+  `).get(...params).s;
+  row.cacheSavedUsd = Math.round(saved) / 1e6;
   return row;
+}
+
+// 项目维度聚合：Claude 的路径编码目录与 Codex 的目录名归并到同一展示名
+function projectDisplayName(dir) {
+  dir = String(dir || '');
+  if (!dir) return '(未知)';
+  if (dir.startsWith('-')) {
+    const seg = dir.split('-').filter(Boolean);
+    return seg.length ? seg[seg.length - 1] : '(未知)';
+  }
+  return dir;
+}
+
+function getProjectStats(start, end, app) {
+  const { where, params } = rangeFilter(start, end, app);
+  const rows = db.prepare(`
+    SELECT projectDir, appType, COUNT(*) AS requests,
+           SUM(inputTokens) AS inputTokens, SUM(outputTokens) AS outputTokens,
+           SUM(cacheReadTokens) AS cacheReadTokens, SUM(cacheCreationTokens) AS cacheCreationTokens,
+           SUM(costMicroUsd) AS costMicroUsd
+    FROM usage_logs ${where} GROUP BY projectDir, appType
+  `).all(...params);
+  const map = new Map();
+  for (const r of rows) {
+    const name = projectDisplayName(r.projectDir);
+    const agg = map.get(name) || {
+      project: name, requests: 0, inputTokens: 0, outputTokens: 0,
+      cacheReadTokens: 0, cacheCreationTokens: 0, costMicroUsd: 0, apps: new Set(),
+    };
+    agg.requests += r.requests;
+    agg.inputTokens += r.inputTokens;
+    agg.outputTokens += r.outputTokens;
+    agg.cacheReadTokens += r.cacheReadTokens;
+    agg.cacheCreationTokens += r.cacheCreationTokens;
+    agg.costMicroUsd += r.costMicroUsd;
+    agg.apps.add(r.appType);
+    map.set(name, agg);
+  }
+  return [...map.values()]
+    .map(a => ({ ...a, apps: [...a.apps].sort() }))
+    .sort((x, y) => y.costMicroUsd - x.costMicroUsd);
+}
+
+function getTopRequests(start, end, app, limit = 10) {
+  const { where, params } = rangeFilter(start, end, app);
+  const size = Math.min(Math.max(Number(limit) || 10, 1), 50);
+  return db.prepare(`
+    SELECT * FROM usage_logs ${where} ORDER BY costMicroUsd DESC LIMIT ?
+  `).all(...params, size);
+}
+
+// 周 × 小时热力图（%w: 0=周日）
+function getHeatmap(start, end, app) {
+  const { where, params } = rangeFilter(start, end, app);
+  return db.prepare(`
+    SELECT CAST(strftime('%w', createdAt, 'unixepoch', 'localtime') AS INTEGER) AS dow,
+           CAST(strftime('%H', createdAt, 'unixepoch', 'localtime') AS INTEGER) AS hour,
+           COUNT(*) AS requests,
+           SUM(inputTokens + outputTokens + cacheReadTokens + cacheCreationTokens) AS totalTokens
+    FROM usage_logs ${where} GROUP BY dow, hour
+  `).all(...params);
 }
 
 function fmtBucketKey(d, bucket) {
@@ -548,6 +616,9 @@ module.exports = {
   getSummary,
   getTrends,
   getModelStats,
+  getProjectStats,
+  getTopRequests,
+  getHeatmap,
   getLogs,
   ensurePricingSeed,
 };
