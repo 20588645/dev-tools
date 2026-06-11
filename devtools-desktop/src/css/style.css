@@ -13766,9 +13766,8 @@ body[data-theme="light"] #page-terminal .term-search-nav-btn:hover {
   z-index: 80;
   margin: -36px 0 14px;
   padding: 42px 2px 10px;
-  background: color-mix(in srgb, var(--bg-base) 90%, transparent);
-  backdrop-filter: saturate(170%) blur(16px);
-  -webkit-backdrop-filter: saturate(170%) blur(16px);
+  /* 必须完全不透明：半透明 + 毛玻璃在部分 WebView 下无法有效遮挡下层滚动内容 */
+  background: var(--bg-base);
   border-bottom: 1px solid transparent;
   transition: border-color .15s ease, box-shadow .15s ease;
 }
