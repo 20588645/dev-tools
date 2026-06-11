@@ -148,6 +148,38 @@ db.exec(`
     createdAt TEXT DEFAULT (datetime('now')),
     updatedAt TEXT DEFAULT (datetime('now'))
   );
+
+  CREATE TABLE IF NOT EXISTS usage_logs (
+    requestId TEXT PRIMARY KEY,
+    sessionId TEXT DEFAULT '',
+    projectDir TEXT DEFAULT '',
+    model TEXT NOT NULL,
+    pricingModel TEXT DEFAULT '',
+    inputTokens INTEGER DEFAULT 0,
+    outputTokens INTEGER DEFAULT 0,
+    cacheReadTokens INTEGER DEFAULT 0,
+    cacheCreationTokens INTEGER DEFAULT 0,
+    costMicroUsd INTEGER DEFAULT 0,
+    createdAt INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_usage_logs_createdAt ON usage_logs(createdAt);
+  CREATE INDEX IF NOT EXISTS idx_usage_logs_model ON usage_logs(model);
+
+  CREATE TABLE IF NOT EXISTS usage_sync (
+    filePath TEXT PRIMARY KEY,
+    lastSize INTEGER DEFAULT 0,
+    lastMtimeMs INTEGER DEFAULT 0,
+    lastSyncedAt INTEGER DEFAULT 0
+  );
+
+  CREATE TABLE IF NOT EXISTS model_pricing (
+    modelId TEXT PRIMARY KEY,
+    displayName TEXT DEFAULT '',
+    inputPerM REAL DEFAULT 0,
+    outputPerM REAL DEFAULT 0,
+    cacheReadPerM REAL DEFAULT 0,
+    cacheCreationPerM REAL DEFAULT 0
+  );
 `);
 
 // 确保 sortOrder 列存在（兼容旧数据库）

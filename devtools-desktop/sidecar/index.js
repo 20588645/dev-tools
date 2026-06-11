@@ -84,6 +84,13 @@ app.use('/api/system', require('./routes/system'));
 app.use('/api/ipcheck', require('./routes/ipcheck'));
 app.use('/api/upgrade', require('./routes/upgrade'));
 app.use('/api/terminal', require('./routes/terminal'));
+app.use('/api/usage', require('./routes/usage'));
+
+// 用量统计后台兜底同步：Claude 桌面端会快速清理已关闭会话的日志文件，
+// 必须趁文件还在时抢先入库，不能只依赖用量页面被打开时的按需同步
+const usageService = require('./services/usage');
+setTimeout(() => { try { usageService.syncUsage(true); } catch (e) { console.error('[Usage] 启动同步失败:', e.message); } }, 5000);
+setInterval(() => { try { usageService.syncUsage(true); } catch (e) {} }, 5 * 60 * 1000);
 
 // 健康检查
 app.get('/api/health', (req, res) => {
