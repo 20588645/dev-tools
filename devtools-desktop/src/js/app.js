@@ -838,6 +838,19 @@ function getProgressStepCount() {
 }
 
 // ========== Log Modal ==========
+// 智能滚动：内容未占满容器时强制回到顶部（保证日志开头/盒子头部不被裁切）；
+// 占满时仅在用户原本就在底部时跟随到最新。用 rAF 等布局结算，规避弹窗开场动画期间的瞬态尺寸。
+function scrollLogTerminal(terminal, wasAtBottom = true) {
+  if (!terminal) return;
+  requestAnimationFrame(() => {
+    if (terminal.scrollHeight <= terminal.clientHeight + 2) {
+      terminal.scrollTop = 0;
+    } else if (wasAtBottom) {
+      terminal.scrollTop = terminal.scrollHeight;
+    }
+  });
+}
+
 function appendLog(text, type = 'info') {
   const terminal = document.getElementById('logTerminal');
   const MAX_LOG_LINES = 3000;
@@ -867,11 +880,12 @@ function appendLog(text, type = 'info') {
     }
   }
 
+  const atBottom = terminal.scrollHeight - terminal.scrollTop - terminal.clientHeight < 60;
   const div = document.createElement('div');
   div.className = `log-line ${clsMap[finalType] || 'log-info'}`;
   div.innerHTML = colorizeAndLinkLog(ansiToHtml(text));
   terminal.appendChild(div);
-  terminal.scrollTop = terminal.scrollHeight;
+  scrollLogTerminal(terminal, atBottom);
 }
 
 function escapeHtml(str) {
@@ -1187,7 +1201,7 @@ async function checkActiveJob() {
         fragment.appendChild(div);
       });
       terminal.appendChild(fragment);
-      terminal.scrollTop = terminal.scrollHeight;
+      scrollLogTerminal(terminal, true);
     }
 
     document.getElementById('logModal').classList.add('active');
