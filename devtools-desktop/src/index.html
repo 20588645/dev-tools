@@ -717,6 +717,102 @@
 </section>
 
 <!-- 纯净检测 -->
+<section class="page" id="page-usage">
+  <div class="page-header-bar page-header-simple">
+    <div>
+      <div class="page-title">📊 用量统计</div>
+      <div class="page-subtitle">Claude Code 模型调用量与成本统计 · 数据来源于本地会话日志 (~/.claude/projects)</div>
+    </div>
+    <div class="page-header-actions">
+      <button class="btn-secondary" onclick="importCcSwitchUsage()">📥 导入 CC Switch 历史</button>
+      <button class="btn-secondary" onclick="toggleUsagePricing()">💰 单价设置</button>
+      <button class="btn-primary" onclick="forceUsageSync()">🔄 重新扫描</button>
+    </div>
+  </div>
+
+  <div class="page-toolbar usage-toolbar">
+    <div class="chips" id="usageRangeChips">
+      <button class="chip active" data-range="today" onclick="setUsageRange('today', this)">今天</button>
+      <button class="chip" data-range="7d" onclick="setUsageRange('7d', this)">近 7 天</button>
+      <button class="chip" data-range="month" onclick="setUsageRange('month', this)">本月</button>
+      <button class="chip" data-range="all" onclick="setUsageRange('all', this)">全部</button>
+    </div>
+    <div class="usage-sync-info" id="usageSyncInfo"></div>
+  </div>
+
+  <!-- 核心指标 -->
+  <div class="usage-hero">
+    <div class="usage-hero-main">
+      <div class="usage-hero-label">⚡ 真实消耗 Tokens</div>
+      <div class="usage-hero-value" id="usageTotalTokens">-</div>
+      <div class="usage-hero-sub" id="usageTotalTokensApprox"></div>
+    </div>
+    <div class="usage-hero-side">
+      <div class="usage-mini">
+        <div class="usage-mini-label">总请求数</div>
+        <div class="usage-mini-value" id="usageRequests">-</div>
+      </div>
+      <div class="usage-mini">
+        <div class="usage-mini-label">总成本</div>
+        <div class="usage-mini-value usage-cost-text" id="usageCost">-</div>
+      </div>
+      <div class="usage-mini">
+        <div class="usage-mini-label">缓存命中率</div>
+        <div class="usage-mini-value" id="usageCacheRate">-</div>
+        <div class="usage-cache-bar"><div class="usage-cache-bar-fill" id="usageCacheRateBar"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="usage-stat-row">
+    <div class="usage-stat-card">
+      <div class="usage-stat-label">📥 新增输入</div>
+      <div class="usage-stat-value" id="usageInputTokens">-</div>
+    </div>
+    <div class="usage-stat-card">
+      <div class="usage-stat-label">📤 输出</div>
+      <div class="usage-stat-value" id="usageOutputTokens">-</div>
+    </div>
+    <div class="usage-stat-card">
+      <div class="usage-stat-label">📦 缓存创建</div>
+      <div class="usage-stat-value" id="usageCacheCreation">-</div>
+    </div>
+    <div class="usage-stat-card">
+      <div class="usage-stat-label">⚡ 缓存命中</div>
+      <div class="usage-stat-value" id="usageCacheRead">-</div>
+    </div>
+  </div>
+
+  <!-- 趋势图 -->
+  <div class="usage-card">
+    <div class="usage-card-title">📈 使用趋势</div>
+    <div id="usageTrendChart" class="usage-trend-chart"></div>
+  </div>
+
+  <!-- 单价设置（默认折叠） -->
+  <div class="usage-card" id="usagePricingCard" style="display:none">
+    <div class="usage-card-title">💰 模型单价 <span class="usage-card-hint">USD / 百万 Token · 保存后自动重算历史成本</span></div>
+    <div id="usagePricingTable"></div>
+  </div>
+
+  <!-- 模型统计 -->
+  <div class="usage-card">
+    <div class="usage-card-title">🤖 模型统计</div>
+    <div id="usageModelTable"></div>
+  </div>
+
+  <!-- 请求日志 -->
+  <div class="usage-card">
+    <div class="usage-card-title">📋 请求日志
+      <select id="usageModelFilter" class="usage-model-select" onchange="setUsageModelFilter(this.value)">
+        <option value="">全部模型</option>
+      </select>
+    </div>
+    <div id="usageLogTable"></div>
+    <div class="usage-pager" id="usagePager"></div>
+  </div>
+</section>
+
 <section class="page" id="page-ipcheck">
   <div class="page-header-bar page-header-simple">
     <div>
@@ -1771,6 +1867,8 @@
 <script src="js/terminal.js"></script>
 <script src="js/settings.js"></script>
 <script src="js/ipcheck.js"></script>
+<script src="js/vendor/echarts/echarts.min.js"></script>
+<script src="js/usage.js"></script>
 <script>
   window.addEventListener('error', function(e) {
     try {

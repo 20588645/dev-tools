@@ -37,7 +37,9 @@ async function initAPI() {
       API_BASE = 'http://127.0.0.1:13456';
     }
   } else {
-    API_BASE = 'http://127.0.0.1:13456';
+    // 浏览器开发模式支持 ?apiPort=13900 指向测试沙箱后端
+    const devPort = new URLSearchParams(location.search).get('apiPort');
+    API_BASE = 'http://127.0.0.1:' + (devPort || '13456');
   }
 }
 
