@@ -250,7 +250,7 @@ function renderUsageRoi(monthSummary) {
   const fee = usageGetSubFee();
   if (!fee) {
     valEl.textContent = '--';
-    subEl.textContent = '点击设置月订阅费';
+    subEl.textContent = '顶部「订阅设置」可配置月费';
     return;
   }
   const cost = monthSummary ? (monthSummary.costUsd || 0) : 0;

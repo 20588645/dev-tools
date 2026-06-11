@@ -726,6 +726,7 @@
       </div>
       <div class="page-header-actions">
         <button class="btn-secondary" onclick="importCcSwitchUsage()">📥 导入 CC Switch 历史</button>
+        <button class="btn-secondary" onclick="editSubscriptionFee()">💳 订阅设置</button>
         <button class="btn-secondary" onclick="toggleUsagePricing()">💰 单价设置</button>
         <button class="btn-primary" onclick="forceUsageSync()">🔄 重新扫描</button>
       </div>
@@ -780,7 +781,7 @@
         <div class="usage-mini-value usage-cost-text" id="usageCacheSaved">-</div>
         <div class="usage-mini-sub">对比无缓存全价输入</div>
       </div>
-      <div class="usage-mini usage-mini-click" onclick="editSubscriptionFee()" title="点击设置月订阅费">
+      <div class="usage-mini">
         <div class="usage-mini-label">订阅回本 · 本月</div>
         <div class="usage-mini-value" id="usageRoi">-</div>
         <div class="usage-mini-sub" id="usageRoiSub"></div>
