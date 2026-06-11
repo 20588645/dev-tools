@@ -13,7 +13,6 @@ const usageState = {
   inited: false,
   lastTrendSeries: null,
   lastBucket: 'min10',
-  lastHeatmap: null,
 };
 
 const USAGE_APP_NAMES = { claude: 'Claude Code', codex: 'Codex' };
@@ -21,7 +20,6 @@ const USAGE_APP_SERIES = [
   { key: 'claude', name: 'Claude Code', cssVar: '--primary' },
   { key: 'codex', name: 'Codex', cssVar: '--success' },
 ];
-const USAGE_DOW_LABELS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
 const USAGE_SUBFEE_KEY = 'devtools-usage-subfee';
 
 let usageChart = null;
@@ -162,14 +160,13 @@ async function refreshUsage(silent) {
       API.get('/api/usage/models' + usageQuery()),
       API.get('/api/usage/projects' + usageQuery()),
       API.get('/api/usage/top' + usageQuery({ limit: 10 })),
-      API.get('/api/usage/heatmap' + usageQuery()),
       API.get('/api/usage/rate').catch(() => null),
       API.get('/api/usage/summary?start=' + monthStart).catch(() => null), // ROI 按全量本月
       prev ? API.get('/api/usage/summary' + usagePrevQuery(prev)).catch(() => null) : Promise.resolve(null),
       ...seriesDefs.map(s => API.get('/api/usage/trends' + usageQuery({ bucket, app: s.key }))),
     ]);
-    const [summary, models, projects, top, heatmap, rate, monthSummary, prevSummary] = results;
-    const trendSeries = results.slice(8).map((trends, i) => ({ ...seriesDefs[i], trends }));
+    const [summary, models, projects, top, rate, monthSummary, prevSummary] = results;
+    const trendSeries = results.slice(7).map((trends, i) => ({ ...seriesDefs[i], trends }));
     usageState.models = models;
     if (rate && rate.rate > 0) usageState.cnyRate = rate;
     renderUsageSummary(summary);
@@ -177,7 +174,7 @@ async function refreshUsage(silent) {
     renderUsageRoi(monthSummary);
     renderUsageTrend(trendSeries, bucket);
     renderUsageProjects(projects);
-    renderUsageHeatmap(heatmap);
+    renderUsageCostPie(models);
     renderUsageTop(top);
     renderUsageModels(models);
     await loadUsageLogs();
@@ -313,7 +310,7 @@ function ensureUsageThemeObserver() {
   usageThemeObserved = true;
   new MutationObserver(() => {
     if (usageState.lastTrendSeries) renderUsageTrend(usageState.lastTrendSeries, usageState.lastBucket);
-    if (usageState.lastHeatmap) renderUsageHeatmap(usageState.lastHeatmap);
+    if (usageState.models && usageState.models.length) renderUsageCostPie(usageState.models);
   }).observe(document.body, { attributes: true, attributeFilter: ['data-theme'] });
 }
 
@@ -471,15 +468,15 @@ function renderUsageProjects(projects) {
   </table>`;
 }
 
-// ========== 渲染：时段热力图 ==========
+// ========== 渲染：成本构成环形图（按模型） ==========
 
-function renderUsageHeatmap(cells) {
-  const el = document.getElementById('usageHeatmapChart');
+function renderUsageCostPie(models) {
+  const el = document.getElementById('usageCostPieChart');
   if (!el) return;
-  usageState.lastHeatmap = cells;
-  if (!cells || !cells.length) {
+  const priced = (models || []).filter(m => m.costMicroUsd > 0);
+  if (!priced.length) {
     if (usageHeatChart) { usageHeatChart.dispose(); usageHeatChart = null; }
-    el.innerHTML = '<div class="usage-empty">暂无数据</div>';
+    el.innerHTML = '<div class="usage-empty">暂无成本数据</div>';
     return;
   }
   if (!usageHeatChart) {
@@ -489,51 +486,67 @@ function renderUsageHeatmap(cells) {
     ensureUsageThemeObserver();
   }
 
-  const cPrimary = usageCssVar('--primary') || '#6366f1';
   const cMuted = usageCssVar('--text-muted') || '#94a3b8';
   const cBorder = usageCssVar('--border-strong') || 'rgba(148,163,184,.25)';
   const cBg = usageCssVar('--bg-elevated') || '#1e293b';
   const cText = usageCssVar('--text-primary') || '#e2e8f0';
+  const cPrimary = usageCssVar('--primary') || '#6366f1';
+  const palette = [cPrimary, usageCssVar('--success') || '#22c55e', usageCssVar('--warning') || '#f59e0b',
+                   usageCssVar('--danger') || '#ef4444', usageCssVar('--accent') || '#0ea5a5',
+                   '#8b5cf6', '#ec4899', '#14b8a6'];
 
-  // %w: 0=周日 → y 轴索引 0=周一
-  const byKey = new Map(cells.map(c => [`${c.dow}-${c.hour}`, c]));
-  const data = cells.map(c => [c.hour, (c.dow + 6) % 7, c.totalTokens]);
-  const maxV = Math.max(...cells.map(c => c.totalTokens), 1);
+  // 取成本前 7 的模型，其余合并为"其他"
+  const sorted = [...priced].sort((a, b) => b.costMicroUsd - a.costMicroUsd);
+  const top = sorted.slice(0, 7);
+  const rest = sorted.slice(7);
+  const detail = new Map();
+  const data = top.map(m => {
+    detail.set(m.displayName, m);
+    return { name: m.displayName, value: m.costMicroUsd / 1e6 };
+  });
+  if (rest.length) {
+    const otherCost = rest.reduce((a, m) => a + m.costMicroUsd, 0);
+    data.push({ name: `其他 (${rest.length})`, value: otherCost / 1e6 });
+  }
+  const totalUsd = sorted.reduce((a, m) => a + m.costMicroUsd, 0) / 1e6;
 
   usageHeatChart.setOption({
-    grid: { left: 8, right: 8, top: 10, bottom: 42, containLabel: true },
+    color: palette,
+    title: {
+      text: '$' + usageFmtMoney(totalUsd),
+      subtext: '总成本',
+      left: '49%', top: '37%', textAlign: 'center',
+      textStyle: { color: cText, fontSize: 20, fontFamily: 'monospace', fontWeight: 700 },
+      subtextStyle: { color: cMuted, fontSize: 11 },
+    },
     tooltip: {
       backgroundColor: cBg, borderColor: cBorder, textStyle: { color: cText, fontSize: 12 },
       formatter: (p) => {
-        const hour = p.data[0];
-        const dow = (p.data[1] + 1) % 7;
-        const c = byKey.get(`${dow}-${hour}`) || { totalTokens: 0, requests: 0 };
-        return `<b>${USAGE_DOW_LABELS[p.data[1]]} ${String(hour).padStart(2, '0')}:00 - ${String(hour).padStart(2, '0')}:59</b><br/>` +
-               `Tokens：${usageFmtNum(c.totalTokens)}<br/>请求数：${usageFmtNum(c.requests)}`;
+        const m = detail.get(p.name);
+        let html = `<b>${p.name}</b><br/>成本：$${usageFmtMoney(p.value)}（${p.percent}%）`;
+        if (m) {
+          const tokens = m.inputTokens + m.outputTokens + m.cacheReadTokens + m.cacheCreationTokens;
+          html += `<br/>请求数：${usageFmtNum(m.requests)}<br/>Tokens：${usageFmtWan(tokens)}<br/>应用：${USAGE_APP_NAMES[m.appType] || m.appType}`;
+        }
+        return html;
       },
     },
-    xAxis: {
-      type: 'category', data: [...Array(24).keys()].map(h => String(h).padStart(2, '0')),
-      splitArea: { show: false }, axisLine: { show: false }, axisTick: { show: false },
-      axisLabel: { color: cMuted, fontFamily: 'monospace', interval: 2, fontSize: 10 },
-    },
-    yAxis: {
-      type: 'category', data: USAGE_DOW_LABELS,
-      splitArea: { show: false }, axisLine: { show: false }, axisTick: { show: false },
-      axisLabel: { color: cMuted, fontSize: 11 },
-    },
-    visualMap: {
-      min: 0, max: maxV, calculable: false,
-      orient: 'horizontal', left: 'center', bottom: 0,
-      itemWidth: 10, itemHeight: 80,
-      textStyle: { color: cMuted, fontSize: 10 },
-      formatter: (v) => usageFmtWan(v),
-      inRange: { color: [usageHexToRgba(cPrimary, 0.07), usageHexToRgba(cPrimary, 0.45), cPrimary] },
+    legend: {
+      orient: 'horizontal', bottom: 0, type: 'scroll',
+      textStyle: { color: cMuted, fontSize: 11 }, icon: 'circle', itemWidth: 8, itemHeight: 8,
+      pageIconColor: cMuted, pageTextStyle: { color: cMuted },
     },
     series: [{
-      type: 'heatmap', data,
-      itemStyle: { borderRadius: 3, borderWidth: 2, borderColor: 'transparent' },
-      emphasis: { itemStyle: { shadowBlur: 8, shadowColor: usageHexToRgba(cPrimary, 0.5) } },
+      type: 'pie', radius: ['50%', '74%'], center: ['50%', '44%'],
+      avoidLabelOverlap: true,
+      itemStyle: { borderRadius: 5, borderColor: cBg, borderWidth: 2 },
+      label: { show: false },
+      emphasis: {
+        label: { show: false },
+        itemStyle: { shadowBlur: 12, shadowColor: 'rgba(0,0,0,0.3)' },
+        scaleSize: 6,
+      },
+      data,
     }],
   }, true);
 }

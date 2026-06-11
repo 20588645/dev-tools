@@ -497,17 +497,6 @@ function getTopRequests(start, end, app, limit = 10) {
   `).all(...params, size);
 }
 
-// 周 × 小时热力图（%w: 0=周日）
-function getHeatmap(start, end, app) {
-  const { where, params } = rangeFilter(start, end, app);
-  return db.prepare(`
-    SELECT CAST(strftime('%w', createdAt, 'unixepoch', 'localtime') AS INTEGER) AS dow,
-           CAST(strftime('%H', createdAt, 'unixepoch', 'localtime') AS INTEGER) AS hour,
-           COUNT(*) AS requests,
-           SUM(inputTokens + outputTokens + cacheReadTokens + cacheCreationTokens) AS totalTokens
-    FROM usage_logs ${where} GROUP BY dow, hour
-  `).all(...params);
-}
 
 function fmtBucketKey(d, bucket) {
   const p = (n) => String(n).padStart(2, '0');
@@ -618,7 +607,6 @@ module.exports = {
   getModelStats,
   getProjectStats,
   getTopRequests,
-  getHeatmap,
   getLogs,
   ensurePricingSeed,
 };

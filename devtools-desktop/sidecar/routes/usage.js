@@ -62,15 +62,6 @@ router.get('/top', (req, res) => {
   }
 });
 
-// GET /api/usage/heatmap?start=&end=&app= — 周 × 小时热力分布
-router.get('/heatmap', (req, res) => {
-  try {
-    res.json(usage.getHeatmap(req.query.start, req.query.end, appParam(req)));
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
 // GET /api/usage/logs?start=&end=&model=&page=&pageSize=
 router.get('/logs', (req, res) => {
   try {
