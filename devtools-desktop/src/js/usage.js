@@ -466,7 +466,7 @@ function renderUsageProjects(projects) {
       const width = Math.max(2, p.costMicroUsd / maxCost * 100).toFixed(1);
       return `<tr>
         <td class="usage-project-cell">
-          <div class="usage-model-name">${p.project}</div>
+          <div class="usage-model-name usage-project-name" title="${p.project}">${p.project}</div>
           <div class="usage-project-bar"><div style="width:${width}%"></div></div>
         </td>
         <td>${p.apps.map(a => `<span class="usage-app-badge usage-app-${a}">${USAGE_APP_NAMES[a] || a}</span>`).join('')}</td>

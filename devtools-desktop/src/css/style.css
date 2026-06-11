@@ -13808,10 +13808,14 @@ body[data-theme="light"] #page-terminal .term-search-nav-btn:hover {
 .usage-project-bar { height: 4px; border-radius: 2px; background: var(--bg-hover); margin-top: 5px; overflow: hidden; max-width: 160px; }
 .usage-project-bar > div { height: 100%; border-radius: 2px; background: var(--primary); }
 
-/* 项目统计：长列表限高滚动，表头吸顶 */
+/* 项目统计：长列表限高滚动（与成本构成饼图等高），表头吸顶，超长项目名省略 */
 .usage-grid-2 .usage-card { overflow: hidden; }
-#usageProjectTable { max-height: 420px; overflow: auto; }
+#usageProjectTable { max-height: 300px; overflow: auto; }
 #usageProjectTable thead th {
   position: sticky; top: 0; z-index: 2;
   background: var(--bg-elevated);
+}
+.usage-project-name {
+  display: block; max-width: 150px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
