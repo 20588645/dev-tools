@@ -12,6 +12,11 @@ const os = require('os');
 const db = require('./database');
 
 const CLAUDE_PROJECTS_DIR = path.join(os.homedir(), '.claude', 'projects');
+// Codex 会话日志长期保留，归档目录与活跃目录格式一致
+const CODEX_SESSION_DIRS = [
+  path.join(os.homedir(), '.codex', 'sessions'),
+  path.join(os.homedir(), '.codex', 'archived_sessions'),
+];
 const SYNC_THROTTLE_MS = 15000;
 let lastSyncAt = 0;
 
@@ -98,18 +103,19 @@ function calcCostMicroUsd(entry, pricing) {
 
 // ========== 会话日志解析 ==========
 
-function listJsonlFiles() {
+function listLogFiles() {
   const files = [];
-  const walk = (dir) => {
+  const walk = (dir, app) => {
     let entries;
     try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }
     for (const e of entries) {
       const full = path.join(dir, e.name);
-      if (e.isDirectory()) walk(full);
-      else if (e.isFile() && e.name.endsWith('.jsonl')) files.push(full);
+      if (e.isDirectory()) walk(full, app);
+      else if (e.isFile() && e.name.endsWith('.jsonl')) files.push({ file: full, app });
     }
   };
-  walk(CLAUDE_PROJECTS_DIR);
+  walk(CLAUDE_PROJECTS_DIR, 'claude');
+  for (const dir of CODEX_SESSION_DIRS) walk(dir, 'codex');
   return files;
 }
 
@@ -126,6 +132,7 @@ function parseLine(line, projectDir) {
     requestId: 'session:' + (msg.id || obj.requestId || obj.uuid),
     sessionId: obj.sessionId || '',
     projectDir,
+    appType: 'claude',
     model,
     inputTokens: Math.max(0, u.input_tokens | 0),
     outputTokens: Math.max(0, u.output_tokens | 0),
@@ -138,21 +145,87 @@ function parseLine(line, projectDir) {
   return entry;
 }
 
+// Codex 会话文件名形如 rollout-2026-05-15T14-09-48-<uuid>.jsonl
+function codexSessionId(filePath) {
+  const m = path.basename(filePath).match(/([0-9a-f]{8}-[0-9a-f-]{27})\.jsonl$/i);
+  return m ? m[1] : path.basename(filePath, '.jsonl');
+}
+
+/**
+ * Codex 解析：token_count 事件携带会话累计值，相邻事件差分得到单次用量。
+ * OpenAI 语义下 input_tokens 已包含 cached_input_tokens，入库前归一化为
+ * "新增输入 = input - cached"，与 Claude 口径对齐。state（当前模型/工作目录/
+ * 上一次累计值）随 usage_sync.stateJson 持久化，保证跨次增量扫描差分正确。
+ */
+function parseCodexLines(lines, state, sessionId) {
+  const entries = [];
+  for (const line of lines) {
+    if (!line || line.length < 10) continue;
+    // 廉价预筛：绝大多数行是对话内容，避免全量 JSON.parse（日志总量数 GB 级）
+    if (line.indexOf('"turn_context"') === -1 && line.indexOf('"token_count"') === -1) continue;
+    let obj;
+    try { obj = JSON.parse(line); } catch { continue; }
+    const p = obj.payload || {};
+    if (obj.type === 'turn_context') {
+      if (p.model) state.model = String(p.model);
+      if (p.cwd) state.cwd = String(p.cwd);
+      continue;
+    }
+    if (obj.type !== 'event_msg' || p.type !== 'token_count' || !p.info) continue;
+    const tot = p.info.total_token_usage;
+    if (!tot) continue;
+    const prev = state.prevTotal || {};
+    let dIn = Math.trunc(tot.input_tokens || 0) - Math.trunc(prev.input || 0);
+    let dCache = Math.trunc(tot.cached_input_tokens || 0) - Math.trunc(prev.cached || 0);
+    let dOut = Math.trunc(tot.output_tokens || 0) - Math.trunc(prev.output || 0);
+    if (dIn < 0 || dCache < 0 || dOut < 0) {
+      // 会话内计数被重置：当前累计值即本段增量
+      dIn = Math.trunc(tot.input_tokens || 0);
+      dCache = Math.trunc(tot.cached_input_tokens || 0);
+      dOut = Math.trunc(tot.output_tokens || 0);
+    }
+    state.prevTotal = {
+      input: Math.trunc(tot.input_tokens || 0),
+      cached: Math.trunc(tot.cached_input_tokens || 0),
+      output: Math.trunc(tot.output_tokens || 0),
+    };
+    if (dIn + dOut <= 0) continue;
+    const ts = Date.parse(obj.timestamp);
+    entries.push({
+      requestId: `codex:${sessionId}:${obj.timestamp}:${tot.total_tokens || 0}`,
+      sessionId,
+      projectDir: state.cwd ? (state.cwd.split('/').filter(Boolean).pop() || '') : '',
+      appType: 'codex',
+      model: state.model || 'unknown',
+      inputTokens: Math.max(0, dIn - dCache),
+      outputTokens: Math.max(0, dOut),
+      cacheReadTokens: Math.max(0, dCache),
+      cacheCreationTokens: 0,
+      createdAt: Number.isFinite(ts) ? Math.floor(ts / 1000) : Math.floor(Date.now() / 1000),
+    });
+  }
+  return entries;
+}
+
 const insertLog = () => db.prepare(`
   INSERT OR REPLACE INTO usage_logs
-    (requestId, sessionId, projectDir, model, pricingModel,
+    (requestId, sessionId, projectDir, appType, model, pricingModel,
      inputTokens, outputTokens, cacheReadTokens, cacheCreationTokens, costMicroUsd, createdAt)
-  VALUES (@requestId, @sessionId, @projectDir, @model, @pricingModel,
+  VALUES (@requestId, @sessionId, @projectDir, @appType, @model, @pricingModel,
      @inputTokens, @outputTokens, @cacheReadTokens, @cacheCreationTokens, @costMicroUsd, @createdAt)
 `);
 
-function syncFile(filePath) {
+function syncFile(filePath, app) {
   let stat;
   try { stat = fs.statSync(filePath); } catch { return 0; }
-  const state = db.prepare('SELECT * FROM usage_sync WHERE filePath = ?').get(filePath);
-  let offset = state ? state.lastSize : 0;
-  if (state && stat.size === state.lastSize) return 0;
-  if (stat.size < offset) offset = 0; // 文件被截断重写：从头重读（主键去重保证幂等）
+  const syncRow = db.prepare('SELECT * FROM usage_sync WHERE filePath = ?').get(filePath);
+  let offset = syncRow ? syncRow.lastSize : 0;
+  if (syncRow && stat.size === syncRow.lastSize) return 0;
+  let parseState = {};
+  if (syncRow && syncRow.stateJson) {
+    try { parseState = JSON.parse(syncRow.stateJson); } catch { parseState = {}; }
+  }
+  if (stat.size < offset) { offset = 0; parseState = {}; } // 文件被截断重写：从头重读（主键去重保证幂等）
 
   let text;
   try {
@@ -168,28 +241,32 @@ function syncFile(filePath) {
   if (lastNL === -1) return 0;
   const complete = text.slice(0, lastNL + 1);
   const consumedBytes = Buffer.byteLength(complete, 'utf8');
+  const lines = complete.split('\n').map(l => l.trim());
 
-  const projectDir = path.relative(CLAUDE_PROJECTS_DIR, filePath).split(path.sep)[0] || '';
-  const entries = [];
-  for (const line of complete.split('\n')) {
-    const entry = parseLine(line.trim(), projectDir);
-    if (entry) {
-      const pricing = findPricing(entry.model);
-      entry.pricingModel = pricing ? pricing.modelId : '';
-      entry.costMicroUsd = calcCostMicroUsd(entry, pricing);
-      entries.push(entry);
-    }
+  let entries;
+  if (app === 'codex') {
+    entries = parseCodexLines(lines, parseState, codexSessionId(filePath));
+  } else {
+    const projectDir = path.relative(CLAUDE_PROJECTS_DIR, filePath).split(path.sep)[0] || '';
+    entries = lines.map(l => parseLine(l, projectDir)).filter(Boolean);
+  }
+  for (const entry of entries) {
+    const pricing = findPricing(entry.model);
+    entry.pricingModel = pricing ? pricing.modelId : '';
+    entry.costMicroUsd = calcCostMicroUsd(entry, pricing);
   }
 
   const insert = insertLog();
   const tx = db.transaction(() => {
     for (const e of entries) insert.run(e);
     db.prepare(`
-      INSERT INTO usage_sync (filePath, lastSize, lastMtimeMs, lastSyncedAt)
-      VALUES (?, ?, ?, ?)
+      INSERT INTO usage_sync (filePath, lastSize, lastMtimeMs, lastSyncedAt, stateJson)
+      VALUES (?, ?, ?, ?, ?)
       ON CONFLICT(filePath) DO UPDATE SET lastSize = excluded.lastSize,
-        lastMtimeMs = excluded.lastMtimeMs, lastSyncedAt = excluded.lastSyncedAt
-    `).run(filePath, offset + consumedBytes, Math.trunc(stat.mtimeMs), Math.floor(Date.now() / 1000));
+        lastMtimeMs = excluded.lastMtimeMs, lastSyncedAt = excluded.lastSyncedAt,
+        stateJson = excluded.stateJson
+    `).run(filePath, offset + consumedBytes, Math.trunc(stat.mtimeMs),
+           Math.floor(Date.now() / 1000), JSON.stringify(parseState));
   });
   tx();
   return entries.length;
@@ -204,10 +281,34 @@ function syncUsage(force = false) {
   lastSyncAt = now;
   ensurePricingSeed();
   pricingCache.clear();
-  const files = listJsonlFiles();
+  const files = listLogFiles();
   let upserted = 0;
-  for (const f of files) upserted += syncFile(f);
+  for (const f of files) upserted += syncFile(f.file, f.app);
   return { files: files.length, upserted };
+}
+
+// ========== 美元→人民币汇率 ==========
+// 12 小时内存缓存；拉取失败时用最近一次成功值，从未成功则用离线兜底汇率
+const RATE_FALLBACK_CNY = 7.10;
+let rateCache = { rate: 0, at: 0, source: '' };
+
+async function getUsdCnyRate() {
+  const now = Date.now();
+  if (rateCache.rate > 0 && now - rateCache.at < 12 * 3600 * 1000) return rateCache;
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 8000);
+    const res = await fetch('https://open.er-api.com/v6/latest/USD', { signal: controller.signal });
+    clearTimeout(timer);
+    const data = await res.json();
+    const rate = Number(data && data.rates && data.rates.CNY);
+    if (rate > 0) {
+      rateCache = { rate, at: now, source: 'open.er-api.com' };
+      return rateCache;
+    }
+  } catch { /* 网络失败走兜底 */ }
+  if (!(rateCache.rate > 0)) rateCache = { rate: RATE_FALLBACK_CNY, at: now, source: 'fallback' };
+  return rateCache;
 }
 
 // ========== CC Switch 历史数据导入 ==========
@@ -275,9 +376,9 @@ function importFromCcSwitch() {
   pricingCache.clear();
   const insert = db.prepare(`
     INSERT OR IGNORE INTO usage_logs
-      (requestId, sessionId, projectDir, model, pricingModel,
+      (requestId, sessionId, projectDir, appType, model, pricingModel,
        inputTokens, outputTokens, cacheReadTokens, cacheCreationTokens, costMicroUsd, createdAt)
-    VALUES (@requestId, @sessionId, '', @model, @pricingModel,
+    VALUES (@requestId, @sessionId, '', 'claude', @model, @pricingModel,
        @inputTokens, @outputTokens, @cacheReadTokens, @cacheCreationTokens, @costMicroUsd, @createdAt)
   `);
   let imported = 0;
@@ -313,16 +414,17 @@ function repriceAll() {
 
 // ========== 聚合查询 ==========
 
-function rangeFilter(start, end) {
+function rangeFilter(start, end, app) {
   const cond = [];
   const params = [];
   if (start) { cond.push('createdAt >= ?'); params.push(Number(start)); }
   if (end) { cond.push('createdAt < ?'); params.push(Number(end)); }
+  if (app) { cond.push('appType = ?'); params.push(String(app)); }
   return { where: cond.length ? 'WHERE ' + cond.join(' AND ') : '', params };
 }
 
-function getSummary(start, end) {
-  const { where, params } = rangeFilter(start, end);
+function getSummary(start, end, app) {
+  const { where, params } = rangeFilter(start, end, app);
   const row = db.prepare(`
     SELECT COUNT(*) AS requests,
            COALESCE(SUM(inputTokens), 0) AS inputTokens,
@@ -345,9 +447,9 @@ function fmtBucketKey(d, bucket) {
   return bucket === 'hour' ? `${day} ${p(d.getHours())}:00` : day;
 }
 
-function getTrends(start, end, bucket) {
+function getTrends(start, end, bucket, app) {
   const fmt = bucket === 'hour' ? '%Y-%m-%d %H:00' : '%Y-%m-%d';
-  const { where, params } = rangeFilter(start, end);
+  const { where, params } = rangeFilter(start, end, app);
   const rows = db.prepare(`
     SELECT strftime('${fmt}', createdAt, 'unixepoch', 'localtime') AS bucket,
            COUNT(*) AS requests,
@@ -363,7 +465,8 @@ function getTrends(start, end, bucket) {
   // 补全空桶：完整时间轴（如"今天"为 0-24 点），无数据的桶填零
   let startTs = start ? Number(start) * 1000 : null;
   if (!startTs) {
-    const min = db.prepare('SELECT MIN(createdAt) AS m FROM usage_logs').get().m;
+    const minFilter = rangeFilter('', '', app);
+    const min = db.prepare(`SELECT MIN(createdAt) AS m FROM usage_logs ${minFilter.where}`).get(...minFilter.params).m;
     if (!min) return [];
     startTs = min * 1000;
   }
@@ -389,10 +492,11 @@ function getTrends(start, end, bucket) {
   return out;
 }
 
-function getModelStats(start, end) {
-  const { where, params } = rangeFilter(start, end);
+function getModelStats(start, end, app) {
+  const { where, params } = rangeFilter(start, end, app);
   return db.prepare(`
     SELECT l.model,
+           l.appType,
            COALESCE(NULLIF(l.pricingModel, ''), '') AS pricingModel,
            COALESCE(p.displayName, l.model) AS displayName,
            COUNT(*) AS requests,
@@ -403,17 +507,18 @@ function getModelStats(start, end) {
            SUM(l.costMicroUsd) AS costMicroUsd
     FROM usage_logs l
     LEFT JOIN model_pricing p ON p.modelId = l.pricingModel
-    ${where ? where.replace(/createdAt/g, 'l.createdAt') : ''}
-    GROUP BY l.model ORDER BY costMicroUsd DESC
+    ${where ? where.replace(/createdAt/g, 'l.createdAt').replace(/appType/g, 'l.appType') : ''}
+    GROUP BY l.model, l.appType ORDER BY costMicroUsd DESC
   `).all(...params);
 }
 
-function getLogs({ start, end, model, page = 1, pageSize = 20 }) {
+function getLogs({ start, end, model, app, page = 1, pageSize = 20 }) {
   const cond = [];
   const params = [];
   if (start) { cond.push('createdAt >= ?'); params.push(Number(start)); }
   if (end) { cond.push('createdAt < ?'); params.push(Number(end)); }
   if (model) { cond.push('model = ?'); params.push(model); }
+  if (app) { cond.push('appType = ?'); params.push(String(app)); }
   const where = cond.length ? 'WHERE ' + cond.join(' AND ') : '';
   const total = db.prepare(`SELECT COUNT(*) AS cnt FROM usage_logs ${where}`).get(...params).cnt;
   const size = Math.min(Math.max(Number(pageSize) || 20, 1), 200);
@@ -428,6 +533,7 @@ module.exports = {
   syncUsage,
   repriceAll,
   importFromCcSwitch,
+  getUsdCnyRate,
   getSummary,
   getTrends,
   getModelStats,

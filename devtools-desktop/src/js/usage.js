@@ -5,6 +5,7 @@
  */
 const usageState = {
   range: 'today',
+  app: '',
   page: 1,
   pageSize: 15,
   model: '',
@@ -13,6 +14,8 @@ const usageState = {
   lastTrends: null,
   lastBucket: 'hour',
 };
+
+const USAGE_APP_NAMES = { claude: 'Claude Code', codex: 'Codex' };
 
 let usageChart = null;
 let usageChartObserved = false;
@@ -25,7 +28,12 @@ function usageFmtNum(n) {
 
 function usageFmtWan(n) {
   n = Number(n) || 0;
+  if (n >= 1e8) return (n / 1e8).toFixed(2) + ' 亿';
   return n >= 10000 ? (n / 10000).toFixed(1) + ' 万' : usageFmtNum(n);
+}
+
+function usageFmtMoney(v) {
+  return (Number(v) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 function usageFmtCost(microUsd) {
@@ -38,10 +46,16 @@ function usageFmtTime(unixSec) {
   return `${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 
-// 项目目录形如 -Users-ldy-personalTools，取末段做展示
+// Claude 的项目目录形如 -Users-ldy-personalTools（路径编码），取末段展示；
+// Codex 的 projectDir 已是目录名本身，原样展示
 function usageFmtProject(dir) {
-  const seg = String(dir || '').split('-').filter(Boolean);
-  return seg.length ? seg[seg.length - 1] : '-';
+  dir = String(dir || '');
+  if (!dir) return '-';
+  if (dir.startsWith('-')) {
+    const seg = dir.split('-').filter(Boolean);
+    return seg.length ? seg[seg.length - 1] : '-';
+  }
+  return dir;
 }
 
 function usageCssVar(name) {
@@ -83,6 +97,7 @@ function usageQuery(extra) {
   const params = new URLSearchParams();
   if (start) params.set('start', start);
   if (end) params.set('end', end);
+  if (usageState.app) params.set('app', usageState.app);
   for (const k in (extra || {})) params.set(k, extra[k]);
   const s = params.toString();
   return s ? '?' + s : '';
@@ -104,12 +119,14 @@ function initUsage() {
 async function refreshUsage(silent) {
   const { bucket } = usageRangeParams();
   try {
-    const [summary, trends, models] = await Promise.all([
+    const [summary, trends, models, rate] = await Promise.all([
       API.get('/api/usage/summary' + usageQuery()),
       API.get('/api/usage/trends' + usageQuery({ bucket })),
       API.get('/api/usage/models' + usageQuery()),
+      API.get('/api/usage/rate').catch(() => null),
     ]);
     usageState.models = models;
+    if (rate && rate.rate > 0) usageState.cnyRate = rate;
     renderUsageSummary(summary);
     renderUsageTrend(trends, bucket);
     renderUsageModels(models);
@@ -123,6 +140,15 @@ function setUsageRange(range, el) {
   usageState.range = range;
   usageState.page = 1;
   document.querySelectorAll('#usageRangeChips .chip').forEach(c => c.classList.remove('active'));
+  if (el) el.classList.add('active');
+  refreshUsage();
+}
+
+function setUsageApp(app, el) {
+  usageState.app = app;
+  usageState.page = 1;
+  usageState.model = '';
+  document.querySelectorAll('#usageAppChips .chip').forEach(c => c.classList.remove('active'));
   if (el) el.classList.add('active');
   refreshUsage();
 }
@@ -155,7 +181,17 @@ function renderUsageSummary(s) {
   set('usageTotalTokens', usageFmtNum(s.totalTokens));
   set('usageTotalTokensApprox', s.totalTokens >= 10000 ? '≈ ' + usageFmtWan(s.totalTokens) : '');
   set('usageRequests', usageFmtNum(s.requests));
-  set('usageCost', '$' + (s.costUsd || 0).toFixed(4));
+  set('usageCost', '$' + usageFmtMoney(s.costUsd));
+  const cnyEl = document.getElementById('usageCostCny');
+  if (cnyEl) {
+    const r = usageState.cnyRate;
+    if (r && r.rate > 0) {
+      cnyEl.textContent = '≈ ¥' + usageFmtMoney((s.costUsd || 0) * r.rate);
+      cnyEl.title = `按 1 USD = ${r.rate.toFixed(4)} CNY 折算（${r.source === 'fallback' ? '离线兜底汇率' : '汇率来源 ' + r.source}）`;
+    } else {
+      cnyEl.textContent = '';
+    }
+  }
   set('usageCacheRate', (s.cacheHitRate * 100).toFixed(1) + '%');
   set('usageInputTokens', usageFmtWan(s.inputTokens));
   set('usageOutputTokens', usageFmtWan(s.outputTokens));
@@ -285,7 +321,7 @@ function renderUsageModels(models) {
       <th>模型</th><th>请求数</th><th>新增输入</th><th>输出</th><th>缓存创建</th><th>缓存命中</th><th>成本</th>
     </tr></thead>
     <tbody>${models.map(m => `<tr>
-      <td><span class="usage-model-name">${m.displayName}</span><span class="usage-model-id">${m.model}</span>${m.pricingModel ? '' : '<span class="usage-badge-warn">未匹配单价</span>'}</td>
+      <td><span class="usage-model-name">${m.displayName}</span><span class="usage-model-id">${m.model}</span><span class="usage-app-badge usage-app-${m.appType}">${USAGE_APP_NAMES[m.appType] || m.appType}</span>${m.pricingModel ? '' : '<span class="usage-badge-warn">未匹配单价</span>'}</td>
       <td>${usageFmtNum(m.requests)}</td>
       <td>${usageFmtWan(m.inputTokens)}</td>
       <td>${usageFmtWan(m.outputTokens)}</td>

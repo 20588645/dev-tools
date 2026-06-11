@@ -13747,3 +13747,13 @@ body[data-theme="light"] #page-terminal .term-search-nav-btn:hover {
 }
 .usage-price-input:focus { border-color: var(--primary); }
 .usage-price-name { width: 150px; font-family: var(--font-sans); }
+.usage-mini-sub { font-size: .74rem; color: var(--text-muted); margin-top: 3px; font-family: var(--font-mono); }
+
+/* 用量统计 - 应用维度筛选与标识 */
+.usage-chip-groups { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.usage-chip-divider { width: 1px; height: 18px; background: var(--border-strong); }
+.usage-app-badge {
+  margin-left: 8px; padding: 1px 8px; border-radius: 10px; font-size: .7rem;
+  background: var(--primary-light); color: var(--primary);
+}
+.usage-app-codex { background: var(--success-subtle); color: var(--success); }

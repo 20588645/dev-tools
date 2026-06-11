@@ -7,11 +7,17 @@ const router = express.Router();
 const db = require('../services/database');
 const usage = require('../services/usage');
 
+// 应用筛选参数白名单
+function appParam(req) {
+  const app = String(req.query.app || '');
+  return ['claude', 'codex'].includes(app) ? app : '';
+}
+
 // GET /api/usage/summary?start=&end=  （unix 秒）
 router.get('/summary', (req, res) => {
   try {
     usage.syncUsage();
-    res.json(usage.getSummary(req.query.start, req.query.end));
+    res.json(usage.getSummary(req.query.start, req.query.end, appParam(req)));
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
@@ -22,7 +28,7 @@ router.get('/trends', (req, res) => {
   try {
     usage.syncUsage();
     const bucket = req.query.bucket === 'hour' ? 'hour' : 'day';
-    res.json(usage.getTrends(req.query.start, req.query.end, bucket));
+    res.json(usage.getTrends(req.query.start, req.query.end, bucket, appParam(req)));
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
@@ -32,7 +38,7 @@ router.get('/trends', (req, res) => {
 router.get('/models', (req, res) => {
   try {
     usage.syncUsage();
-    res.json(usage.getModelStats(req.query.start, req.query.end));
+    res.json(usage.getModelStats(req.query.start, req.query.end, appParam(req)));
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
@@ -80,6 +86,16 @@ router.put('/pricing/:modelId', (req, res) => {
 router.post('/sync', (req, res) => {
   try {
     res.json(usage.syncUsage(true));
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// GET /api/usage/rate — 美元→人民币汇率（12h 缓存 + 离线兜底）
+router.get('/rate', async (req, res) => {
+  try {
+    const r = await usage.getUsdCnyRate();
+    res.json({ rate: r.rate, source: r.source, fetchedAt: r.at });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }

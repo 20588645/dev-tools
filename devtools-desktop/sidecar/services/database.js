@@ -153,6 +153,7 @@ db.exec(`
     requestId TEXT PRIMARY KEY,
     sessionId TEXT DEFAULT '',
     projectDir TEXT DEFAULT '',
+    appType TEXT DEFAULT 'claude',
     model TEXT NOT NULL,
     pricingModel TEXT DEFAULT '',
     inputTokens INTEGER DEFAULT 0,
@@ -169,7 +170,8 @@ db.exec(`
     filePath TEXT PRIMARY KEY,
     lastSize INTEGER DEFAULT 0,
     lastMtimeMs INTEGER DEFAULT 0,
-    lastSyncedAt INTEGER DEFAULT 0
+    lastSyncedAt INTEGER DEFAULT 0,
+    stateJson TEXT DEFAULT ''
   );
 
   CREATE TABLE IF NOT EXISTS model_pricing (
@@ -194,6 +196,19 @@ try {
   db.prepare("SELECT remindAt FROM todos LIMIT 1").get();
 } catch {
   db.exec("ALTER TABLE todos ADD COLUMN remindAt TEXT DEFAULT ''");
+}
+
+// 用量表多应用支持（兼容旧数据库：历史行默认归为 claude）
+try {
+  db.prepare("SELECT appType FROM usage_logs LIMIT 1").get();
+} catch {
+  db.exec("ALTER TABLE usage_logs ADD COLUMN appType TEXT DEFAULT 'claude'");
+}
+db.exec("CREATE INDEX IF NOT EXISTS idx_usage_logs_appType ON usage_logs(appType)");
+try {
+  db.prepare("SELECT stateJson FROM usage_sync LIMIT 1").get();
+} catch {
+  db.exec("ALTER TABLE usage_sync ADD COLUMN stateJson TEXT DEFAULT ''");
 }
 
 module.exports = db;

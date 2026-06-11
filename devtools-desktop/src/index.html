@@ -721,7 +721,7 @@
   <div class="page-header-bar page-header-simple">
     <div>
       <div class="page-title">📊 用量统计</div>
-      <div class="page-subtitle">Claude Code 模型调用量与成本统计 · 数据来源于本地会话日志 (~/.claude/projects)</div>
+      <div class="page-subtitle">AI 编码工具模型用量与成本统计 · 本地解析 Claude Code (~/.claude) 与 Codex (~/.codex) 会话日志</div>
     </div>
     <div class="page-header-actions">
       <button class="btn-secondary" onclick="importCcSwitchUsage()">📥 导入 CC Switch 历史</button>
@@ -731,11 +731,19 @@
   </div>
 
   <div class="page-toolbar usage-toolbar">
-    <div class="chips" id="usageRangeChips">
-      <button class="chip active" data-range="today" onclick="setUsageRange('today', this)">今天</button>
-      <button class="chip" data-range="7d" onclick="setUsageRange('7d', this)">近 7 天</button>
-      <button class="chip" data-range="month" onclick="setUsageRange('month', this)">本月</button>
-      <button class="chip" data-range="all" onclick="setUsageRange('all', this)">全部</button>
+    <div class="usage-chip-groups">
+      <div class="chips" id="usageRangeChips">
+        <button class="chip active" data-range="today" onclick="setUsageRange('today', this)">今天</button>
+        <button class="chip" data-range="7d" onclick="setUsageRange('7d', this)">近 7 天</button>
+        <button class="chip" data-range="month" onclick="setUsageRange('month', this)">本月</button>
+        <button class="chip" data-range="all" onclick="setUsageRange('all', this)">全部</button>
+      </div>
+      <span class="usage-chip-divider"></span>
+      <div class="chips" id="usageAppChips">
+        <button class="chip active" data-app="" onclick="setUsageApp('', this)">全部应用</button>
+        <button class="chip" data-app="claude" onclick="setUsageApp('claude', this)">Claude Code</button>
+        <button class="chip" data-app="codex" onclick="setUsageApp('codex', this)">Codex</button>
+      </div>
     </div>
     <div class="usage-sync-info" id="usageSyncInfo"></div>
   </div>
@@ -755,6 +763,7 @@
       <div class="usage-mini">
         <div class="usage-mini-label">总成本</div>
         <div class="usage-mini-value usage-cost-text" id="usageCost">-</div>
+        <div class="usage-mini-sub" id="usageCostCny"></div>
       </div>
       <div class="usage-mini">
         <div class="usage-mini-label">缓存命中率</div>
