@@ -697,18 +697,19 @@ function resetMenuOrder() {
 // 约定：新功能页面的标题区 + 工具栏统一包在 <div class="page-fixed-header"> 内，
 // 滚动时自动吸附在顶部（毛玻璃背景，吸附后出现分隔线）。静态页面直接套类即可；
 // 动态页面可用 renderPageHeader() 按标准结构渲染。初始化由 setupNavigation 自动完成。
-function updatePageStickyHeaders() {
-  const root = document.querySelector('.main-content');
-  if (!root) return;
-  const stuck = root.scrollTop > 4;
-  document.querySelectorAll('.page .page-fixed-header').forEach(h => h.classList.toggle('is-stuck', stuck));
-}
-
 function initPageStickyHeaders() {
-  const root = document.querySelector('.main-content');
-  if (!root || root._stickyHeaderBound) return;
-  root._stickyHeaderBound = true;
-  root.addEventListener('scroll', updatePageStickyHeaders, { passive: true });
+  document.querySelectorAll('.page .page-fixed-header').forEach(header => {
+    const page = header.closest('.page');
+    if (!page || page._fixedHeaderBound) return;
+    page._fixedHeaderBound = true;
+    page.classList.add('has-fixed-header');
+    const body = page.querySelector('.page-scroll-body');
+    if (body) {
+      body.addEventListener('scroll', () => {
+        header.classList.toggle('is-stuck', body.scrollTop > 4);
+      }, { passive: true });
+    }
+  });
 }
 
 /**
@@ -794,8 +795,12 @@ function switchPage(page, el) {
     }
   }
   const activePage = document.getElementById('page-' + page);
-  if (activePage) { activePage.scrollTop = 0; activePage.scrollLeft = 0; }
-  updatePageStickyHeaders();
+  if (activePage) {
+    activePage.scrollTop = 0;
+    activePage.scrollLeft = 0;
+    const scrollBody = activePage.querySelector('.page-scroll-body');
+    if (scrollBody) scrollBody.scrollTop = 0;
+  }
   if (page === 'deploy') {
     const activeSub = document.querySelector('.sub-tab.active');
     if (activeSub) switchSubTab(activeSub.dataset.sub, activeSub);
