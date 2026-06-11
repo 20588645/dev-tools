@@ -4,7 +4,7 @@
 
 ![Platform](https://img.shields.io/badge/platform-macOS-blue)
 ![Tech](https://img.shields.io/badge/tech-Tauri%20%2B%20Node.js-purple)
-![Version](https://img.shields.io/badge/version-0.1.92-green)
+![Version](https://img.shields.io/badge/version-0.1.93-green)
 
 基于 Tauri 2.x + Node.js Sidecar 架构，双击 .app 即可使用，无需终端操作。
 
@@ -95,7 +95,7 @@ cargo tauri build
 
 # 产出位置
 # src-tauri/target/release/bundle/macos/DevTools.app
-# src-tauri/target/release/bundle/dmg/DevTools_0.1.92_aarch64.dmg
+# src-tauri/target/release/bundle/dmg/DevTools_0.1.93_aarch64.dmg
 ```
 
 ### 安装到 Applications
