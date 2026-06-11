@@ -334,10 +334,12 @@ function renderUsageTrend(seriesList, bucket) {
     ensureUsageThemeObserver();
   }
 
-  const labels = base.trends.map(t => bucket === 'day' ? t.bucket.slice(5) : t.bucket.slice(11));
+  const buckets = base.trends.map(t => t.bucket);
+  // 小时粒度跨多天（近7天/本月）时，X 轴只在每天 0 点标注日期，悬浮仍精确到小时
+  const multiDay = bucket !== 'day' && new Set(buckets.map(b => b.slice(0, 10))).size > 1;
   const tokensBySeries = seriesList.map(s =>
     (s.trends || []).map(t => (t.inputTokens || 0) + (t.outputTokens || 0) + (t.cacheReadTokens || 0) + (t.cacheCreationTokens || 0)));
-  const costs = labels.map((_, i) =>
+  const costs = buckets.map((_, i) =>
     seriesList.reduce((acc, s) => acc + ((s.trends[i] && s.trends[i].costMicroUsd) || 0), 0) / 1e6);
 
   const cDanger = usageCssVar('--danger') || '#ef4444';
@@ -407,9 +409,17 @@ function renderUsageTrend(seriesList, bucket) {
       },
     ],
     xAxis: {
-      type: 'category', boundaryGap: false, data: labels,
+      type: 'category', boundaryGap: false, data: buckets,
       axisLine: { lineStyle: { color: cBorder } },
-      axisLabel: { color: cMuted, fontFamily: 'monospace', hideOverlap: true },
+      axisLabel: {
+        color: cMuted, fontFamily: 'monospace', hideOverlap: true,
+        formatter: (val) => {
+          if (bucket === 'day') return val.slice(5);
+          if (multiDay) return val.slice(11, 16) === '00:00' ? val.slice(5, 10) : '';
+          return val.slice(11);
+        },
+        interval: multiDay ? ((idx) => buckets[idx].slice(11, 16) === '00:00') : 'auto',
+      },
       axisTick: { show: false },
     },
     yAxis: [
@@ -515,8 +525,8 @@ function renderUsageCostPie(models) {
     title: {
       text: '$' + usageFmtMoney(totalUsd),
       subtext: '总成本',
-      left: '49%', top: '37%', textAlign: 'center',
-      textStyle: { color: cText, fontSize: 20, fontFamily: 'monospace', fontWeight: 700 },
+      left: '33%', top: '40%', textAlign: 'center',
+      textStyle: { color: cText, fontSize: 19, fontFamily: 'monospace', fontWeight: 700 },
       subtextStyle: { color: cMuted, fontSize: 11 },
     },
     tooltip: {
@@ -532,12 +542,12 @@ function renderUsageCostPie(models) {
       },
     },
     legend: {
-      orient: 'horizontal', bottom: 0, type: 'scroll',
+      orient: 'vertical', right: 6, top: 'middle', type: 'scroll',
       textStyle: { color: cMuted, fontSize: 11 }, icon: 'circle', itemWidth: 8, itemHeight: 8,
-      pageIconColor: cMuted, pageTextStyle: { color: cMuted },
+      itemGap: 9, pageIconColor: cMuted, pageTextStyle: { color: cMuted },
     },
     series: [{
-      type: 'pie', radius: ['50%', '74%'], center: ['50%', '44%'],
+      type: 'pie', radius: ['46%', '70%'], center: ['34%', '46%'],
       avoidLabelOverlap: true,
       itemStyle: { borderRadius: 5, borderColor: cBg, borderWidth: 2 },
       label: { show: false },
