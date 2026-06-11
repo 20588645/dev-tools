@@ -444,14 +444,25 @@ function getSummary(start, end, app) {
 function fmtBucketKey(d, bucket) {
   const p = (n) => String(n).padStart(2, '0');
   const day = `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  if (bucket === 'min10') return `${day} ${p(d.getHours())}:${p(Math.floor(d.getMinutes() / 10) * 10)}`;
   return bucket === 'hour' ? `${day} ${p(d.getHours())}:00` : day;
 }
 
+// 各粒度的 SQL 分桶表达式与补桶参数（min10 = 10 分钟粒度，分钟向下取整）
+const TREND_BUCKETS = {
+  min10: {
+    sql: `strftime('%Y-%m-%d %H:', createdAt, 'unixepoch', 'localtime') || printf('%02d', (CAST(strftime('%M', createdAt, 'unixepoch', 'localtime') AS INTEGER) / 10) * 10)`,
+    stepMs: 600000, max: 320,
+  },
+  hour: { sql: `strftime('%Y-%m-%d %H:00', createdAt, 'unixepoch', 'localtime')`, stepMs: 3600000, max: 800 },
+  day: { sql: `strftime('%Y-%m-%d', createdAt, 'unixepoch', 'localtime')`, stepMs: 86400000, max: 400 },
+};
+
 function getTrends(start, end, bucket, app) {
-  const fmt = bucket === 'hour' ? '%Y-%m-%d %H:00' : '%Y-%m-%d';
+  const cfg = TREND_BUCKETS[bucket] || TREND_BUCKETS.day;
   const { where, params } = rangeFilter(start, end, app);
   const rows = db.prepare(`
-    SELECT strftime('${fmt}', createdAt, 'unixepoch', 'localtime') AS bucket,
+    SELECT ${cfg.sql} AS bucket,
            COUNT(*) AS requests,
            SUM(inputTokens) AS inputTokens,
            SUM(outputTokens) AS outputTokens,
@@ -471,22 +482,22 @@ function getTrends(start, end, bucket, app) {
     startTs = min * 1000;
   }
   const endTs = end ? Number(end) * 1000 : Date.now();
-  const maxBuckets = bucket === 'hour' ? 200 : 400;
-  const stepMs = bucket === 'hour' ? 3600000 : 86400000;
-  if ((endTs - startTs) / stepMs > maxBuckets) startTs = endTs - maxBuckets * stepMs; // 超长跨度从尾部截取
+  if ((endTs - startTs) / cfg.stepMs > cfg.max) startTs = endTs - cfg.max * cfg.stepMs; // 超长跨度从尾部截取
   const cursor = new Date(startTs);
-  if (bucket === 'hour') cursor.setMinutes(0, 0, 0);
+  if (bucket === 'min10') cursor.setMinutes(Math.floor(cursor.getMinutes() / 10) * 10, 0, 0);
+  else if (bucket === 'hour') cursor.setMinutes(0, 0, 0);
   else cursor.setHours(0, 0, 0, 0);
 
   const map = new Map(rows.map(r => [r.bucket, r]));
   const out = [];
-  while (cursor.getTime() < endTs && out.length < maxBuckets) {
+  while (cursor.getTime() < endTs && out.length < cfg.max) {
     const key = fmtBucketKey(cursor, bucket);
     out.push(map.get(key) || {
       bucket: key, requests: 0, inputTokens: 0, outputTokens: 0,
       cacheReadTokens: 0, cacheCreationTokens: 0, costMicroUsd: 0,
     });
-    if (bucket === 'hour') cursor.setHours(cursor.getHours() + 1);
+    if (bucket === 'min10') cursor.setMinutes(cursor.getMinutes() + 10);
+    else if (bucket === 'hour') cursor.setHours(cursor.getHours() + 1);
     else cursor.setDate(cursor.getDate() + 1);
   }
   return out;

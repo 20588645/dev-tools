@@ -27,7 +27,7 @@ router.get('/summary', (req, res) => {
 router.get('/trends', (req, res) => {
   try {
     usage.syncUsage();
-    const bucket = req.query.bucket === 'hour' ? 'hour' : 'day';
+    const bucket = ['min10', 'hour', 'day'].includes(req.query.bucket) ? req.query.bucket : 'day';
     res.json(usage.getTrends(req.query.start, req.query.end, bucket, appParam(req)));
   } catch (e) {
     res.status(500).json({ error: e.message });

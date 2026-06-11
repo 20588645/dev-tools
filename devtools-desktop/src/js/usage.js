@@ -77,14 +77,15 @@ function usageHexToRgba(hex, alpha) {
 function usageRangeParams() {
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  // 分桶粒度：今天 10 分钟、近 7 天/本月 按小时、全部 按天，悬浮可看精细时段明细
   let start = null, end = null, bucket = 'day';
   if (usageState.range === 'today') {
     start = todayStart;
     end = new Date(todayStart.getTime() + 86400000); // 完整 0-24 点
-    bucket = 'hour';
+    bucket = 'min10';
   }
-  else if (usageState.range === '7d') { start = new Date(todayStart.getTime() - 6 * 86400000); }
-  else if (usageState.range === 'month') { start = new Date(now.getFullYear(), now.getMonth(), 1); }
+  else if (usageState.range === '7d') { start = new Date(todayStart.getTime() - 6 * 86400000); bucket = 'hour'; }
+  else if (usageState.range === 'month') { start = new Date(now.getFullYear(), now.getMonth(), 1); bucket = 'hour'; }
   return {
     start: start ? Math.floor(start.getTime() / 1000) : '',
     end: end ? Math.floor(end.getTime() / 1000) : '',
@@ -226,7 +227,7 @@ function renderUsageTrend(trends, bucket) {
     }
   }
 
-  const labels = trends.map(t => bucket === 'hour' ? t.bucket.slice(11) : t.bucket.slice(5));
+  const labels = trends.map(t => bucket === 'day' ? t.bucket.slice(5) : t.bucket.slice(11));
   const tokens = trends.map(t => (t.inputTokens || 0) + (t.outputTokens || 0) + (t.cacheReadTokens || 0) + (t.cacheCreationTokens || 0));
   const costs = trends.map(t => (t.costMicroUsd || 0) / 1e6);
 
