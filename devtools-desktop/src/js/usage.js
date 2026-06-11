@@ -517,68 +517,71 @@ function renderUsageCostPie(models) {
   const totalUsd = priced.reduce((a, m) => a + m.costMicroUsd, 0) / 1e6;
   const detail = new Map();
 
-  // 旭日图两级结构：内环 = 应用，外环 = 该应用下的模型（主色渐变色阶，Top6 之外归并"其他"）
-  const data = USAGE_APP_SERIES
-    .filter(app => priced.some(m => m.appType === app.key))
-    .map(app => {
-      const base = usageCssVar(app.cssVar) || '#6366f1';
-      const ms = priced.filter(m => m.appType === app.key).sort((a, b) => b.costMicroUsd - a.costMicroUsd);
-      const top = ms.slice(0, 6);
-      const rest = ms.slice(6);
-      const children = top.map((m, i) => {
-        const key = `${app.key}:${m.displayName}`;
-        detail.set(key, m);
-        return {
-          name: m.displayName, value: m.costMicroUsd / 1e6, _key: key,
-          itemStyle: { color: usageShadeColor(base, 0.12 + i * 0.09) },
-        };
-      });
-      if (rest.length) {
-        children.push({
-          name: `其他 (${rest.length})`,
-          value: rest.reduce((a, m) => a + m.costMicroUsd, 0) / 1e6,
-          itemStyle: { color: usageShadeColor(base, 0.12 + 6 * 0.09) },
-        });
-      }
-      return { name: app.name, itemStyle: { color: base }, children };
-    });
+  // Apple 活力环风格：Top5 模型一人一环，环长 = 成本占比，成本最高的在最外环
+  // 调色板由内到外（外环固定用主题紫，与全局视觉呼应）
+  const RING_COLORS = ['#fb7185', '#fbbf24', '#34d399', '#22d3ee', '#7c6cf6'];
+  const rings = [...priced].sort((a, b) => a.costMicroUsd - b.costMicroUsd).slice(-5);
+  const names = rings.map(m => m.displayName);
+  rings.forEach(m => detail.set(m.displayName, m));
+
+  // 底部暗色轨道环
+  const trackSeries = {
+    type: 'bar', coordinateSystem: 'polar', silent: true, roundCap: true,
+    barGap: '-100%', z: 1, animation: false,
+    itemStyle: { color: usageHexToRgba(cMuted, 0.09) },
+    data: names.map(() => 100),
+  };
+  const ringSeries = rings.map((m, i) => {
+    const color = RING_COLORS[RING_COLORS.length - rings.length + i] || RING_COLORS[i % RING_COLORS.length];
+    const realPct = totalUsd > 0 ? (m.costMicroUsd / 1e6 / totalUsd * 100) : 0;
+    return {
+      name: m.displayName, type: 'bar', coordinateSystem: 'polar', roundCap: true,
+      barGap: '-100%', z: 2,
+      data: names.map((n, j) => (j === i ? Math.max(realPct, 1.5) : null)),
+      itemStyle: {
+        color: new echarts.graphic.LinearGradient(0, 1, 1, 0, [
+          { offset: 0, color: usageShadeColor(color, -0.22) },
+          { offset: 1, color: usageShadeColor(color, 0.18) },
+        ]),
+        shadowBlur: 12, shadowColor: usageHexToRgba(color, 0.55),
+      },
+      animationDuration: 900, animationDelay: i * 150, animationEasing: 'cubicOut',
+    };
+  });
 
   usageHeatChart.setOption({
     title: {
       text: '$' + usageFmtMoney(totalUsd),
       subtext: '总成本',
-      left: 'center', top: '41%',
+      left: 'center', top: '40%',
       textStyle: { color: cText, fontSize: 16, fontFamily: 'monospace', fontWeight: 700 },
       subtextStyle: { color: cMuted, fontSize: 10 },
     },
     tooltip: {
+      trigger: 'item',
       backgroundColor: cBg, borderColor: cBorder, textStyle: { color: cText, fontSize: 12 },
       formatter: (p) => {
-        const pct = totalUsd > 0 ? (p.value / totalUsd * 100).toFixed(1) : '0.0';
-        let html = `<b>${p.name}</b><br/>成本：$${usageFmtMoney(p.value)}（${pct}%）`;
-        const m = p.data && p.data._key ? detail.get(p.data._key) : null;
-        if (m) {
-          const tokens = m.inputTokens + m.outputTokens + m.cacheReadTokens + m.cacheCreationTokens;
-          html += `<br/>请求数：${usageFmtNum(m.requests)}<br/>Tokens：${usageFmtWan(tokens)}<br/>应用：${USAGE_APP_NAMES[m.appType] || m.appType}`;
-        }
-        return html;
+        const m = detail.get(p.seriesName);
+        if (!m) return p.seriesName;
+        const pct = totalUsd > 0 ? (m.costMicroUsd / 1e6 / totalUsd * 100).toFixed(1) : '0.0';
+        const tokens = m.inputTokens + m.outputTokens + m.cacheReadTokens + m.cacheCreationTokens;
+        return `<b>${p.seriesName}</b><br/>成本：$${usageFmtMoney(m.costMicroUsd / 1e6)}（${pct}%）<br/>` +
+               `请求数：${usageFmtNum(m.requests)}<br/>Tokens：${usageFmtWan(tokens)}<br/>` +
+               `应用：${USAGE_APP_NAMES[m.appType] || m.appType}`;
       },
     },
-    series: [{
-      type: 'sunburst',
-      radius: ['38%', '88%'],
-      center: ['50%', '47%'],
-      nodeClick: false,
-      emphasis: { focus: 'ancestor' },
-      itemStyle: { borderColor: cBg, borderWidth: 2, borderRadius: 6 },
-      label: { color: cText, fontSize: 10, minAngle: 14, rotate: 'radial' },
-      levels: [
-        {},
-        { r0: '38%', r: '58%', label: { rotate: 'tangential', fontSize: 11, fontWeight: 600, minAngle: 20 } },
-        { r0: '58%', r: '88%', label: { align: 'right', padding: 2 } },
-      ],
-      data,
-    }],
+    legend: {
+      bottom: 0, icon: 'circle', itemWidth: 8, itemHeight: 8, itemGap: 14,
+      textStyle: { color: cMuted, fontSize: 11 },
+      data: [...names].reverse(), // 图例按成本从高到低
+    },
+    polar: { radius: ['24%', '90%'], center: ['50%', '46%'] },
+    angleAxis: { max: 100, startAngle: 90, show: false },
+    radiusAxis: {
+      type: 'category', data: names,
+      axisLine: { show: false }, axisTick: { show: false }, axisLabel: { show: false },
+    },
+    series: [trackSeries, ...ringSeries],
   }, true);
 }
 
