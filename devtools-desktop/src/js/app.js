@@ -693,10 +693,47 @@ function resetMenuOrder() {
   renderMenuOrderSettings();
 }
 
+// ========== 公共页面顶部组件（吸附式） ==========
+// 约定：新功能页面的标题区 + 工具栏统一包在 <div class="page-fixed-header"> 内，
+// 滚动时自动吸附在顶部（毛玻璃背景，吸附后出现分隔线）。静态页面直接套类即可；
+// 动态页面可用 renderPageHeader() 按标准结构渲染。初始化由 setupNavigation 自动完成。
+function updatePageStickyHeaders() {
+  const root = document.querySelector('.main-content');
+  if (!root) return;
+  const stuck = root.scrollTop > 4;
+  document.querySelectorAll('.page .page-fixed-header').forEach(h => h.classList.toggle('is-stuck', stuck));
+}
+
+function initPageStickyHeaders() {
+  const root = document.querySelector('.main-content');
+  if (!root || root._stickyHeaderBound) return;
+  root._stickyHeaderBound = true;
+  root.addEventListener('scroll', updatePageStickyHeaders, { passive: true });
+}
+
+/**
+ * 动态渲染标准页面顶部。page 为页面名（对应 #page-<name> 内的 .page-fixed-header 容器）。
+ * opts: { icon, title, subtitle, actionsHTML, toolbarHTML }
+ */
+function renderPageHeader(page, opts = {}) {
+  const host = document.querySelector(`#page-${page} .page-fixed-header`);
+  if (!host) return;
+  host.innerHTML = `
+    <div class="page-header-bar page-header-simple">
+      <div>
+        <div class="page-title">${opts.icon ? opts.icon + ' ' : ''}${opts.title || ''}</div>
+        ${opts.subtitle ? `<div class="page-subtitle">${opts.subtitle}</div>` : ''}
+      </div>
+      ${opts.actionsHTML ? `<div class="page-header-actions">${opts.actionsHTML}</div>` : ''}
+    </div>
+    ${opts.toolbarHTML ? `<div class="page-toolbar">${opts.toolbarHTML}</div>` : ''}`;
+}
+
 // ========== Navigation ==========
 function setupNavigation() {
   renderSidebar();
   initSidebarState();
+  initPageStickyHeaders();
   const collapseBtn = document.querySelector('.sidebar-collapse-toggle');
   if (collapseBtn) {
     collapseBtn.addEventListener('click', (event) => {
@@ -758,6 +795,7 @@ function switchPage(page, el) {
   }
   const activePage = document.getElementById('page-' + page);
   if (activePage) { activePage.scrollTop = 0; activePage.scrollLeft = 0; }
+  updatePageStickyHeaders();
   if (page === 'deploy') {
     const activeSub = document.querySelector('.sub-tab.active');
     if (activeSub) switchSubTab(activeSub.dataset.sub, activeSub);
