@@ -68,6 +68,19 @@ function usageCssVar(name) {
   return getComputedStyle(document.body).getPropertyValue(name).trim();
 }
 
+// 基于主色生成色阶：t>0 向白混合变亮，t<0 向黑混合变暗
+function usageShadeColor(hex, t) {
+  const h = String(hex).replace('#', '');
+  if (h.length !== 6) return hex;
+  const target = t >= 0 ? 255 : 0;
+  const f = Math.min(Math.abs(t), 1);
+  const mix = (i) => {
+    const c = parseInt(h.slice(i, i + 2), 16);
+    return Math.round(c + (target - c) * f);
+  };
+  return `rgb(${mix(0)},${mix(2)},${mix(4)})`;
+}
+
 function usageHexToRgba(hex, alpha) {
   const h = String(hex).replace('#', '');
   if (h.length === 3) {
@@ -500,40 +513,50 @@ function renderUsageCostPie(models) {
   const cBorder = usageCssVar('--border-strong') || 'rgba(148,163,184,.25)';
   const cBg = usageCssVar('--bg-elevated') || '#1e293b';
   const cText = usageCssVar('--text-primary') || '#e2e8f0';
-  const cPrimary = usageCssVar('--primary') || '#6366f1';
-  const palette = [cPrimary, usageCssVar('--success') || '#22c55e', usageCssVar('--warning') || '#f59e0b',
-                   usageCssVar('--danger') || '#ef4444', usageCssVar('--accent') || '#0ea5a5',
-                   '#8b5cf6', '#ec4899', '#14b8a6'];
 
-  // 取成本前 7 的模型，其余合并为"其他"
-  const sorted = [...priced].sort((a, b) => b.costMicroUsd - a.costMicroUsd);
-  const top = sorted.slice(0, 7);
-  const rest = sorted.slice(7);
+  const totalUsd = priced.reduce((a, m) => a + m.costMicroUsd, 0) / 1e6;
   const detail = new Map();
-  const data = top.map(m => {
-    detail.set(m.displayName, m);
-    return { name: m.displayName, value: m.costMicroUsd / 1e6 };
-  });
-  if (rest.length) {
-    const otherCost = rest.reduce((a, m) => a + m.costMicroUsd, 0);
-    data.push({ name: `其他 (${rest.length})`, value: otherCost / 1e6 });
-  }
-  const totalUsd = sorted.reduce((a, m) => a + m.costMicroUsd, 0) / 1e6;
+
+  // 旭日图两级结构：内环 = 应用，外环 = 该应用下的模型（主色渐变色阶，Top6 之外归并"其他"）
+  const data = USAGE_APP_SERIES
+    .filter(app => priced.some(m => m.appType === app.key))
+    .map(app => {
+      const base = usageCssVar(app.cssVar) || '#6366f1';
+      const ms = priced.filter(m => m.appType === app.key).sort((a, b) => b.costMicroUsd - a.costMicroUsd);
+      const top = ms.slice(0, 6);
+      const rest = ms.slice(6);
+      const children = top.map((m, i) => {
+        const key = `${app.key}:${m.displayName}`;
+        detail.set(key, m);
+        return {
+          name: m.displayName, value: m.costMicroUsd / 1e6, _key: key,
+          itemStyle: { color: usageShadeColor(base, 0.12 + i * 0.09) },
+        };
+      });
+      if (rest.length) {
+        children.push({
+          name: `其他 (${rest.length})`,
+          value: rest.reduce((a, m) => a + m.costMicroUsd, 0) / 1e6,
+          itemStyle: { color: usageShadeColor(base, 0.12 + 6 * 0.09) },
+        });
+      }
+      return { name: app.name, itemStyle: { color: base }, children };
+    });
 
   usageHeatChart.setOption({
-    color: palette,
     title: {
       text: '$' + usageFmtMoney(totalUsd),
       subtext: '总成本',
-      left: '33%', top: '40%', textAlign: 'center',
-      textStyle: { color: cText, fontSize: 19, fontFamily: 'monospace', fontWeight: 700 },
-      subtextStyle: { color: cMuted, fontSize: 11 },
+      left: 'center', top: '41%',
+      textStyle: { color: cText, fontSize: 16, fontFamily: 'monospace', fontWeight: 700 },
+      subtextStyle: { color: cMuted, fontSize: 10 },
     },
     tooltip: {
       backgroundColor: cBg, borderColor: cBorder, textStyle: { color: cText, fontSize: 12 },
       formatter: (p) => {
-        const m = detail.get(p.name);
-        let html = `<b>${p.name}</b><br/>成本：$${usageFmtMoney(p.value)}（${p.percent}%）`;
+        const pct = totalUsd > 0 ? (p.value / totalUsd * 100).toFixed(1) : '0.0';
+        let html = `<b>${p.name}</b><br/>成本：$${usageFmtMoney(p.value)}（${pct}%）`;
+        const m = p.data && p.data._key ? detail.get(p.data._key) : null;
         if (m) {
           const tokens = m.inputTokens + m.outputTokens + m.cacheReadTokens + m.cacheCreationTokens;
           html += `<br/>请求数：${usageFmtNum(m.requests)}<br/>Tokens：${usageFmtWan(tokens)}<br/>应用：${USAGE_APP_NAMES[m.appType] || m.appType}`;
@@ -541,21 +564,19 @@ function renderUsageCostPie(models) {
         return html;
       },
     },
-    legend: {
-      orient: 'vertical', right: 6, top: 'middle', type: 'scroll',
-      textStyle: { color: cMuted, fontSize: 11 }, icon: 'circle', itemWidth: 8, itemHeight: 8,
-      itemGap: 9, pageIconColor: cMuted, pageTextStyle: { color: cMuted },
-    },
     series: [{
-      type: 'pie', radius: ['46%', '70%'], center: ['34%', '46%'],
-      avoidLabelOverlap: true,
-      itemStyle: { borderRadius: 5, borderColor: cBg, borderWidth: 2 },
-      label: { show: false },
-      emphasis: {
-        label: { show: false },
-        itemStyle: { shadowBlur: 12, shadowColor: 'rgba(0,0,0,0.3)' },
-        scaleSize: 6,
-      },
+      type: 'sunburst',
+      radius: ['38%', '88%'],
+      center: ['50%', '47%'],
+      nodeClick: false,
+      emphasis: { focus: 'ancestor' },
+      itemStyle: { borderColor: cBg, borderWidth: 2, borderRadius: 6 },
+      label: { color: cText, fontSize: 10, minAngle: 14, rotate: 'radial' },
+      levels: [
+        {},
+        { r0: '38%', r: '58%', label: { rotate: 'tangential', fontSize: 11, fontWeight: 600, minAngle: 20 } },
+        { r0: '58%', r: '88%', label: { align: 'right', padding: 2 } },
+      ],
       data,
     }],
   }, true);
