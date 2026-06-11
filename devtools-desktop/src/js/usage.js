@@ -518,17 +518,22 @@ function renderUsageCostPie(models) {
   const detail = new Map();
 
   // Apple 活力环风格：Top5 模型一人一环，环长 = 成本占比，成本最高的在最外环
-  // 调色板由内到外（外环固定用主题紫，与全局视觉呼应）
-  const RING_COLORS = ['#fb7185', '#fbbf24', '#34d399', '#22d3ee', '#7c6cf6'];
+  // 主题感知配色：暗色用霓虹亮色 + 强光晕；亮色用深沉内敛色调 + 弱光晕，避免在浅背景上刺眼
+  const isLight = document.body.getAttribute('data-theme') === 'light';
+  const RING_COLORS = isLight
+    ? ['#cf5876', '#c08207', '#0e9f6e', '#0c8fa6', '#5850ec']
+    : ['#fb7185', '#fbbf24', '#34d399', '#22d3ee', '#7c6cf6'];
+  const glow = isLight ? { blur: 7, alpha: 0.25 } : { blur: 12, alpha: 0.55 };
+  const grad = isLight ? { from: -0.14, to: 0.06 } : { from: -0.22, to: 0.18 };
   const rings = [...priced].sort((a, b) => a.costMicroUsd - b.costMicroUsd).slice(-5);
   const names = rings.map(m => m.displayName);
   rings.forEach(m => detail.set(m.displayName, m));
 
-  // 底部暗色轨道环
+  // 底部轨道环（亮色模式下加深一档保证可见）
   const trackSeries = {
     type: 'bar', coordinateSystem: 'polar', silent: true, roundCap: true,
     barGap: '-100%', z: 1, animation: false,
-    itemStyle: { color: usageHexToRgba(cMuted, 0.09) },
+    itemStyle: { color: usageHexToRgba(cMuted, isLight ? 0.14 : 0.09) },
     data: names.map(() => 100),
   };
   const ringSeries = rings.map((m, i) => {
@@ -540,10 +545,10 @@ function renderUsageCostPie(models) {
       data: names.map((n, j) => (j === i ? Math.max(realPct, 1.5) : null)),
       itemStyle: {
         color: new echarts.graphic.LinearGradient(0, 1, 1, 0, [
-          { offset: 0, color: usageShadeColor(color, -0.22) },
-          { offset: 1, color: usageShadeColor(color, 0.18) },
+          { offset: 0, color: usageShadeColor(color, grad.from) },
+          { offset: 1, color: usageShadeColor(color, grad.to) },
         ]),
-        shadowBlur: 12, shadowColor: usageHexToRgba(color, 0.55),
+        shadowBlur: glow.blur, shadowColor: usageHexToRgba(color, glow.alpha),
       },
       animationDuration: 900, animationDelay: i * 150, animationEasing: 'cubicOut',
     };
