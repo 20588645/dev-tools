@@ -7215,8 +7215,13 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: rgba(15, 23, 42, 0.15); /* 微透磨砂感 */
+  background: rgba(15, 23, 42, 0.15); /* 暗色专属的微透磨砂感，亮色由下方规则接管 */
   backdrop-filter: blur(10px);
+}
+
+/* 亮色主题：深藏青磨砂在浅底上发灰发脏，改用与设置页卡片同语义的浅色面板 */
+body[data-theme="light"] .nb-list-panel {
+  background: var(--bg-card);
 }
 
 .nb-list-header {
@@ -7298,7 +7303,7 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
   padding: 12px 14px;
   margin-bottom: 8px;
   border-radius: 8px;
-  border: 1px solid transparent;
+  border: 1px solid var(--border);
   background: transparent;
   cursor: pointer;
   transition: all 0.2s ease-in-out;
@@ -7326,9 +7331,10 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
 }
 
 .nb-note-item.active {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.09) 0%, rgba(59, 130, 246, 0.03) 100%) !important;
-  border-color: rgba(59, 130, 246, 0.25) !important;
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.06) !important;
+  /* 收敛硬编码蓝到 --primary：暗色主题主色为紫，原 rgba(59,130,246) 与竖条/侧栏的紫互相打架 */
+  background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 9%, transparent) 0%, color-mix(in srgb, var(--primary) 3%, transparent) 100%);
+  border-color: color-mix(in srgb, var(--primary) 25%, transparent);
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--primary) 6%, transparent);
 }
 
 .nb-note-item.active::before {
@@ -7339,8 +7345,19 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
   height: 70%;
   width: 3px;
   border-radius: 0 3px 3px 0;
-  background: linear-gradient(to bottom, var(--primary), rgba(59, 130, 246, 0.5));
+  background: linear-gradient(to bottom, var(--primary), color-mix(in srgb, var(--primary) 50%, transparent));
   box-shadow: 0 0 6px var(--primary);
+}
+
+/* 亮色主题：暗色底调的低浓度状态色在白底上近乎隐身，整体提一档浓度 */
+body[data-theme="light"] .nb-note-item.pinned {
+  background: color-mix(in srgb, var(--warning) 7%, transparent);
+  border-color: color-mix(in srgb, var(--warning) 38%, transparent);
+}
+
+body[data-theme="light"] .nb-note-item.active {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 12%, transparent) 0%, color-mix(in srgb, var(--primary) 4%, transparent) 100%);
+  border-color: color-mix(in srgb, var(--primary) 40%, transparent);
 }
 
 .nb-note-item-title {
