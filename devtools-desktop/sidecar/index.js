@@ -85,12 +85,26 @@ app.use('/api/ipcheck', require('./routes/ipcheck'));
 app.use('/api/upgrade', require('./routes/upgrade'));
 app.use('/api/terminal', require('./routes/terminal'));
 app.use('/api/usage', require('./routes/usage'));
+app.use('/api/backup', require('./routes/backup'));
 
 // 用量统计后台兜底同步：Claude 桌面端会快速清理已关闭会话的日志文件，
 // 必须趁文件还在时抢先入库，不能只依赖用量页面被打开时的按需同步
 const usageService = require('./services/usage');
 setTimeout(() => { try { usageService.syncUsage(true); } catch (e) { console.error('[Usage] 启动同步失败:', e.message); } }, 5000);
 setInterval(() => { try { usageService.syncUsage(true); } catch (e) {} }, 5 * 60 * 1000);
+
+// 数据库自动备份：启动后延迟触发（每日至多一次）+ 24h 周期兜底
+const backupService = require('./services/backup');
+const runAutoBackup = async () => {
+  try {
+    const r = await backupService.autoBackup();
+    if (!r.skipped) console.log(`[Backup] 自动备份完成: ${r.file}`);
+  } catch (e) {
+    console.error('[Backup] 自动备份失败:', e.message);
+  }
+};
+setTimeout(runAutoBackup, 8000);
+setInterval(runAutoBackup, 24 * 60 * 60 * 1000);
 
 // 健康检查
 app.get('/api/health', (req, res) => {

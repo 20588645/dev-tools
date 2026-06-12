@@ -13,6 +13,29 @@ const DB_PATH = path.join(__dirname, '..', IS_TEST ? 'data-test' : 'data', 'devt
 const dataDir = path.dirname(DB_PATH);
 if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
 
+// 恢复暂存换库：备份恢复不能覆盖运行中的库，由 backup 服务把目标备份落为
+// restore-pending.db，这里在开库前完成换库；当前库自动留存 pre-restore 副本兜底
+const RESTORE_PENDING = path.join(dataDir, 'restore-pending.db');
+if (fs.existsSync(RESTORE_PENDING)) {
+  try {
+    if (fs.existsSync(DB_PATH)) {
+      const backupDir = path.join(dataDir, 'backups');
+      if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir, { recursive: true });
+      const p = (n) => String(n).padStart(2, '0');
+      const d = new Date();
+      const ts = `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
+      fs.copyFileSync(DB_PATH, path.join(backupDir, `devtools-${ts}-pre-restore.db`));
+    }
+    for (const suffix of ['', '-wal', '-shm']) {
+      try { fs.unlinkSync(DB_PATH + suffix); } catch { /* 不存在则跳过 */ }
+    }
+    fs.renameSync(RESTORE_PENDING, DB_PATH);
+    console.log('[DB] 已应用暂存的备份恢复（原库留存为 pre-restore 副本）');
+  } catch (e) {
+    console.error('[DB] 应用备份恢复失败，继续使用原库:', e.message);
+  }
+}
+
 const db = new Database(DB_PATH);
 
 // 性能优化

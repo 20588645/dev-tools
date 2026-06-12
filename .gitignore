@@ -37,3 +37,5 @@ reports/
 # Build output
 devtools-desktop/icon-1024.png
 devtools-desktop/icon.svg
+devtools-desktop/sidecar/data/backups/
+devtools-desktop/sidecar/data/restore-pending.db
