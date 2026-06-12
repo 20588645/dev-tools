@@ -1115,7 +1115,7 @@ input:focus, select:focus { border-color: var(--accent); }
 
 .fav-btn { background: none; border: none; cursor: pointer; font-size: 14px; color: var(--text-muted); margin-left: auto; padding: 2px 4px; opacity: 0.5; transition: all 0.15s; flex-shrink: 0; }
 .fav-btn:hover { opacity: 1; transform: scale(1.2); }
-.fav-btn.active { color: #f59e0b; opacity: 1; }
+.fav-btn.active { color: var(--warning); opacity: 1; }
 
 .module-divider { grid-column: 1/-1; display: flex; align-items: center; gap: 8px; padding: 4px 0; color: var(--text-muted); font-size: 11px; }
 .module-divider::before, .module-divider::after { content: ''; flex: 1; border-top: 1px solid var(--border); }
@@ -3699,30 +3699,30 @@ body[data-theme="dark"] .run-status-panel {
 #logModal .log-info { color: #253047; }
 #logModal .log-success { color: #15803d; }
 #logModal .log-warn { color: #b45309; }
-#logModal .log-error { color: #dc2626; }
+#logModal .log-error { color: color-mix(in srgb, var(--danger) 85%, black); }
 #logModal .log-highlight { background: rgba(250, 204, 21, 0.22); border-radius: 3px; }
 #logModal .log-highlight-active { background: rgba(37, 99, 235, 0.2); }
 
 #logModal.run-compile-error .progress-bar {
-  background: linear-gradient(90deg, #ef4444, #dc2626);
+  background: linear-gradient(90deg, var(--danger), color-mix(in srgb, var(--danger) 85%, black));
 }
 
 #logModal.run-compile-error .progress-text,
 #logModal.run-compile-error .deploy-result {
-  color: #dc2626;
+  color: color-mix(in srgb, var(--danger) 85%, black);
 }
 
 #logModal.run-compile-error .step.active,
 #logModal.run-compile-error .step.done {
-  color: #dc2626;
-  border-color: rgba(220, 38, 38, 0.3);
+  color: color-mix(in srgb, var(--danger) 85%, black);
+  border-color: color-mix(in srgb, var(--danger) 30%, transparent);
   background: rgba(254, 226, 226, 0.82);
 }
 
 #logModal.run-compile-error .step.active .step-dot,
 #logModal.run-compile-error .step.done .step-dot {
-  background: #dc2626;
-  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.14);
+  background: color-mix(in srgb, var(--danger) 85%, black);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 14%, transparent);
 }
 
 #logModal.run-compile-warning .progress-text {
@@ -6195,16 +6195,16 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
 }
 
 .todo-pill-warning {
-  color: #fbbf24 !important;
-  background: linear-gradient(135deg, rgba(251, 191, 36, 0.08) 0%, rgba(217, 119, 6, 0.08) 100%) !important;
-  border-color: rgba(251, 191, 36, 0.2) !important;
-  box-shadow: 0 0 6px rgba(251, 191, 36, 0.04) !important;
+  color: var(--warning) !important;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--warning) 8%, transparent) 0%, rgba(217, 119, 6, 0.08) 100%) !important;
+  border-color: color-mix(in srgb, var(--warning) 20%, transparent) !important;
+  box-shadow: 0 0 6px color-mix(in srgb, var(--warning) 4%, transparent) !important;
 }
 
 .todo-pill-danger {
-  color: #f87171 !important;
-  background: linear-gradient(135deg, rgba(248, 113, 113, 0.08) 0%, rgba(220, 38, 38, 0.08) 100%) !important;
-  border-color: rgba(248, 113, 113, 0.2) !important;
+  color: var(--danger) !important;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--danger) 8%, transparent) 0%, color-mix(in srgb, var(--danger) 8%, transparent) 100%) !important;
+  border-color: color-mix(in srgb, var(--danger) 20%, transparent) !important;
 }
 
 .todo-time-ago {
@@ -6294,9 +6294,9 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
   font-weight: 600 !important;
   padding: 4px 10px !important;
   border-radius: 20px !important;
-  background: rgba(245, 158, 11, 0.08) !important;
+  background: color-mix(in srgb, var(--warning) 8%, transparent) !important;
   color: var(--warning) !important;
-  border: 1px solid rgba(245, 158, 11, 0.2) !important;
+  border: 1px solid color-mix(in srgb, var(--warning) 20%, transparent) !important;
 }
 
 .todo-status-doing {
@@ -6306,9 +6306,9 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
 }
 
 .todo-status-done {
-  background: rgba(16, 185, 129, 0.1) !important;
+  background: color-mix(in srgb, var(--success) 10%, transparent) !important;
   color: var(--success) !important;
-  border-color: rgba(16, 185, 129, 0.2) !important;
+  border-color: color-mix(in srgb, var(--success) 20%, transparent) !important;
 }
 
 .todo-detail-section {
@@ -6502,16 +6502,16 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
 }
 
 .todo-btn-success:hover {
-  background: #059669 !important;
+  background: color-mix(in srgb, var(--success) 75%, black) !important;
 }
 
 .todo-btn-danger {
-  color: #ef4444 !important;
+  color: var(--danger) !important;
 }
 
 .todo-btn-danger:hover {
-  background: rgba(239, 68, 68, 0.05) !important;
-  border-color: rgba(239, 68, 68, 0.2) !important;
+  background: color-mix(in srgb, var(--danger) 5%, transparent) !important;
+  border-color: color-mix(in srgb, var(--danger) 20%, transparent) !important;
 }
 
 /* ========== 快捷命令面板 ========== */
@@ -7315,8 +7315,8 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
 }
 
 .nb-note-item.pinned {
-  background: rgba(245, 158, 11, 0.02);
-  border-color: rgba(245, 158, 11, 0.12);
+  background: color-mix(in srgb, var(--warning) 2%, transparent);
+  border-color: color-mix(in srgb, var(--warning) 12%, transparent);
 }
 
 .nb-note-item:hover {
@@ -7354,9 +7354,9 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
 }
 
 .nb-item-pin-icon {
-  color: #f59e0b;
+  color: var(--warning);
   flex-shrink: 0;
-  filter: drop-shadow(0 0 1px rgba(245, 158, 11, 0.3));
+  filter: drop-shadow(0 0 1px color-mix(in srgb, var(--warning) 30%, transparent));
 }
 
 .nb-note-title-text {
@@ -7487,19 +7487,19 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
 }
 
 .nb-action-btn.btn-danger-hover:hover {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-  border-color: rgba(239, 68, 68, 0.2);
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 20%, transparent);
 }
 
 .nb-action-btn#nbPinBtn.active {
-  color: #f59e0b !important;
-  background: rgba(245, 158, 11, 0.08) !important;
-  border-color: rgba(245, 158, 11, 0.2) !important;
+  color: var(--warning) !important;
+  background: color-mix(in srgb, var(--warning) 8%, transparent) !important;
+  border-color: color-mix(in srgb, var(--warning) 20%, transparent) !important;
 }
 
 .nb-action-btn#nbPinBtn.active:hover {
-  background: rgba(245, 158, 11, 0.15) !important;
+  background: color-mix(in srgb, var(--warning) 15%, transparent) !important;
 }
 
 .nb-save-status {
@@ -7521,18 +7521,18 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
 }
 
 .save-dot.success {
-  background: #10b981;
-  box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
+  background: var(--success);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--success) 60%, transparent);
 }
 
 .save-dot.warning {
-  background: #f59e0b;
-  box-shadow: 0 0 6px rgba(245, 158, 11, 0.6);
+  background: var(--warning);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--warning) 60%, transparent);
 }
 
 .save-dot.danger {
-  background: #ef4444;
-  box-shadow: 0 0 6px rgba(239, 68, 68, 0.6);
+  background: var(--danger);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--danger) 60%, transparent);
 }
 
 .save-dot.loading {
@@ -7875,12 +7875,12 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
   font-size: 14px;
 }
 
-.shortcut-icon.green { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
+.shortcut-icon.green { background: color-mix(in srgb, var(--success) 15%, transparent); color: var(--success); }
 .shortcut-icon.blue { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
-.shortcut-icon.orange { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+.shortcut-icon.orange { background: color-mix(in srgb, var(--warning) 15%, transparent); color: var(--warning); }
 .shortcut-icon.purple { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
 .shortcut-icon.teal { background: rgba(20, 184, 166, 0.15); color: #14b8a6; }
-.shortcut-icon.amber { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
+.shortcut-icon.amber { background: color-mix(in srgb, var(--warning) 15%, transparent); color: var(--warning); }
 
 /* 本周概览 */
 #page-home .home-week-card {
@@ -7976,12 +7976,12 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
 
 .chart-demo-badge {
   font-size: 8px !important;
-  background: rgba(245, 158, 11, 0.15) !important;
-  color: #f59e0b !important;
+  background: color-mix(in srgb, var(--warning) 15%, transparent) !important;
+  color: var(--warning) !important;
   padding: 1px 4px !important;
   border-radius: var(--radius-xs) !important;
   font-weight: 700 !important;
-  border: 1px solid rgba(245, 158, 11, 0.2) !important;
+  border: 1px solid color-mix(in srgb, var(--warning) 20%, transparent) !important;
 }
 
 /* 首页重构：自适应高度，填满剩余高度，防止底部留白 */
@@ -8117,7 +8117,7 @@ body[data-theme="dark"] .geek-arc-line {
   pointer-events: none;
   z-index: 2;
   transition: left 0.5s cubic-bezier(0.4, 0, 0.2, 1), top 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  filter: drop-shadow(0 0 3px rgba(245, 158, 11, 0.6));
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--warning) 60%, transparent));
 }
 
 .geek-arc-labels {
@@ -8214,7 +8214,7 @@ body[data-theme="dark"] .geek-arc-line {
 
 .geek-progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--primary), #10b981);
+  background: linear-gradient(90deg, var(--primary), var(--success));
   border-radius: 3px;
 }
 
@@ -8234,13 +8234,13 @@ body[data-theme="dark"] .geek-arc-line {
 }
 
 .geek-box.yi {
-  background: rgba(16, 185, 129, 0.06);
-  border: 1px solid rgba(16, 185, 129, 0.25);
+  background: color-mix(in srgb, var(--success) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--success) 25%, transparent);
 }
 
 .geek-box.ji {
-  background: rgba(239, 68, 68, 0.05);
-  border: 1px solid rgba(239, 68, 68, 0.22);
+  background: color-mix(in srgb, var(--danger) 5%, transparent);
+  border: 1px solid color-mix(in srgb, var(--danger) 22%, transparent);
 }
 
 .geek-box .label {
@@ -8857,13 +8857,13 @@ body[data-theme="dark"] .sys-progress-circle::before {
 }
 .pomo-status.focusing {
   color: var(--danger) !important;
-  border-color: rgba(239, 68, 68, 0.3) !important;
-  background: rgba(239, 68, 68, 0.05) !important;
+  border-color: color-mix(in srgb, var(--danger) 30%, transparent) !important;
+  background: color-mix(in srgb, var(--danger) 5%, transparent) !important;
 }
 .pomo-status.rest {
   color: var(--success) !important;
-  border-color: rgba(16, 185, 129, 0.3) !important;
-  background: rgba(16, 185, 129, 0.05) !important;
+  border-color: color-mix(in srgb, var(--success) 30%, transparent) !important;
+  background: color-mix(in srgb, var(--success) 5%, transparent) !important;
 }
 .pomo-controls {
   display: flex !important;
@@ -9380,7 +9380,7 @@ body[data-theme="dark"] .sys-progress-circle::before {
 
 .todo-form-sidebar .remind-clear-btn:hover {
   background: var(--danger-subtle) !important;
-  border-color: rgba(239, 68, 68, 0.3) !important;
+  border-color: color-mix(in srgb, var(--danger) 30%, transparent) !important;
   color: var(--danger) !important;
 }
 
@@ -9819,7 +9819,7 @@ body[data-theme="dark"] .sys-progress-circle::before {
 #page-ipcheck .item-icon-box.location { background: rgba(244, 63, 94, 0.12); border-color: rgba(244, 63, 94, 0.2); }
 #page-ipcheck .item-icon-box.asn { background: rgba(234, 179, 8, 0.12); border-color: rgba(234, 179, 8, 0.2); }
 #page-ipcheck .item-icon-box.asn-owner { background: rgba(168, 85, 247, 0.12); border-color: rgba(168, 85, 247, 0.2); }
-#page-ipcheck .item-icon-box.org { background: rgba(34, 197, 94, 0.12); border-color: rgba(34, 197, 94, 0.2); }
+#page-ipcheck .item-icon-box.org { background: color-mix(in srgb, var(--success) 12%, transparent); border-color: color-mix(in srgb, var(--success) 20%, transparent); }
 #page-ipcheck .item-icon-box.coords { background: rgba(6, 182, 212, 0.12); border-color: rgba(6, 182, 212, 0.2); }
 #page-ipcheck .item-icon-box.native { background: rgba(20, 184, 166, 0.12); border-color: rgba(20, 184, 166, 0.2); }
 #page-ipcheck .item-icon-box.ai-model { background: rgba(236, 72, 153, 0.12); border-color: rgba(236, 72, 153, 0.2); }
@@ -9975,23 +9975,23 @@ body[data-theme="dark"] .sys-progress-circle::before {
 }
 
 #page-ipcheck .gauge-bar-fill.safe {
-  background: linear-gradient(90deg, #10b981, #059669);
-  color: #10b981;
+  background: linear-gradient(90deg, var(--success), color-mix(in srgb, var(--success) 75%, black));
+  color: var(--success);
 }
 
 #page-ipcheck .gauge-bar-fill.clean {
-  background: linear-gradient(90deg, #10b981, #f59e0b);
-  color: #fbbf24;
+  background: linear-gradient(90deg, var(--success), var(--warning));
+  color: var(--warning);
 }
 
 #page-ipcheck .gauge-bar-fill.warning {
-  background: linear-gradient(90deg, #f59e0b, #ef4444);
-  color: #f59e0b;
+  background: linear-gradient(90deg, var(--warning), var(--danger));
+  color: var(--warning);
 }
 
 #page-ipcheck .gauge-bar-fill.danger {
-  background: linear-gradient(90deg, #ef4444, #991b1b);
-  color: #ef4444;
+  background: linear-gradient(90deg, var(--danger), color-mix(in srgb, var(--danger) 55%, black));
+  color: var(--danger);
 }
 
 #page-ipcheck .gauge-labels {
@@ -10021,18 +10021,18 @@ body[data-theme="dark"] .sys-progress-circle::before {
 
 /* 🛡️ 右侧大面板动态氛围呼吸光 */
 #page-ipcheck .ipcheck-risk-panel.safe {
-  border-color: rgba(16, 185, 129, 0.25) !important;
-  box-shadow: 0 8px 30px rgba(16, 185, 129, 0.04), 0 0 15px rgba(16, 185, 129, 0.03) !important;
+  border-color: color-mix(in srgb, var(--success) 25%, transparent) !important;
+  box-shadow: 0 8px 30px color-mix(in srgb, var(--success) 4%, transparent), 0 0 15px color-mix(in srgb, var(--success) 3%, transparent) !important;
 }
 
 #page-ipcheck .ipcheck-risk-panel.warning {
-  border-color: rgba(245, 158, 11, 0.25) !important;
-  box-shadow: 0 8px 30px rgba(245, 158, 11, 0.04), 0 0 15px rgba(245, 158, 11, 0.03) !important;
+  border-color: color-mix(in srgb, var(--warning) 25%, transparent) !important;
+  box-shadow: 0 8px 30px color-mix(in srgb, var(--warning) 4%, transparent), 0 0 15px color-mix(in srgb, var(--warning) 3%, transparent) !important;
 }
 
 #page-ipcheck .ipcheck-risk-panel.danger {
-  border-color: rgba(239, 68, 68, 0.25) !important;
-  box-shadow: 0 8px 30px rgba(239, 68, 68, 0.05), 0 0 20px rgba(239, 68, 68, 0.04) !important;
+  border-color: color-mix(in srgb, var(--danger) 25%, transparent) !important;
+  box-shadow: 0 8px 30px color-mix(in srgb, var(--danger) 5%, transparent), 0 0 20px color-mix(in srgb, var(--danger) 4%, transparent) !important;
 }
 
 /* 场景推荐卡片列表 - 玻璃磨砂网格 */
@@ -10062,18 +10062,18 @@ body[data-theme="dark"] .sys-progress-circle::before {
 
 /* 卡片根据推荐级别，悬停时产生对应的细发光边框 */
 #page-ipcheck .scene-recommendation-card:hover:has(.scene-advice.safe) {
-  border-color: rgba(34, 197, 94, 0.4) !important;
-  box-shadow: 0 8px 24px rgba(34, 197, 94, 0.08);
+  border-color: color-mix(in srgb, var(--success) 40%, transparent) !important;
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--success) 8%, transparent);
 }
 
 #page-ipcheck .scene-recommendation-card:hover:has(.scene-advice.warning) {
-  border-color: rgba(245, 158, 11, 0.4) !important;
-  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.08);
+  border-color: color-mix(in srgb, var(--warning) 40%, transparent) !important;
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--warning) 8%, transparent);
 }
 
 #page-ipcheck .scene-recommendation-card:hover:has(.scene-advice.danger) {
-  border-color: rgba(239, 68, 68, 0.4) !important;
-  box-shadow: 0 8px 24px rgba(239, 68, 68, 0.08);
+  border-color: color-mix(in srgb, var(--danger) 40%, transparent) !important;
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--danger) 8%, transparent);
 }
 
 #page-ipcheck .scene-icon {
@@ -10120,9 +10120,9 @@ body[data-theme="dark"] .sys-progress-circle::before {
 /* 星星霓虹发光效果 */
 #page-ipcheck .scene-stars {
   font-size: 12px;
-  color: #fbbf24;
+  color: var(--warning);
   letter-spacing: 0.02em;
-  text-shadow: 0 0 5px rgba(251, 191, 36, 0.4), 0 0 10px rgba(251, 191, 36, 0.1);
+  text-shadow: 0 0 5px color-mix(in srgb, var(--warning) 40%, transparent), 0 0 10px color-mix(in srgb, var(--warning) 10%, transparent);
   flex-shrink: 0;
 }
 
@@ -10193,20 +10193,20 @@ body[data-theme="dark"] .sys-progress-circle::before {
 
 /* 根据状态赋予呼吸光环 */
 #page-ipcheck .ipcheck-shared-card:has(.shared-card-status.safe) {
-  border-color: rgba(16, 185, 129, 0.25) !important;
-  box-shadow: 0 8px 30px rgba(16, 185, 129, 0.04), 0 0 15px rgba(16, 185, 129, 0.02) !important;
+  border-color: color-mix(in srgb, var(--success) 25%, transparent) !important;
+  box-shadow: 0 8px 30px color-mix(in srgb, var(--success) 4%, transparent), 0 0 15px color-mix(in srgb, var(--success) 2%, transparent) !important;
 }
 #page-ipcheck .ipcheck-shared-card:has(.shared-card-status.clean) {
   border-color: rgba(6, 182, 212, 0.25) !important;
   box-shadow: 0 8px 30px rgba(6, 182, 212, 0.04), 0 0 15px rgba(6, 182, 212, 0.02) !important;
 }
 #page-ipcheck .ipcheck-shared-card:has(.shared-card-status.warning) {
-  border-color: rgba(245, 158, 11, 0.25) !important;
-  box-shadow: 0 8px 30px rgba(245, 158, 11, 0.04), 0 0 15px rgba(245, 158, 11, 0.02) !important;
+  border-color: color-mix(in srgb, var(--warning) 25%, transparent) !important;
+  box-shadow: 0 8px 30px color-mix(in srgb, var(--warning) 4%, transparent), 0 0 15px color-mix(in srgb, var(--warning) 2%, transparent) !important;
 }
 #page-ipcheck .ipcheck-shared-card:has(.shared-card-status.danger) {
-  border-color: rgba(239, 68, 68, 0.25) !important;
-  box-shadow: 0 8px 30px rgba(239, 68, 68, 0.04), 0 0 15px rgba(239, 68, 68, 0.02) !important;
+  border-color: color-mix(in srgb, var(--danger) 25%, transparent) !important;
+  box-shadow: 0 8px 30px color-mix(in srgb, var(--danger) 4%, transparent), 0 0 15px color-mix(in srgb, var(--danger) 2%, transparent) !important;
 }
 
 #page-ipcheck .shared-card-header {
@@ -10278,10 +10278,10 @@ body[data-theme="dark"] .sys-progress-circle::before {
   animation: pulseGlow 1.8s infinite ease-in-out;
 }
 
-#page-ipcheck .shared-bar-fill.safe { background: linear-gradient(90deg, #10b981, #059669); color: #10b981; }
+#page-ipcheck .shared-bar-fill.safe { background: linear-gradient(90deg, var(--success), color-mix(in srgb, var(--success) 75%, black)); color: var(--success); }
 #page-ipcheck .shared-bar-fill.clean { background: linear-gradient(90deg, #06b6d4, #3b82f6); color: #06b6d4; }
-#page-ipcheck .shared-bar-fill.warning { background: linear-gradient(90deg, #fbbf24, #f59e0b); color: #fbbf24; }
-#page-ipcheck .shared-bar-fill.danger { background: linear-gradient(90deg, #ef4444, #dc2626); color: #ef4444; }
+#page-ipcheck .shared-bar-fill.warning { background: linear-gradient(90deg, var(--warning), var(--warning)); color: var(--warning); }
+#page-ipcheck .shared-bar-fill.danger { background: linear-gradient(90deg, var(--danger), color-mix(in srgb, var(--danger) 85%, black)); color: var(--danger); }
 
 #page-ipcheck .shared-labels {
   display: grid;
@@ -10783,8 +10783,8 @@ body[data-theme="light"] #page-terminal .term-search-nav-btn:hover {
 }
 
 #page-terminal .term-search-close-btn:hover {
-  background: rgba(239, 68, 68, 0.15);
-  color: #ef4444;
+  background: color-mix(in srgb, var(--danger) 15%, transparent);
+  color: var(--danger);
 }
 
 #page-terminal .term-search-nav-btn:active,
