@@ -113,6 +113,7 @@ async function loadSettings() {
   // 刷新关于信息和 Sidecar 状态（每次切换设置页面都刷新，确保数据最新且不显示 "-"）
   await refreshAboutSettingsInfo();
   refreshTestSidecarStatus();
+  loadBackups();
 
   if (settingsLoaded) return;
   settingsLoaded = true;
@@ -407,3 +408,98 @@ function handleClickParticle(e) {
     enableClickEffect();
   }
 })();
+
+// ========== 数据备份管理 ==========
+function fmtBackupSize(bytes) {
+  bytes = Number(bytes) || 0;
+  if (bytes >= 1048576) return (bytes / 1048576).toFixed(1) + ' MB';
+  if (bytes >= 1024) return (bytes / 1024).toFixed(0) + ' KB';
+  return bytes + ' B';
+}
+
+function fmtBackupTime(unixSec) {
+  const d = new Date(unixSec * 1000);
+  const p = (v) => String(v).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+async function loadBackups() {
+  try {
+    const data = await API.get('/api/backup/list');
+    const badge = document.getElementById('settingBackupStatus');
+    if (badge) {
+      if (data.pendingRestore) {
+        badge.textContent = '恢复待重启生效';
+        badge.style.color = 'var(--warning)';
+      } else if (data.backups.length) {
+        badge.textContent = '最近备份 ' + fmtBackupTime(data.backups[0].createdAt);
+        badge.style.color = '';
+      } else {
+        badge.textContent = '暂无备份';
+        badge.style.color = '';
+      }
+    }
+    const list = document.getElementById('backupList');
+    if (!list) return;
+    let html = data.backups.map(b => `
+      <div class="backup-row">
+        <span class="backup-name" title="${b.file}">${b.file}</span>
+        <span class="backup-meta">${fmtBackupTime(b.createdAt)} · ${fmtBackupSize(b.size)}</span>
+        <span class="backup-actions">
+          <button class="btn-secondary backup-btn" onclick="restoreDbBackup('${b.file}')">恢复</button>
+          <button class="btn-secondary backup-btn backup-btn-danger" onclick="deleteDbBackup('${b.file}')">删除</button>
+        </span>
+      </div>`).join('');
+    if (data.pendingRestore) {
+      html = `<div class="backup-row backup-pending">已暂存一份恢复，点击上方「重启后端」生效，或
+        <a href="javascript:void(0)" onclick="cancelDbRestore()">取消恢复</a></div>` + html;
+    }
+    list.innerHTML = html;
+  } catch (e) {
+    console.warn('[Settings] 备份列表加载失败:', e.message);
+  }
+}
+
+async function createDbBackup() {
+  try {
+    const r = await API.post('/api/backup/create', {});
+    showToast('✅ 备份完成', r.file);
+    loadBackups();
+  } catch (e) {
+    showToast('❌ 备份失败', e.message);
+  }
+}
+
+async function restoreDbBackup(file) {
+  const ok = await showConfirm(`确认恢复备份「${file}」？当前数据将被替换（原库自动留存 pre-restore 副本），重启后端后生效。`, { danger: true, confirmText: '恢复' });
+  if (!ok) return;
+  try {
+    await API.post('/api/backup/restore', { file });
+    showToast('✅ 已暂存恢复', '点击「重启后端」后生效');
+    loadBackups();
+  } catch (e) {
+    showToast('❌ 恢复失败', e.message);
+  }
+}
+
+async function cancelDbRestore() {
+  try {
+    await API.post('/api/backup/restore-cancel', {});
+    showToast('已取消恢复', '数据库保持现状');
+    loadBackups();
+  } catch (e) {
+    showToast('❌ 操作失败', e.message);
+  }
+}
+
+async function deleteDbBackup(file) {
+  const ok = await showConfirm(`删除备份「${file}」？`, { danger: true, confirmText: '删除' });
+  if (!ok) return;
+  try {
+    await API.del('/api/backup/' + encodeURIComponent(file));
+    showToast('已删除备份', file);
+    loadBackups();
+  } catch (e) {
+    showToast('❌ 删除失败', e.message);
+  }
+}

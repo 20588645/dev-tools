@@ -13819,3 +13819,21 @@ body[data-theme="light"] #page-terminal .term-search-nav-btn:hover {
   display: block; max-width: 150px;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
+
+/* 设置页 - 数据备份列表 */
+.backup-list { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+.backup-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 8px 12px; border-radius: var(--radius-sm);
+  background: var(--bg-input); font-size: .82rem;
+}
+.backup-name {
+  font-family: var(--font-mono); color: var(--text-primary);
+  flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.backup-meta { color: var(--text-muted); white-space: nowrap; font-size: .76rem; }
+.backup-actions { display: flex; gap: 6px; }
+.backup-btn { padding: 3px 10px; font-size: .76rem; }
+.backup-btn-danger { color: var(--danger); }
+.backup-pending { background: var(--warning-subtle); color: var(--warning); }
+.backup-pending a { color: var(--warning); text-decoration: underline; }

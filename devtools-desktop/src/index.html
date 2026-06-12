@@ -1117,6 +1117,22 @@
 
     </div>
 
+    <!-- 数据备份 -->
+    <div class="settings-section">
+      <h3>数据备份</h3>
+      <div class="setting-item">
+        <div class="setting-info">
+          <div class="setting-label">数据库自动备份</div>
+          <div class="setting-desc">每日自动备份一次，滚动保留最近 7 份；恢复需点击上方「重启后端」生效</div>
+        </div>
+        <div class="setting-control" style="display:flex;align-items:center;gap:10px">
+          <span class="setting-badge" id="settingBackupStatus">-</span>
+          <button class="btn-secondary" onclick="createDbBackup()" style="padding:6px 12px">💾 立即备份</button>
+        </div>
+      </div>
+      <div class="backup-list" id="backupList"></div>
+    </div>
+
     <!-- 菜单排序 -->
     <div class="settings-section">
       <h3>菜单排序</h3>
