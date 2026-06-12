@@ -328,75 +328,33 @@ input[type="text"], input[type="password"], input[type="number"], input[type="da
 input:focus, select:focus { border-color: var(--accent); }
 
 /* ---------- Chips / Filter ---------- */
-.filter-chips { display: flex; gap: 4px; flex-wrap: wrap; }
-.chip {
-  padding: 4px 10px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: transparent;
-  color: var(--text-secondary);
-  font-size: 11px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.12s;
-}
+
 .chip:hover { border-color: var(--accent); color: var(--text-primary); }
-.chip.active { background: var(--accent-subtle); border-color: var(--accent); color: var(--accent); }
 
 /* ---------- Modal (Public) — Cockpit Style ---------- */
-.modal-overlay {
+.modal-overlay { /* 保留：与穿插规则存在层叠依赖 */
   display: none;
-  position: fixed;
-  inset: 0;
-  background: var(--bg-overlay);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  z-index: 200;
   align-items: center;
   justify-content: center;
 }
-.modal-overlay.active { display: flex; animation: fadeIn 0.15s; }
+
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-.modal {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-xl);
-  width: 80vw;
+.modal { /* 保留：与穿插规则存在层叠依赖 */
   max-width: 900px;
-  max-height: 80vh;
-  display: flex;
-  flex-direction: column;
-  box-shadow: var(--shadow-lg);
 }
 
-.modal-sm { width: 440px; }
-.modal-log { width: 90vw; max-width: 1000px; }
-.modal-quick { width: 600px; }
-
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px 24px 16px;
-  border-bottom: 1px solid var(--border);
-}
 .modal-header h2 { font-size: 16px; font-weight: 700; }
-.modal-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
-.modal-close {
-  width: 28px; height: 28px;
-  border: none; background: transparent;
-  color: var(--text-muted); font-size: 16px;
-  cursor: pointer; border-radius: var(--radius-sm);
-  display: flex; align-items: center; justify-content: center;
-  transition: all 0.15s;
+.modal-subtitle { /* 保留：与穿插规则存在层叠依赖 */
+  margin-top: 3px;
 }
-.modal-close:hover { background: var(--bg-hover); color: var(--text-primary); }
+.modal-close { /* 保留：与穿插规则存在层叠依赖 */
+  border: none;
+}
 
-.modal-body { padding: 20px 24px; overflow-y: auto; flex: 1; }
-.modal-footer {
-  display: flex; align-items: center; justify-content: flex-end; gap: 10px;
-  padding: 16px 24px; border-top: 1px solid var(--border);
+.modal-body { /* 保留：与穿插规则存在层叠依赖 */
+  overflow-y: auto;
+  flex: 1;
 }
 
 /* ---------- System Dialog ---------- */
@@ -664,34 +622,20 @@ input:focus, select:focus { border-color: var(--accent); }
 }
 
 /* --- Project Grid --- */
-.project-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 12px;
-}
 
 /* --- Project Card --- */
-.project-card {
+.project-card { /* 保留：与穿插规则存在层叠依赖 */
   background: var(--bg-card);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 20px;
-  cursor: default;
-  transition: border-color 0.15s, box-shadow 0.2s, transform 0.2s;
   display: flex;
   flex-direction: column;
-  position: relative;
   overflow: hidden;
   box-shadow: var(--shadow-sm);
 }
 .project-card::before { display: none; }
-.project-card:hover {
-  border-color: var(--border-strong);
-  box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
-}
+
 .project-card.card-busy { border-color: var(--warning); }
 
 /* Card Top */
@@ -882,21 +826,13 @@ input:focus, select:focus { border-color: var(--accent); }
 .btn-icon.danger:hover { border-color: var(--danger); color: var(--danger); background: var(--danger-subtle); }
 
 /* --- History Table --- */
-.history-table {
-  background: var(--bg-card);
+.history-table { /* 保留：与穿插规则存在层叠依赖 */
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  overflow: hidden;
 }
 
-.history-row {
-  display: flex;
+.history-row { /* 保留：与穿插规则存在层叠依赖 */
   align-items: center;
-  padding: 0 16px;
-  height: 40px;
   border-bottom: 1px solid var(--border);
-  font-size: 12px;
-  transition: background 0.1s;
 }
 .history-row:last-child { border-bottom: none; }
 .history-row:hover:not(.header) { background: var(--bg-card-hover); }
@@ -911,7 +847,6 @@ input:focus, select:focus { border-color: var(--accent); }
 }
 .history-row.row-selected { background: var(--accent-subtle); }
 
-.history-row .h-cell { padding: 0 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .history-row .h-cell.h-check { width: 32px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
 .history-row .h-cell.h-time { width: 90px; flex-shrink: 0; color: var(--text-muted); }
 .history-row .h-cell.h-project { width: 120px; flex-shrink: 0; font-weight: 600; color: var(--text-primary); }
@@ -921,12 +856,10 @@ input:focus, select:focus { border-color: var(--accent); }
 .history-row .h-cell.h-status { width: 72px; flex-shrink: 0; }
 .history-row .h-cell.h-actions { width: 80px; flex-shrink: 0; display: flex; align-items: center; gap: 4px; justify-content: flex-end; }
 
-.history-modules { display: flex; flex-wrap: wrap; gap: 3px; }
 .status-success { color: var(--success); font-weight: 600; }
 .status-fail { color: var(--danger); font-weight: 600; }
 
 /* History Stats */
-.history-stats { color: var(--text-muted); font-size: 12px; margin-bottom: 10px; }
 
 /* --- History Toolbar / Segmented Control --- */
 
@@ -987,38 +920,14 @@ input:focus, select:focus { border-color: var(--accent); }
   min-height: 0;
 }
 
-.report-panel {
+.report-panel { /* 保留：与穿插规则存在层叠依赖 */
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.report-panel-left {
-  width: 340px;
-  min-width: 300px;
-  flex-shrink: 0;
 }
 
 .report-panel-right {
   flex: 1;
   min-width: 0;
-}
-
-.report-panel-title {
-  padding: 10px 16px;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  border-bottom: 1px solid var(--border);
-  background: var(--bg-input);
-  display: flex;
-  align-items: center;
-  gap: 6px;
 }
 
 .report-panel-title::before {
@@ -1027,12 +936,6 @@ input:focus, select:focus { border-color: var(--accent); }
   height: 6px;
   border-radius: 50%;
   background: var(--success);
-}
-
-.report-panel-body {
-  padding: 14px 16px;
-  overflow-y: auto;
-  flex: 1;
 }
 
 /* --- Git 周报：Form Fields --- */
@@ -2317,30 +2220,33 @@ table { border-collapse: collapse; }
   box-shadow: none !important;
 }
 .search-bar input { font-size: 12px !important; }
-.filter-chips { gap: 6px; }
+.filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
 .chip {
-  min-height: 24px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.12s;
   padding: 3px 10px !important;
   border-radius: 999px !important;
-  background: transparent !important;
   border: 1px solid var(--border) !important;
+  background: transparent !important;
   color: var(--text-secondary) !important;
   font-size: 11px !important;
+  min-height: 24px;
 }
-.chip.active { background: var(--primary-light) !important; border-color: color-mix(in srgb, var(--primary) 35%, transparent) !important; color: var(--primary) !important; }
+.chip.active {
+  background: var(--primary-light) !important;
+  border-color: color-mix(in srgb, var(--primary) 35%, transparent) !important;
+  color: var(--primary) !important;
+}
 
-.project-grid {
-  grid-template-columns: repeat(3, minmax(210px, 1fr)) !important;
-  gap: 10px !important;
-  padding-right: 3px;
-}
-.project-card {
-  min-height: 170px;
-  padding: 13px !important;
-  gap: 7px;
+.project-card { /* 保留：与穿插规则存在层叠依赖 */
   transform: none !important;
 }
-.project-card:hover { border-color: var(--border-strong) !important; box-shadow: var(--shadow-md) !important; }
+
 .card-top { margin-bottom: 2px !important; }
 .card-name { font-size: 12px !important; line-height: 1.35; }
 .card-badge,
@@ -2407,23 +2313,14 @@ table { border-collapse: collapse; }
 .server-host { font-size: 11px !important; color: var(--text-secondary); font-family: var(--font-mono); }
 .server-actions { justify-content: flex-end; gap: 4px; }
 
-.history-table { overflow: hidden auto !important; }
-.history-row {
-  min-height: 36px !important;
-  height: auto !important;
-  padding: 0 10px !important;
-  font-size: 11px !important;
+.history-table { /* 保留：与穿插规则存在层叠依赖 */
+  overflow: hidden auto !important;
 }
-.history-stats {
-  min-height: 42px;
+
+.history-stats { /* 保留：与穿插规则存在层叠依赖 */
+  margin-bottom: 10px !important;
   display: flex;
   align-items: center;
-  padding: 0 12px;
-  margin-bottom: 10px !important;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg-card);
-  color: var(--text-secondary);
 }
 
 .btn-primary,
@@ -2504,17 +2401,21 @@ select:focus,
 .report-app { height: calc(100vh - 56px) !important; }
 
 .report-main { gap: 10px !important; }
-.report-panel-left { width: 300px !important; min-width: 280px !important; }
+
 .report-panel-title {
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   padding: 9px 12px !important;
-  background: var(--bg-input) !important;
-  border-bottom: 1px solid var(--border) !important;
   font-size: 11px !important;
   color: var(--text-secondary) !important;
   text-transform: none !important;
   letter-spacing: 0 !important;
+  border-bottom: 1px solid var(--border) !important;
+  background: var(--bg-input) !important;
 }
-.report-panel-body { padding: 12px !important; }
+
 .rpt-mode-switcher,
 .rpt-view-switcher,
 .seg-control {
@@ -2570,46 +2471,31 @@ select:focus,
   backdrop-filter: blur(12px) saturate(115%);
   -webkit-backdrop-filter: blur(12px) saturate(115%);
 }
-.modal {
+.modal { /* 保留：与穿插规则存在层叠依赖 */
   width: min(860px, 86vw) !important;
   max-height: 82vh !important;
-  border-radius: 8px !important;
-  border: 1px solid var(--border-strong) !important;
-  background: var(--bg-elevated) !important;
   box-shadow: var(--shadow-lg) !important;
-  overflow: hidden;
 }
-.modal-sm { width: 430px !important; }
-.modal-quick { width: 600px !important; }
-.modal-log { width: min(980px, 90vw) !important; }
-.modal-header {
-  min-height: 44px;
-  padding: 10px 14px !important;
-  border-bottom: 1px solid var(--border) !important;
-  position: relative;
-  justify-content: space-between;
+.modal-sm {
+  width: 430px !important;
 }
-.modal-header h2,
-.modal-header h3 {
-  font-size: 13px !important;
-  font-weight: 670 !important;
+.modal-quick {
+  width: 600px !important;
+}
+.modal-log {
+  max-width: 1000px;
+  width: min(980px, 90vw) !important;
+}
+
+.modal-close { /* 保留：与穿插规则存在层叠依赖 */
+  background: transparent !important;
+  color: var(--text-muted) !important;
+}
+.modal-close:hover {
+  background: var(--bg-hover) !important;
   color: var(--text-primary) !important;
 }
-.modal-subtitle { font-size: 11px !important; color: var(--text-muted) !important; }
-.modal-close {
-  width: 24px !important;
-  height: 24px !important;
-  border-radius: 6px !important;
-  color: var(--text-muted) !important;
-  background: transparent !important;
-}
-.modal-close:hover { background: var(--bg-hover) !important; color: var(--text-primary) !important; }
-.modal-body { padding: 14px !important; }
-.modal-footer {
-  padding: 10px 14px !important;
-  border-top: 1px solid var(--border) !important;
-  background: color-mix(in srgb, var(--bg-input) 56%, transparent);
-}
+
 .form-group label,
 .config-row label,
 .rfield label {
@@ -2922,20 +2808,6 @@ textarea::placeholder {
   margin-top: 14px !important;
 }
 
-.modal-overlay.active {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  padding: 28px;
-}
-.modal {
-  position: relative;
-  transform: none;
-}
-#serverFormModal .modal {
-  width: 430px !important;
-  max-width: 430px !important;
-}
 #cleanupModal .modal {
   width: 440px !important;
   max-width: 440px !important;
@@ -2962,10 +2834,7 @@ textarea::placeholder {
   width: 720px !important;
   max-width: min(720px, 88vw) !important;
 }
-#logModal .modal {
-  width: min(980px, 90vw) !important;
-  max-width: min(980px, 90vw) !important;
-}
+
 #serverFormModal .modal-body,
 #cleanupModal .modal-body,
 #projectConfigModal .modal-body {
@@ -3020,34 +2889,13 @@ textarea::placeholder {
   align-items: center;
 }
 
-.history-table {
+.history-table { /* 保留：与穿插规则存在层叠依赖 */
   min-height: 320px;
 }
-.history-row {
+.history-row { /* 保留：与穿插规则存在层叠依赖 */
   display: grid !important;
-  grid-template-columns: 88px minmax(118px, 1fr) 68px minmax(130px, 1.2fr) minmax(96px, 1fr) 72px 72px;
-}
-.history-row .h-cell {
-  width: auto !important;
-  min-width: 0;
-}
-.history-row .h-actions {
-  justify-content: flex-end;
-}
-.history-modules {
-  flex-wrap: nowrap !important;
-  overflow: hidden;
-}
-.history-modules .module-tag {
-  flex: 0 1 auto;
-  max-width: 140px;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-.report-panel-left {
-  width: 310px !important;
-}
 .rfield-row {
   min-width: 0;
 }
@@ -3199,13 +3047,8 @@ body[data-theme="dark"] {
 .page-sticky-header {
   padding-bottom: 10px !important;
 }
-.project-grid {
-  grid-template-columns: repeat(3, minmax(230px, 1fr)) !important;
-  gap: 10px !important;
-}
-.project-card {
-  min-height: 156px;
-  padding: 12px !important;
+
+.project-card { /* 保留：与穿插规则存在层叠依赖 */
   border-radius: 7px !important;
 }
 .card-name {
@@ -3226,11 +3069,6 @@ body[data-theme="dark"] {
   flex-basis: 30px !important;
 }
 
-.server-list,
-.history-table {
-  border-radius: 7px !important;
-  min-height: 0;
-}
 .server-row {
   min-height: 38px;
   padding: 0 11px !important;
@@ -3238,28 +3076,18 @@ body[data-theme="dark"] {
 .server-head {
   min-height: 32px;
 }
-.history-row {
-  min-height: 34px !important;
-  padding: 0 10px !important;
-}
-.history-stats {
-  min-height: 36px;
-}
 
 .report-app {
   height: calc(100vh - 50px) !important;
 }
 
 .report-panel {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
   border-radius: 7px !important;
 }
-.report-panel-left {
-  width: 292px !important;
-  min-width: 292px !important;
-}
-.report-panel-body {
-  padding: 10px !important;
-}
+
 .rfield {
   margin-bottom: 8px;
 }
@@ -3278,29 +3106,6 @@ body[data-theme="dark"] {
   padding: 10px 12px !important;
 }
 
-.modal-overlay.active {
-  padding: 24px;
-}
-.modal {
-  border-radius: 7px !important;
-}
-.modal-header {
-  min-height: 42px;
-  padding: 9px 12px !important;
-}
-.modal-body {
-  padding: 12px !important;
-}
-.modal-footer {
-  padding: 9px 12px !important;
-}
-#serverFormModal .modal {
-  width: 408px !important;
-  max-width: 408px !important;
-}
-#serverFormModal .modal-body {
-  max-height: 560px;
-}
 .form-group {
   margin-bottom: 10px;
 }
@@ -3584,15 +3389,6 @@ select {
   background-repeat: no-repeat !important;
 }
 
-.project-grid {
-  gap: 9px !important;
-}
-
-.project-card {
-  min-height: 150px !important;
-  padding: 11px !important;
-}
-
 .module-tag,
 .history-modules .module-tag,
 .tag,
@@ -3603,11 +3399,6 @@ select {
   font-size: 9px !important;
   background: color-mix(in srgb, var(--bg-input) 86%, var(--bg-card)) !important;
   border: 1px solid var(--border-color) !important;
-}
-
-.server-list,
-.history-table {
-  overflow: hidden !important;
 }
 
 .server-row,
@@ -3636,15 +3427,12 @@ select {
   font-size: 10px !important;
 }
 
-.history-row {
-  min-height: 32px !important;
+.history-row { /* 保留：与穿插规则存在层叠依赖 */
   grid-template-columns: 0.78fr 1.65fr 0.74fr 1.65fr 1.55fr 0.72fr 0.64fr !important;
 }
 
-.history-stats {
-  min-height: 32px !important;
+.history-stats { /* 保留：与穿插规则存在层叠依赖 */
   padding: 0 12px !important;
-  font-size: 10px !important;
 }
 
 .server-actions .btn-icon,
@@ -3662,11 +3450,6 @@ select {
 
 .report-app {
   gap: 9px !important;
-}
-
-.report-panel-left {
-  width: 286px !important;
-  min-width: 286px !important;
 }
 
 .report-panel-header,
@@ -3705,9 +3488,7 @@ select {
   color: var(--text-muted) !important;
 }
 
-.modal-overlay {
-  backdrop-filter: blur(8px) !important;
-  -webkit-backdrop-filter: blur(8px) !important;
+.modal-overlay { /* 保留：与穿插规则存在层叠依赖 */
   background: rgba(7, 12, 20, 0.18) !important;
 }
 
@@ -3719,38 +3500,21 @@ body[data-theme="dark"] .modal-overlay {
   background: rgba(0, 8, 14, 0.58) !important;
 }
 
-.modal {
-  overflow: hidden !important;
-  border: 1px solid var(--border-strong) !important;
+.modal { /* 保留：与穿插规则存在层叠依赖 */
   background: var(--bg-card) !important;
-}
-
-.modal-header {
-  min-height: 38px !important;
-  padding: 8px 12px !important;
-  background: color-mix(in srgb, var(--bg-card) 78%, var(--bg-input)) !important;
-}
-
-.modal-header h2,
-.modal-header h3 {
-  font-size: 12px !important;
-  line-height: 1.25 !important;
+  border: 1px solid var(--border-strong) !important;
 }
 
 .modal-close {
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
   width: 22px !important;
   height: 22px !important;
   border-radius: 5px !important;
-}
-
-.modal-body {
-  padding: 12px !important;
-}
-
-.modal-footer {
-  min-height: 42px !important;
-  background: color-mix(in srgb, var(--bg-card) 80%, var(--bg-input)) !important;
-  border-top: 1px solid var(--border-color) !important;
 }
 
 #serverFormModal .modal {
@@ -3976,15 +3740,11 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
   line-height: 1;
 }
 
-.run-project-grid {
+.run-project-grid { /* 保留：与穿插规则存在层叠依赖 */
   flex: 1 1 auto;
   min-height: 0;
   overflow: auto;
-  display: grid;
   grid-template-columns: repeat(3, minmax(260px, 1fr));
-  align-content: start;
-  gap: 14px;
-  padding: 2px 2px 20px;
 }
 
 .run-project-card {
@@ -5324,6 +5084,10 @@ body.sidebar-collapsed .sidebar-tool-label {
 }
 
 .modal-overlay {
+  position: fixed;
+  inset: 0;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
   z-index: 2000 !important;
 }
 
@@ -5590,9 +5354,9 @@ body.sidebar-collapsed .sidebar-footer {
 }
 
 .history-table {
-  display: block !important;
-  border-radius: 7px !important;
   background: var(--bg-card) !important;
+  border-radius: 7px !important;
+  display: block !important;
 }
 
 .history-row,
@@ -5604,8 +5368,7 @@ body.sidebar-collapsed .sidebar-footer {
   padding: 0 12px !important;
 }
 
-.history-row {
-  min-height: 34px !important;
+.history-row { /* 保留：与穿插规则存在层叠依赖 */
   color: var(--text-secondary) !important;
 }
 
@@ -5625,10 +5388,12 @@ body.sidebar-collapsed .sidebar-footer {
 }
 
 .history-row .h-cell {
-  min-width: 0 !important;
+  padding: 0 6px;
+  width: auto !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
   white-space: nowrap !important;
+  min-width: 0 !important;
   font-size: 10px !important;
 }
 
@@ -5638,17 +5403,23 @@ body.sidebar-collapsed .sidebar-footer {
 }
 
 .history-row .h-actions {
-  display: inline-flex !important;
   justify-content: flex-end !important;
+  display: inline-flex !important;
   gap: 4px !important;
 }
 
 .history-modules {
+  gap: 3px;
+  flex-wrap: nowrap !important;
+  overflow: hidden;
   display: inline-flex !important;
   max-width: 100%;
 }
 
 .history-modules .module-tag {
+  flex: 0 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
   max-width: 128px !important;
 }
 
@@ -6048,19 +5819,10 @@ textarea,
   padding: 0 9px !important;
 }
 
-.project-grid {
+.project-grid { /* 保留：与穿插规则存在层叠依赖 */
   grid-template-columns: repeat(3, minmax(196px, 1fr)) !important;
-  gap: 10px !important;
-  align-content: start !important;
-  align-items: start !important;
 }
-.project-card {
-  height: auto !important;
-  min-height: 142px !important;
-  padding: 10px !important;
-  gap: 5px !important;
-  justify-content: flex-start !important;
-}
+
 .card-top { margin-bottom: 0 !important; }
 .card-meta {
   flex-direction: row !important;
@@ -6133,8 +5895,10 @@ textarea,
 }
 .server-list,
 .history-table {
-  flex: none !important;
+  border-radius: 7px !important;
+  overflow: hidden !important;
   min-height: 0 !important;
+  flex: none !important;
   height: auto !important;
 }
 #page-deploy .server-list,
@@ -6145,15 +5909,19 @@ textarea,
   overflow: hidden !important;
 }
 .history-row {
-  min-height: 34px !important;
+  transition: background 0.1s;
+  height: auto !important;
   padding: 0 10px !important;
   font-size: 10.5px !important;
+  min-height: 34px !important;
 }
 .history-stats {
+  color: var(--text-secondary);
+  font-size: 10px !important;
   min-height: 40px !important;
+  border: 1px solid var(--border) !important;
   border-radius: 8px !important;
   background: var(--bg-card) !important;
-  border: 1px solid var(--border) !important;
 }
 
 .report-app {
@@ -6163,6 +5931,7 @@ textarea,
   gap: 10px !important;
 }
 .report-panel-left {
+  flex-shrink: 0;
   width: 310px !important;
   min-width: 300px !important;
 }
@@ -6262,6 +6031,8 @@ textarea,
   border-bottom: 1px solid var(--border) !important;
 }
 .report-panel-body {
+  overflow-y: auto;
+  flex: 1;
   padding: 12px !important;
 }
 .settings-content {
@@ -6278,22 +6049,36 @@ textarea,
 }
 
 .modal-overlay.active {
+  animation: fadeIn 0.15s;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 24px;
   background: color-mix(in srgb, var(--bg-base) 54%, transparent) !important;
   backdrop-filter: blur(8px) !important;
   -webkit-backdrop-filter: blur(8px) !important;
 }
 .modal {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transform: none;
   border-radius: 8px !important;
   overflow: hidden !important;
 }
 .modal-header {
-  min-height: 44px !important;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
   padding: 12px 14px !important;
   border-bottom: 1px solid var(--border) !important;
+  min-height: 44px !important;
   background: color-mix(in srgb, var(--bg-elevated) 78%, transparent) !important;
 }
 .modal-header h2,
 .modal-header h3 {
+  line-height: 1.25 !important;
   font-size: 13px !important;
   font-weight: 700 !important;
   color: var(--text-primary) !important;
@@ -6302,12 +6087,18 @@ textarea,
   font-size: 10px !important;
   color: var(--text-muted) !important;
 }
-.modal-body { padding: 14px !important; }
+.modal-body {
+  padding: 14px !important;
+}
 .modal-footer {
-  min-height: 48px !important;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
   padding: 10px 14px !important;
   border-top: 1px solid var(--border) !important;
   background: color-mix(in srgb, var(--bg-elevated) 76%, transparent) !important;
+  min-height: 48px !important;
 }
 
 @media (max-width: 980px) {
@@ -9526,12 +9317,11 @@ body[data-theme="dark"] .geek-arc-line {
 }
 
 /* --- 项目卡片悬浮增强 --- */
-.project-card {
-  transition: border-color 0.2s, box-shadow 0.25s, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
-}
+
 .project-card:hover {
-  transform: translateY(-3px) !important;
+  border-color: var(--border-strong) !important;
   box-shadow: 0 12px 28px rgba(0,0,0,0.12) !important;
+  transform: translateY(-3px) !important;
 }
 
 /* --- 按钮点击反馈 --- */
@@ -9703,9 +9493,16 @@ body[data-theme="dark"] .geek-arc-line {
   gap: 12px !important;
 }
 .project-grid {
+  display: grid;
+  padding-right: 3px;
+  align-content: start !important;
+  align-items: start !important;
   gap: 12px !important;
 }
 .run-project-grid {
+  display: grid;
+  align-content: start;
+  padding: 2px 2px 20px;
   gap: 12px !important;
 }
 
@@ -9716,6 +9513,13 @@ body[data-theme="dark"] .geek-arc-line {
   padding: 14px 16px !important;
 }
 .project-card {
+  cursor: default;
+  position: relative;
+  min-height: 142px !important;
+  gap: 5px !important;
+  height: auto !important;
+  justify-content: flex-start !important;
+  transition: border-color 0.2s, box-shadow 0.25s, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
   padding: 14px 16px !important;
 }
 
