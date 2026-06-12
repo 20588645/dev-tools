@@ -8906,8 +8906,8 @@ body[data-theme="dark"] .sys-progress-circle::before {
   padding: 24px 28px !important;
   border-radius: 14px !important;
   backdrop-filter: blur(24px) saturate(120%) !important;
-  background: rgba(20, 27, 45, 0.7) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: var(--bg-elevated) !important;
+  border: 1px solid var(--border) !important;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35) !important;
   display: flex !important;
   flex-direction: column !important;
@@ -9016,8 +9016,8 @@ body[data-theme="dark"] .sys-progress-circle::before {
 }
 
 .todo-form-sidebar .todo-remind-section {
-  background: rgba(255, 255, 255, 0.02) !important;
-  border: 1px solid rgba(255, 255, 255, 0.04) !important;
+  background: transparent !important;
+  border: 1px solid var(--border) !important;
   border-radius: 8px !important;
   padding: 12px !important;
   display: flex !important;
@@ -9028,7 +9028,7 @@ body[data-theme="dark"] .sys-progress-circle::before {
 }
 
 .todo-form-sidebar .todo-remind-title-row {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
+  border-bottom: 1px solid var(--border) !important;
   padding-bottom: 8px !important;
 }
 
@@ -9061,9 +9061,9 @@ body[data-theme="dark"] .sys-progress-circle::before {
 
 .todo-form-sidebar .remind-quick-btn {
   padding: 6px 0 !important;
-  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid var(--border) !important;
   border-radius: 6px !important;
-  background: rgba(255, 255, 255, 0.04) !important;
+  background: var(--bg-hover) !important;
   color: var(--text-secondary) !important;
   font-size: 11px !important;
   font-weight: 600 !important;
@@ -9102,14 +9102,14 @@ body[data-theme="dark"] .sys-progress-circle::before {
 }
 
 .custom-date-trigger:hover {
-  border-color: rgba(59, 130, 246, 0.5) !important;
-  background: rgba(255, 255, 255, 0.03) !important;
+  border-color: var(--primary) !important;
+  background: var(--bg-hover) !important;
 }
 
 .custom-date-trigger:focus-within,
 .custom-date-trigger.active {
   border-color: var(--primary) !important;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+  box-shadow: 0 0 0 3px var(--primary-light) !important;
   background: var(--bg-card) !important;
 }
 
@@ -9131,9 +9131,9 @@ body[data-theme="dark"] .sys-progress-circle::before {
   bottom: 36px !important;
   left: 0 !important;
   width: 240px !important; /* 拓宽至 240px，防止月历标题换行 */
-  background: rgba(20, 27, 45, 0.95) !important;
+  background: var(--bg-elevated) !important;
   backdrop-filter: blur(20px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid var(--border-strong) !important;
   border-radius: 8px !important;
   padding: 10px !important;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4) !important;
@@ -9167,7 +9167,7 @@ body[data-theme="dark"] .sys-progress-circle::before {
 }
 
 .cal-header button:hover {
-  background: rgba(255, 255, 255, 0.08) !important;
+  background: var(--bg-hover) !important;
   color: var(--text-primary) !important;
 }
 
@@ -9201,7 +9201,7 @@ body[data-theme="dark"] .sys-progress-circle::before {
 }
 
 .cal-day:hover {
-  background: rgba(255, 255, 255, 0.08) !important;
+  background: var(--bg-hover) !important;
 }
 
 .cal-day.other-month {
@@ -9253,14 +9253,14 @@ body[data-theme="dark"] .sys-progress-circle::before {
 }
 
 .custom-time-trigger:hover {
-  border-color: rgba(59, 130, 246, 0.5) !important;
-  background: rgba(255, 255, 255, 0.03) !important;
+  border-color: var(--primary) !important;
+  background: var(--bg-hover) !important;
 }
 
 .custom-time-trigger:focus-within,
 .custom-time-trigger.active {
   border-color: var(--primary) !important;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+  box-shadow: 0 0 0 3px var(--primary-light) !important;
   background: var(--bg-card) !important;
 }
 
@@ -9282,9 +9282,9 @@ body[data-theme="dark"] .sys-progress-circle::before {
   bottom: 36px !important;
   left: 0 !important;
   width: 180px !important;
-  background: rgba(20, 27, 45, 0.95) !important;
+  background: var(--bg-elevated) !important;
   backdrop-filter: blur(20px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid var(--border-strong) !important;
   border-radius: 8px !important;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4) !important;
   z-index: 1000 !important;
@@ -9305,7 +9305,7 @@ body[data-theme="dark"] .sys-progress-circle::before {
 }
 
 .time-popover-col:first-child {
-  border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border-right: 1px solid var(--border) !important;
   padding-right: 4px !important;
 }
 
@@ -9315,7 +9315,7 @@ body[data-theme="dark"] .sys-progress-circle::before {
   color: var(--text-muted) !important;
   text-align: center !important;
   padding-bottom: 4px !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border-bottom: 1px solid var(--border) !important;
   margin-bottom: 4px !important;
   text-transform: uppercase !important;
 }
@@ -9342,7 +9342,7 @@ body[data-theme="dark"] .sys-progress-circle::before {
 }
 
 .time-popover-col li:hover {
-  background: rgba(255, 255, 255, 0.08) !important;
+  background: var(--bg-hover) !important;
   color: var(--text-primary) !important;
 }
 
@@ -9359,16 +9359,16 @@ body[data-theme="dark"] .sys-progress-circle::before {
   background: transparent !important;
 }
 .time-popover-col ul::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12) !important;
+  background: var(--border-strong) !important;
   border-radius: 1.5px !important;
 }
 
 .todo-form-sidebar .remind-clear-btn {
   padding: 6px 12px !important;
   height: 32px !important;
-  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid var(--border) !important;
   border-radius: 6px !important;
-  background: rgba(255, 255, 255, 0.04) !important;
+  background: var(--bg-hover) !important;
   color: var(--text-secondary) !important;
   font-size: 11px !important;
   font-weight: 600 !important;
@@ -9379,9 +9379,9 @@ body[data-theme="dark"] .sys-progress-circle::before {
 }
 
 .todo-form-sidebar .remind-clear-btn:hover {
-  background: rgba(239, 68, 68, 0.1) !important;
+  background: var(--danger-subtle) !important;
   border-color: rgba(239, 68, 68, 0.3) !important;
-  color: #ef4444 !important;
+  color: var(--danger) !important;
 }
 
 .todo-form-sidebar .remind-display-wrapper {
@@ -9399,7 +9399,7 @@ body[data-theme="dark"] .sys-progress-circle::before {
   background: var(--primary-light) !important;
   padding: 4px 8px !important;
   border-radius: 4px !important;
-  border: 1px solid rgba(59, 130, 246, 0.2) !important;
+  border: 1px solid var(--primary-light) !important;
   box-sizing: border-box !important;
   white-space: normal !important;
   word-break: break-all !important;
@@ -9497,7 +9497,7 @@ body[data-theme="dark"] .sys-progress-circle::before {
   background: transparent !important;
 }
 .todo-checklist-items-list::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1) !important;
+  background: var(--border-strong) !important;
   border-radius: 2px !important;
 }
 
@@ -9505,8 +9505,8 @@ body[data-theme="dark"] .sys-progress-circle::before {
   display: flex !important;
   align-items: flex-start !important;
   gap: 10px !important;
-  background: rgba(255, 255, 255, 0.01) !important;
-  border: 1px solid rgba(255, 255, 255, 0.03) !important;
+  background: transparent !important;
+  border: 1px solid var(--border) !important;
   border-radius: 8px !important;
   padding: 8px 12px !important;
   box-sizing: border-box !important;
@@ -9514,15 +9514,15 @@ body[data-theme="dark"] .sys-progress-circle::before {
 }
 
 .todo-editor-checklist-item:focus-within {
-  background: rgba(255, 255, 255, 0.03) !important;
-  border-color: rgba(59, 130, 246, 0.3) !important;
+  background: var(--bg-hover) !important;
+  border-color: var(--primary) !important;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.05) !important;
 }
 
 .todo-editor-item-checkbox {
   width: 16px !important;
   height: 16px !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.25) !important;
+  border: 1.5px solid var(--border-strong) !important;
   border-radius: 4px !important;
   display: flex !important;
   align-items: center !important;
@@ -9537,7 +9537,7 @@ body[data-theme="dark"] .sys-progress-circle::before {
 
 .todo-editor-item-checkbox:hover {
   border-color: var(--primary) !important;
-  background: rgba(59, 130, 246, 0.05) !important;
+  background: var(--primary-light) !important;
 }
 
 .todo-editor-item-checkbox.checked {
@@ -9586,7 +9586,7 @@ body[data-theme="dark"] .sys-progress-circle::before {
 }
 
 .todo-editor-item-delete:hover {
-  color: #ef4444 !important;
+  color: var(--danger) !important;
   opacity: 1 !important;
   transform: scale(1.1) !important;
 }
@@ -9777,7 +9777,7 @@ body[data-theme="dark"] .sys-progress-circle::before {
   align-items: center;
   gap: 16px;
   padding: 16px 20px;
-  background: rgba(255, 255, 255, 0.02);
+  background: transparent;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--border);
@@ -9798,8 +9798,8 @@ body[data-theme="dark"] .sys-progress-circle::before {
   width: 42px;
   height: 42px;
   font-size: 20px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -9903,7 +9903,7 @@ body[data-theme="dark"] .sys-progress-circle::before {
 
 /* 风控评分面板美化 */
 #page-ipcheck .ipcheck-risk-gauge {
-  background: rgba(255, 255, 255, 0.02);
+  background: transparent;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--border);
@@ -9942,7 +9942,7 @@ body[data-theme="dark"] .sys-progress-circle::before {
   overflow: visible;
   margin-bottom: 16px;
   position: relative;
-  border: 1px solid rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
 }
 
 #page-ipcheck .gauge-bar-fill {
@@ -10043,7 +10043,7 @@ body[data-theme="dark"] .sys-progress-circle::before {
 }
 
 #page-ipcheck .scene-recommendation-card {
-  background: rgba(255, 255, 255, 0.02) !important;
+  background: transparent !important;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--border);
@@ -10057,7 +10057,7 @@ body[data-theme="dark"] .sys-progress-circle::before {
 
 #page-ipcheck .scene-recommendation-card:hover {
   transform: translateY(-4px) scale(1.02);
-  background: rgba(255, 255, 255, 0.04) !important;
+  background: var(--bg-hover) !important;
 }
 
 /* 卡片根据推荐级别，悬停时产生对应的细发光边框 */
@@ -10078,8 +10078,8 @@ body[data-theme="dark"] .sys-progress-circle::before {
 
 #page-ipcheck .scene-icon {
   font-size: 22px;
-  background: rgba(255, 255, 255, 0.04) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--bg-hover) !important;
+  border: 1px solid var(--border);
   width: 44px;
   height: 44px;
   border-radius: 12px;
@@ -10093,7 +10093,7 @@ body[data-theme="dark"] .sys-progress-circle::before {
 
 #page-ipcheck .scene-recommendation-card:hover .scene-icon {
   transform: scale(1.08) rotate(3deg);
-  background: rgba(255, 255, 255, 0.08) !important;
+  background: var(--bg-hover) !important;
 }
 
 #page-ipcheck .scene-info {
@@ -10180,7 +10180,7 @@ body[data-theme="dark"] .sys-progress-circle::before {
 
 /* 👥 共享人数评估大卡片样式 */
 #page-ipcheck .ipcheck-shared-card {
-  background: rgba(255, 255, 255, 0.02);
+  background: transparent;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--border);
@@ -10251,7 +10251,7 @@ body[data-theme="dark"] .sys-progress-circle::before {
   overflow: visible;
   margin-bottom: 16px;
   position: relative;
-  border: 1px solid rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
 }
 
 #page-ipcheck .shared-bar-fill {
@@ -10740,7 +10740,7 @@ body[data-theme="light"] #page-terminal #termSearchInput {
 }
 
 #page-terminal #termSearchInput::placeholder {
-  color: rgba(255, 255, 255, 0.35);
+  color: var(--text-muted);
 }
 
 body[data-theme="light"] #page-terminal #termSearchInput::placeholder {
@@ -10773,7 +10773,7 @@ body[data-theme="light"] #page-terminal #termSearchInput::placeholder {
 }
 
 #page-terminal .term-search-nav-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--bg-hover);
   color: #ffffff;
 }
 
