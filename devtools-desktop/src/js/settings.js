@@ -71,7 +71,7 @@ async function killTestSidecars() {
 }
 
 // 重启后端服务，并让前端自动重连到新进程
-async function restartSidecar() {
+async function restartSidecar(skipConfirm = false) {
   const btn = document.getElementById('restartSidecarBtn');
   const badge = document.getElementById('settingSidecarStatus');
   const invoke = getTauriInvoke();
@@ -79,8 +79,10 @@ async function restartSidecar() {
     showToast('⚠️ 仅桌面应用内可重启后端');
     return;
   }
-  const confirmed = await showConfirm('确定重启后端服务？正在进行的构建/部署等任务会被中断。', { icon: '🔄', confirmText: '重启' });
-  if (!confirmed) return;
+  if (!skipConfirm) {
+    const confirmed = await showConfirm('确定重启后端服务？正在进行的构建/部署等任务会被中断。', { icon: '🔄', confirmText: '重启' });
+    if (!confirmed) return;
+  }
 
   if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
   if (badge) { badge.textContent = '● 重启中...'; badge.className = 'setting-badge'; }
@@ -97,6 +99,7 @@ async function restartSidecar() {
     // 3. 稍等后端就绪，刷新状态
     await new Promise(r => setTimeout(r, 600));
     await refreshAboutSettingsInfo();
+    loadBackups(); // 重启后刷新备份区，清除可能残留的"待重启恢复"状态
     showToast('✅ 后端已重启并重新连接（端口 ' + newPort + '）');
   } catch (e) {
     if (badge) { badge.textContent = '● 离线'; badge.className = 'setting-badge offline'; }
@@ -471,15 +474,22 @@ async function createDbBackup() {
 }
 
 async function restoreDbBackup(file) {
-  const ok = await showConfirm(`确认恢复备份「${file}」？当前数据将被替换（原库自动留存 pre-restore 副本），重启后端后生效。`, { danger: true, confirmText: '恢复' });
+  const ok = await showConfirm(`确认恢复备份「${file}」？\n\n当前数据将被替换（原库自动留存 pre-restore 副本），需重启后端生效。`, { danger: true, confirmText: '恢复' });
   if (!ok) return;
   try {
     await API.post('/api/backup/restore', { file });
-    showToast('✅ 已暂存恢复', '点击「重启后端」后生效');
-    loadBackups();
   } catch (e) {
     showToast('❌ 恢复失败', e.message);
+    return;
   }
+  loadBackups();
+  // 恢复需重启后端生效，桌面端直接引导一气呵成；选"稍后"则保留暂存与「取消恢复」入口
+  const canRestart = typeof getTauriInvoke === 'function' && getTauriInvoke();
+  if (canRestart) {
+    const restartNow = await showConfirm('恢复已就绪，需重启后端才能生效。是否立即重启？', { icon: '🔄', confirmText: '立即重启', cancelText: '稍后' });
+    if (restartNow) { await restartSidecar(true); return; }
+  }
+  showToast('✅ 已暂存恢复', '点击「重启后端」生效，或在列表上方取消恢复');
 }
 
 async function cancelDbRestore() {
