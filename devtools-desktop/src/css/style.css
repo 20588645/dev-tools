@@ -6443,7 +6443,7 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
 
 .todo-group-count {
   margin-left: 6px !important;
-  background: rgba(255, 255, 255, 0.05) !important;
+  background: var(--bg-hover) !important;
   padding: 1px 6px !important;
   border-radius: 8px !important;
   font-size: 10px !important;
@@ -6469,7 +6469,7 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
   align-items: center !important;
   gap: 12px !important;
   padding: 10px 14px !important;
-  background: rgba(255, 255, 255, 0.01) !important;
+  background: transparent !important;
   border: 1px solid var(--border) !important;
   border-radius: var(--radius-sm) !important;
   cursor: pointer !important;
@@ -6478,8 +6478,8 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
 }
 
 .todo-task-row:hover {
-  background: rgba(255, 255, 255, 0.04) !important;
-  border-color: rgba(255, 255, 255, 0.15) !important;
+  background: var(--bg-hover) !important;
+  border-color: var(--border-strong) !important;
   transform: translateX(2px) !important;
 }
 
@@ -6492,7 +6492,7 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
 .todo-task-checkbox-circle {
   width: 16px !important;
   height: 16px !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.3) !important;
+  border: 1.5px solid var(--border-strong) !important;
   border-radius: 50% !important;
   display: flex !important;
   align-items: center !important;
@@ -6527,7 +6527,7 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
 
 .todo-task-row.completed .todo-task-title-text {
   text-decoration: line-through !important;
-  color: rgba(255, 255, 255, 0.25) !important;
+  color: var(--text-muted) !important;
 }
 
 /* 列表行右侧元数据信息区 */
@@ -6545,7 +6545,7 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
   display: flex !important;
   align-items: center !important;
   gap: 5px !important;
-  background: rgba(255, 255, 255, 0.03) !important;
+  background: var(--bg-hover) !important;
   padding: 2px 6px !important;
   border-radius: 12px !important;
   border: 1px solid var(--border) !important;
@@ -6580,8 +6580,8 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
   font-size: 10.5px !important;
   font-weight: 600 !important;
   letter-spacing: -0.01em !important;
-  border: 1px solid rgba(255, 255, 255, 0.05) !important;
-  background: rgba(255, 255, 255, 0.02) !important;
+  border: 1px solid var(--border) !important;
+  background: transparent !important;
   transition: all 0.2s !important;
   color: var(--text-secondary) !important;
 }
@@ -6614,7 +6614,7 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
 .todo-meta-divider {
   width: 1px !important;
   height: 10px !important;
-  background: rgba(255, 255, 255, 0.08) !important;
+  background: var(--border) !important;
 }
 
 /* 右栏：详情面板 */
@@ -6725,7 +6725,7 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
 }
 
 .todo-detail-desc {
-  background: rgba(255, 255, 255, 0.01) !important;
+  background: transparent !important;
   border: 1px solid var(--border) !important;
   border-radius: var(--radius-sm) !important;
   padding: 12px !important;
@@ -6740,7 +6740,7 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
 
 .todo-detail-desc:focus {
   border-color: var(--primary) !important;
-  background: rgba(255, 255, 255, 0.02) !important;
+  background: var(--bg-hover) !important;
 }
 
 /* 子任务列表 */
@@ -6758,21 +6758,21 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
   gap: 10px !important;
   padding: 6px 10px !important;
   border-radius: 6px !important;
-  background: rgba(255, 255, 255, 0.01) !important;
+  background: transparent !important;
   border: 1px solid var(--border) !important;
   position: relative !important;
   box-sizing: border-box !important;
 }
 
 .todo-detail-checklist-item:hover {
-  background: rgba(255, 255, 255, 0.02) !important;
-  border-color: rgba(255, 255, 255, 0.15) !important;
+  background: var(--bg-hover) !important;
+  border-color: var(--border-strong) !important;
 }
 
 .todo-detail-checklist-check {
   width: 14px !important;
   height: 14px !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.3) !important;
+  border: 1.5px solid var(--border-strong) !important;
   border-radius: 50% !important;
   cursor: pointer !important;
   display: flex !important;
@@ -6863,7 +6863,7 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
   font-weight: 600 !important;
   cursor: pointer !important;
   border: 1px solid var(--border) !important;
-  background: rgba(255, 255, 255, 0.03) !important;
+  background: transparent !important;
   color: var(--text-primary) !important;
   display: flex !important;
   align-items: center !important;
@@ -6872,8 +6872,8 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
 }
 
 .todo-btn:hover {
-  background: rgba(255, 255, 255, 0.07) !important;
-  border-color: rgba(255, 255, 255, 0.15) !important;
+  background: var(--bg-hover) !important;
+  border-color: var(--border-strong) !important;
 }
 
 .todo-btn-primary {
