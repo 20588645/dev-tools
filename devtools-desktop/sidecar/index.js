@@ -91,7 +91,7 @@ app.use('/api/backup', require('./routes/backup'));
 // 必须趁文件还在时抢先入库，不能只依赖用量页面被打开时的按需同步
 const usageService = require('./services/usage');
 setTimeout(() => { try { usageService.syncUsage(true); } catch (e) { console.error('[Usage] 启动同步失败:', e.message); } }, 5000);
-setInterval(() => { try { usageService.syncUsage(true); } catch (e) {} }, 5 * 60 * 1000);
+setInterval(() => { try { usageService.syncUsage(true); } catch {} }, 5 * 60 * 1000);
 
 // 数据库自动备份：启动后延迟触发（每日至多一次）+ 24h 周期兜底
 const backupService = require('./services/backup');
@@ -139,7 +139,7 @@ wss.on('connection', (ws) => {
 
         let ptyProcess = ptyProcesses.get(terminalId);
         if (ptyProcess) {
-          try { ptyProcess.kill(); } catch (e) {}
+          try { ptyProcess.kill(); } catch {}
           ptyProcesses.delete(terminalId);
         }
 
@@ -256,7 +256,7 @@ wss.on('connection', (ws) => {
         if (!terminalId) return;
         const ptyProcess = ptyProcesses.get(terminalId);
         if (ptyProcess) {
-          try { ptyProcess.kill(); } catch (e) {}
+          try { ptyProcess.kill(); } catch {}
           ptyProcesses.delete(terminalId);
           console.log(`[PTY] Closed terminal ${terminalId}`);
         }
@@ -274,7 +274,7 @@ wss.on('connection', (ws) => {
     console.log('[WS] 客户端已断开');
     for (const [tid, ptyProc] of ptyProcesses.entries()) {
       console.log(`[PTY] Killing shell process ${ptyProc.pid} for terminal ${tid}`);
-      try { ptyProc.kill(); } catch (e) {}
+      try { ptyProc.kill(); } catch {}
     }
     ptyProcesses.clear();
   });
@@ -293,7 +293,7 @@ function updateTerminalCwd(terminalId, pid) {
       try {
         const db = require('./services/database');
         db.prepare('UPDATE terminal_sessions SET cwd = ? WHERE id = ?').run(cwd, terminalId);
-      } catch (e) {}
+      } catch {}
     }
   });
 }
@@ -374,7 +374,7 @@ function killOldSidecars() {
           try {
             process.kill(oldPid, 'SIGKILL');
             console.log(`[Guardian] 已强行肃清旧进程 PID: ${oldPid}`);
-          } catch (e) {}
+          } catch {}
         }
         // 稍微等待 150ms 确保端口被操作系统底层彻底释放
         setTimeout(resolve, 150);

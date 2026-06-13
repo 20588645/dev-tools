@@ -313,11 +313,11 @@ function cleanupRunJobsSync() {
         try {
           // 向整个进程组 (PGID = pid) 发送 SIGKILL，强制且同步地杀死所有子进程（如 webpack 进程）
           process.kill(-job.pid, 'SIGKILL');
-        } catch (e) {
+        } catch {
           try {
             // 兜底杀死自身
             process.kill(job.pid, 'SIGKILL');
-          } catch (err) {}
+          } catch {}
         }
       }
     }
@@ -855,7 +855,7 @@ router.post('/:id/stop', (req, res) => {
         terminateJob(job, 'SIGKILL');
       }
     }, 2500);
-  } catch (err) {
+  } catch {
     try { job.child?.kill('SIGTERM'); } catch {}
   }
 
@@ -925,7 +925,7 @@ router.post('/force-release', (req, res) => {
     // 强制强杀该 PID 的整个进程组（前置负号）
     process.kill(-pid, 'SIGKILL');
     res.json({ success: true, message: `已强制释放进程组 -${pid}` });
-  } catch (err) {
+  } catch {
     try {
       // 兜底单独只强杀目标进程自身
       process.kill(pid, 'SIGKILL');

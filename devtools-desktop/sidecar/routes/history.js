@@ -35,7 +35,7 @@ router.get('/:id', (req, res) => {
     } else {
       record.logs = [];
     }
-  } catch (e) {
+  } catch {
     record.logs = [];
   }
   res.json(record);

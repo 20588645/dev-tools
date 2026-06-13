@@ -8,7 +8,7 @@ function findTestSidecarPids() {
   try {
     const out = execSync('pgrep -f "sidecar/index.js --test"', { encoding: 'utf8' });
     pids = out.split(/\s+/).map(Number).filter(p => p && p !== process.pid);
-  } catch (e) {
+  } catch {
     return []; // pgrep 无匹配会以非 0 退出
   }
   // 只保留真正的 node 进程，排除恰好包含该字符串的 shell 包装进程
@@ -16,7 +16,7 @@ function findTestSidecarPids() {
     try {
       const comm = execSync(`ps -o comm= -p ${pid}`, { encoding: 'utf8' }).trim();
       return comm.endsWith('node');
-    } catch (e) {
+    } catch {
       return false;
     }
   });
@@ -30,10 +30,10 @@ router.get('/test-sidecars', (req, res) => {
 // POST /api/system/test-sidecars/kill — 停止所有测试沙箱进程
 router.post('/test-sidecars/kill', (req, res) => {
   const pids = findTestSidecarPids();
-  for (const pid of pids) { try { process.kill(pid, 'SIGTERM'); } catch (e) {} }
+  for (const pid of pids) { try { process.kill(pid, 'SIGTERM'); } catch {} }
   // 稍等后强杀仍存活的
   setTimeout(() => {
-    for (const pid of findTestSidecarPids()) { try { process.kill(pid, 'SIGKILL'); } catch (e) {} }
+    for (const pid of findTestSidecarPids()) { try { process.kill(pid, 'SIGKILL'); } catch {} }
     res.json({ killed: pids.length });
   }, 300);
 });

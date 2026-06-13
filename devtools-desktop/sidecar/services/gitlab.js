@@ -4,7 +4,6 @@
  */
 const https = require('https');
 const http = require('http');
-const url = require('url');
 
 const WEEKDAYS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
 
@@ -52,7 +51,7 @@ function httpGet(requestUrl, token) {
             data: JSON.parse(body),
             headers: res.headers,
           });
-        } catch (e) {
+        } catch {
           reject(new Error('JSON 解析失败'));
         }
       });

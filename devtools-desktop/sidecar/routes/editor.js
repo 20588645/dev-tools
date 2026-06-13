@@ -89,13 +89,13 @@ router.get('/browse', (req, res) => {
       let isDir = d.isDirectory();
       // 处理符号链接
       if (d.isSymbolicLink()) {
-        try { isDir = fs.statSync(fullPath).isDirectory(); } catch (e) { continue; }
+        try { isDir = fs.statSync(fullPath).isDirectory(); } catch { continue; }
       }
       if (isDir) {
         dirs.push({ name: d.name, path: fullPath, isDir: true });
       } else if (d.isFile() || d.isSymbolicLink()) {
         let size = 0;
-        try { size = fs.statSync(fullPath).size; } catch (e) {}
+        try { size = fs.statSync(fullPath).size; } catch {}
         files.push({ name: d.name, path: fullPath, isDir: false, size });
       }
     }
@@ -194,7 +194,7 @@ router.get('/stat', (req, res) => {
     const filePath = path.resolve(expandHome(req.query.path));
     const stat = fs.statSync(filePath);
     res.json({ exists: true, mtime: stat.mtimeMs, size: stat.size });
-  } catch (e) {
+  } catch {
     res.json({ exists: false });
   }
 });

@@ -480,7 +480,7 @@ router.post('/:id/browse', (req, res) => {
     if (responded) return;
     responded = true;
     clearTimeout(timeout);
-    try { conn.end(); } catch (_) { /* ignore */ }
+    try { conn.end(); } catch { /* ignore */ }
     res.status(status).json(body);
   }
 

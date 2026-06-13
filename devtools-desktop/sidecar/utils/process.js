@@ -40,7 +40,7 @@ async function killProcessTree(pid, signal = 'SIGTERM') {
     for (const childPid of children) {
       try {
         process.kill(childPid, signal);
-      } catch (e) {
+      } catch {
         // 忽略进程已不存在等错误
       }
     }
@@ -48,14 +48,14 @@ async function killProcessTree(pid, signal = 'SIGTERM') {
     // 2. 终结根进程自身
     try {
       process.kill(pid, signal);
-    } catch (e) {
+    } catch {
       // 忽略错误
     }
-  } catch (err) {
+  } catch {
     // 兜底处理
     try {
       process.kill(pid, signal);
-    } catch (e) {}
+    } catch {}
   }
 }
 
