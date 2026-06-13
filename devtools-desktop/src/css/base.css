@@ -1,0 +1,429 @@
+/* ===== base：design tokens、主题变量、标签重置、滚动条、keyframes（批次5 拆分自 style.css，规则保持原始相对顺序） ===== */
+
+/* ===== DevTools Design System — Cockpit Style ===== */
+/* ---------- Theme Variables ---------- */
+:root,
+[data-theme="light"] {
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', sans-serif;
+  --font-mono: 'SF Mono', 'JetBrains Mono', 'Menlo', monospace;
+
+  --primary: #1d4ed8;
+  --primary-hover: #1e40af;
+  --primary-light: rgba(29, 78, 216, 0.12);
+  --accent: #0ea5a5;
+
+  --success: #22c55e;
+  --success-subtle: rgba(34, 197, 94, 0.1);
+  --warning: #f59e0b;
+  --warning-subtle: rgba(245, 158, 11, 0.1);
+  --danger: #ef4444;
+  --danger-subtle: rgba(239, 68, 68, 0.1);
+
+  --bg-base: #f6f5f2;
+  --bg-elevated: #ffffff;
+  --bg-card: rgba(255, 255, 255, 0.75);
+  --bg-card-hover: rgba(255, 255, 255, 0.9);
+  --bg-input: #eef2f7;
+  --bg-overlay: rgba(0, 0, 0, 0.3);
+  --bg-hover: rgba(15, 23, 42, 0.06);
+
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+
+  --border: rgba(15, 23, 42, 0.1);
+  --border-strong: rgba(15, 23, 42, 0.15);
+
+  --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 8px 24px rgba(15, 23, 42, 0.1);
+  --shadow-lg: 0 20px 40px rgba(15, 23, 42, 0.14);
+
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+
+  --sidebar-width: 68px;
+  --content-max-width: 1200px;
+
+  color-scheme: light;
+}
+
+/* ---------- Reset & Base ---------- */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* ---------- App Layout ---------- */
+/* ---------- Sidebar — Floating Capsule (Cockpit Style) ---------- */
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translate(-20px, -50%); }
+  to { opacity: 1; transform: translate(0, -50%); }
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---------- Content Area ---------- */
+/* ---------- Pages ---------- */
+@keyframes pageIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+/* ---------- Inputs ---------- */
+input[type="text"], input[type="password"], input[type="number"], input[type="date"], select {
+  padding: 7px 10px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+input:focus, select:focus { border-color: var(--accent); }
+
+/* ---------- Modal (Public) — Cockpit Style ---------- */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* ---------- Toast ---------- */
+@keyframes toastSlide { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: none; } }
+
+/* macOS 标题栏覆盖模式 - 顶部留出拖拽区域 */
+/* ========== Final Mac Native Tool Skin ========== */
+
+* { letter-spacing: 0; }
+
+body {
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.6;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--text-primary);
+  background: var(--bg-base);
+  margin: 0;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--bg-shell) 98%, var(--primary) 2%) 0%, var(--bg-base) 62%, color-mix(in srgb, var(--bg-base) 94%, var(--primary) 6%) 100%);
+}
+
+@keyframes pageIn { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+
+table { border-collapse: collapse; }
+
+@keyframes toastSlide { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--text-muted) 38%, transparent);
+  border-radius: 999px;
+}
+
+@media (max-width: 960px) {
+:root, body[data-theme="light"], body[data-theme="dark"] { --sidebar-width: 104px; }
+
+}
+
+/* ========== Final Pass: Control Polish & Edge Cases ========== */
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  white-space: nowrap;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+input,
+select,
+textarea {
+  width: auto;
+  max-width: 100%;
+}
+
+select { /* 保留：与穿插规则存在层叠依赖 */
+  padding-right: 30px !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: color-mix(in srgb, var(--text-muted) 78%, transparent);
+}
+
+/* ========== Reference Match Pass: tighter macOS utility surface ========== */
+body[data-theme="light"] { /* 保留：与穿插规则存在层叠依赖 */
+  --bg-sidebar: rgba(248, 250, 253, 0.94);
+  --bg-elevated: rgba(255, 255, 255, 0.98);
+  --border: rgba(25, 37, 56, 0.1);
+}
+
+/* ========== Reference Match Pass 2: controls, dialogs, dense utility pages ========== */
+:root,
+body[data-theme="light"],
+body[data-theme="dark"] {
+  --sidebar-width: 112px;
+  --mac-radius: 7px;
+  --mac-control-radius: 5px;
+  --mac-row: 32px;
+}
+
+body[data-theme="light"] { /* 保留：与穿插规则存在层叠依赖 */
+  --bg-base: #f5f7fb;
+  --bg-card: rgba(255, 255, 255, 0.9);
+  --bg-input: #f8f9fc;
+  --text-primary: #172033;
+  --text-secondary: #667085;
+  --text-muted: #98a2b3;
+  --border-strong: rgba(29, 41, 57, 0.16);
+  --bg-page: #f7f8fb;
+  --border-color: rgba(29, 41, 57, 0.105);
+}
+
+/* Top drag strip for Tauri overlay windows. Keep content below it clickable. */
+/* ========== Design Reference Alignment ========== */
+:root,
+body[data-theme="light"] {
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "SF Mono", Menlo, Monaco, Consolas, monospace;
+  --topbar-height: 0px;
+  --content-max-width: none;
+  --accent-hover: #2563df;
+  --accent-subtle: rgba(47, 115, 246, 0.1);
+  --success-subtle: rgba(47, 191, 98, 0.11);
+  --warning-subtle: rgba(245, 165, 36, 0.13);
+  --danger-subtle: rgba(239, 77, 94, 0.11);
+  --bg-shell: #fbfcfe;
+  --bg-card-hover: rgba(255, 255, 255, 0.98);
+  --bg-overlay: rgba(246, 248, 252, 0.5);
+  --shadow-lg: 0 22px 60px rgba(16, 24, 40, 0.18);
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-xl: 12px;
+  --sidebar-width: 92px;
+  --primary: #2f6fed;
+  --primary-hover: #255dd2;
+  --primary-light: rgba(47, 111, 237, 0.11);
+  --accent: #2f6fed;
+  --success: #22b85c;
+  --warning: #f4a622;
+  --danger: #ef4b5f;
+  --bg-base: #f6f8fb;
+  --bg-sidebar: rgba(245, 248, 253, 0.94);
+  --bg-elevated: rgba(255, 255, 255, 0.96);
+  --bg-card: rgba(255, 255, 255, 0.88);
+  --bg-input: #f3f6fb;
+  --bg-hover: rgba(34, 87, 190, 0.07);
+  --text-primary: #182033;
+  --text-secondary: #536072;
+  --text-muted: #97a2b2;
+  --border: rgba(32, 47, 72, 0.11);
+  --border-strong: rgba(32, 47, 72, 0.18);
+  --shadow-sm: 0 1px 2px rgba(18, 32, 56, 0.04), 0 8px 22px rgba(18, 32, 56, 0.06);
+  --shadow-md: 0 14px 34px rgba(18, 32, 56, 0.1);
+  --radius: 8px;
+  --radius-md: 8px;
+  --radius-lg: 8px;
+  color-scheme: light;
+  --bg-page: #f7f9fc;
+}
+
+body[data-theme="dark"] { /* 保留：与穿插规则存在层叠依赖 */
+  --sidebar-width: 92px;
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  width: 100%;
+  background: var(--bg-base) !important;
+}
+
+body::before,
+body[data-theme="dark"]::before {
+  background: radial-gradient(circle at 90% 6%, color-mix(in srgb, var(--primary) 8%, transparent), transparent 28%),
+    linear-gradient(145deg, color-mix(in srgb, var(--bg-page) 96%, #ffffff 4%) 0%, var(--bg-base) 100%) !important;
+}
+
+body[data-theme="dark"]::before {
+  background: radial-gradient(circle at 85% 0%, rgba(72, 98, 125, 0.16), transparent 30%),
+    linear-gradient(145deg, #101d2a 0%, #08141e 52%, #06121b 100%) !important;
+}
+
+/* ========== Modal Choice Controls Alignment ========== */
+:root {
+  --modal-field-compact-width: 220px;
+  --modal-choice-width: 224px;
+  --modal-choice-height: 36px;
+}
+
+@media (max-width: 720px) {
+:root {
+    --modal-field-compact-width: 100%;
+    --modal-choice-width: 100%;
+  }
+
+}
+
+@media (max-width: 980px) {
+:root,
+  body[data-theme="light"],
+  body[data-theme="dark"] { --sidebar-width: 84px; }
+
+}
+
+@keyframes clickParticleBurst {
+  0% {
+    transform: translate(-50%, -50%) translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) translate(var(--tx), var(--ty)) scale(0);
+    opacity: 0;
+  }
+}
+
+@keyframes savePulse {
+  0%, 100% { opacity: 0.4; transform: scale(0.85); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.95) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes dialogIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes cardFadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes indicatorIn {
+  from { height: 0; opacity: 0; }
+  to { height: 16px; opacity: 1; }
+}
+
+@keyframes shimmer {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes emptyPulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+@keyframes skeletonShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { transform: translateY(-50%) scale(1); opacity: 0.8; }
+  50% { transform: translateY(-50%) scale(1.25); opacity: 1; }
+}
+
+@keyframes pulseGlowBadge {
+  0%, 100% { box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3); }
+  50% { box-shadow: 0 4px 22px rgba(124, 58, 237, 0.55), 0 0 8px rgba(255, 255, 255, 0.2); }
+}
+
+@keyframes rippleGlow {
+  0% { transform: scale(0.5); opacity: 1; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+/* ========== Terminal Panel Integration Styles ========== */
+body[data-theme="light"] {
+  --bg-shell: #fbfcfe;
+  --bg-panel: rgba(255, 255, 255, 0.86);
+  --bg-terminal: #f8fafc;
+  --terminal-hdr-bg: rgba(238, 243, 250, 0.85);
+  --terminal-btn-bg: rgba(255, 255, 255, 0.9);
+  --terminal-btn-color: #59657a;
+  --terminal-btn-hover: #2f73f6;
+  --terminal-btn-hover-bg: rgba(47, 115, 246, 0.08);
+}
+
+body[data-theme="dark"] {
+  --accent-hover: #8d84ff;
+  --accent-subtle: rgba(125, 116, 247, 0.14);
+  --success-subtle: rgba(51, 209, 122, 0.12);
+  --warning-subtle: rgba(247, 185, 85, 0.14);
+  --danger-subtle: rgba(255, 93, 108, 0.13);
+  --bg-card-hover: rgba(29, 42, 58, 0.92);
+  --border-color: rgba(148, 163, 184, 0.14);
+  --bg-overlay: rgba(4, 10, 16, 0.58);
+  --shadow-lg: 0 26px 80px rgba(0, 0, 0, 0.44);
+  --bg-shell: #0b1722;
+  --bg-panel: rgba(15, 29, 43, 0.86);
+  --primary: #7a68ee;
+  --primary-hover: #8d7cff;
+  --primary-light: rgba(122, 104, 238, 0.2);
+  --accent: #7a68ee;
+  --success: #2ed573;
+  --warning: #f5bd4f;
+  --danger: #ff5d6e;
+  --bg-base: #08141e;
+  --bg-sidebar: rgba(13, 25, 37, 0.96);
+  --bg-elevated: rgba(22, 36, 52, 0.96);
+  --bg-card: rgba(18, 31, 45, 0.9);
+  --bg-input: rgba(10, 22, 34, 0.92);
+  --bg-hover: rgba(129, 119, 255, 0.1);
+  --text-primary: #edf3fb;
+  --text-secondary: #a8b6c6;
+  --text-muted: #718195;
+  --border: rgba(153, 174, 199, 0.13);
+  --border-strong: rgba(153, 174, 199, 0.23);
+  --shadow-sm: 0 1px 0 rgba(255, 255, 255, 0.03), 0 10px 28px rgba(0, 0, 0, 0.22);
+  --shadow-md: 0 18px 48px rgba(0, 0, 0, 0.34);
+  color-scheme: dark;
+  --bg-page: #0a1621;
+  --bg-terminal: #0c1017;
+  --terminal-hdr-bg: rgba(20, 31, 44, 0.8);
+  --terminal-btn-bg: rgba(30, 41, 59, 0.6);
+  --terminal-btn-color: #aab6c5;
+  --terminal-btn-hover: #7d74f7;
+  --terminal-btn-hover-bg: rgba(125, 116, 247, 0.12);
+}
+
+@keyframes breathing-connected {
+  0% { box-shadow: 0 0 0 0 rgba(51, 209, 122, 0.4); }
+  70% { box-shadow: 0 0 0 6px rgba(51, 209, 122, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(51, 209, 122, 0); }
+}
+
+@keyframes slide-in-search {
+  from { transform: translateY(-10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes edMenuIn { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: none; } }

@@ -1,0 +1,1387 @@
+/* ===== pages/settings：页面专属样式（批次5 拆分自 style.css，规则保持原始相对顺序） ===== */
+
+.modal-header h2 { font-size: 16px; font-weight: 700; }
+
+.modal-subtitle { /* 保留：与穿插规则存在层叠依赖 */
+  margin-top: 3px;
+}
+
+.modal-body { /* 保留：与穿插规则存在层叠依赖 */
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* ---------- System Dialog ---------- */
+.sys-dialog-overlay {
+  position: fixed; inset: 0; z-index: 10000;
+  background: var(--bg-overlay); backdrop-filter: blur(6px);
+  display: none; align-items: center; justify-content: center;
+}
+
+.sys-dialog-overlay.active { display: flex; }
+
+.sys-dialog-btns { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+
+/* ========== 设置页 ========== */
+.settings-section { /* 保留：与穿插规则存在层叠依赖 */
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+}
+
+.setting-item:last-child { border-bottom: none; }
+
+.setting-info { flex: 1; }
+
+.setting-input { /* 保留：与穿插规则存在层叠依赖 */
+  border: 1px solid var(--border);
+}
+
+.setting-input:focus { border-color: var(--accent); }
+
+.setting-value {
+  font-size: 11px;
+  color: var(--text-muted);
+  padding: 4px 10px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.setting-badge {
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.setting-badge.online { color: var(--success); background: var(--success-subtle); }
+
+.setting-badge.offline { color: var(--danger); background: var(--danger-subtle); }
+
+/* Settings Repo List */
+.setting-repo-row input { /* 保留：与穿插规则存在层叠依赖 */
+  border: 1px solid var(--border);
+}
+
+.setting-repo-row input:focus { border-color: var(--accent); }
+
+.setting-repo-row input.repo-url { flex: 3; }
+
+.setting-repo-row input.repo-branch { flex: 1; }
+
+.setting-repo-row input.repo-group { flex: 1; }
+
+.setting-repo-row button {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: var(--radius-xs);
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.setting-repo-row button:hover { background: var(--danger-subtle); color: var(--danger); }
+
+/* Settings Upgrade Log */
+.upgrade-log {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  max-height: 320px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.upgrade-progress-bar {
+  height: 4px;
+  background: var(--bg-input);
+  border-radius: 2px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.upgrade-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+
+/* Quick Actions (right column - separate cards) */
+/* ========== 弹窗内模块网格 & 表单优化 ========== */
+
+.module-search input {
+  padding: 7px 12px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 13px;
+  outline: none;
+  width: 160px;
+}
+
+.module-search input:focus { border-color: var(--primary); }
+
+.selected-count { font-size: 12px; color: var(--primary); background: var(--primary-light); padding: 3px 10px; border-radius: 10px; font-weight: 600; }
+
+.module-filter-btn { opacity: 0.5; transition: 0.15s; font-size: 13px; }
+
+.module-filter-btn.active { opacity: 1; color: var(--primary); font-weight: 600; }
+
+/* 弹窗内表单 */
+
+.config-row label { font-size: 13px; color: var(--text-secondary); width: 80px; flex-shrink: 0; }
+
+.config-row select, .config-row input { flex: 1; padding: 8px 12px; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary); font-size: 13px; outline: none; }
+
+.config-row select:focus, .config-row input:focus { border-color: var(--primary); }
+
+.single-info { text-align: center; padding: 32px; color: var(--text-secondary); font-size: 14px; }
+
+.info-icon { font-size: 40px; margin-bottom: 10px; }
+
+/* 表单组 */
+
+.form-group input, .form-group select { width: 100%; padding: 9px 12px; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary); font-size: 13px; outline: none; }
+
+.form-group input:focus, .form-group select:focus { border-color: var(--primary); }
+
+/* Tag 输入 */
+.tag-input-container { /* 保留：与穿插规则存在层叠依赖 */
+  border: 1px solid var(--border);
+}
+
+.tag-input-container:focus-within { border-color: var(--primary); }
+
+.tag-list { display: flex; flex-direction: column; gap: 5px; margin-bottom: 4px; }
+
+.tag-list:empty { margin-bottom: 0; }
+
+.tag-input-field { background: transparent; border: none; outline: none; color: var(--text-primary); font-size: 13px; width: 100%; padding: 4px 2px; }
+
+/* 快速复用弹窗 */
+.quick-history-list { display: flex; flex-direction: column; gap: 6px; max-height: 360px; overflow-y: auto; }
+
+/* 快速复用筛选 */
+.quick-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+
+.quick-filters { display: flex; gap: 4px; }
+
+/* Git Log 预览 */
+.git-log-section { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+
+/* 分段控件 */
+.seg-control {
+  display: inline-flex;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 3px;
+}
+
+/* 隐藏模块工具栏中的全选/全不选按钮 */
+.module-actions .btn-text:nth-child(3),
+.module-actions .btn-text:nth-child(4) { display: none; }
+
+.module-actions span[style*="border"] { display: none; }
+
+/* Node 版本 select 优化 */
+.deploy-config select,
+.config-row select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 9px 36px 9px 14px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  transition: border-color 0.15s;
+}
+
+.deploy-config select:focus,
+.config-row select:focus {
+  border-color: var(--primary);
+  outline: none;
+  box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+.settings-section h3 {
+  font-weight: 600;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  font-size: 12px !important;
+  color: var(--text-primary) !important;
+  border-bottom: 1px solid var(--border);
+  margin: 0 !important;
+  padding: 11px 14px !important;
+  background: var(--bg-input);
+}
+
+.setting-desc {
+  color: var(--text-muted);
+  margin-top: 2px;
+  font-size: 10px !important;
+}
+
+.setting-value,
+.setting-badge {
+  border: 1px solid var(--border);
+  border-radius: 6px !important;
+  background: var(--bg-input);
+}
+
+.modal-overlay,
+.sys-dialog-overlay {
+  background: var(--bg-overlay) !important;
+  backdrop-filter: blur(12px) saturate(115%);
+  -webkit-backdrop-filter: blur(12px) saturate(115%);
+}
+
+.modal-sm {
+  width: 430px !important;
+}
+
+.modal-quick {
+  width: 600px !important;
+}
+
+.modal-log {
+  max-width: 1000px;
+  width: min(980px, 90vw) !important;
+}
+
+.modal-close { /* 保留：与穿插规则存在层叠依赖 */
+  background: transparent !important;
+  color: var(--text-muted) !important;
+}
+
+.modal-close:hover {
+  background: var(--bg-hover) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Browser list & items (手动浏览面板) */
+.browser-breadcrumb {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  padding: 8px 12px !important;
+  margin-bottom: 8px !important;
+  overflow-x: auto !important;
+  white-space: nowrap !important;
+  font-size: 12px !important;
+}
+
+.browser-breadcrumb button {
+  background: none !important;
+  border: none !important;
+  color: var(--accent) !important;
+  font-size: 12px !important;
+  cursor: pointer !important;
+  padding: 2px 4px !important;
+  border-radius: 4px !important;
+}
+
+.browser-breadcrumb button:hover {
+  background: var(--bg-hover) !important;
+}
+
+.browser-breadcrumb span {
+  color: var(--text-muted) !important;
+}
+
+.browser-list {
+  overflow-y: auto !important;
+  padding: 6px !important;
+}
+
+.sys-dialog {
+  min-width: 300px;
+  max-width: 380px;
+  text-align: center;
+  background: var(--bg-elevated) !important;
+  border: 1px solid var(--border-strong) !important;
+  border-radius: 8px !important;
+  padding: 18px !important;
+  box-shadow: var(--shadow-lg) !important;
+  width: 420px;
+}
+
+.sys-dialog-icon {
+  margin-bottom: 10px;
+  font-size: 24px !important;
+}
+
+.sys-dialog-msg {
+  line-height: 1.6;
+  margin-bottom: 20px;
+  white-space: pre-wrap;
+  font-size: 13px !important;
+  color: var(--text-primary) !important;
+}
+
+.module-toolbar {
+  background: var(--bg-input);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  gap: 12px;
+  padding: 10px 14px;
+  min-height: 42px;
+}
+
+.module-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.module-grid {
+  display: grid;
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 2px;
+  gap: 7px !important;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea,
+.config-row input,
+.config-row select {
+  width: 100% !important;
+}
+
+.config-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+  align-items: center;
+}
+
+.config-row > label {
+  width: 92px !important;
+}
+
+.deploy-config {
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+  margin-top: 14px !important;
+  padding: 12px !important;
+}
+
+#cleanupModal .modal {
+  width: 440px !important;
+  max-width: 440px !important;
+}
+
+#projectConfigModal .modal {
+  width: 500px !important;
+  max-width: 500px !important;
+}
+
+#quickModal .modal {
+  width: 600px !important;
+  max-width: 600px !important;
+}
+
+#addProjectModal .modal,
+#filezillaModal .modal {
+  width: 720px !important;
+  max-width: min(720px, 86vw) !important;
+}
+
+#buildModal .modal,
+#deployModal .modal {
+  width: 780px !important;
+  max-width: min(780px, 88vw) !important;
+}
+
+#remoteBrowserModal .modal {
+  width: 720px !important;
+  max-width: min(720px, 88vw) !important;
+}
+
+#serverFormModal .modal-body,
+#cleanupModal .modal-body,
+#projectConfigModal .modal-body {
+  max-height: 58vh;
+}
+
+.modal-header > div {
+  min-width: 0;
+  flex: 1;
+}
+
+.modal-header h2,
+.modal-header h3,
+.modal-subtitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.modal-footer .btn-primary,
+.modal-footer .btn-secondary {
+  min-width: 72px;
+}
+
+.modal-footer > div {
+  min-width: 0;
+}
+
+.sys-dialog-btns button {
+  flex: 1;
+  padding: 8px 0;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  min-width: 90px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.setting-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.setting-input {
+  background: var(--bg-input);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 12px;
+  padding: 6px 10px;
+  outline: none;
+  transition: border-color 0.15s;
+  width: min(320px, 38vw) !important;
+}
+
+.setting-repo-row {
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  display: grid !important;
+  grid-template-columns: minmax(180px, 2fr) minmax(110px, 1fr) minmax(110px, 1fr) 26px;
+}
+
+.form-group label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+  gap: 10px !important;
+}
+
+.modal-overlay { /* 保留：与穿插规则存在层叠依赖 */
+  background: rgba(7, 12, 20, 0.18) !important;
+}
+
+body[data-theme="light"] .modal-overlay {
+  background: rgba(244, 247, 251, 0.54) !important;
+}
+
+body[data-theme="dark"] .modal-overlay {
+  background: rgba(0, 8, 14, 0.58) !important;
+}
+
+.modal-close {
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  width: 22px !important;
+  height: 22px !important;
+  border-radius: 5px !important;
+}
+
+#serverFormModal .modal {
+  width: 392px !important;
+  max-width: 392px !important;
+}
+
+#serverFormModal .modal-body {
+  max-height: 520px !important;
+}
+
+.form-group {
+  margin-bottom: 9px !important;
+}
+
+.tag-input-container {
+  background: var(--bg-input);
+  cursor: text;
+  transition: border-color 0.15s;
+  padding: 6px !important;
+  border-radius: 6px !important;
+  min-height: 34px !important;
+}
+
+.run-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 0.82fr);
+  gap: 14px;
+}
+
+.run-config-panel,
+.run-status-panel {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-input);
+  padding: 14px;
+}
+
+.run-section-title {
+  margin-bottom: 12px;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 720;
+}
+
+.run-config-panel .config-row {
+  display: grid;
+  grid-template-columns: 82px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.run-config-panel .config-row label {
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 680;
+}
+
+.run-config-panel .run-auto-restart-label input {
+  width: 14px !important;
+  height: 14px !important;
+  padding: 0 !important;
+}
+
+.run-config-panel #runModuleRow {
+  align-items: start;
+}
+
+.run-module-config {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.run-module-config #runModuleSearch {
+  width: 100%;
+  height: 32px;
+}
+
+.run-module-picker {
+  width: 100%;
+  min-height: 128px;
+  max-height: 190px;
+  overflow: auto;
+  display: grid;
+  grid-template-columns: 1fr;
+  align-content: start;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--bg-elevated);
+}
+
+.run-home-control {
+  width: 100%;
+  min-height: 32px;
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 9px;
+}
+
+.run-home-check {
+  width: 92px !important;
+  min-height: 32px;
+  display: inline-flex !important;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--bg-elevated);
+  color: var(--text-secondary) !important;
+  font-size: 12px !important;
+  font-weight: 650 !important;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.run-config-panel .config-row > .run-home-control {
+  width: 100% !important;
+}
+
+.run-home-control #runHomeModuleName {
+  height: 32px !important;
+  min-height: 32px !important;
+  font-family: var(--font-mono);
+}
+
+.run-hint {
+  margin-top: 4px;
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+body[data-theme="light"] .run-config-panel,
+body[data-theme="light"] .run-status-panel {
+  background: rgba(248, 250, 252, 0.88);
+}
+
+body[data-theme="dark"] .run-config-panel,
+body[data-theme="dark"] .run-status-panel {
+  background: rgba(15, 28, 41, 0.72);
+}
+
+@media (max-width: 760px) {
+.run-layout {
+    grid-template-columns: 1fr;
+  }
+
+.run-module-picker {
+    grid-template-columns: 1fr;
+  }
+
+}
+
+#logModal .modal-header {
+  flex: 0 0 auto;
+  min-height: 58px !important;
+  padding: 14px 18px 12px !important;
+  background: color-mix(in srgb, var(--bg-elevated) 90%, var(--bg-input)) !important;
+}
+
+#logModal .modal-header h2 {
+  font-size: 15px !important;
+  line-height: 1.3 !important;
+}
+
+#logModal .modal-subtitle {
+  margin-top: 4px;
+  font-size: 12px !important;
+}
+
+#logModal .modal-body {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden !important;
+  padding: 0 !important;
+  background: var(--bg-elevated);
+}
+
+#logModal .deploy-progress {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px 12px;
+  align-items: center;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg-input) 48%, var(--bg-elevated));
+}
+
+#logModal .progress-steps {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  overflow-x: auto;
+  padding-bottom: 1px;
+}
+
+#logModal .progress-bar-container {
+  height: 6px;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--border) 62%, transparent);
+}
+
+#logModal .progress-bar {
+  height: 100%;
+  width: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  transition: width 0.22s ease;
+}
+
+#logModal .progress-text {
+  min-width: 42px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 720;
+  text-align: right;
+}
+
+#logModal .log-search-bar {
+  flex: 0 0 auto;
+  display: none;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg-input) 38%, var(--bg-elevated));
+}
+
+#logModal .log-search-bar.active {
+  display: flex;
+}
+
+#logModal #logSearchInput {
+  width: min(260px, 34vw);
+  height: 30px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 12px;
+}
+
+#logModal .log-search-info {
+  min-width: 46px;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+#logModal .log-search-btn {
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+#logModal .log-search-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+  background: var(--bg-hover);
+}
+
+#logModal .log-terminal {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  margin: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #253047;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.56;
+  white-space: pre-wrap;
+  word-break: break-word;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+#logModal .modal-footer {
+  flex: 0 0 auto;
+  min-height: 54px !important;
+  padding: 10px 14px !important;
+  background: color-mix(in srgb, var(--bg-elevated) 82%, var(--bg-input)) !important;
+}
+
+#logModal .deploy-result {
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+body[data-theme="light"] #logModal .modal-header,
+body[data-theme="light"] #logModal .modal-footer {
+  background: rgba(255, 255, 255, 0.9) !important;
+}
+
+body[data-theme="light"] #logModal .deploy-progress,
+body[data-theme="light"] #logModal .log-search-bar {
+  background: rgba(248, 250, 252, 0.88) !important;
+}
+
+body[data-theme="dark"] #logModal .modal-header,
+body[data-theme="dark"] #logModal .modal-footer {
+  background: rgba(18, 31, 44, 0.94) !important;
+}
+
+body[data-theme="dark"] #logModal .deploy-progress,
+body[data-theme="dark"] #logModal .log-search-bar {
+  background: rgba(15, 28, 41, 0.94) !important;
+}
+
+body[data-theme="dark"] #logModal .log-terminal {
+  border-color: rgba(174, 190, 211, 0.14);
+  background: #0d1b28;
+  color: #d7e0ec;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+@media (max-width: 720px) {
+#logModal .deploy-progress {
+    padding: 10px 12px;
+  }
+
+#logModal .log-terminal {
+    margin: 10px;
+    padding: 12px;
+    font-size: 11px;
+  }
+
+}
+
+/* ========== Notification Settings ========== */
+.setting-switch {
+  position: relative;
+  width: 38px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.setting-switch input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.setting-switch-track {
+  width: 38px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--border-strong);
+  border: 1px solid var(--border);
+  transition: background 0.16s ease, border-color 0.16s ease;
+}
+
+.setting-switch-track::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--bg-elevated);
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.22);
+  transition: transform 0.16s ease;
+}
+
+.setting-switch input:checked + .setting-switch-track {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.setting-switch input:checked + .setting-switch-track::after {
+  transform: translateX(16px);
+}
+
+/* ========== Project Intro Modal ========== */
+.modal-intro {
+  width: min(720px, calc(100vw - 48px)) !important;
+  max-width: 720px !important;
+}
+
+.intro-hero {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--bg-input) 72%, transparent);
+}
+
+.intro-mark {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  background: var(--primary-light);
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.intro-title {
+  font-size: 13px;
+  font-weight: 720;
+  color: var(--text-primary);
+  margin-bottom: 5px;
+}
+
+.intro-desc {
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.intro-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.intro-item {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 9px;
+  min-height: 88px;
+  padding: 11px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-elevated);
+}
+
+.intro-item-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  background: var(--primary-light);
+  font-size: 15px;
+  line-height: 1;
+}
+
+.intro-item strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 12px;
+  color: var(--text-primary);
+}
+
+.intro-item span {
+  display: block;
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.intro-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 12px;
+}
+
+.intro-system-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.intro-system-item {
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-input);
+}
+
+.intro-system-item span,
+.intro-system-item strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.intro-system-item span {
+  margin-bottom: 5px;
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.intro-system-item strong {
+  color: var(--text-primary);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.intro-system-item strong.ok { color: var(--success); }
+
+.intro-system-item strong.warn { color: var(--warning); }
+
+.intro-system-item strong.danger { color: var(--danger); }
+
+@media (max-width: 640px) {
+.intro-grid {
+    grid-template-columns: 1fr;
+  }
+
+}
+
+.settings-actions {
+  margin: 0 !important;
+  padding: 14px 16px !important;
+  border-top: 1px solid var(--border) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  background: color-mix(in srgb, var(--bg-elevated) 54%, transparent) !important;
+}
+
+.settings-actions .btn-primary {
+  min-width: 112px !important;
+}
+
+.modal-overlay {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  inset: 0;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  z-index: 2000 !important;
+}
+
+.deploy-config .config-row {
+  display: grid !important;
+  grid-template-columns: 100px minmax(0, 1fr) !important;
+  align-items: center !important;
+  column-gap: 14px !important;
+  row-gap: 8px !important;
+}
+
+.deploy-config .config-row > label {
+  width: auto !important;
+  padding-top: 0 !important;
+  line-height: var(--modal-choice-height) !important;
+}
+
+.deploy-config .config-row > div {
+  min-width: 0 !important;
+}
+
+.server-check-list {
+  flex-wrap: wrap;
+  display: grid !important;
+  gap: 8px !important;
+  grid-template-columns: repeat(auto-fill, var(--modal-choice-width)) !important;
+  align-items: start !important;
+}
+
+@media (max-width: 720px) {
+.deploy-config .config-row {
+    grid-template-columns: 1fr !important;
+  }
+
+.deploy-config .config-row > label {
+    line-height: 1.2 !important;
+  }
+
+.server-check-list {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+}
+
+.settings-content {
+  padding-bottom: 18px !important;
+  max-width: none !important;
+}
+
+.setting-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px !important;
+  border-bottom: 1px solid var(--border) !important;
+  min-height: 44px !important;
+}
+
+.setting-label {
+  font-weight: 650 !important;
+  font-size: 11px !important;
+  color: var(--text-primary) !important;
+}
+
+.modal-overlay.active {
+  animation: fadeIn 0.15s;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 24px;
+  background: color-mix(in srgb, var(--bg-base) 54%, transparent) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  padding: 12px 14px !important;
+  border-bottom: 1px solid var(--border) !important;
+  min-height: 44px !important;
+  background: color-mix(in srgb, var(--bg-elevated) 78%, transparent) !important;
+}
+
+.modal-header h2,
+.modal-header h3 {
+  line-height: 1.25 !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  color: var(--text-primary) !important;
+}
+
+.modal-subtitle {
+  font-size: 10px !important;
+  color: var(--text-muted) !important;
+}
+
+.modal-body {
+  padding: 14px !important;
+}
+
+.modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 10px 14px !important;
+  border-top: 1px solid var(--border) !important;
+  background: color-mix(in srgb, var(--bg-elevated) 76%, transparent) !important;
+  min-height: 48px !important;
+}
+
+/* ========== Batch Import Modal ========== */
+.batch-import-textarea {
+  width: 100%;
+  min-height: 160px;
+  max-height: 240px;
+  padding: 12px 14px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.6;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.batch-import-textarea:focus {
+  border-color: var(--primary);
+}
+
+.batch-import-textarea::placeholder {
+  color: var(--text-muted);
+}
+
+.batch-import-preview {
+  margin-top: 12px;
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  background: var(--bg-elevated);
+}
+
+/* ========== Run History ========== */
+.run-history-list {
+  max-height: 480px;
+  overflow-y: auto;
+}
+
+/* ========== Auto Restart Check ========== */
+.run-auto-restart-row.config-row {
+  align-items: center;
+  overflow: visible !important;
+}
+
+.run-config-panel .run-auto-restart-row.config-row {
+  grid-template-columns: 82px minmax(0, 1fr) !important;
+  overflow: visible !important;
+}
+
+.run-config-panel .run-auto-restart-row.config-row > label.run-auto-restart-label {
+  display: flex !important;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 0 12px;
+  height: 32px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--bg-elevated);
+  cursor: pointer;
+  font-size: 12px !important;
+  font-weight: 500;
+  color: var(--text-secondary) !important;
+  white-space: nowrap;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  flex: 1 1 auto !important;
+  box-sizing: border-box;
+  overflow: visible !important;
+}
+
+.run-auto-restart-label input[type="checkbox"] {
+  width: 14px !important;
+  height: 14px !important;
+  min-height: 14px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+  accent-color: var(--primary);
+  flex: 0 0 14px !important;
+  background: transparent !important;
+  border: 1px solid var(--border) !important;
+}
+
+/* ========== Live2D 看板娘位置覆盖 ========== */
+#waifu {
+  left: auto !important;
+  right: 20px !important;
+  bottom: 40px !important;
+  z-index: 999;
+  pointer-events: auto;
+  transform: scale(0.5) !important;
+  transform-origin: right bottom !important;
+}
+
+#waifu canvas,
+#waifu #live2d {
+  transform: none !important;
+}
+
+/* ========== 点击粒子特效 ========== */
+.click-particle {
+  position: fixed;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 99999;
+  animation: clickParticleBurst 0.6s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+}
+
+/* 9. 设置 */
+#page-settings.active {
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  height: 100% !important;
+}
+
+#page-settings > .page-header-bar {
+  flex-shrink: 0 !important;
+}
+
+#page-settings > .settings-content {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  min-height: 0 !important;
+}
+
+/* ========== UI 优化：动画与视觉增强 ========== */
+/* --- 弹窗入场动画 --- */
+.modal-overlay.active .modal {
+  animation: modalIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* --- 系统对话框入场动画 --- */
+.sys-dialog-overlay.active .sys-dialog {
+  animation: dialogIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* 设置页 - 数据备份列表 */
+.backup-list { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+
+.backup-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 8px 12px; border-radius: var(--radius-sm);
+  background: var(--bg-input); font-size: .82rem;
+}
+
+.backup-name {
+  font-family: var(--font-mono); color: var(--text-primary);
+  flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+.backup-meta { color: var(--text-muted); white-space: nowrap; font-size: .76rem; }
+
+.backup-actions { display: flex; gap: 6px; }
+
+.backup-btn { padding: 3px 10px; font-size: .76rem; }
+
+.backup-btn-danger { color: var(--danger); }
+
+.backup-pending { background: var(--warning-subtle); color: var(--warning); }
+
+.backup-pending a { color: var(--warning); text-decoration: underline; }

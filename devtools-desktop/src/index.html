@@ -10,7 +10,23 @@
     window.__TAURI__ = window.__TAURI_INTERNALS__;
   }
 </script>
-<link rel="stylesheet" href="css/style.css">
+<!-- 样式按层加载：base → layout → components → 各页面 → overrides（晚期覆盖，顺序敏感勿动） -->
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/layout.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/pages/home.css">
+<link rel="stylesheet" href="css/pages/run.css">
+<link rel="stylesheet" href="css/pages/deploy.css">
+<link rel="stylesheet" href="css/pages/terminal.css">
+<link rel="stylesheet" href="css/pages/todo.css">
+<link rel="stylesheet" href="css/pages/report.css">
+<link rel="stylesheet" href="css/pages/notes.css">
+<link rel="stylesheet" href="css/pages/notebook.css">
+<link rel="stylesheet" href="css/pages/editor.css">
+<link rel="stylesheet" href="css/pages/ipcheck.css">
+<link rel="stylesheet" href="css/pages/usage.css">
+<link rel="stylesheet" href="css/pages/settings.css">
+<link rel="stylesheet" href="css/overrides.css">
 <link rel="stylesheet" href="css/xterm.css">
 <link rel="stylesheet" href="js/vendor/codemirror/cm.bundle.css">
 </head>

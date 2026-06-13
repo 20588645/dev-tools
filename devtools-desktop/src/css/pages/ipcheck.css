@@ -1,0 +1,701 @@
+/* ===== pages/ipcheck：页面专属样式（批次5 拆分自 style.css，规则保持原始相对顺序） ===== */
+
+/* --- 加载骨架屏 --- */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-input) !important;
+  border-radius: 6px;
+  color: transparent !important;
+}
+
+.skeleton * { visibility: hidden; }
+
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+  animation: shimmer 1.5s infinite;
+}
+
+/* ==========================================================================
+   IP 纯净度检测 (IP Cleanliness/Purity Checker) 样式
+   ========================================================================== */
+/* 专属工具栏，内含检测搜索布局 */
+#page-ipcheck .ipcheck-toolbar {
+  margin-bottom: 24px;
+}
+
+#page-ipcheck .ipcheck-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+#page-ipcheck .ipcheck-search-wrap .search-bar {
+  flex: 1;
+  height: 38px;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.15s;
+}
+
+#page-ipcheck .ipcheck-search-wrap .search-bar:focus-within {
+  border-color: var(--primary);
+}
+
+#page-ipcheck .ipcheck-search-wrap .search-bar input {
+  background: none !important;
+  border: none !important;
+  color: var(--text-primary) !important;
+  font-size: 13px !important;
+  height: 100% !important;
+  width: 100% !important;
+  padding: 0 !important;
+  outline: none !important;
+}
+
+#page-ipcheck .ipcheck-search-wrap button {
+  height: 38px;
+  padding: 0 16px;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+/* 主内容容器，弹性高度自动滚动 */
+#page-ipcheck .ipcheck-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 提示状态居中展示 */
+#page-ipcheck .ipcheck-empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  text-align: center;
+  animation: fadeIn 0.3s ease;
+}
+
+/* 骨架屏网格 */
+#page-ipcheck .ipcheck-skeleton {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  height: 100%;
+}
+
+#page-ipcheck .skeleton-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+#page-ipcheck .skeleton-line {
+  height: 16px;
+  background: linear-gradient(90deg, var(--bg-input) 25%, var(--border) 50%, var(--bg-input) 75%);
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.5s infinite linear;
+  border-radius: var(--radius-xs);
+}
+
+#page-ipcheck .skeleton-line.title {
+  height: 24px;
+  width: 40%;
+}
+
+#page-ipcheck .skeleton-line.row {
+  height: 16px;
+}
+
+#page-ipcheck .skeleton-line.chart {
+  height: 140px;
+  border-radius: var(--radius-md);
+}
+
+/* 数据展示大屏 */
+#page-ipcheck .ipcheck-dashboard {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 24px;
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 24px;
+}
+
+/* 主面板容器 */
+#page-ipcheck .ipcheck-panel {
+  background: var(--bg-card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+#page-ipcheck .panel-section-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  letter-spacing: 0.02em;
+}
+
+/* 左栏：高颜值网格栅格 */
+#page-ipcheck .ipcheck-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* 突出显示第一个卡片 (IP 地址) */
+#page-ipcheck .ipcheck-info-grid .ipcheck-item:first-child {
+  grid-column: span 2;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(6, 182, 212, 0.08)) !important;
+  border: 1px solid rgba(99, 102, 241, 0.3) !important;
+  box-shadow: 0 8px 30px rgba(99, 102, 241, 0.08);
+}
+
+#page-ipcheck .ipcheck-info-grid .ipcheck-item:first-child .item-icon-box {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(6, 182, 212, 0.2));
+  color: #818cf8;
+}
+
+/* 每一个小条目卡片 */
+#page-ipcheck .ipcheck-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  background: transparent;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#page-ipcheck .ipcheck-item:hover {
+  transform: translateY(-3px) scale(1.01);
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-md);
+  background: var(--bg-card-hover);
+}
+
+/* 图标容器包装 */
+#page-ipcheck .item-icon-box {
+  width: 42px;
+  height: 42px;
+  font-size: 20px;
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+#page-ipcheck .ipcheck-item:hover .item-icon-box {
+  transform: rotate(5deg) scale(1.05);
+}
+
+/* 不同的项目小图标配置不同的主题色背光 */
+#page-ipcheck .item-icon-box.ip-addr { background: rgba(99, 102, 241, 0.12); border-color: rgba(99, 102, 241, 0.2); }
+
+#page-ipcheck .item-icon-box.ip-num { background: rgba(14, 165, 233, 0.12); border-color: rgba(14, 165, 233, 0.2); }
+
+#page-ipcheck .item-icon-box.location { background: rgba(244, 63, 94, 0.12); border-color: rgba(244, 63, 94, 0.2); }
+
+#page-ipcheck .item-icon-box.asn { background: rgba(234, 179, 8, 0.12); border-color: rgba(234, 179, 8, 0.2); }
+
+#page-ipcheck .item-icon-box.asn-owner { background: rgba(168, 85, 247, 0.12); border-color: rgba(168, 85, 247, 0.2); }
+
+#page-ipcheck .item-icon-box.org { background: color-mix(in srgb, var(--success) 12%, transparent); border-color: color-mix(in srgb, var(--success) 20%, transparent); }
+
+#page-ipcheck .item-icon-box.coords { background: rgba(6, 182, 212, 0.12); border-color: rgba(6, 182, 212, 0.2); }
+
+#page-ipcheck .item-icon-box.native { background: rgba(20, 184, 166, 0.12); border-color: rgba(20, 184, 166, 0.2); }
+
+#page-ipcheck .item-icon-box.ai-model { background: rgba(236, 72, 153, 0.12); border-color: rgba(236, 72, 153, 0.2); }
+
+#page-ipcheck .item-icon-box.shared { background: rgba(249, 115, 22, 0.12); border-color: rgba(249, 115, 22, 0.2); }
+
+#page-ipcheck .item-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+#page-ipcheck .item-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+#page-ipcheck .item-value {
+  font-size: 14px;
+  color: var(--text-primary);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  word-break: break-all;
+}
+
+/* 自定义徽章样式 */
+#page-ipcheck .ipc-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 6px;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+#page-ipcheck .ipc-badge.isp {
+  background: var(--success-subtle);
+  color: var(--success);
+}
+
+#page-ipcheck .ipc-badge.idc {
+  background: rgba(99, 102, 241, 0.15);
+  color: var(--primary);
+}
+
+/* 状态色框 */
+#page-ipcheck .status-badge {
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+#page-ipcheck .status-badge.safe {
+  background: var(--success-subtle);
+  color: var(--success);
+}
+
+#page-ipcheck .status-badge.warning {
+  background: var(--warning-subtle);
+  color: var(--warning);
+}
+
+#page-ipcheck .status-badge.danger {
+  background: var(--danger-subtle);
+  color: var(--danger);
+}
+
+#page-ipcheck .status-badge.idc {
+  background: rgba(99, 102, 241, 0.15);
+  color: var(--primary);
+}
+
+/* 风控评分面板美化 */
+#page-ipcheck .ipcheck-risk-gauge {
+  background: transparent;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s ease;
+}
+
+#page-ipcheck .gauge-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 16px;
+}
+
+#page-ipcheck .gauge-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+#page-ipcheck .gauge-score {
+  font-size: 48px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.03em;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
+}
+
+#page-ipcheck .gauge-bar-wrapper {
+  height: 12px;
+  background: var(--bg-input);
+  border-radius: 6px;
+  overflow: visible;
+  margin-bottom: 16px;
+  position: relative;
+  border: 1px solid var(--border);
+}
+
+#page-ipcheck .gauge-bar-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 6px;
+  transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.3s;
+  position: relative;
+}
+
+/* 风控值末尾发光呼吸点 */
+#page-ipcheck .gauge-bar-fill::after {
+  content: '';
+  position: absolute;
+  right: -6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 0 10px currentColor;
+  border: 2px solid rgba(0, 0, 0, 0.15);
+  animation: pulseGlow 1.8s infinite ease-in-out;
+}
+
+#page-ipcheck .gauge-bar-fill.safe {
+  background: linear-gradient(90deg, var(--success), color-mix(in srgb, var(--success) 75%, black));
+  color: var(--success);
+}
+
+#page-ipcheck .gauge-bar-fill.clean {
+  background: linear-gradient(90deg, var(--success), var(--warning));
+  color: var(--warning);
+}
+
+#page-ipcheck .gauge-bar-fill.warning {
+  background: linear-gradient(90deg, var(--warning), var(--danger));
+  color: var(--warning);
+}
+
+#page-ipcheck .gauge-bar-fill.danger {
+  background: linear-gradient(90deg, var(--danger), color-mix(in srgb, var(--danger) 55%, black));
+  color: var(--danger);
+}
+
+#page-ipcheck .gauge-labels {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  font-size: 10px;
+  color: var(--text-muted);
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+#page-ipcheck .gauge-label-item {
+  position: relative;
+  font-weight: 500;
+}
+
+#page-ipcheck .gauge-result-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  border-top: 1px solid var(--border);
+  padding-top: 20px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* 🛡️ 右侧大面板动态氛围呼吸光 */
+#page-ipcheck .ipcheck-risk-panel.safe {
+  border-color: color-mix(in srgb, var(--success) 25%, transparent) !important;
+  box-shadow: 0 8px 30px color-mix(in srgb, var(--success) 4%, transparent), 0 0 15px color-mix(in srgb, var(--success) 3%, transparent) !important;
+}
+
+#page-ipcheck .ipcheck-risk-panel.warning {
+  border-color: color-mix(in srgb, var(--warning) 25%, transparent) !important;
+  box-shadow: 0 8px 30px color-mix(in srgb, var(--warning) 4%, transparent), 0 0 15px color-mix(in srgb, var(--warning) 3%, transparent) !important;
+}
+
+#page-ipcheck .ipcheck-risk-panel.danger {
+  border-color: color-mix(in srgb, var(--danger) 25%, transparent) !important;
+  box-shadow: 0 8px 30px color-mix(in srgb, var(--danger) 5%, transparent), 0 0 20px color-mix(in srgb, var(--danger) 4%, transparent) !important;
+}
+
+/* 场景推荐卡片列表 - 玻璃磨砂网格 */
+#page-ipcheck .ipcheck-scenarios {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+#page-ipcheck .scene-recommendation-card {
+  background: transparent !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#page-ipcheck .scene-recommendation-card:hover {
+  transform: translateY(-4px) scale(1.02);
+  background: var(--bg-hover) !important;
+}
+
+/* 卡片根据推荐级别，悬停时产生对应的细发光边框 */
+#page-ipcheck .scene-recommendation-card:hover:has(.scene-advice.safe) {
+  border-color: color-mix(in srgb, var(--success) 40%, transparent) !important;
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--success) 8%, transparent);
+}
+
+#page-ipcheck .scene-recommendation-card:hover:has(.scene-advice.warning) {
+  border-color: color-mix(in srgb, var(--warning) 40%, transparent) !important;
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--warning) 8%, transparent);
+}
+
+#page-ipcheck .scene-recommendation-card:hover:has(.scene-advice.danger) {
+  border-color: color-mix(in srgb, var(--danger) 40%, transparent) !important;
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--danger) 8%, transparent);
+}
+
+#page-ipcheck .scene-icon {
+  font-size: 22px;
+  background: var(--bg-hover) !important;
+  border: 1px solid var(--border);
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s ease;
+}
+
+#page-ipcheck .scene-recommendation-card:hover .scene-icon {
+  transform: scale(1.08) rotate(3deg);
+  background: var(--bg-hover) !important;
+}
+
+#page-ipcheck .scene-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+#page-ipcheck .scene-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+}
+
+#page-ipcheck .scene-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* 星星霓虹发光效果 */
+#page-ipcheck .scene-stars {
+  font-size: 12px;
+  color: var(--warning);
+  letter-spacing: 0.02em;
+  text-shadow: 0 0 5px color-mix(in srgb, var(--warning) 40%, transparent), 0 0 10px color-mix(in srgb, var(--warning) 10%, transparent);
+  flex-shrink: 0;
+}
+
+#page-ipcheck .scene-advice {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 5px;
+  display: inline-block;
+  align-self: flex-start;
+}
+
+#page-ipcheck .scene-advice.safe {
+  background: var(--success-subtle);
+  color: var(--success);
+}
+
+#page-ipcheck .scene-advice.warning {
+  background: var(--warning-subtle);
+  color: var(--warning);
+}
+
+#page-ipcheck .scene-advice.danger {
+  background: var(--danger-subtle);
+  color: var(--danger);
+}
+
+/* 👥 共享人数评估大卡片样式 */
+#page-ipcheck .ipcheck-shared-card {
+  background: transparent;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s ease;
+}
+
+/* 根据状态赋予呼吸光环 */
+#page-ipcheck .ipcheck-shared-card:has(.shared-card-status.safe) {
+  border-color: color-mix(in srgb, var(--success) 25%, transparent) !important;
+  box-shadow: 0 8px 30px color-mix(in srgb, var(--success) 4%, transparent), 0 0 15px color-mix(in srgb, var(--success) 2%, transparent) !important;
+}
+
+#page-ipcheck .ipcheck-shared-card:has(.shared-card-status.clean) {
+  border-color: rgba(6, 182, 212, 0.25) !important;
+  box-shadow: 0 8px 30px rgba(6, 182, 212, 0.04), 0 0 15px rgba(6, 182, 212, 0.02) !important;
+}
+
+#page-ipcheck .ipcheck-shared-card:has(.shared-card-status.warning) {
+  border-color: color-mix(in srgb, var(--warning) 25%, transparent) !important;
+  box-shadow: 0 8px 30px color-mix(in srgb, var(--warning) 4%, transparent), 0 0 15px color-mix(in srgb, var(--warning) 2%, transparent) !important;
+}
+
+#page-ipcheck .ipcheck-shared-card:has(.shared-card-status.danger) {
+  border-color: color-mix(in srgb, var(--danger) 25%, transparent) !important;
+  box-shadow: 0 8px 30px color-mix(in srgb, var(--danger) 4%, transparent), 0 0 15px color-mix(in srgb, var(--danger) 2%, transparent) !important;
+}
+
+#page-ipcheck .shared-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+#page-ipcheck .shared-card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+#page-ipcheck .shared-score-row {
+  display: flex;
+  align-items: baseline;
+  margin-bottom: 16px;
+  gap: 4px;
+}
+
+#page-ipcheck .shared-score-val {
+  font-size: 48px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.03em;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
+}
+
+#page-ipcheck .shared-score-unit {
+  font-size: 14px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* 独享度进度条 */
+#page-ipcheck .shared-bar-wrapper {
+  height: 12px;
+  background: var(--bg-input);
+  border-radius: 6px;
+  overflow: visible;
+  margin-bottom: 16px;
+  position: relative;
+  border: 1px solid var(--border);
+}
+
+#page-ipcheck .shared-bar-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 6px;
+  transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.3s;
+  position: relative;
+}
+
+/* 发光指示点 */
+#page-ipcheck .shared-bar-fill::after {
+  content: '';
+  position: absolute;
+  right: -6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 0 10px currentColor;
+  border: 2px solid rgba(0, 0, 0, 0.15);
+  animation: pulseGlow 1.8s infinite ease-in-out;
+}
+
+#page-ipcheck .shared-bar-fill.safe { background: linear-gradient(90deg, var(--success), color-mix(in srgb, var(--success) 75%, black)); color: var(--success); }
+
+#page-ipcheck .shared-bar-fill.clean { background: linear-gradient(90deg, #06b6d4, #3b82f6); color: #06b6d4; }
+
+#page-ipcheck .shared-bar-fill.warning { background: linear-gradient(90deg, var(--warning), var(--warning)); color: var(--warning); }
+
+#page-ipcheck .shared-bar-fill.danger { background: linear-gradient(90deg, var(--danger), color-mix(in srgb, var(--danger) 85%, black)); color: var(--danger); }
+
+#page-ipcheck .shared-labels {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  font-size: 10px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+#page-ipcheck .shared-label-item {
+  position: relative;
+  font-weight: 500;
+}
