@@ -863,6 +863,42 @@ function escapeAttr(str) {
   return escapeHtml(str).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
+// 用于内联 onclick="fn('${escapeOnclickArg(x)}')" 的【JS 字符串参数】转义。
+// 关键：浏览器执行 onclick 前会先做一次 HTML 实体解码，escapeAttr 把 ' 编成 &#39; 会被还原成字面 '，
+// 仍会断裂单引号字符串（含可执行注入）。故必须先做 JS 字符串层转义（\ 与 ' 与换行），
+// 再做 HTML 实体编码（& < > "）——解码后恰好是合法 JS 字符串字面量。
+// 注意：仅用于 onclick 的 JS 字符串值；普通属性值（title/data-*）仍用 escapeAttr。
+function escapeOnclickArg(str) {
+  return String(str == null ? '' : str)
+    .replace(/\\/g, '\\\\')
+    .replace(/'/g, "\\'")
+    .replace(/\r/g, '\\r')
+    .replace(/\n/g, '\\n')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// 异步操作期间锁定按钮：防连点重复请求 + 给即时进行态反馈；无论成败都恢复
+// btn 已 disabled（上次请求未完成）时直接忽略本次点击；按钮在请求中被重渲移除则跳过恢复
+async function withButtonBusy(btn, busyText, fn) {
+  if (btn && btn.disabled) return;
+  const orig = btn ? btn.innerHTML : null;
+  if (btn) {
+    btn.disabled = true;
+    if (busyText) btn.innerHTML = busyText;
+  }
+  try {
+    return await fn();
+  } finally {
+    if (btn && btn.isConnected) {
+      btn.disabled = false;
+      btn.innerHTML = orig;
+    }
+  }
+}
+
 function setStepActive(idx) {
   document.querySelectorAll('.step').forEach((s, i) => {
     s.classList.toggle('active', i === idx);
