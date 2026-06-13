@@ -157,7 +157,16 @@ function renderRunPage() {
   if (batchStopBtn) batchStopBtn.style.display = runningCount > 0 ? '' : 'none';
 
   if (list.length === 0) {
-    grid.innerHTML = '<div class="run-empty">没有匹配的项目</div>';
+    // 区分两种空态：从未添加项目 → 引导添加；有项目但被搜索/筛选过滤光 → 提示无匹配
+    if (projects.length === 0) {
+      grid.innerHTML = `<div class="run-empty run-empty-guide">
+        <div class="run-empty-icon">📂</div>
+        <div>还没有可运行的项目</div>
+        <button class="btn-primary" onclick="showAddProject()">+ 添加项目</button>
+      </div>`;
+    } else {
+      grid.innerHTML = '<div class="run-empty">没有匹配的项目</div>';
+    }
     return;
   }
 
@@ -177,9 +186,9 @@ function renderRunPage() {
       stateHtml = `<div><span class="run-dot"></span>${job.status === 'starting' ? '启动中' : '运行中'} · ${url}</div>
       <span>PID ${job.pid || '—'} · ${formatRunUptime(job.startedAt)}</span>`;
       actionHtml = `
-        <button class="btn-danger" onclick="stopLocalRun('${p.name}')">■ 停止</button>
-        <button class="btn-secondary" onclick="openRunLog('${p.name}')">查看日志</button>
-        <button class="btn-primary" onclick="openRunUrl('${p.name}')">打开地址</button>
+        <button class="btn-danger" onclick="stopLocalRun('${escapeOnclickArg(p.name)}', event)">■ 停止</button>
+        <button class="btn-secondary" onclick="openRunLog('${escapeOnclickArg(p.name)}')">查看日志</button>
+        <button class="btn-primary" onclick="openRunUrl('${escapeOnclickArg(p.name)}', event)">打开地址</button>
       `;
     } else {
       if (alertInfo) {
@@ -191,15 +200,15 @@ function renderRunPage() {
           </div>
         `;
         actionHtml = `
-          <button class="btn-warning" onclick="forceReleaseAndStart('${escapeAttr(p.name)}', ${alertInfo.pid})">⚡ 一键释放并启动</button>
-          <button class="btn-primary" onclick="openRunModal('${escapeAttr(p.name)}', 'start')">▶ 启动</button>
-          <button class="btn-secondary" onclick="openRunModal('${escapeAttr(p.name)}', 'config')">配置</button>
+          <button class="btn-warning" onclick="forceReleaseAndStart('${escapeOnclickArg(p.name)}', ${alertInfo.pid})">⚡ 一键释放并启动</button>
+          <button class="btn-primary" onclick="openRunModal('${escapeOnclickArg(p.name)}', 'start')">▶ 启动</button>
+          <button class="btn-secondary" onclick="openRunModal('${escapeOnclickArg(p.name)}', 'config')">配置</button>
         `;
       } else {
         stateHtml = '<div>○ 尚未运行</div><span>点击启动可配置命令和模块</span>';
         actionHtml = `
-          <button class="btn-primary" onclick="openRunModal('${escapeAttr(p.name)}', 'start')">▶ 启动运行</button>
-          <button class="btn-secondary" onclick="openRunModal('${escapeAttr(p.name)}', 'config')">配置</button>
+          <button class="btn-primary" onclick="openRunModal('${escapeOnclickArg(p.name)}', 'start')">▶ 启动运行</button>
+          <button class="btn-secondary" onclick="openRunModal('${escapeOnclickArg(p.name)}', 'config')">配置</button>
         `;
       }
     }
@@ -290,7 +299,7 @@ function renderRunModalStatus(job) {
         ${quickModules.length
           ? `<div class="run-quick-grid">
               ${quickModules.map(name => `
-                <button type="button" class="run-quick-module${selectedRunModuleNames.has(name) ? ' active' : ''}" data-module="${escapeAttr(name)}" onclick="toggleRunQuickModule('${escapeAttr(name)}')" title="${escapeAttr(name)}">
+                <button type="button" class="run-quick-module${selectedRunModuleNames.has(name) ? ' active' : ''}" data-module="${escapeAttr(name)}" onclick="toggleRunQuickModule('${escapeOnclickArg(name)}')" title="${escapeAttr(name)}">
                   <span class="run-quick-check">${selectedRunModuleNames.has(name) ? '✓' : ''}</span>
                   <strong>${escapeHtml(name)}</strong>
                 </button>
@@ -311,9 +320,9 @@ function renderRunModalStatus(job) {
       <div class="run-live-url">${url}</div>
       <div class="run-live-meta">PID ${job.pid || '—'} · ${formatRunModules(job)} · ${job.command || ''}</div>
       <div class="run-live-actions">
-        <button class="btn-secondary" onclick="openRunLog('${job.projectName}')">查看日志</button>
-        <button class="btn-secondary" onclick="openRunUrl('${job.projectName}')">打开地址</button>
-        <button class="btn-danger" onclick="stopLocalRun('${job.projectName}')">停止运行</button>
+        <button class="btn-secondary" onclick="openRunLog('${escapeOnclickArg(job.projectName)}')">查看日志</button>
+        <button class="btn-secondary" onclick="openRunUrl('${escapeOnclickArg(job.projectName)}', event)">打开地址</button>
+        <button class="btn-danger" onclick="stopLocalRun('${escapeOnclickArg(job.projectName)}', event)">停止运行</button>
       </div>
     </div>`;
 }
@@ -448,26 +457,32 @@ async function openRunLog(projectName) {
   }
 }
 
-async function openRunUrl(projectName) {
+async function openRunUrl(projectName, ev) {
   const job = runningProjects[projectName];
   if (!job) return;
-  try {
-    const data = await API.post(`/api/run/${job.id}/open`, {});
-    showToast('已打开本地地址', data.url);
-  } catch (e) {
-    showAlert('打开失败: ' + e.message, { icon: '❌' });
-  }
+  // 锁按钮防连点开多个浏览器标签
+  await withButtonBusy(ev && ev.currentTarget, null, async () => {
+    try {
+      const data = await API.post(`/api/run/${job.id}/open`, {});
+      showToast('已打开本地地址', data.url);
+    } catch (e) {
+      showAlert('打开失败: ' + e.message, { icon: '❌' });
+    }
+  });
 }
 
-async function stopLocalRun(projectName) {
+async function stopLocalRun(projectName, ev) {
   const job = runningProjects[projectName];
   if (!job) return;
-  try {
-    await API.post(`/api/run/${job.id}/stop`, {});
-    showToast('正在停止本地服务', projectName);
-  } catch (e) {
-    showAlert('停止失败: ' + e.message, { icon: '❌' });
-  }
+  // 停止有可见延迟（依赖 WS 回推移除卡片），锁按钮防连点重复 stop
+  await withButtonBusy(ev && ev.currentTarget, '停止中…', async () => {
+    try {
+      await API.post(`/api/run/${job.id}/stop`, {});
+      showToast('正在停止本地服务', projectName);
+    } catch (e) {
+      showAlert('停止失败: ' + e.message, { icon: '❌' });
+    }
+  });
 }
 
 // ========== 批量停止 ==========
@@ -478,12 +493,14 @@ async function batchStopAllRun() {
     return;
   }
   if (!await showConfirm(`确定停止全部 ${runningNames.length} 个运行中的服务？`, { icon: '⚠️', confirmText: '全部停止', danger: true })) return;
-  try {
-    await API.post('/api/run/batch-stop', { projectNames: runningNames });
-    showToast(`正在停止 ${runningNames.length} 个服务`);
-  } catch (e) {
-    showAlert('批量停止失败: ' + e.message, { icon: '❌' });
-  }
+  await withButtonBusy(document.getElementById('btnBatchStopRun'), '停止中…', async () => {
+    try {
+      await API.post('/api/run/batch-stop', { projectNames: runningNames });
+      showToast(`正在停止 ${runningNames.length} 个服务`);
+    } catch (e) {
+      showAlert('批量停止失败: ' + e.message, { icon: '❌' });
+    }
+  });
 }
 
 // ========== 运行历史 ==========
@@ -519,6 +536,8 @@ async function showRunHistory() {
 }
 
 async function deleteRunHistoryItem(id) {
+  // 删除不可逆、按钮又是小图标易误触，与「清空历史」确认粒度对齐
+  if (!await showConfirm('确定删除这条运行记录？', { icon: '🗑️', danger: true, confirmText: '删除' })) return;
   try {
     await API.del(`/api/run/history/${id}`);
     showRunHistory();

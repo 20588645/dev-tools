@@ -238,6 +238,24 @@
   text-align: center;
 }
 
+/* 引导型空态（从未添加项目）与失败态（接口失败带重试）共用纵向居中布局 */
+.run-empty-guide,
+.run-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.run-empty-icon {
+  font-size: 40px;
+  line-height: 1;
+}
+
+.run-error {
+  color: var(--danger);
+}
+
 @media (max-width: 1180px) {
 .run-project-grid {
     grid-template-columns: repeat(2, minmax(260px, 1fr));
@@ -410,6 +428,9 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: 7px;
+  /* 收藏模块多时内部滚动，避免撑破弹窗把「启动运行」按钮推出可视区 */
+  max-height: 220px;
+  overflow-y: auto;
 }
 
 .run-quick-module {

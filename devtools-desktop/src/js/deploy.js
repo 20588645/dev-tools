@@ -22,6 +22,22 @@ async function loadProjects() {
     syncTrayMenu();
   } catch (e) {
     console.error('加载项目失败:', e);
+    // 首屏失败（尚无数据）：清屏给失败态 + 重试入口；后台刷新失败：保留旧数据，仅 toast
+    if (!projects || projects.length === 0) {
+      const failHtml = (pad) => `<div class="run-empty run-error" style="grid-column:1/-1;padding:${pad}px">
+        <div class="run-empty-icon">⚠️</div>
+        <div>加载项目失败：${escapeHtml(e.message)}</div>
+        <button class="btn-secondary" onclick="loadProjects()">重试</button>
+      </div>`;
+      const runGrid = document.getElementById('runProjectGrid');
+      if (runGrid) runGrid.innerHTML = failHtml(48);
+      const runOverview = document.getElementById('runOverview');
+      if (runOverview) runOverview.innerHTML = '';
+      const projGrid = document.getElementById('projectGrid');
+      if (projGrid) projGrid.innerHTML = failHtml(60);
+    } else {
+      showToast('刷新项目失败：' + e.message);
+    }
   }
 }
 
@@ -243,16 +259,18 @@ function renderAvailableProjects(filter = '') {
   const filtered = availableProjects.filter(p => !filter || p.name.toLowerCase().includes(filter.toLowerCase()));
   document.getElementById('availableProjectGrid').innerHTML = filtered.length
     ? filtered.map(p => `
-      <div class="module-item ${checkedAvailableProjects.has(p.path) ? 'checked' : ''}" onclick="toggleAvailableProject('${p.path}')">
+      <div class="module-item ${checkedAvailableProjects.has(p.path) ? 'checked' : ''}" data-path="${escapeAttr(p.path)}" onclick="toggleAvailableProject(this)">
         <div class="checkbox">${checkedAvailableProjects.has(p.path) ? '✓' : ''}</div>
-        <span>${p.name}</span>
+        <span title="${escapeAttr(p.name)}">${escapeHtml(p.name)}</span>
       </div>`).join('')
     : '<div style="text-align:center;color:var(--text-muted);padding:24px;grid-column:1/-1">所有项目已添加</div>';
   document.getElementById('selectedProjectCount').textContent = `已选 ${checkedAvailableProjects.size} 个`;
   updateAddSubmitBtn();
 }
 
-function toggleAvailableProject(path) {
+// 路径经 data-path 传递（浏览器解码后即原始值），避免内联 onclick 字符串拼接的转义陷阱
+function toggleAvailableProject(el) {
+  const path = el.dataset.path;
   checkedAvailableProjects.has(path) ? checkedAvailableProjects.delete(path) : checkedAvailableProjects.add(path);
   renderAvailableProjects(document.getElementById('availableProjectSearch').value);
 }
@@ -280,11 +298,11 @@ async function browseTo(dir) {
 function renderBrowseBreadcrumb(currentDir, root) {
   const rel = currentDir.replace(root, '').replace(/^\//, '');
   const parts = rel ? rel.split('/') : [];
-  let html = `<button onclick="browseTo('${root}')">📁 project</button>`;
+  let html = `<button onclick="browseTo('${escapeOnclickArg(root)}')">📁 project</button>`;
   let accum = root;
   parts.forEach(p => {
     accum = accum + '/' + p;
-    html += `<span>/</span><button onclick="browseTo('${accum}')">${p}</button>`;
+    html += `<span>/</span><button onclick="browseTo('${escapeOnclickArg(accum)}')">${escapeHtml(p)}</button>`;
   });
   document.getElementById('addBrowseBreadcrumb').innerHTML = html;
 }
@@ -299,37 +317,35 @@ function renderBrowseList(entries) {
       const checked = checkedBrowseProjects.has(e.path);
       const disabled = e.alreadyAdded;
       return `<div class="browser-item ${checked ? 'selected' : ''} ${disabled ? 'disabled' : ''}"
-                   onclick="${disabled ? '' : `toggleBrowseProject('${e.path}')`}"
+                   ${disabled ? '' : `data-path="${escapeAttr(e.path)}" onclick="toggleBrowseProject(this)"`}
                    style="cursor:${disabled ? 'not-allowed' : 'pointer'}">
-        <span style="display:flex;align-items:center;gap:8px">
+        <span style="display:flex;align-items:center;gap:8px;min-width:0">
           ${disabled ? '✅' : checked ? '<span style="color:var(--accent)">☑</span>' : '☐'}
-          <span style="color:var(--accent)">📦</span> ${e.name}
+          <span style="color:var(--accent)">📦</span> <span title="${escapeAttr(e.name)}">${escapeHtml(e.name)}</span>
         </span>
         <span style="font-size:11px;color:var(--text-muted)">${disabled ? '已添加' : '前端项目'}</span>
       </div>`;
     } else if (e.hasSubDirs) {
-      return `<div class="browser-item" onclick="browseTo('${e.path}')" style="cursor:pointer">
-        <span style="display:flex;align-items:center;gap:8px">📁 ${e.name}</span>
+      return `<div class="browser-item" onclick="browseTo('${escapeOnclickArg(e.path)}')" style="cursor:pointer">
+        <span style="display:flex;align-items:center;gap:8px">📁 <span title="${escapeAttr(e.name)}">${escapeHtml(e.name)}</span></span>
         <span style="font-size:11px;color:var(--text-muted)">→</span>
       </div>`;
     } else {
       return `<div class="browser-item disabled" style="cursor:default;opacity:.4">
-        <span style="display:flex;align-items:center;gap:8px">📁 ${e.name}</span>
+        <span style="display:flex;align-items:center;gap:8px">📁 ${escapeHtml(e.name)}</span>
         <span style="font-size:11px;color:var(--text-muted)">空</span>
       </div>`;
     }
   }).join('');
 }
 
-function toggleBrowseProject(p) {
+// 路径经 data-path 传递；重刷高亮也读 dataset.path，不再正则反解 onclick（含单引号路径也能正确命中）
+function toggleBrowseProject(el) {
+  const p = el.dataset.path;
   checkedBrowseProjects.has(p) ? checkedBrowseProjects.delete(p) : checkedBrowseProjects.add(p);
   document.getElementById('browseSelectedCount').textContent = `已选 ${checkedBrowseProjects.size} 个`;
-  document.querySelectorAll('#addBrowseList .browser-item:not(.disabled)').forEach(el => {
-    const onclick = el.getAttribute('onclick') || '';
-    const match = onclick.match(/toggleBrowseProject\('(.+?)'\)/);
-    if (match) {
-      el.classList.toggle('selected', checkedBrowseProjects.has(match[1]));
-    }
+  document.querySelectorAll('#addBrowseList .browser-item:not(.disabled)').forEach(item => {
+    if (item.dataset.path) item.classList.toggle('selected', checkedBrowseProjects.has(item.dataset.path));
   });
   updateAddSubmitBtn();
 }
