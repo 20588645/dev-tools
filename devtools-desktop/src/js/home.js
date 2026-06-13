@@ -535,56 +535,6 @@ function refreshHomeIfVisible() {
   }
 }
 
-function getHomeActivityTypeLabel(item) {
-  if (item.type === 'deploy') return '部署';
-  if (item.type === 'run') return '运行';
-  return '构建';
-}
-
-function getHomeActivityStatus(item) {
-  if (item.type === 'run') {
-    if (item.status === 'warning') {
-      return { dotCls: 'warning', statusCls: 'warning', statusText: '有报错', eventLabel: '本地运行异常' };
-    }
-    if (item.status === 'starting') {
-      return { dotCls: 'running', statusCls: 'running', statusText: '启动中', eventLabel: '本地启动中' };
-    }
-    return { dotCls: 'running', statusCls: 'running', statusText: '运行中', eventLabel: '本地运行中' };
-  }
-  if (item.status === 'success') return { dotCls: 'success', statusCls: 'success', statusText: '成功' };
-  if (item.status === 'running') return { dotCls: 'running', statusCls: 'running', statusText: '进行中' };
-  return { dotCls: 'fail', statusCls: 'fail', statusText: '失败' };
-}
-
-function formatAverageDuration(history) {
-  const seconds = history
-    .map(item => parseDurationSeconds(item.duration))
-    .filter(value => Number.isFinite(value) && value > 0);
-  if (!seconds.length) return '—';
-  const avg = Math.round(seconds.reduce((sum, value) => sum + value, 0) / seconds.length);
-  if (avg < 60) return `${avg}s`;
-  const minutes = Math.floor(avg / 60);
-  const remainSeconds = avg % 60;
-  if (minutes < 60) return remainSeconds ? `${minutes}m ${remainSeconds}s` : `${minutes}m`;
-  return `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
-}
-
-function parseDurationSeconds(duration) {
-  if (typeof duration === 'number') return duration;
-  if (!duration) return NaN;
-  const text = String(duration);
-  let total = 0;
-  const hour = text.match(/(\d+)\s*h/);
-  const minute = text.match(/(\d+)\s*m/);
-  const second = text.match(/(\d+)\s*s/);
-  if (hour) total += Number(hour[1]) * 3600;
-  if (minute) total += Number(minute[1]) * 60;
-  if (second) total += Number(second[1]);
-  if (total > 0) return total;
-  const plain = text.match(/^(\d+)$/);
-  return plain ? Number(plain[1]) : NaN;
-}
-
 async function refreshProjectIntroStatus() {
   const versionEl = document.getElementById('introVersion');
   const sidecarEl = document.getElementById('introSidecarStatus');

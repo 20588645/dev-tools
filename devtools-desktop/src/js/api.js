@@ -18,12 +18,6 @@ function getTauriInvoke() {
       || (window.__TAURI_INTERNALS__ && window.__TAURI_INTERNALS__.invoke)
       || null;
 }
-function hasTauri() { return !!getTauriInvoke(); }
-async function tauriInvoke(cmd, args) {
-  const fn = getTauriInvoke();
-  if (!fn) throw new Error('Tauri 调用不可用');
-  return fn(cmd, args);
-}
 
 async function initAPI() {
   const invoke = getTauriInvoke();
