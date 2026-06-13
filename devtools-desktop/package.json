@@ -10,7 +10,7 @@
     "sync-version": "node scripts/sync-version.js",
     "lint": "npm run lint:js && npm run lint:css",
     "lint:js": "npx --yes eslint@9 sidecar scripts src/js",
-    "lint:css": "npx --yes stylelint@16 \"src/css/*.css\""
+    "lint:css": "npx --yes stylelint@16 \"src/css/**/*.css\""
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.0.0"

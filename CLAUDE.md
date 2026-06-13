@@ -6,7 +6,7 @@
 ## 项目形态
 
 - **Tauri 2 (Rust) + Node.js Sidecar (Express) + 无框架 vanilla JS 前端**——无框架/无构建是刻意选择，禁止引入框架、打包器、转译器
-- 前端：`devtools-desktop/src/`（`index.html` 单页多 `<section class="page">` + `js/` 按模块分文件 + `css/style.css`）
+- 前端：`devtools-desktop/src/`（`index.html` 单页多 `<section class="page">` + `js/` 按模块分文件 + `css/` 分层：`base → layout → components → pages/<页面> → overrides`，加载顺序即层叠顺序，新样式写进对应层；`overrides.css` 是顺序敏感的历史晚期覆盖，只减不增）
 - 后端：`devtools-desktop/sidecar/`（`routes/` 按模块、`services/` 公共服务、SQLite via better-sqlite3）
 
 ## 铁律
