@@ -149,9 +149,9 @@ function renderRunPage() {
   // 改统计多模块项目数，与单体区分，是真实可读的口径
   const multiModuleCount = projects.filter(p => p.type === 'multi-module').length;
   overview.innerHTML = `
-    <div class="run-stat-card run-stat-total"><span>可运行项目</span><strong>${projects.length}</strong></div>
-    <div class="run-stat-card run-stat-running${runningCount > 0 ? ' is-active' : ''}"><span>运行中</span><strong>${runningCount}</strong></div>
-    <div class="run-stat-card run-stat-multi"><span>多模块项目</span><strong>${multiModuleCount}</strong></div>
+    <div class="run-stat-card"><span>可运行项目</span><strong>${projects.length}</strong></div>
+    <div class="run-stat-card"><span>运行中</span><strong>${runningCount}</strong></div>
+    <div class="run-stat-card"><span>多模块项目</span><strong>${multiModuleCount}</strong></div>
   `;
 
   // 显示/隐藏批量停止按钮

@@ -54,6 +54,21 @@
   width: min(360px, 42vw);
 }
 
+/* 工具栏控件齐高：chips 与右侧按钮统一 32px 并垂直居中，与 34px 搜索框对齐成一条线 */
+#page-run .run-page-toolbar .chip {
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+}
+
+#page-run .run-page-toolbar .btn-secondary {
+  height: 32px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  box-shadow: none;
+}
+
 #page-run .search-bar {
   width: min(360px, 42vw) !important;
   height: 34px !important;
@@ -120,6 +135,8 @@
   display: block;
   margin-top: 6px;
   color: var(--text-primary);
+  /* 数值统一 font-mono，与全应用数字排版一致 */
+  font-family: var(--font-mono);
   font-size: 28px;
   line-height: 1;
 }
@@ -360,7 +377,7 @@
 }
 
 .run-card-state.port-alert .alert-content code {
-  background: rgba(245, 165, 36, 0.15);
+  background: color-mix(in srgb, var(--warning) 15%, transparent);
   color: var(--warning);
   padding: 1px 4px;
   border-radius: 4px;
@@ -562,7 +579,7 @@
 #logModal.run-compile-error .step.done {
   color: color-mix(in srgb, var(--danger) 85%, black);
   border-color: color-mix(in srgb, var(--danger) 30%, transparent);
-  background: rgba(254, 226, 226, 0.82);
+  background: color-mix(in srgb, var(--danger) 12%, var(--bg-card));
 }
 
 #logModal.run-compile-error .step.active .step-dot,
@@ -573,9 +590,9 @@
 
 body[data-theme="dark"] #logModal.run-compile-error .step.active,
 body[data-theme="dark"] #logModal.run-compile-error .step.done {
-  color: #ff7a86;
-  border-color: rgba(255, 122, 134, 0.32);
-  background: rgba(127, 29, 29, 0.32);
+  color: color-mix(in srgb, var(--danger) 80%, white);
+  border-color: color-mix(in srgb, var(--danger) 32%, transparent);
+  background: color-mix(in srgb, var(--danger) 28%, black);
 }
 
 .ha-table td {
