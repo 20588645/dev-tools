@@ -363,33 +363,37 @@
 
 <!-- 本地运行 -->
 <section class="page" id="page-run">
-  <div class="page-header-bar page-header-simple">
-    <div>
-      <div class="page-title">▶ 本地运行</div>
-      <div class="page-subtitle">快速启动前端开发服务，管理模块、日志和本地地址</div>
+  <div class="page-fixed-header">
+    <div class="page-header-bar page-header-simple">
+      <div>
+        <div class="page-title">▶ 本地运行</div>
+        <div class="page-subtitle">快速启动前端开发服务，管理模块、日志和本地地址</div>
+      </div>
+      <div class="page-header-actions">
+        <button class="btn-primary" onclick="showAddProject()" style="white-space:nowrap">+ 添加项目</button>
+      </div>
     </div>
-    <div class="page-header-actions">
-      <button class="btn-primary" onclick="showAddProject()" style="white-space:nowrap">+ 添加项目</button>
+
+    <div class="page-toolbar run-page-toolbar">
+      <div class="run-page-search search-bar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" placeholder="搜索可运行项目..." id="runSearchInput" autocomplete="off">
+      </div>
+      <div class="run-page-filters">
+        <button class="chip active" data-run-filter="all">全部</button>
+        <button class="chip" data-run-filter="running">运行中</button>
+        <button class="chip" data-run-filter="multi">多模块</button>
+        <button class="chip" data-run-filter="single">单体项目</button>
+      </div>
+      <button class="btn-secondary" onclick="batchStopAllRun()" id="btnBatchStopRun" style="white-space:nowrap;display:none">■ 全部停止</button>
+      <button class="btn-secondary" onclick="showRunHistory()" style="white-space:nowrap">📋 运行历史</button>
     </div>
   </div>
 
-  <div class="page-toolbar run-page-toolbar">
-    <div class="run-page-search search-bar">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      <input type="text" placeholder="搜索可运行项目..." id="runSearchInput" autocomplete="off">
-    </div>
-    <div class="run-page-filters">
-      <button class="chip active" data-run-filter="all">全部</button>
-      <button class="chip" data-run-filter="running">运行中</button>
-      <button class="chip" data-run-filter="multi">多模块</button>
-      <button class="chip" data-run-filter="single">单体项目</button>
-    </div>
-    <button class="btn-secondary" onclick="batchStopAllRun()" id="btnBatchStopRun" style="white-space:nowrap;display:none">■ 全部停止</button>
-    <button class="btn-secondary" onclick="showRunHistory()" style="white-space:nowrap">📋 运行历史</button>
+  <div class="page-scroll-body">
+    <div class="run-overview" id="runOverview"></div>
+    <div class="run-project-grid" id="runProjectGrid"></div>
   </div>
-
-  <div class="run-overview" id="runOverview"></div>
-  <div class="run-project-grid" id="runProjectGrid"></div>
 </section>
 
 <!-- 代码周报 -->

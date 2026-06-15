@@ -108,7 +108,6 @@
 }
 
 .run-overview {
-  flex: 0 0 auto;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
@@ -141,10 +140,7 @@
   line-height: 1;
 }
 
-.run-project-grid { /* 保留：与穿插规则存在层叠依赖 */
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: auto;
+.run-project-grid {
   grid-template-columns: repeat(3, minmax(260px, 1fr));
 }
 
@@ -618,24 +614,8 @@ body[data-theme="dark"] #logModal.run-compile-error .step.done {
 }
 
 /* 3. 本地运行 */
-#page-run.active {
-  min-height: 0;
-  display: flex !important;
-  flex-direction: column !important;
-  overflow: hidden !important;
-  height: 100% !important;
-}
-
-#page-run > .run-overview {
-  flex-shrink: 0 !important;
-}
-
-#page-run > .run-project-grid {
-  flex: 1 !important;
-  overflow-y: auto !important;
-  min-height: 0 !important;
-}
-
+/* 定高滚动改由全局 .page.has-fixed-header 接管（initPageStickyHeaders 自动加类），
+   不再用 #page-run.active 自定义 flex + grid 自滚那套 */
 .run-project-grid {
   display: grid;
   align-content: start;
