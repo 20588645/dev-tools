@@ -371,7 +371,7 @@
         <div class="page-subtitle">快速启动前端开发服务，管理模块、日志和本地地址</div>
       </div>
       <div class="page-header-actions">
-        <button class="btn-primary" onclick="showAddProject()" style="white-space:nowrap">+ 添加项目</button>
+        <button class="btn btn--primary" onclick="showAddProject()" style="white-space:nowrap">+ 添加项目</button>
       </div>
     </div>
 
@@ -386,8 +386,8 @@
         <button class="chip" data-run-filter="multi">多模块</button>
         <button class="chip" data-run-filter="single">单体项目</button>
       </div>
-      <button class="btn-secondary" onclick="batchStopAllRun()" id="btnBatchStopRun" style="white-space:nowrap;display:none">■ 全部停止</button>
-      <button class="btn-secondary" onclick="showRunHistory()" style="white-space:nowrap">📋 运行历史</button>
+      <button class="btn" onclick="batchStopAllRun()" id="btnBatchStopRun" style="white-space:nowrap;display:none">■ 全部停止</button>
+      <button class="btn" onclick="showRunHistory()" style="white-space:nowrap">📋 运行历史</button>
     </div>
   </div>
 
@@ -1451,7 +1451,7 @@
         <span class="result-icon" id="resultIcon">✅</span>
         <span id="resultText">部署完成！</span>
       </div>
-      <button class="btn-secondary" onclick="closeModal('logModal')">关闭</button>
+      <button class="btn" onclick="closeModal('logModal')">关闭</button>
     </div>
   </div>
 </div>
@@ -1514,8 +1514,8 @@
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn-secondary" onclick="closeModal('runModal')">取消</button>
-      <button class="btn-primary" id="runStartBtn" onclick="startLocalRunFromModal()">▶ 启动运行</button>
+      <button class="btn" onclick="closeModal('runModal')">取消</button>
+      <button class="btn btn--primary" id="runStartBtn" onclick="startLocalRunFromModal()">▶ 启动运行</button>
     </div>
   </div>
 </div>
@@ -1764,8 +1764,8 @@
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn-secondary" onclick="closeModal('addProjectModal')">取消</button>
-      <button class="btn-primary" id="addProjectSubmitBtn" onclick="addSelectedProjects()">添加选中项目</button>
+      <button class="btn" onclick="closeModal('addProjectModal')">取消</button>
+      <button class="btn btn--primary" id="addProjectSubmitBtn" onclick="addSelectedProjects()">添加选中项目</button>
     </div>
   </div>
 </div>
@@ -1873,8 +1873,8 @@
       <div id="runHistoryList" class="run-history-list"></div>
     </div>
     <div class="modal-footer">
-      <button class="btn-secondary" style="color:var(--danger)" onclick="clearRunHistory(event)">🗑 清空历史</button>
-      <button class="btn-secondary" onclick="closeModal('runHistoryModal')">关闭</button>
+      <button class="btn btn--danger" onclick="clearRunHistory(event)">🗑 清空历史</button>
+      <button class="btn" onclick="closeModal('runHistoryModal')">关闭</button>
     </div>
   </div>
 </div>

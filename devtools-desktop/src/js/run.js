@@ -181,7 +181,7 @@ function renderRunPage() {
       grid.innerHTML = `<div class="run-empty run-empty-guide">
         <div class="run-empty-icon">📂</div>
         <div>还没有可运行的项目</div>
-        <button class="btn-primary" onclick="showAddProject()">+ 添加项目</button>
+        <button class="btn btn--primary" onclick="showAddProject()">+ 添加项目</button>
       </div>`;
     } else {
       grid.innerHTML = '<div class="run-empty">没有匹配的项目</div>';
@@ -205,9 +205,9 @@ function renderRunPage() {
       stateHtml = `<div><span class="run-dot"></span>${job.status === 'starting' ? '启动中' : '运行中'} · ${url}</div>
       <span>PID ${job.pid || '—'} · ${formatRunUptime(job.startedAt)}</span>`;
       actionHtml = `
-        <button class="btn-danger" onclick="stopLocalRun('${escapeOnclickArg(p.name)}', event)">■ 停止</button>
-        <button class="btn-secondary" onclick="openRunLog('${escapeOnclickArg(p.name)}')">查看日志</button>
-        <button class="btn-primary" onclick="openRunUrl('${escapeOnclickArg(p.name)}', event)">打开地址</button>
+        <button class="btn btn--danger" onclick="stopLocalRun('${escapeOnclickArg(p.name)}', event)">■ 停止</button>
+        <button class="btn" onclick="openRunLog('${escapeOnclickArg(p.name)}')">查看日志</button>
+        <button class="btn btn--primary" onclick="openRunUrl('${escapeOnclickArg(p.name)}', event)">打开地址</button>
       `;
     } else {
       if (alertInfo) {
@@ -219,15 +219,15 @@ function renderRunPage() {
           </div>
         `;
         actionHtml = `
-          <button class="btn-warning" onclick="forceReleaseAndStart('${escapeOnclickArg(p.name)}', ${alertInfo.pid})">⚡ 一键释放并启动</button>
-          <button class="btn-primary" onclick="openRunModal('${escapeOnclickArg(p.name)}', 'start')">▶ 启动</button>
-          <button class="btn-secondary" onclick="openRunModal('${escapeOnclickArg(p.name)}', 'config')">配置</button>
+          <button class="btn btn--warning" onclick="forceReleaseAndStart('${escapeOnclickArg(p.name)}', ${alertInfo.pid})">⚡ 一键释放并启动</button>
+          <button class="btn btn--primary" onclick="openRunModal('${escapeOnclickArg(p.name)}', 'start')">▶ 启动</button>
+          <button class="btn" onclick="openRunModal('${escapeOnclickArg(p.name)}', 'config')">配置</button>
         `;
       } else {
         stateHtml = '<div>○ 尚未运行</div><span>点击启动可配置命令和模块</span>';
         actionHtml = `
-          <button class="btn-primary" onclick="openRunModal('${escapeOnclickArg(p.name)}', 'start')">▶ 启动运行</button>
-          <button class="btn-secondary" onclick="openRunModal('${escapeOnclickArg(p.name)}', 'config')">配置</button>
+          <button class="btn btn--primary" onclick="openRunModal('${escapeOnclickArg(p.name)}', 'start')">▶ 启动运行</button>
+          <button class="btn" onclick="openRunModal('${escapeOnclickArg(p.name)}', 'config')">配置</button>
         `;
       }
     }
@@ -340,9 +340,9 @@ function renderRunModalStatus(job) {
       <div class="run-live-url">${url}</div>
       <div class="run-live-meta">PID ${job.pid || '—'} · ${formatRunModules(job)} · ${job.command || ''}</div>
       <div class="run-live-actions">
-        <button class="btn-secondary" onclick="openRunLog('${escapeOnclickArg(job.projectName)}')">查看日志</button>
-        <button class="btn-secondary" onclick="openRunUrl('${escapeOnclickArg(job.projectName)}', event)">打开地址</button>
-        <button class="btn-danger" onclick="stopLocalRun('${escapeOnclickArg(job.projectName)}', event)">停止运行</button>
+        <button class="btn" onclick="openRunLog('${escapeOnclickArg(job.projectName)}')">查看日志</button>
+        <button class="btn" onclick="openRunUrl('${escapeOnclickArg(job.projectName)}', event)">打开地址</button>
+        <button class="btn btn--danger" onclick="stopLocalRun('${escapeOnclickArg(job.projectName)}', event)">停止运行</button>
       </div>
     </div>`;
 }
@@ -580,7 +580,7 @@ async function showRunHistory() {
           <td class="ha-modules" title="${escapeAttr(mods)}">${escapeHtml(mods)}</td>
           <td class="${statusCls}">${statusText}</td>
           <td>${h.duration || '—'}</td>
-          <td><button class="btn-icon danger" onclick="deleteRunHistoryItem('${h.id}', event)" title="删除">⌫</button></td>
+          <td><button class="btn btn--icon btn--sm btn--danger" onclick="deleteRunHistoryItem('${h.id}', event)" title="删除">⌫</button></td>
         </tr>`;
       }).join('')}</tbody>
     </table>`;

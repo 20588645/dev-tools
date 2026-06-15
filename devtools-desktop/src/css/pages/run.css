@@ -54,19 +54,11 @@
   width: min(360px, 42vw);
 }
 
-/* 工具栏控件齐高：chips 与右侧按钮统一 32px 并垂直居中，与 34px 搜索框对齐成一条线 */
+/* 工具栏控件齐高：chips 与新 .btn 按钮、34px 搜索框对齐成一条线（.btn 默认即 34px） */
 #page-run .run-page-toolbar .chip {
-  min-height: 32px;
+  min-height: 34px;
   display: inline-flex;
   align-items: center;
-}
-
-#page-run .run-page-toolbar .btn-secondary {
-  height: 32px;
-  padding: 0 14px;
-  display: inline-flex;
-  align-items: center;
-  box-shadow: none;
 }
 
 #page-run .search-bar {
@@ -295,45 +287,7 @@
 
 }
 
-.btn-danger {
-  height: 32px;
-  min-width: 74px;
-  padding: 0 12px;
-  border: 1px solid color-mix(in srgb, var(--danger) 28%, transparent);
-  border-radius: 7px;
-  background: var(--danger-subtle);
-  color: var(--danger);
-  font-size: 12px;
-  font-weight: 680;
-  cursor: pointer;
-}
-
-.btn-danger:hover {
-  border-color: color-mix(in srgb, var(--danger) 48%, transparent);
-  background: color-mix(in srgb, var(--danger-subtle) 70%, var(--danger) 10%);
-}
-
-.btn-warning {
-  height: 32px;
-  min-width: 74px;
-  padding: 0 12px;
-  border: 1px solid color-mix(in srgb, var(--warning) 28%, transparent);
-  border-radius: 7px;
-  background: var(--warning-subtle);
-  color: var(--warning);
-  font-size: 12px;
-  font-weight: 680;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-}
-
-.btn-warning:hover {
-  border-color: color-mix(in srgb, var(--warning) 48%, transparent);
-  background: color-mix(in srgb, var(--warning-subtle) 70%, var(--warning) 10%);
-}
+/* 旧 .btn-danger/.btn-warning 已随本页按钮迁移到统一 .btn 组件（.btn--danger/--warning），定义移除 */
 
 .run-card-state.port-alert {
   border-color: color-mix(in srgb, var(--warning) 30%, transparent);
