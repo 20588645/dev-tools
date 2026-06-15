@@ -257,13 +257,18 @@ function switchAddMode(mode, btn) {
 
 function renderAvailableProjects(filter = '') {
   const filtered = availableProjects.filter(p => !filter || p.name.toLowerCase().includes(filter.toLowerCase()));
+  // 三种空态区分：扫描目录下无项目 / 搜索无匹配 / 全部已添加，避免共用一句误导文案
+  let emptyMsg;
+  if (!availableProjects.length) emptyMsg = '未在扫描目录下发现前端项目，可切到「手动浏览」选择';
+  else if (filter) emptyMsg = '没有匹配的项目';
+  else emptyMsg = '所有项目已添加';
   document.getElementById('availableProjectGrid').innerHTML = filtered.length
     ? filtered.map(p => `
       <div class="module-item ${checkedAvailableProjects.has(p.path) ? 'checked' : ''}" data-path="${escapeAttr(p.path)}" onclick="toggleAvailableProject(this)">
         <div class="checkbox">${checkedAvailableProjects.has(p.path) ? '✓' : ''}</div>
         <span title="${escapeAttr(p.name)}">${escapeHtml(p.name)}</span>
       </div>`).join('')
-    : '<div style="text-align:center;color:var(--text-muted);padding:24px;grid-column:1/-1">所有项目已添加</div>';
+    : `<div style="text-align:center;color:var(--text-muted);padding:24px;grid-column:1/-1">${emptyMsg}</div>`;
   document.getElementById('selectedProjectCount').textContent = `已选 ${checkedAvailableProjects.size} 个`;
   updateAddSubmitBtn();
 }

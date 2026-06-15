@@ -145,11 +145,13 @@ function renderRunPage() {
   });
 
   const runningCount = Object.values(runningProjects).filter(job => ['starting', 'running'].includes(job.status)).length;
-  const configuredRunCount = projects.filter(p => p.runCommand).length;
+  // 原「已保存命令」恒等于项目总数（扫描时每个项目都会写入默认命令），无信息量；
+  // 改统计多模块项目数，与单体区分，是真实可读的口径
+  const multiModuleCount = projects.filter(p => p.type === 'multi-module').length;
   overview.innerHTML = `
-    <div class="run-stat-card"><span>可运行项目</span><strong>${projects.length}</strong></div>
-    <div class="run-stat-card"><span>运行中</span><strong>${runningCount}</strong></div>
-    <div class="run-stat-card"><span>已保存命令</span><strong>${configuredRunCount}</strong></div>
+    <div class="run-stat-card run-stat-total"><span>可运行项目</span><strong>${projects.length}</strong></div>
+    <div class="run-stat-card run-stat-running${runningCount > 0 ? ' is-active' : ''}"><span>运行中</span><strong>${runningCount}</strong></div>
+    <div class="run-stat-card run-stat-multi"><span>多模块项目</span><strong>${multiModuleCount}</strong></div>
   `;
 
   // 显示/隐藏批量停止按钮
@@ -446,7 +448,7 @@ function showRunLogShell(job) {
 
 async function openRunLog(projectName) {
   const job = runningProjects[projectName];
-  if (!job) return;
+  if (!job) { showToast('该服务已不在运行', projectName); return; }
   try {
     const data = await API.get(`/api/run/${job.id}/logs`);
     showRunLogShell(data);
@@ -459,7 +461,7 @@ async function openRunLog(projectName) {
 
 async function openRunUrl(projectName, ev) {
   const job = runningProjects[projectName];
-  if (!job) return;
+  if (!job) { showToast('该服务已不在运行', projectName); return; }
   // 锁按钮防连点开多个浏览器标签
   await withButtonBusy(ev && ev.currentTarget, null, async () => {
     try {
@@ -478,7 +480,7 @@ async function openRunUrl(projectName, ev) {
 
 async function stopLocalRun(projectName, ev) {
   const job = runningProjects[projectName];
-  if (!job) return;
+  if (!job) { showToast('该服务已不在运行', projectName); return; }
   // 停止有可见延迟（依赖 WS 回推移除卡片），锁按钮防连点重复 stop
   await withButtonBusy(ev && ev.currentTarget, '停止中…', async () => {
     try {
@@ -615,6 +617,21 @@ async function loadRunStatuses() {
   } catch (e) {
     runningProjects = {};
   }
+}
+
+// 本地运行页可见期间的轮询：① 刷新卡片「运行时长」文本（WS 仅状态变化时推送，
+// 稳定运行的服务不会触发重渲，时长会停在旧值）；② 与后端对账（WS 丢事件/瞬断时
+// 内存运行态可能失真）。仅在有运行中项目时打扰后端，空闲不轮询。离开页面统一清理。
+let runPagePollTimer = null;
+function startRunPagePolling() {
+  stopRunPagePolling();
+  runPagePollTimer = setInterval(() => {
+    if (!Object.keys(runningProjects).length) return;
+    loadRunStatuses().then(() => renderRunPage());
+  }, 15000);
+}
+function stopRunPagePolling() {
+  if (runPagePollTimer) { clearInterval(runPagePollTimer); runPagePollTimer = null; }
 }
 
 async function forceReleaseAndStart(projectName, pid) {

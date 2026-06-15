@@ -533,6 +533,17 @@ function setupWSHandlers() {
 
   window.checkPortOccupancyForProject = checkPortOccupancyForProject;
 
+  // WS 重连后全量对账：断线期间的 run-status 推送会全部丢失，重连后从后端拉一次
+  // 真实运行态，纠正可能失真的卡片/统计（首连也会触发，loadRunStatuses 幂等故安全）
+  WS.on('open', () => {
+    loadRunStatuses().then(() => {
+      renderProjects();
+      renderRunPage();
+      refreshHomeIfVisible();
+      syncTrayMenu();
+    });
+  });
+
   WS.on('run-status', async (data) => {
     const isActive = ['starting', 'running'].includes(data.status);
     if (isActive) {
@@ -555,6 +566,7 @@ function setupWSHandlers() {
     if (!isActive && data.id) {
       notifiedRunIds.delete(data.id);
       clearRunCompileErrorTimers(data.id);
+      clearNotifiedCompileErrors(data.id);
     }
 
     if (data.id === currentRunId) updateRunLogStatus(data);
@@ -572,6 +584,14 @@ function clearRunCompileErrorTimers(jobId) {
       clearTimeout(pendingRunCompileErrorTimers[key]);
       delete pendingRunCompileErrorTimers[key];
     });
+}
+
+// 任务结束时清理其编译报错去重记录，避免 notifiedRunCompileErrors 只增不删导致
+// 长期运行缓慢内存增长（与 notifiedRunIds.delete / clearRunCompileErrorTimers 生命周期对齐）
+function clearNotifiedCompileErrors(jobId) {
+  [...notifiedRunCompileErrors].forEach(key => {
+    if (key.startsWith(`${jobId}:`)) notifiedRunCompileErrors.delete(key);
+  });
 }
 
 function handleRunCompileErrorNotification(data) {
@@ -778,6 +798,8 @@ function setupNavigation() {
 
 // ========== 页面切换 ==========
 function switchPage(page, el) {
+  // 离开本地运行页时停掉其轮询（运行时长刷新 + 起停对账），避免后台空转
+  if (typeof stopRunPagePolling === 'function') stopRunPagePolling();
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.dock-item').forEach(d => d.classList.remove('active'));
   document.querySelectorAll('.sidebar-item').forEach(d => d.classList.remove('active'));
@@ -807,6 +829,7 @@ function switchPage(page, el) {
   }
   if (page === 'run') {
     loadRunStatuses().then(() => renderRunPage());
+    startRunPagePolling();
   }
   if (page === 'home') {
     loadRunStatuses().then(() => loadHomeData());
