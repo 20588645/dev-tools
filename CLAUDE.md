@@ -38,7 +38,7 @@
 - 颜色/圆角/间距/字体一律使用 `:root` CSS 变量（`--primary`、`--bg-card`、`--radius`、`--font-mono` 等），**禁止新增硬编码 hex 色值**
 - **明暗主题都必须验证**（`body[data-theme]`）；图表颜色运行时读 CSS 变量，并监听 `data-theme` 变化重绘；两主题视觉冲突时做差异化配色（先例：用量统计活力环）
 - 同一选择器只允许一处权威定义；**禁止用 `!important` 解决覆盖问题**（存量历史债除外，治理中只减不增）
-- **按钮一律用统一组件**（`components.css` 顶部「按钮组件」契约块）：动作按钮用 `.btn-primary/.btn-secondary/.btn-danger/.btn-warning/.btn-text/.btn-icon`，切换/筛选用 `.chip`；**禁止再造平行按钮类**（rbtn/qf-btn/fav-btn 等为存量债，随各页打磨迁回 canonical）。紧凑尺寸在页面自身作用域约束高度，不改全局
+- **按钮一律用统一组件 `css/button.css`**（BEM：`.btn` + `.btn--primary/danger/warning/success/text`，尺寸 `.btn--sm/lg`，形态 `.btn--icon/block/round`；不加变体=默认次操作）。切换/筛选用 `.chip`。**禁止再造平行按钮类**；旧 `.btn-*`（单连字符）/ rbtn / qf-btn / fav-btn 等为存量债，**逐页替换为新 `.btn` 并删除该页旧按钮代码**，全部迁完后移除旧体系与 overrides 按钮泥潭
 - **不主动加装饰性视觉**：功能页默认朴素克制，不擅自给功能卡片/按钮加彩色色条、渐变、hover 抬升、脉动等装饰；颜色只服务真实语义状态（运行中/危险/成功）。需要视觉增强先问用户
 - 数字展示：万/亿分级、金额两位小数、数值用 `var(--font-mono)`；长文本省略号 + `title` 悬浮全名
 
