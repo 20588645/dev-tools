@@ -14,6 +14,27 @@
   box-shadow: var(--shadow-sm);
 }
 
+/* ===================== 按钮组件（统一约定） =====================
+ * 全应用唯一的动作按钮体系，所有页面一律复用，禁止再新增平行按钮类。
+ *
+ * 变体（按语义选用）：
+ *   .btn-primary    主操作（实心强调，如「启动运行/保存/添加项目」）
+ *   .btn-secondary  次操作 / 默认按钮（描边浅底，如「配置/取消/查看日志」）
+ *   .btn-danger     危险操作（删除/停止）
+ *   .btn-warning    警示操作（一键释放等）
+ *   .btn-text       文字按钮（无边框，弱操作）
+ *   .btn-icon       纯图标按钮（可叠加 .danger 表危险图标）
+ * 状态：:hover / :active / :disabled 自动具备；禁用态由 disabled 属性驱动。
+ * 尺寸：默认尺寸为准；紧凑场景由页面在自身作用域内约束高度
+ *       （如 #page-run .run-page-toolbar .btn-secondary{height:32px}），不改全局。
+ *
+ * 切换/筛选用 .chip（语义是「选中态切换」而非「触发动作」），不归入按钮。
+ *
+ * 历史平行体系（rbtn/rbtn-* 周报、qf-btn/seg-btn/fav-btn/btn-deploy-card/btn-build-card/
+ * module-filter-btn 等）属技术债，随各页打磨逐步迁移到上述 canonical 变体并从 overrides.css 抽离归位。
+ * 新代码严禁再造此类平行按钮类。
+ * ============================================================== */
+
 /* ---------- Buttons ---------- */
 .btn-primary { /* 保留：与穿插规则存在层叠依赖 */
   padding: 8px 16px;
