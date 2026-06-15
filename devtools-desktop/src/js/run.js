@@ -72,7 +72,8 @@ function renderRunModulePicker(project, mode = runModalMode) {
   includeHome.checked = project.runIncludeHome !== false;
   homeInput.value = homeModuleName;
 
-  moduleRow.style.display = modules.length ? '' : 'none';
+  // 即使无子模块也保留该行：给出空态提示，避免「无模块可收藏，启动又必须选模块」的死结
+  moduleRow.style.display = '';
   modulePicker.innerHTML = modules.length
     ? modules.map(m => {
       const value = escapeAttr(m.name);
@@ -83,7 +84,7 @@ function renderRunModulePicker(project, mode = runModalMode) {
           <span>${label}</span>
         </label>`;
     }).join('')
-    : '';
+    : '<div class="run-module-empty" style="color:var(--text-muted);font-size:11px;padding:10px 4px">未检测到可运行的子模块，请检查项目结构，或以单体方式直接运行。</div>';
   filterRunConfigModules();
 }
 
@@ -346,34 +347,46 @@ function renderRunModalStatus(job) {
     </div>`;
 }
 
+// 统一的本地启动执行：POST /start + 写入运行态 + 打开日志壳 + 重渲，供模态启动与强释启动共用，
+// 避免两条路径参数构造（autoRestart/模块/命令）分叉
+async function startRunJob(project, { moduleNames = [], command = '', nodeVersion = '', autoRestart = false } = {}) {
+  const data = await API.post('/api/run/start', {
+    projectName: project.name,
+    command: command || project.runCommand || inferRunCommand(project),
+    moduleNames,
+    nodeVersion,
+    autoRestart: !!autoRestart,
+  });
+  runningProjects[project.name] = data;
+  showRunLogShell(data);
+  renderRunPage();
+  return data;
+}
+
 async function startLocalRunFromModal() {
+  const project = projects.find(p => p.name === runModalProjectName);
+  if (!project) return;
+  let intent = null; // 本次启动意图，端口冲突走强释时透传，避免丢 autoRestart/模块选择
   try {
-    const project = projects.find(p => p.name === runModalProjectName);
-    if (!project) return;
     document.getElementById('runStartBtn').disabled = true;
 
     const config = await persistLocalRunConfig(project);
     if (!config) return;
 
-    const { command, nodeVersion } = config;
     const moduleNames = project.type === 'multi-module' ? [...selectedRunModuleNames] : [];
-
     if (project.type === 'multi-module' && moduleNames.length === 0) {
       await showAlert('请选择要运行的模块。可以先在配置里收藏常用模块，再从启动弹窗中勾选一个或多个模块。', { icon: '⚠️' });
       return;
     }
 
     const autoRestart = !!document.getElementById('runAutoRestart')?.checked;
-    const data = await API.post('/api/run/start', { projectName: project.name, command, moduleNames, nodeVersion, autoRestart });
-    runningProjects[project.name] = data;
+    intent = { moduleNames, command: config.command, nodeVersion: config.nodeVersion, autoRestart };
+    await startRunJob(project, intent);
     closeModal('runModal');
-    showRunLogShell(data);
     showToast('▶ 本地运行已启动', project.displayName || project.name);
-    renderRunPage();
   } catch (e) {
-    const project = projects.find(p => p.name === runModalProjectName);
     const isPortInUse = e.message && (e.message.includes('已被外部进程') || e.message.includes('EADDRINUSE'));
-    if (isPortInUse && project) {
+    if (isPortInUse) {
       let port = project.runPort || (runningProjects[project.name]?.port);
       if (!port && e.message) {
         const match = e.message.match(/端口\s*(\d{2,5})/);
@@ -390,7 +403,7 @@ async function startLocalRunFromModal() {
             { icon: '⚠️', confirmText: '释放并启动', cancelText: '取消' }
           );
           if (confirmRelease) {
-            await forceReleaseAndStart(project.name, alertInfo.pid);
+            await forceReleaseAndStart(project.name, alertInfo.pid, intent);
           }
           return;
         }
@@ -672,36 +685,50 @@ function stopRunPagePolling() {
   if (runPagePollTimer) { clearInterval(runPagePollTimer); runPagePollTimer = null; }
 }
 
-async function forceReleaseAndStart(projectName, pid) {
+// opts（可选）= 来自启动弹窗的本次启动意图 { moduleNames, command, nodeVersion, autoRestart }；
+// 无 opts 时为卡片「一键释放并启动」：多模块取收藏、收藏为空则开弹窗让用户选
+async function forceReleaseAndStart(projectName, pid, opts = null) {
+  const project = projects.find(p => p.name === projectName);
+  if (!project) { showToast('项目未找到', projectName); return; }
   try {
     showToast('⏳ 正在强释端口并重新启动...', projectName);
     await API.post('/api/run/force-release', { pid });
     delete portOccupancyAlerts[projectName];
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    const project = projects.find(p => p.name === projectName);
-    if (!project) {
-      showToast('项目未找到', projectName);
-      return;
+
+    // 轮询确认端口真正释放（替代固定 800ms——TIME_WAIT/回收慢时 800ms 可能不够，
+    // 重启会再次 EADDRINUSE）；最多约 3s，确认释放或超时后再启动
+    const port = project.runPort || '';
+    if (port) {
+      for (let i = 0; i < 12; i++) {
+        await new Promise(r => setTimeout(r, 250));
+        try { const chk = await API.get(`/api/run/port-check/${port}`); if (!chk.inUse) break; } catch { break; }
+      }
+    } else {
+      await new Promise(r => setTimeout(r, 500));
     }
 
-    const moduleNames = project.type === 'multi-module' ? getRunFavoriteModules(project) : [];
-    if (project.type === 'multi-module' && moduleNames.length === 0) {
-      openRunModal(projectName, 'start');
-      return;
+    // 模块意图：优先用弹窗传入；否则多模块取收藏，收藏为空则开弹窗让用户确认
+    let moduleNames = opts ? opts.moduleNames : null;
+    if (moduleNames == null) {
+      moduleNames = project.type === 'multi-module' ? getRunFavoriteModules(project) : [];
+      if (project.type === 'multi-module' && moduleNames.length === 0) {
+        openRunModal(projectName, 'start');
+        return;
+      }
     }
 
-    const data = await API.post('/api/run/start', {
-      projectName: project.name,
-      command: project.runCommand || inferRunCommand(project),
+    await startRunJob(project, {
       moduleNames,
-      nodeVersion: project.nodeVersion || '',
+      command: opts ? opts.command : '',
+      nodeVersion: opts ? opts.nodeVersion : (project.nodeVersion || ''),
+      autoRestart: opts ? opts.autoRestart : false,
     });
-    runningProjects[project.name] = data;
-    showRunLogShell(data);
     showToast('▶ 本地运行已成功强释并启动', project.displayName || project.name);
-    renderRunPage();
   } catch (e) {
+    // 启动仍失败时复用端口诊断（可能换了占用进程），而非直接 alert 死路
+    if (project.runPort) {
+      try { await checkPortOccupancyForProject(project.name, project.runPort); renderRunPage(); } catch { /* 诊断失败不阻塞提示 */ }
+    }
     showAlert('强释启动失败: ' + e.message, { icon: '❌' });
   }
 }
