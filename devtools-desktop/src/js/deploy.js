@@ -367,9 +367,14 @@ async function addSelectedProjects() {
     const result = await API.post('/api/projects/batch', { paths });
     closeModal('addProjectModal');
     await loadProjects();
-    const msg = [`成功添加 ${result.added.length} 个项目`];
-    if (result.errors.length) msg.push(`${result.errors.length} 个失败`);
-    showAlert(msg.join('，'), { icon: '✅' });
+    // 分列：已存在跳过 vs 真失败，便于用户定位（后端对重复返回 error:'已存在'）
+    const errors = result.errors || [];
+    const skipped = errors.filter(e => e.error === '已存在');
+    const failed = errors.filter(e => e.error !== '已存在');
+    const parts = [`成功添加 ${result.added.length} 个`];
+    if (skipped.length) parts.push(`${skipped.length} 个已存在跳过`);
+    if (failed.length) parts.push(`${failed.length} 个失败`);
+    showAlert(parts.join('，'), { icon: failed.length ? '⚠️' : '✅' });
   } catch (e) {
     showAlert('添加失败: ' + e.message, { icon: '❌' });
   }

@@ -1492,7 +1492,7 @@
           </div>
           <div class="config-row">
             <label>服务端口</label>
-            <input type="text" id="runPortInput" placeholder="自动推断 (例如 8080)">
+            <input type="text" inputmode="numeric" id="runPortInput" placeholder="自动推断 (例如 8080)">
           </div>
           <div class="config-row run-auto-restart-row">
             <label>自动重启</label>
@@ -1868,7 +1868,7 @@
       <div id="runHistoryList" class="run-history-list"></div>
     </div>
     <div class="modal-footer">
-      <button class="btn-secondary" style="color:var(--danger)" onclick="clearRunHistory()">🗑 清空历史</button>
+      <button class="btn-secondary" style="color:var(--danger)" onclick="clearRunHistory(event)">🗑 清空历史</button>
       <button class="btn-secondary" onclick="closeModal('runHistoryModal')">关闭</button>
     </div>
   </div>

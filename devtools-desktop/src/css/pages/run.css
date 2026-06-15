@@ -609,6 +609,14 @@ body[data-theme="dark"] #logModal.run-compile-error .step.done {
   color: var(--text-primary) !important;
 }
 
+/* 运行历史长项目名/长模块串单行截断，避免撑宽 720px 弹窗表格（全名见 title 悬浮） */
+.run-history-table .ha-project,
+.run-history-table .ha-modules {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* 3. 本地运行 */
 #page-run.active {
   min-height: 0;

@@ -114,6 +114,22 @@ function toggleRunQuickModule(moduleName) {
     const mark = btn.querySelector('.run-quick-check');
     if (mark) mark.textContent = checked ? '✓' : '';
   });
+  updateRunStartBtnState();
+}
+
+// 启动模式 + 多模块项目未勾选任何模块时禁用「启动运行」，事前引导而非点了才报错
+function updateRunStartBtnState() {
+  const btn = document.getElementById('runStartBtn');
+  if (!btn) return;
+  if (runModalMode !== 'start') { btn.disabled = false; btn.removeAttribute('title'); return; }
+  const project = projects.find(p => p.name === runModalProjectName);
+  if (project && project.type === 'multi-module' && selectedRunModuleNames.size === 0) {
+    btn.disabled = true;
+    btn.title = '请先勾选要运行的模块';
+  } else {
+    btn.disabled = false;
+    btn.removeAttribute('title');
+  }
 }
 
 function inferRunCommand(project) {
@@ -218,10 +234,10 @@ function renderRunPage() {
     return `
       <div class="run-project-card" data-project="${escapeAttr(p.name)}">
         <div class="run-card-top">
-          <div class="run-card-title">${isMulti ? '📦' : '📄'} ${escapeHtml(p.displayName || p.name)}</div>
+          <div class="run-card-title" title="${escapeAttr(p.displayName || p.name)}">${isMulti ? '📦' : '📄'} ${escapeHtml(p.displayName || p.name)}</div>
           <span class="card-badge ${isMulti ? 'badge-multi' : 'badge-single'}">${isMulti ? '多模块' : '单体'}</span>
         </div>
-        <div class="run-card-path">${escapeHtml(p.path || '')}</div>
+        <div class="run-card-path" title="${escapeAttr(p.path || '')}">${escapeHtml(p.path || '')}</div>
         <div class="run-card-meta">
           <span>${escapeHtml(p.tool)}</span>
           <span>${escapeHtml(nodeLabel)}</span>
@@ -286,6 +302,7 @@ function openRunModal(projectName, mode = 'start') {
     selectedRunModuleNames = new Set(project.runIncludeHome !== false && favorites.some(name => name.toLowerCase() === homeModuleName.toLowerCase()) ? [homeModuleName] : []);
     renderRunModalStatus(runningProjects[projectName]);
   }
+  updateRunStartBtnState();
   document.getElementById('runModal').classList.add('active');
 }
 
@@ -381,8 +398,7 @@ async function startLocalRunFromModal() {
     }
     showAlert('启动失败: ' + e.message, { icon: '❌' });
   } finally {
-    const btn = document.getElementById('runStartBtn');
-    if (btn) btn.disabled = false;
+    updateRunStartBtnState();
   }
 }
 
@@ -399,7 +415,7 @@ async function saveLocalRunConfig() {
   } catch (e) {
     showAlert('保存配置失败: ' + e.message, { icon: '❌' });
   } finally {
-    document.getElementById('runStartBtn').disabled = false;
+    updateRunStartBtnState();
   }
 }
 
@@ -411,6 +427,15 @@ async function persistLocalRunConfig(project) {
   }
 
   const runPort = document.getElementById('runPortInput')?.value.trim() || '';
+  // 端口校验：空=自动推断放行；非空必须为 1-65535 整数，否则非法值会破坏端口推断/占用检测
+  if (runPort && !/^\d+$/.test(runPort)) {
+    await showAlert('服务端口只能填数字（留空则自动推断）', { icon: '⚠️' });
+    return null;
+  }
+  if (runPort && (Number(runPort) < 1 || Number(runPort) > 65535)) {
+    await showAlert('服务端口需在 1–65535 之间', { icon: '⚠️' });
+    return null;
+  }
   const nodeVersion = document.getElementById('runNodeVersion').value;
   const favoriteRunModules = runModalMode === 'config' ? getCheckedRunFavoriteModules() : normalizeModuleList(project.favoriteRunModules);
   const runIncludeHome = !!document.getElementById('runIncludeHome')?.checked;
@@ -449,13 +474,17 @@ function showRunLogShell(job) {
 async function openRunLog(projectName) {
   const job = runningProjects[projectName];
   if (!job) { showToast('该服务已不在运行', projectName); return; }
+  // 先用本地 job 立即打开日志弹窗并占位，避免接口慢时点击「查看日志」毫无反馈；
+  // 同时建立实时通道（showRunLogShell 设 currentRunId），后续 WS run-log 可继续追加
+  showRunLogShell(job);
+  appendLog('正在加载历史日志…', 'info');
   try {
     const data = await API.get(`/api/run/${job.id}/logs`);
-    showRunLogShell(data);
+    document.getElementById('logTerminal').innerHTML = '';
     (data.logs || []).forEach(log => appendLog(log.text, log.type));
     updateRunLogStatus(data);
   } catch (e) {
-    showAlert('加载运行日志失败: ' + e.message, { icon: '❌' });
+    appendLog('加载历史日志失败: ' + e.message, 'error');
   }
 }
 
@@ -512,56 +541,65 @@ async function batchStopAllRun() {
 
 // ========== 运行历史 ==========
 async function showRunHistory() {
+  const list = document.getElementById('runHistoryList');
   document.getElementById('runHistoryModal').classList.add('active');
+  // 先清空旧内容并显示加载态：避免二次打开时旧数据闪现、空白弹窗体
+  list.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:40px">加载中…</div>';
   try {
     const history = await API.get('/api/run/history');
-    const list = document.getElementById('runHistoryList');
     if (!history || history.length === 0) {
       list.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:40px">暂无运行历史记录</div>';
       return;
     }
-    list.innerHTML = `<table class="ha-table">
+    list.innerHTML = `<table class="ha-table run-history-table">
       <thead><tr><th>时间</th><th>项目</th><th>模块</th><th>状态</th><th>运行时长</th><th>操作</th></tr></thead>
       <tbody>${history.map(h => {
         const time = new Date(h.startedAt).toLocaleString('zh-CN', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
-        const statusCls = h.status === 'success' || h.status === 'stopped' ? 'status-success' : 'status-fail';
-        const statusText = h.status === 'success' || h.status === 'stopped' ? '正常退出' : '异常退出';
+        // 三档区分：自然成功 / 用户手动停止 / 异常崩溃，便于排查「是我停的还是它崩的」
+        let statusCls, statusText;
+        if (h.status === 'success') { statusCls = 'status-success'; statusText = '已结束'; }
+        else if (h.status === 'stopped') { statusCls = ''; statusText = '手动停止'; }
+        else { statusCls = 'status-fail'; statusText = '异常退出'; }
         const mods = (h.moduleNames || []).join(', ') || '—';
         return `<tr>
           <td class="ha-time">${time}</td>
-          <td class="ha-project">${escapeHtml(h.projectName)}</td>
-          <td>${escapeHtml(mods)}</td>
+          <td class="ha-project" title="${escapeAttr(h.projectName)}">${escapeHtml(h.projectName)}</td>
+          <td class="ha-modules" title="${escapeAttr(mods)}">${escapeHtml(mods)}</td>
           <td class="${statusCls}">${statusText}</td>
           <td>${h.duration || '—'}</td>
-          <td><button class="btn-icon danger" onclick="deleteRunHistoryItem('${h.id}')" title="删除">⌫</button></td>
+          <td><button class="btn-icon danger" onclick="deleteRunHistoryItem('${h.id}', event)" title="删除">⌫</button></td>
         </tr>`;
       }).join('')}</tbody>
     </table>`;
   } catch (e) {
-    document.getElementById('runHistoryList').innerHTML = `<div style="color:var(--danger);padding:20px">加载失败: ${e.message}</div>`;
+    list.innerHTML = `<div style="color:var(--danger);padding:20px">加载失败: ${escapeHtml(e.message)}</div>`;
   }
 }
 
-async function deleteRunHistoryItem(id) {
+async function deleteRunHistoryItem(id, ev) {
   // 删除不可逆、按钮又是小图标易误触，与「清空历史」确认粒度对齐
   if (!await showConfirm('确定删除这条运行记录？', { icon: '🗑️', danger: true, confirmText: '删除' })) return;
-  try {
-    await API.del(`/api/run/history/${id}`);
-    showRunHistory();
-  } catch (e) {
-    showAlert('删除失败: ' + e.message, { icon: '❌' });
-  }
+  await withButtonBusy(ev && ev.currentTarget, '', async () => {
+    try {
+      await API.del(`/api/run/history/${id}`);
+      showRunHistory();
+    } catch (e) {
+      showAlert('删除失败: ' + e.message, { icon: '❌' });
+    }
+  });
 }
 
-async function clearRunHistory() {
+async function clearRunHistory(ev) {
   if (!await showConfirm('确定清空所有运行历史记录？', { icon: '🗑️', danger: true, confirmText: '清空' })) return;
-  try {
-    await API.del('/api/run/history');
-    showRunHistory();
-    showToast('🗑 运行历史已清空');
-  } catch (e) {
-    showAlert('清空失败: ' + e.message, { icon: '❌' });
-  }
+  await withButtonBusy(ev && ev.currentTarget, '清空中…', async () => {
+    try {
+      await API.del('/api/run/history');
+      showRunHistory();
+      showToast('🗑 运行历史已清空');
+    } catch (e) {
+      showAlert('清空失败: ' + e.message, { icon: '❌' });
+    }
+  });
 }
 
 function updateRunLogStatus(job) {
