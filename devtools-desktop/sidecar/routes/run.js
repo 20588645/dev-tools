@@ -10,6 +10,7 @@ const { spawn, execFile } = require('child_process');
 const db = require('../services/database');
 const { StringDecoder } = require('string_decoder');
 const { killProcessTree } = require('../utils/process');
+const { withLoginShellPath } = require('../utils/shell-path');
 
 const PROJECTS_FILE = path.join(__dirname, '../data/projects.json');
 
@@ -92,9 +93,11 @@ function getNodeBinPath(nodeVersion) {
 }
 
 function buildRunEnv(nodeVersion, port, isPty = false) {
-  const env = {
+  // GUI 启动的 sidecar 自带 PATH 缺少用户 shell 配置的 node/npm，先合并登录 shell 真实 PATH，
+  // 修复「系统默认」Node 项目 npm: command not found（指定 nvm 版本下方仍会 prepend 覆盖）
+  const env = withLoginShellPath({
     ...process.env,
-  };
+  });
   // 无论是否为 PTY，都强行伪装支持彩色的 256 色终端，以实现与 VS Code / 终端一致的彩色日志与执行特性
   env.TERM = 'xterm-256color';
   env.FORCE_COLOR = '1';

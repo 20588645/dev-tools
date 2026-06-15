@@ -6,6 +6,7 @@ const { spawn } = require('child_process');
 const path = require('path');
 const os = require('os');
 const fs = require('fs');
+const { withLoginShellPath } = require('../utils/shell-path');
 
 /**
  * 执行构建
@@ -159,8 +160,9 @@ async function build({ projectPath, buildCommand, modules = [], nodeVersion = ''
       return arg;
     });
 
-    // 构建环境变量，支持 Node 版本切换
-    const env = { ...process.env, FORCE_COLOR: '0' };
+    // 构建环境变量，支持 Node 版本切换；先合并登录 shell 真实 PATH，
+    // 修复「系统默认」Node 项目 GUI 启动下 npm 找不到（指定版本下方仍会 prepend 覆盖）
+    const env = withLoginShellPath({ ...process.env, FORCE_COLOR: '0' });
 
     onLog('info', '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     onLog('info', '🔨 阶段二：执行构建');
