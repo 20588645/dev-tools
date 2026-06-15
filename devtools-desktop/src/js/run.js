@@ -464,7 +464,12 @@ async function openRunUrl(projectName, ev) {
   await withButtonBusy(ev && ev.currentTarget, null, async () => {
     try {
       const data = await API.post(`/api/run/${job.id}/open`, {});
-      showToast('已打开本地地址', data.url);
+      const urls = data.urls || (data.url ? [data.url] : []);
+      if (urls.length > 1) {
+        showToast(`已打开 ${urls.length} 个模块页面`, urls.join('  ·  '));
+      } else {
+        showToast('已打开本地地址', urls[0] || '');
+      }
     } catch (e) {
       showAlert('打开失败: ' + e.message, { icon: '❌' });
     }

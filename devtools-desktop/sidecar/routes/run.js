@@ -343,7 +343,10 @@ function markRunningFromOutput(app, job, text) {
 
 function getPidsOnPort(port) {
   return new Promise((resolve) => {
-    execFile('lsof', ['-ti', `tcp:${port}`], (err, stdout) => {
+    // 仅匹配 LISTEN 状态：真正阻止新 dev server 绑定端口的只有监听套接字。
+    // 不加该过滤会把浏览器到该端口的客户端连接（如打开地址后标签页的 HMR 重连）
+    // 误判为「端口被占用」，导致停止后再启动报占用。
+    execFile('lsof', ['-ti', `tcp:${port}`, '-sTCP:LISTEN'], (err, stdout) => {
       if (err && !stdout) return resolve([]);
       const pids = String(stdout || '')
         .split(/\s+/)
@@ -868,12 +871,22 @@ router.post('/:id/stop', (req, res) => {
 router.post('/:id/open', (req, res) => {
   const job = runJobs.get(req.params.id);
   if (!job) return res.status(404).json({ error: '运行任务不存在' });
-  const url = job.url || (job.port ? `http://localhost:${job.port}` : '');
-  if (!url) return res.status(400).json({ error: '还没有可打开的本地地址' });
+  const rawBase = job.url || (job.port ? `http://localhost:${job.port}` : '');
+  if (!rawBase) return res.status(400).json({ error: '还没有可打开的本地地址' });
 
-  execFile('open', [url], (err) => {
+  // 多模块 Vue 项目每个模块是独立入口页 <模块>.html#/，逐个在浏览器打开；
+  // 单体项目（无模块）直接打开根地址
+  let base;
+  try { base = new URL(rawBase).origin; } catch { base = rawBase.replace(/\/+$/, ''); }
+  const modules = Array.isArray(job.moduleNames) ? job.moduleNames.filter(Boolean) : [];
+  const urls = modules.length
+    ? modules.map(m => `${base}/${m}.html#/`)
+    : [base];
+
+  // macOS open 接受多个 URL 参数，逐一交给默认浏览器（各开一个标签页）
+  execFile('open', urls, (err) => {
     if (err) return res.status(500).json({ error: err.message });
-    res.json({ success: true, url });
+    res.json({ success: true, urls });
   });
 });
 
@@ -884,7 +897,8 @@ router.get('/port-owner/:port', (req, res) => {
     return res.status(400).json({ error: '无效端口号' });
   }
 
-  execFile('lsof', ['-ti', `tcp:${port}`], (err, stdout) => {
+  // 仅匹配 LISTEN 套接字，避免把浏览器到该端口的客户端连接误报为占用进程
+  execFile('lsof', ['-ti', `tcp:${port}`, '-sTCP:LISTEN'], (err, stdout) => {
     if (err && !stdout) {
       return res.json({ inUse: false });
     }
