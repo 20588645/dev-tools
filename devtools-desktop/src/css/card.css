@@ -1,0 +1,42 @@
+/* ============================== 卡片/面板外壳 .card ==============================
+ * 全应用统一的卡片/面板外壳。基类 .card 为纯静态容器（无 hover——卡片是容器，克制）。
+ * 重度定制的页面卡片（如本地运行页项目卡）保持 bespoke 更整洁；card.css 主要服务
+ * 大量「简单容器卡片」的收敛（设置页 section 等），逐页打磨时把平行外壳类迁到 .card + 变体。
+ * BEM、token 驱动、明暗自适配。
+ * 用法：
+ *   <div class="card"><div class="card__header"><div class="card__title">标题</div>…</div>…</div>
+ * ============================================================================== */
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+}
+
+/* 内边距尺寸 */
+.card--sm { padding: 12px; }
+.card--pad-lg { padding: 20px; }
+.card--flush { padding: 0; }       /* 无内边距：内容自管（如 section 自带 header/body 内边距） */
+
+/* 子结构 */
+.card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.card__title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.card__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
+}

@@ -1,18 +1,7 @@
 /* ===== components：跨页面共用组件（按钮/弹窗/toast/chips/表单/日志弹窗等）（批次5 拆分自 style.css，规则保持原始相对顺序） ===== */
 
 /* ---------- Cards ---------- */
-.card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 16px;
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-
-.card:hover {
-  border-color: var(--border-strong);
-  box-shadow: var(--shadow-sm);
-}
+/* .card 已迁到 css/card.css 并改为纯静态（去 hover）；此处不再定义 */
 
 /* ===================== 旧按钮体系 .btn-*（技术债，逐页替换中） =====================
  * 统一新按钮组件见 css/button.css（.btn + .btn--变体，BEM）。以下 .btn-primary /
