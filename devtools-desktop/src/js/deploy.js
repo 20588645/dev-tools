@@ -766,7 +766,7 @@ async function browseRemoteDir(dirPath) {
     listEl.innerHTML = fallbackHtml + renderBrowserListHtml(data.items, data.path);
   } catch (e) {
     document.getElementById('browserList').innerHTML = 
-      `<div style="text-align:center;color:var(--error);padding:30px">
+      `<div style="text-align:center;color:var(--danger);padding:30px">
         <div style="font-size:24px;margin-bottom:8px">⚠</div>
         <div>${e.message || '目录读取失败'}</div>
         <button class="btn-text" onclick="browseRemoteDir('/')" style="margin-top:12px;color:var(--accent)">返回根目录</button>
@@ -1441,8 +1441,8 @@ function renderFzServers() {
   grid.innerHTML = fzServers.map(s => {
     const checked = checkedFzServers.has(s.name);
     const statusTag = s.exists
-      ? (checked ? '<span style="font-size:10px;color:var(--success);margin-left:4px">已导入</span>' : '<span style="font-size:10px;color:var(--error);margin-left:4px">将删除</span>')
-      : (checked ? '<span style="font-size:10px;color:var(--info);margin-left:4px">待导入</span>' : '');
+      ? (checked ? '<span style="font-size:10px;color:var(--success);margin-left:4px">已导入</span>' : '<span style="font-size:10px;color:var(--danger);margin-left:4px">将删除</span>')
+      : (checked ? '<span style="font-size:10px;color:var(--primary);margin-left:4px">待导入</span>' : '');
     return `
     <div class="module-item ${checked ? 'checked' : ''} ${!checked && s.exists ? 'will-remove' : ''}"
          onclick="toggleFzServer('${s.name}')"
