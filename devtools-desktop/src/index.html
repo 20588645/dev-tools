@@ -1505,8 +1505,7 @@
           </div>
           <div class="config-row" id="runGroupRow">
             <label>分组</label>
-            <input type="text" id="runGroupInput" list="runGroupOptions" placeholder="未分组（输入新建或选择已有）" autocomplete="off">
-            <datalist id="runGroupOptions"></datalist>
+            <select id="runGroupSelect" onchange="onRunGroupSelectChange(this)"></select>
           </div>
           <div class="config-row run-auto-restart-row">
             <label>自动重启</label>

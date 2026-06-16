@@ -308,6 +308,23 @@ function runGroupNames() {
   return [...new Set(projects.map(p => (p.groupName || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'zh'));
 }
 
+// 分组下拉选「+ 新建分组…」→ 弹输入框建组；取消/空则回退到上次有效值
+async function onRunGroupSelectChange(sel) {
+  if (sel.value !== '__newgroup__') { sel.dataset.prev = sel.value; return; }
+  const input = await showPrompt('新建分组', { confirmText: '创建', placeholder: '分组名称' });
+  const name = (input || '').trim();
+  if (!name) { sel.value = sel.dataset.prev || ''; return; }
+  let opt = [...sel.options].find(o => o.value === name);
+  if (!opt) {
+    opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = name;
+    sel.insertBefore(opt, sel.querySelector('option[value="__newgroup__"]'));
+  }
+  sel.value = name;
+  sel.dataset.prev = name;
+}
+
 function isRunGroupCollapsed(key) {
   try { return JSON.parse(localStorage.getItem('runCollapsedGroups') || '[]').includes(key); } catch (e) { return false; }
 }
@@ -391,11 +408,17 @@ function openRunModal(projectName, mode = 'start') {
   document.getElementById('runCommand').value = project.runCommand || inferRunCommand(project);
   document.getElementById('runPortInput').value = project.runPort || '';
 
-  // 分组字段：仅配置模式可见，datalist 列出已有分组供快速选择
-  const groupInput = document.getElementById('runGroupInput');
-  if (groupInput) groupInput.value = project.groupName || '';
-  const groupOptions = document.getElementById('runGroupOptions');
-  if (groupOptions) groupOptions.innerHTML = runGroupNames().map(g => `<option value="${escapeAttr(g)}"></option>`).join('');
+  // 分组字段：仅配置模式可见。下拉「未分组 + 已有分组 + 新建分组…」，样式与 Node 版本下拉一致
+  const groupSelect = document.getElementById('runGroupSelect');
+  if (groupSelect) {
+    const current = (project.groupName || '').trim();
+    groupSelect.innerHTML = ['<option value="">未分组</option>']
+      .concat(runGroupNames().map(g => `<option value="${escapeAttr(g)}">${escapeHtml(g)}</option>`))
+      .concat(['<option value="__newgroup__">+ 新建分组…</option>'])
+      .join('');
+    groupSelect.value = current;
+    groupSelect.dataset.prev = current;
+  }
   const groupRow = document.getElementById('runGroupRow');
   if (groupRow) groupRow.style.display = mode === 'config' ? '' : 'none';
   if (mode === 'start') {
@@ -555,7 +578,10 @@ async function persistLocalRunConfig(project) {
   const runIncludeHome = !!document.getElementById('runIncludeHome')?.checked;
   const homeModuleName = getRunHomeModuleName();
   // 分组仅配置模式可编辑；启动模式沿用项目现值，避免被隐藏字段覆盖
-  const groupName = runModalMode === 'config' ? (document.getElementById('runGroupInput')?.value || '').trim() : (project.groupName || '');
+  const groupSel = document.getElementById('runGroupSelect');
+  const groupName = (runModalMode === 'config' && groupSel && groupSel.value !== '__newgroup__')
+    ? groupSel.value.trim()
+    : (project.groupName || '');
 
   await API.put(`/api/projects/${project.name}`, { runCommand: command, runPort, runHomeModule: homeModuleName, runIncludeHome, favoriteRunModules, nodeVersion, groupName });
   project.runCommand = command;
