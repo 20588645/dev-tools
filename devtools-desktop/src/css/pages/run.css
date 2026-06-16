@@ -54,9 +54,12 @@
   width: min(360px, 42vw);
 }
 
-/* 工具栏控件齐高：chips 与新 .btn 按钮、34px 搜索框对齐成一条线（.btn 默认即 34px） */
+/* 工具栏控件齐高：chips 与新 .btn 按钮、34px 搜索框对齐成一条线（.btn 默认即 34px）。
+   注：overrides.css 用 .chip{min-height:24px !important} 全局锁死了 min-height，故这里改用 height
+   （全局未锁 height，本作用域更高特异性即可生效），避免新增 !important、不动全局 chip 泥潭。 */
 #page-run .run-page-toolbar .chip {
-  min-height: 34px;
+  height: 34px;
+  box-sizing: border-box;
   display: inline-flex;
   align-items: center;
 }
@@ -73,10 +76,7 @@
   box-shadow: none !important;
 }
 
-#page-run .search-bar:focus-within {
-  border-color: color-mix(in srgb, var(--primary) 42%, var(--border)) !important;
-  box-shadow: 0 0 0 3px var(--primary-light) !important;
-}
+/* 搜索框聚焦不做边框/光环高亮（用户要求克制、与工具栏齐整不割裂）；静态边框已足够 */
 
 #page-run .search-bar input,
 #page-run .search-bar input:focus {
