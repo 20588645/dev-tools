@@ -1,0 +1,50 @@
+/* ============================== 分段控件 .seg ==============================
+ * 全应用统一的「一组互斥切换」控件，逐页替换旧平行类（seg-btn/sub-tab/rpt-mode-btn/
+ * rpt-view-btn/pill-btn 等，散落 overrides 与各页、active 前景色 accent/primary 不一）。
+ * 与 .chip 区别：.chip 是独立多选/筛选标签；.seg 是一组里单选高亮的分段切换。
+ * 配套可选助手 segActivate(el) 收口互斥高亮。BEM、token 驱动、明暗自适配、克制无装饰。
+ * 用法：
+ *   <div class="seg">
+ *     <button class="seg__item is-active" onclick="...">周报</button>
+ *     <button class="seg__item" onclick="...">日报</button>
+ *   </div>
+ * ========================================================================== */
+
+.seg {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.seg__item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 28px;
+  padding: 0 13px;
+  border: none;
+  border-radius: calc(var(--radius-sm) - 2px);
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.seg__item:hover { color: var(--text-primary); }
+
+.seg__item.is-active {
+  background: var(--bg-elevated);
+  color: var(--primary);
+  box-shadow: var(--shadow-sm);
+}
+
+/* 紧凑尺寸 */
+.seg--sm .seg__item { min-height: 24px; padding: 0 10px; font-size: 11px; }

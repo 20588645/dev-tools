@@ -903,6 +903,34 @@ function escapeOnclickArg(str) {
     .replace(/"/g, '&quot;');
 }
 
+// 统一渲染三态占位（空态/加载/失败），配套 css/state.css 的 .state 组件。
+// opts: { kind:'empty'|'loading'|'error', icon, title, desc, actionHTML, block, sm }
+// title/desc 自动转义；actionHTML 是调用方可信 HTML（放 .btn 等）。
+function renderState(el, opts = {}) {
+  if (!el) return;
+  const { kind = 'empty', icon = '', title = '', desc = '', actionHTML = '', block = false, sm = false } = opts;
+  const cls = ['state',
+    kind === 'error' ? 'state--error' : '',
+    block ? 'state--block' : '',
+    sm ? 'state--sm' : ''].filter(Boolean).join(' ');
+  const head = kind === 'loading'
+    ? '<div class="state__spinner"></div>'
+    : (icon ? `<div class="state__icon">${icon}</div>` : '');
+  el.innerHTML = `<div class="${cls}">
+    ${head}
+    ${title ? `<div class="state__title">${escapeHtml(title)}</div>` : ''}
+    ${desc ? `<div class="state__desc">${escapeHtml(desc)}</div>` : ''}
+    ${actionHTML ? `<div class="state__action">${actionHTML}</div>` : ''}
+  </div>`;
+}
+
+// 分段控件 .seg 的互斥高亮收口：把点击项设 is-active、同组其余移除（配 css/segmented.css）
+function segActivate(el) {
+  const seg = el && el.closest('.seg');
+  if (!seg) return;
+  seg.querySelectorAll('.seg__item').forEach(item => item.classList.toggle('is-active', item === el));
+}
+
 // 异步操作期间锁定按钮：防连点重复请求 + 给即时进行态反馈；无论成败都恢复
 // btn 已 disabled（上次请求未完成）时直接忽略本次点击；按钮在请求中被重渲移除则跳过恢复
 async function withButtonBusy(btn, busyText, fn) {

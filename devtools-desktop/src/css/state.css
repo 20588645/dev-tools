@@ -1,0 +1,52 @@
+/* ============================== 三态/占位组件 .state ==============================
+ * 全应用统一的「空态 / 加载中 / 失败」占位，逐页替换各处手写的内联占位 div。
+ * 配套 JS 助手 renderState(el, {kind,icon,title,desc,actionHTML,block,sm}) 在 app.js。
+ * BEM 命名，token 驱动、明暗自适配、克制无装饰（loading 转圈是功能反馈不算装饰）。
+ * 用法：<div class="state state--error"><div class="state__icon">⚠️</div><div class="state__title">…</div></div>
+ * ============================================================================== */
+
+.state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 48px 24px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* 紧凑（弹窗/小容器内） */
+.state--sm { padding: 24px 16px; gap: 8px; }
+/* 在 grid 容器里占满整行 */
+.state--block { grid-column: 1 / -1; }
+/* 失败态：文字转危险色 */
+.state--error { color: var(--danger); }
+
+.state__icon { font-size: 40px; line-height: 1; }
+.state--sm .state__icon { font-size: 28px; }
+
+.state__title { font-size: 13px; color: var(--text-secondary); }
+.state__desc { max-width: 360px; font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+.state--error .state__title,
+.state--error .state__desc { color: var(--danger); }
+
+.state__action { margin-top: 4px; }
+
+/* 加载转圈（BEM 子元素，不与既有 .spinner 撞名）——功能反馈，非装饰 */
+.state__spinner {
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: stateSpin 0.7s linear infinite;
+}
+
+@keyframes stateSpin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .state__spinner { animation-duration: 1.6s; }
+}
