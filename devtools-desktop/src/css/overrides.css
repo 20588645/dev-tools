@@ -803,16 +803,6 @@ textarea,
   transition: all 0.2s !important;
 }
 
-.todo-dialog-footer button {
-  min-height: 34px !important;
-  padding: 0 20px !important;
-  font-size: 12px !important;
-  font-weight: 600 !important;
-  border-radius: var(--radius-sm) !important;
-  cursor: pointer !important;
-  transition: all 0.2s ease-in-out !important;
-}
-
 .ed-open-btn, .ed-save-btn { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; }
 
 /* ========== 用量统计模块 ========== */

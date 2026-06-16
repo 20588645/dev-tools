@@ -526,8 +526,8 @@ async function showAddCommand() {
         <input type="text" id="addCmdIcon" class="sys-prompt-input" placeholder="图标 emoji（默认 ⚡）" value="⚡">
       </div>
       <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
-        <button class="sys-btn-cancel" id="sysCancel">取消</button>
-        <button class="sys-btn-confirm" id="sysOk">添加</button>
+        <button class="btn" id="sysCancel">取消</button>
+        <button class="btn btn--primary" id="sysOk">添加</button>
       </div>
     `;
     overlay.classList.add('active');

@@ -44,15 +44,7 @@
 /* ---------- Chips / Filter ---------- */
 .chip:hover { border-color: var(--accent); color: var(--text-primary); }
 
-.sys-btn-cancel { background: var(--bg-input); color: var(--text-secondary); border: 1px solid var(--border); }
-
-.sys-btn-cancel:hover { background: var(--bg-card-hover); }
-
-.sys-btn-confirm { background: var(--accent); color: #fff; }
-
-.sys-btn-confirm:hover { background: var(--accent-hover); }
-
-.sys-btn-ok { background: var(--accent); color: #fff; }
+/* 系统弹窗按钮已统一为 .btn 组件（见 button.css）；旧 .sys-btn-* 已删除 */
 
 .sys-prompt-input {
   width: 100%;
@@ -356,17 +348,6 @@ select:focus,
 
 .browser-item.disabled {
   opacity: 0.5 !important;
-}
-
-.sys-btn-cancel,
-.sys-btn-ok,
-.sys-btn-confirm { min-height: 30px; border-radius: 6px !important; }
-
-.sys-btn-confirm,
-.sys-btn-ok { background: var(--primary) !important; color: #fff !important; }
-
-.sys-btn-confirm.danger {
-  background: var(--danger) !important;
 }
 
 .toast-container {

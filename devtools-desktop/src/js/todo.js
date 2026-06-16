@@ -496,8 +496,8 @@ function showAddTodo() {
         </div>
       </div>
       <div class="todo-dialog-footer">
-        <button class="sys-btn-cancel" id="sysCancel">取消</button>
-        <button class="sys-btn-confirm" id="sysOk">创建</button>
+        <button class="btn" id="sysCancel">取消</button>
+        <button class="btn btn--primary" id="sysOk">创建</button>
       </div>
     `;
     overlay.classList.add('active');

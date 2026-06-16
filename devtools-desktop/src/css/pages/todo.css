@@ -1080,29 +1080,7 @@
   width: 100% !important;
 }
 
-.todo-dialog-footer .sys-btn-cancel {
-  border: 1px solid var(--border) !important;
-  background: transparent !important;
-  color: var(--text-secondary) !important;
-}
-
-.todo-dialog-footer .sys-btn-cancel:hover {
-  background: var(--bg-hover) !important;
-  color: var(--text-primary) !important;
-  border-color: var(--border-strong) !important;
-}
-
-.todo-dialog-footer .sys-btn-confirm {
-  background: linear-gradient(135deg, var(--primary) 0%, rgba(59, 130, 246, 0.8) 100%) !important;
-  border: none !important;
-  color: #fff !important;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2) !important;
-}
-
-.todo-dialog-footer .sys-btn-confirm:hover {
-  transform: translateY(-0.5px) !important;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4) !important;
-}
+/* todo 弹窗底部按钮已统一为 .btn（含确认键，去掉旧渐变+抬升+硬编码 rgba）；配色/盒模型由 button.css 负责 */
 
 /* 弹窗 Checklist 编辑器样式 */
 .checklist-group {

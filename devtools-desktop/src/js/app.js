@@ -170,10 +170,10 @@ function showConfirm(msg, opts = {}) {
     const overlay = document.getElementById('sysDialog');
     document.getElementById('sysDialogIcon').textContent = opts.icon || '⚠️';
     document.getElementById('sysDialogMsg').textContent = msg;
-    const dangerCls = opts.danger ? ' danger' : '';
+    const okVariant = opts.danger ? 'btn--danger' : 'btn--primary';
     document.getElementById('sysDialogBtns').innerHTML = `
-      <button class="sys-btn-cancel" id="sysCancel">${opts.cancelText || '取消'}</button>
-      <button class="sys-btn-confirm${dangerCls}" id="sysOk">${opts.confirmText || '确定'}</button>
+      <button class="btn" id="sysCancel">${opts.cancelText || '取消'}</button>
+      <button class="btn ${okVariant}" id="sysOk">${opts.confirmText || '确定'}</button>
     `;
     overlay.classList.add('active');
     const cleanup = (val) => {
@@ -193,7 +193,7 @@ function showAlert(msg, opts = {}) {
     document.getElementById('sysDialogIcon').textContent = opts.icon || 'ℹ️';
     document.getElementById('sysDialogMsg').textContent = msg;
     document.getElementById('sysDialogBtns').innerHTML = `
-      <button class="sys-btn-ok" id="sysOk">${opts.okText || '知道了'}</button>
+      <button class="btn btn--primary" id="sysOk">${opts.okText || '知道了'}</button>
     `;
     overlay.classList.add('active');
     const cleanup = () => {
@@ -214,8 +214,8 @@ function showPrompt(msg, opts = {}) {
     document.getElementById('sysDialogBtns').innerHTML = `
       <input type="text" id="sysPromptInput" class="sys-prompt-input" placeholder="${opts.placeholder || ''}" value="${opts.defaultValue || ''}">
       <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
-        <button class="sys-btn-cancel" id="sysCancel">${opts.cancelText || '取消'}</button>
-        <button class="sys-btn-confirm" id="sysOk">${opts.confirmText || '确定'}</button>
+        <button class="btn" id="sysCancel">${opts.cancelText || '取消'}</button>
+        <button class="btn btn--primary" id="sysOk">${opts.confirmText || '确定'}</button>
       </div>
     `;
     overlay.classList.add('active');

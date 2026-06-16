@@ -456,18 +456,10 @@
   min-width: 0;
 }
 
-.sys-dialog-btns button {
+/* 系统弹窗按钮已统一为 .btn（盒模型/配色由 button.css 负责）；此处仅保留弹窗内等宽填充布局 */
+.sys-dialog-btns .btn {
   flex: 1;
-  padding: 8px 0;
-  border-radius: var(--radius-sm);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  border: none;
   min-width: 90px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .setting-control {
