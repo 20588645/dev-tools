@@ -1503,6 +1503,11 @@
             <label>服务端口</label>
             <input type="text" inputmode="numeric" id="runPortInput" placeholder="自动推断 (例如 8080)">
           </div>
+          <div class="config-row" id="runGroupRow">
+            <label>分组</label>
+            <input type="text" id="runGroupInput" list="runGroupOptions" placeholder="未分组（输入新建或选择已有）" autocomplete="off">
+            <datalist id="runGroupOptions"></datalist>
+          </div>
           <div class="config-row run-auto-restart-row">
             <label>自动重启</label>
             <label class="run-auto-restart-label">

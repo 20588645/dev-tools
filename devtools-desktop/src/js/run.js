@@ -176,6 +176,7 @@ function renderRunPage() {
   if (batchStopBtn) batchStopBtn.style.display = runningCount > 0 ? '' : 'none';
 
   if (list.length === 0) {
+    grid.classList.remove('is-grouped');
     // 区分两种空态：从未添加项目 → 引导添加；有项目但被搜索/筛选过滤光 → 提示无匹配
     if (projects.length === 0) {
       renderState(grid, { kind: 'empty', icon: '📂', title: '还没有可运行的项目', desc: '点击右上角「+ 添加项目」开始', actionHTML: '<button class="btn btn--primary" onclick="showAddProject()">+ 添加项目</button>', block: true });
@@ -185,73 +186,169 @@ function renderRunPage() {
     return;
   }
 
-  grid.innerHTML = list.map(p => {
-    const isMulti = p.type === 'multi-module';
-    const moduleCount = (p.modules || []).length;
-    const job = runningProjects[p.name];
-    const command = p.runCommand || inferRunCommand(p);
-    const nodeLabel = p.nodeVersion || '系统默认';
-    const url = job ? (job.url || (job.port ? `http://localhost:${job.port}` : '等待地址')) : '未启动';
+  // 无任何分组 → 维持平铺；否则按 groupName 渲染可折叠分区
+  const hasGroups = projects.some(p => (p.groupName || '').trim());
+  if (!hasGroups) {
+    grid.classList.remove('is-grouped');
+    grid.innerHTML = list.map(runProjectCardHTML).join('');
+    return;
+  }
 
-    const alertInfo = portOccupancyAlerts[p.name];
-    let stateHtml = '';
-    let actionHtml = '';
+  // 按 groupName 聚合（list 已按运行中置顶，组内沿用此序）
+  const groups = new Map();
+  for (const p of list) {
+    const key = (p.groupName || '').trim() || RUN_UNGROUPED;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(p);
+  }
+  const namedKeys = [...groups.keys()].filter(k => k !== RUN_UNGROUPED).sort((a, b) => a.localeCompare(b, 'zh'));
+  if (namedKeys.length === 0) {
+    // 当前可见项里没有任何具名分组 → 退回平铺，避免只剩一个「未分组」头
+    grid.classList.remove('is-grouped');
+    grid.innerHTML = list.map(runProjectCardHTML).join('');
+    return;
+  }
+  const orderedKeys = groups.has(RUN_UNGROUPED) ? [...namedKeys, RUN_UNGROUPED] : namedKeys;
 
-    if (job) {
-      stateHtml = `<div><span class="run-dot"></span>${job.status === 'starting' ? '启动中' : '运行中'} · ${url}</div>
-      <span>PID ${job.pid || '—'} · ${formatRunUptime(job.startedAt)}</span>`;
-      actionHtml = `
-        <button class="btn btn--danger" onclick="stopLocalRun('${escapeOnclickArg(p.name)}', event)">■ 停止</button>
-        <button class="btn" onclick="openRunLog('${escapeOnclickArg(p.name)}')">查看日志</button>
-        <button class="btn btn--primary" onclick="openRunUrl('${escapeOnclickArg(p.name)}', event)">打开地址</button>
-      `;
-    } else {
-      if (alertInfo) {
-        stateHtml = `
-          <div class="alert-icon">⚠️</div>
-          <div class="alert-content">
-            <strong>端口被占用</strong>
-            <span>端口 ${alertInfo.port} 被 <code>${escapeHtml(alertInfo.command)}</code> (PID: ${alertInfo.pid}) 占用</span>
-          </div>
-        `;
-        actionHtml = `
-          <button class="btn btn--warning" onclick="forceReleaseAndStart('${escapeOnclickArg(p.name)}', ${alertInfo.pid})">⚡ 一键释放并启动</button>
-          <button class="btn btn--primary" onclick="openRunModal('${escapeOnclickArg(p.name)}', 'start')">▶ 启动</button>
-          <button class="btn" onclick="openRunModal('${escapeOnclickArg(p.name)}', 'config')">配置</button>
-        `;
-      } else {
-        stateHtml = '<div>○ 尚未运行</div><span>点击启动可配置命令和模块</span>';
-        actionHtml = `
-          <button class="btn btn--primary" onclick="openRunModal('${escapeOnclickArg(p.name)}', 'start')">▶ 启动运行</button>
-          <button class="btn" onclick="openRunModal('${escapeOnclickArg(p.name)}', 'config')">配置</button>
-        `;
-      }
-    }
-
+  grid.classList.add('is-grouped');
+  grid.innerHTML = orderedKeys.map(key => {
+    const items = groups.get(key);
+    const isUngrouped = key === RUN_UNGROUPED;
+    const collapsed = isRunGroupCollapsed(key);
+    const runningN = items.filter(p => runningProjects[p.name]).length;
+    const menuHtml = isUngrouped ? ''
+      : `<button class="btn btn--icon btn--sm run-group-menu" title="重命名分组" onclick="renameRunGroup('${escapeOnclickArg(key)}', event)">✎</button>`;
+    const runningHtml = runningN
+      ? `<span class="run-group-running"><span class="run-dot"></span>运行中 ${runningN}</span>` : '';
     return `
-      <div class="run-project-card" data-project="${escapeAttr(p.name)}">
-        <div class="run-card-top">
-          <div class="run-card-title" title="${escapeAttr(p.displayName || p.name)}">${isMulti ? '📦' : '📄'} ${escapeHtml(p.displayName || p.name)}</div>
-          <span class="badge ${isMulti ? 'badge--primary' : 'badge--success'}">${isMulti ? '多模块' : '单体'}</span>
+      <div class="run-group">
+        <div class="run-group-header${collapsed ? ' is-collapsed' : ''}" onclick="toggleRunGroup('${escapeOnclickArg(key)}', this)">
+          <span class="run-group-chevron">${collapsed ? '▸' : '▾'}</span>
+          <span class="run-group-name${isUngrouped ? ' is-ungrouped' : ''}">${escapeHtml(isUngrouped ? '未分组' : key)}</span>
+          <span class="run-group-count">${items.length} 个项目</span>
+          ${runningHtml}
+          ${menuHtml}
         </div>
-        <div class="run-card-path" title="${escapeAttr(p.path || '')}">${escapeHtml(p.path || '')}</div>
-        <div class="run-card-meta">
-          <span>${escapeHtml(p.tool)}</span>
-          <span>${escapeHtml(nodeLabel)}</span>
-          ${isMulti ? `<span>${moduleCount} 个模块</span>` : ''}
-        </div>
-        <div class="run-card-command">
-          <span>启动命令</span>
-          <code>${escapeHtml(command)}</code>
-        </div>
-        <div class="run-card-state ${job ? 'active' : (alertInfo ? 'port-alert' : '')}">
-          ${stateHtml}
-        </div>
-        <div class="run-card-actions">
-          ${actionHtml}
-        </div>
+        <div class="run-group-body run-project-grid"${collapsed ? ' style="display:none"' : ''}>${items.map(runProjectCardHTML).join('')}</div>
       </div>`;
   }).join('');
+}
+
+// 单张运行项目卡片（平铺与分组视图共用）
+function runProjectCardHTML(p) {
+  const isMulti = p.type === 'multi-module';
+  const moduleCount = (p.modules || []).length;
+  const job = runningProjects[p.name];
+  const command = p.runCommand || inferRunCommand(p);
+  const nodeLabel = p.nodeVersion || '系统默认';
+  const url = job ? (job.url || (job.port ? `http://localhost:${job.port}` : '等待地址')) : '未启动';
+
+  const alertInfo = portOccupancyAlerts[p.name];
+  let stateHtml = '';
+  let actionHtml = '';
+
+  if (job) {
+    stateHtml = `<div><span class="run-dot"></span>${job.status === 'starting' ? '启动中' : '运行中'} · ${url}</div>
+    <span>PID ${job.pid || '—'} · ${formatRunUptime(job.startedAt)}</span>`;
+    actionHtml = `
+      <button class="btn btn--danger" onclick="stopLocalRun('${escapeOnclickArg(p.name)}', event)">■ 停止</button>
+      <button class="btn" onclick="openRunLog('${escapeOnclickArg(p.name)}')">查看日志</button>
+      <button class="btn btn--primary" onclick="openRunUrl('${escapeOnclickArg(p.name)}', event)">打开地址</button>
+    `;
+  } else if (alertInfo) {
+    stateHtml = `
+      <div class="alert-icon">⚠️</div>
+      <div class="alert-content">
+        <strong>端口被占用</strong>
+        <span>端口 ${alertInfo.port} 被 <code>${escapeHtml(alertInfo.command)}</code> (PID: ${alertInfo.pid}) 占用</span>
+      </div>
+    `;
+    actionHtml = `
+      <button class="btn btn--warning" onclick="forceReleaseAndStart('${escapeOnclickArg(p.name)}', ${alertInfo.pid})">⚡ 一键释放并启动</button>
+      <button class="btn btn--primary" onclick="openRunModal('${escapeOnclickArg(p.name)}', 'start')">▶ 启动</button>
+      <button class="btn" onclick="openRunModal('${escapeOnclickArg(p.name)}', 'config')">配置</button>
+    `;
+  } else {
+    stateHtml = '<div>○ 尚未运行</div><span>点击启动可配置命令和模块</span>';
+    actionHtml = `
+      <button class="btn btn--primary" onclick="openRunModal('${escapeOnclickArg(p.name)}', 'start')">▶ 启动运行</button>
+      <button class="btn" onclick="openRunModal('${escapeOnclickArg(p.name)}', 'config')">配置</button>
+    `;
+  }
+
+  return `
+    <div class="run-project-card" data-project="${escapeAttr(p.name)}">
+      <div class="run-card-top">
+        <div class="run-card-title" title="${escapeAttr(p.displayName || p.name)}">${isMulti ? '📦' : '📄'} ${escapeHtml(p.displayName || p.name)}</div>
+        <span class="badge ${isMulti ? 'badge--primary' : 'badge--success'}">${isMulti ? '多模块' : '单体'}</span>
+      </div>
+      <div class="run-card-path" title="${escapeAttr(p.path || '')}">${escapeHtml(p.path || '')}</div>
+      <div class="run-card-meta">
+        <span>${escapeHtml(p.tool)}</span>
+        <span>${escapeHtml(nodeLabel)}</span>
+        ${isMulti ? `<span>${moduleCount} 个模块</span>` : ''}
+      </div>
+      <div class="run-card-command">
+        <span>启动命令</span>
+        <code>${escapeHtml(command)}</code>
+      </div>
+      <div class="run-card-state ${job ? 'active' : (alertInfo ? 'port-alert' : '')}">
+        ${stateHtml}
+      </div>
+      <div class="run-card-actions">
+        ${actionHtml}
+      </div>
+    </div>`;
+}
+
+// —— 项目分组：折叠态存 localStorage（纯视图偏好），分组名取自各项目 groupName ——
+const RUN_UNGROUPED = '__ungrouped__';
+
+function runGroupNames() {
+  return [...new Set(projects.map(p => (p.groupName || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'zh'));
+}
+
+function isRunGroupCollapsed(key) {
+  try { return JSON.parse(localStorage.getItem('runCollapsedGroups') || '[]').includes(key); } catch (e) { return false; }
+}
+
+function setRunGroupCollapsed(key, collapsed) {
+  let arr = [];
+  try { arr = JSON.parse(localStorage.getItem('runCollapsedGroups') || '[]'); } catch (e) { arr = []; }
+  const i = arr.indexOf(key);
+  if (collapsed && i === -1) arr.push(key);
+  else if (!collapsed && i !== -1) arr.splice(i, 1);
+  localStorage.setItem('runCollapsedGroups', JSON.stringify(arr));
+}
+
+function toggleRunGroup(key, headerEl) {
+  const collapsed = !isRunGroupCollapsed(key);
+  setRunGroupCollapsed(key, collapsed);
+  headerEl.classList.toggle('is-collapsed', collapsed);
+  const chevron = headerEl.querySelector('.run-group-chevron');
+  if (chevron) chevron.textContent = collapsed ? '▸' : '▾';
+  const body = headerEl.nextElementSibling;
+  if (body) body.style.display = collapsed ? 'none' : '';
+}
+
+async function renameRunGroup(key, event) {
+  if (event) event.stopPropagation();   // 别冒泡触发分区头折叠
+  const input = await showPrompt('重命名分组', { defaultValue: key, confirmText: '保存', placeholder: '分组名称' });
+  if (input === null) return;
+  const name = input.trim();
+  if (!name || name === key) return;
+  const affected = projects.filter(p => (p.groupName || '').trim() === key);
+  try {
+    for (const p of affected) {
+      await API.put(`/api/projects/${p.name}`, { groupName: name });
+      p.groupName = name;
+    }
+    if (isRunGroupCollapsed(key)) { setRunGroupCollapsed(key, false); setRunGroupCollapsed(name, true); }
+    showToast('分组已重命名', `${key} → ${name}`);
+    renderRunPage();
+  } catch (e) {
+    showAlert('重命名失败: ' + e.message, { icon: '❌' });
+  }
 }
 
 function formatRunUptime(startedAt) {
@@ -293,6 +390,14 @@ function openRunModal(projectName, mode = 'start') {
 
   document.getElementById('runCommand').value = project.runCommand || inferRunCommand(project);
   document.getElementById('runPortInput').value = project.runPort || '';
+
+  // 分组字段：仅配置模式可见，datalist 列出已有分组供快速选择
+  const groupInput = document.getElementById('runGroupInput');
+  if (groupInput) groupInput.value = project.groupName || '';
+  const groupOptions = document.getElementById('runGroupOptions');
+  if (groupOptions) groupOptions.innerHTML = runGroupNames().map(g => `<option value="${escapeAttr(g)}"></option>`).join('');
+  const groupRow = document.getElementById('runGroupRow');
+  if (groupRow) groupRow.style.display = mode === 'config' ? '' : 'none';
   if (mode === 'start') {
     const favorites = getRunFavoriteModules(project);
     const homeModuleName = (project.runHomeModule || 'home').trim() || 'home';
@@ -449,14 +554,17 @@ async function persistLocalRunConfig(project) {
   const favoriteRunModules = runModalMode === 'config' ? getCheckedRunFavoriteModules() : normalizeModuleList(project.favoriteRunModules);
   const runIncludeHome = !!document.getElementById('runIncludeHome')?.checked;
   const homeModuleName = getRunHomeModuleName();
+  // 分组仅配置模式可编辑；启动模式沿用项目现值，避免被隐藏字段覆盖
+  const groupName = runModalMode === 'config' ? (document.getElementById('runGroupInput')?.value || '').trim() : (project.groupName || '');
 
-  await API.put(`/api/projects/${project.name}`, { runCommand: command, runPort, runHomeModule: homeModuleName, runIncludeHome, favoriteRunModules, nodeVersion });
+  await API.put(`/api/projects/${project.name}`, { runCommand: command, runPort, runHomeModule: homeModuleName, runIncludeHome, favoriteRunModules, nodeVersion, groupName });
   project.runCommand = command;
   project.runPort = runPort;
   project.runHomeModule = homeModuleName;
   project.runIncludeHome = runIncludeHome;
   project.favoriteRunModules = favoriteRunModules;
   project.nodeVersion = nodeVersion;
+  project.groupName = groupName;
   return { command, nodeVersion, favoriteRunModules, runIncludeHome, homeModuleName, runPort };
 }
 

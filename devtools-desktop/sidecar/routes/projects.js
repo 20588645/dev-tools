@@ -186,7 +186,7 @@ router.put('/:name', (req, res) => {
   const idx = projects.findIndex(p => p.name === req.params.name);
   if (idx === -1) return res.status(404).json({ error: '项目不存在' });
 
-  const { defaultServerId, defaultServerIds, remotePath, buildCommand, runCommand, runPort, runHomeModule, runIncludeHome, favoriteRunModules, modules, nodeVersion, displayName } = req.body;
+  const { defaultServerId, defaultServerIds, remotePath, buildCommand, runCommand, runPort, runHomeModule, runIncludeHome, favoriteRunModules, modules, nodeVersion, displayName, groupName } = req.body;
   if (defaultServerId !== undefined) projects[idx].defaultServerId = defaultServerId;
   if (defaultServerIds !== undefined) projects[idx].defaultServerIds = defaultServerIds;
   if (remotePath !== undefined) projects[idx].remotePath = remotePath;
@@ -199,6 +199,7 @@ router.put('/:name', (req, res) => {
   if (modules !== undefined) projects[idx].modules = modules;
   if (nodeVersion !== undefined) projects[idx].nodeVersion = nodeVersion;
   if (displayName !== undefined) projects[idx].displayName = displayName;
+  if (groupName !== undefined) projects[idx].groupName = (groupName || '').trim();
 
   writeProjects(projects);
   res.json(projects[idx]);
