@@ -24,17 +24,14 @@ async function loadProjects() {
     console.error('加载项目失败:', e);
     // 首屏失败（尚无数据）：清屏给失败态 + 重试入口；后台刷新失败：保留旧数据，仅 toast
     if (!projects || projects.length === 0) {
-      const failHtml = (pad) => `<div class="run-empty run-error" style="grid-column:1/-1;padding:${pad}px">
-        <div class="run-empty-icon">⚠️</div>
-        <div>加载项目失败：${escapeHtml(e.message)}</div>
-        <button class="btn-secondary" onclick="loadProjects()">重试</button>
-      </div>`;
-      const runGrid = document.getElementById('runProjectGrid');
-      if (runGrid) runGrid.innerHTML = failHtml(48);
+      const fail = (id) => {
+        const el = document.getElementById(id);
+        if (el) renderState(el, { kind: 'error', icon: '⚠️', title: '加载项目失败', desc: e.message, actionHTML: '<button class="btn" onclick="loadProjects()">重试</button>', block: true });
+      };
+      fail('runProjectGrid');
+      fail('projectGrid');
       const runOverview = document.getElementById('runOverview');
       if (runOverview) runOverview.innerHTML = '';
-      const projGrid = document.getElementById('projectGrid');
-      if (projGrid) projGrid.innerHTML = failHtml(60);
     } else {
       showToast('刷新项目失败：' + e.message);
     }

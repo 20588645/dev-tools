@@ -178,13 +178,9 @@ function renderRunPage() {
   if (list.length === 0) {
     // 区分两种空态：从未添加项目 → 引导添加；有项目但被搜索/筛选过滤光 → 提示无匹配
     if (projects.length === 0) {
-      grid.innerHTML = `<div class="run-empty run-empty-guide">
-        <div class="run-empty-icon">📂</div>
-        <div>还没有可运行的项目</div>
-        <button class="btn btn--primary" onclick="showAddProject()">+ 添加项目</button>
-      </div>`;
+      renderState(grid, { kind: 'empty', icon: '📂', title: '还没有可运行的项目', desc: '点击右上角「+ 添加项目」开始', actionHTML: '<button class="btn btn--primary" onclick="showAddProject()">+ 添加项目</button>', block: true });
     } else {
-      grid.innerHTML = '<div class="run-empty">没有匹配的项目</div>';
+      renderState(grid, { kind: 'empty', title: '没有匹配的项目', block: true });
     }
     return;
   }
@@ -557,11 +553,11 @@ async function showRunHistory() {
   const list = document.getElementById('runHistoryList');
   document.getElementById('runHistoryModal').classList.add('active');
   // 先清空旧内容并显示加载态：避免二次打开时旧数据闪现、空白弹窗体
-  list.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:40px">加载中…</div>';
+  renderState(list, { kind: 'loading', title: '加载中…', sm: true });
   try {
     const history = await API.get('/api/run/history');
     if (!history || history.length === 0) {
-      list.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:40px">暂无运行历史记录</div>';
+      renderState(list, { kind: 'empty', icon: '📋', title: '暂无运行历史记录', sm: true });
       return;
     }
     list.innerHTML = `<table class="ha-table run-history-table">
@@ -585,7 +581,7 @@ async function showRunHistory() {
       }).join('')}</tbody>
     </table>`;
   } catch (e) {
-    list.innerHTML = `<div style="color:var(--danger);padding:20px">加载失败: ${escapeHtml(e.message)}</div>`;
+    renderState(list, { kind: 'error', icon: '⚠️', title: '加载失败', desc: e.message, sm: true });
   }
 }
 
