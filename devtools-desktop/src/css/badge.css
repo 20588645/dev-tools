@@ -1,0 +1,59 @@
+/* ============================== 徽章/标签组件 .badge ==============================
+ * 全应用统一的小标签/状态徽章，逐页替换旧平行类（card-badge/badge-multi/badge-single/
+ * badge-tool/module-tag/status-badge/各页 status-* 等，圆角字号配色混乱、夹带硬编码 rgba）。
+ * BEM、token 驱动、明暗自适配、克制。
+ * 用法：
+ *   <span class="badge">Webpack</span>                 中性标签
+ *   <span class="badge badge--primary">多模块</span>    语义色
+ *   <span class="badge badge--success badge--dot">运行中</span>  带状态点
+ * ============================================================================== */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.6;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+/* 语义色：浅底 + token 前景/描边，由 color-mix 自动适配明暗 */
+.badge--primary {
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: var(--primary);
+  border-color: color-mix(in srgb, var(--primary) 22%, transparent);
+}
+
+.badge--success {
+  background: color-mix(in srgb, var(--success) 13%, transparent);
+  color: var(--success);
+  border-color: color-mix(in srgb, var(--success) 24%, transparent);
+}
+
+.badge--warning {
+  background: color-mix(in srgb, var(--warning) 14%, transparent);
+  color: var(--warning);
+  border-color: color-mix(in srgb, var(--warning) 26%, transparent);
+}
+
+.badge--danger {
+  background: color-mix(in srgb, var(--danger) 13%, transparent);
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 24%, transparent);
+}
+
+/* 前置状态圆点（取当前文字色） */
+.badge--dot::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}

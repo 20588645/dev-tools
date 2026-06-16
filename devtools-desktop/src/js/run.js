@@ -232,7 +232,7 @@ function renderRunPage() {
       <div class="run-project-card" data-project="${escapeAttr(p.name)}">
         <div class="run-card-top">
           <div class="run-card-title" title="${escapeAttr(p.displayName || p.name)}">${isMulti ? '📦' : '📄'} ${escapeHtml(p.displayName || p.name)}</div>
-          <span class="card-badge ${isMulti ? 'badge-multi' : 'badge-single'}">${isMulti ? '多模块' : '单体'}</span>
+          <span class="badge ${isMulti ? 'badge--primary' : 'badge--success'}">${isMulti ? '多模块' : '单体'}</span>
         </div>
         <div class="run-card-path" title="${escapeAttr(p.path || '')}">${escapeHtml(p.path || '')}</div>
         <div class="run-card-meta">
