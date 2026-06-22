@@ -637,6 +637,43 @@ async function persistLocalRunConfig(project) {
   return { command, nodeVersion, favoriteRunModules, runIncludeHome, homeModuleName, runPort };
 }
 
+// —— 启动期反馈：webpack 编译阶段 dev server 长时间不吐新日志，面板像卡死；
+// 进度条改为不确定流光动画 + 每秒跳的「已等待」计时，给出"在跑、没挂"的优雅可见反馈 ——
+let runStartElapsedTimer = null;
+let runStartElapsedFrom = 0;
+
+function setRunProgressIndeterminate(on) {
+  const bar = document.getElementById('progressBar');
+  if (!bar || !bar.parentElement) return;
+  bar.parentElement.classList.toggle('is-indeterminate', on);
+  if (on) bar.style.width = '';   // 清掉内联宽度，让 CSS 的流光段接管（避免靠 !important 覆盖内联）
+}
+
+function renderRunStartElapsed() {
+  const el = document.getElementById('runStartElapsed');
+  if (!el) return;
+  // 日志弹窗与部署共用：切到部署任务则自停，避免在部署 footer 误显示等待计时
+  if (!activeTask || activeTask.taskKind !== 'run') { stopRunStartElapsed(); return; }
+  const s = Math.max(0, Math.floor((Date.now() - runStartElapsedFrom) / 1000));
+  const t = s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${s % 60}s`;
+  el.textContent = s >= 15 ? `· 已等待 ${t} · 编译较久属正常，请稍候` : `· 已等待 ${t}`;
+}
+
+function startRunStartElapsed(startedAt) {
+  runStartElapsedFrom = startedAt || Date.now();
+  setRunProgressIndeterminate(true);
+  if (runStartElapsedTimer) return;   // 已在计时则只更新起点、不重启
+  renderRunStartElapsed();
+  runStartElapsedTimer = setInterval(renderRunStartElapsed, 1000);
+}
+
+function stopRunStartElapsed() {
+  if (runStartElapsedTimer) { clearInterval(runStartElapsedTimer); runStartElapsedTimer = null; }
+  setRunProgressIndeterminate(false);
+  const el = document.getElementById('runStartElapsed');
+  if (el) el.textContent = '';
+}
+
 function showRunLogShell(job) {
   currentRunId = job.id;
   currentDeployId = null;
@@ -654,6 +691,7 @@ function showRunLogShell(job) {
     `<div class="step${i === 0 ? ' active' : ''}" id="step${i}"><div class="step-dot"></div>${s}</div>`
   ).join('');
   document.getElementById('logModal').classList.add('active');
+  if (job.status === 'starting') startRunStartElapsed(job.startedAt); else stopRunStartElapsed();
   updateLogModalCloseBtn();
 }
 
@@ -790,6 +828,7 @@ async function clearRunHistory(ev) {
 
 function updateRunLogStatus(job) {
   if (job.id !== currentRunId) return;
+  if (job.status === 'starting') startRunStartElapsed(job.startedAt); else stopRunStartElapsed();
   const isRunning = ['starting', 'running'].includes(job.status);
   const logModal = document.getElementById('logModal');
   logModal.classList.toggle('run-compile-error', job.compileStatus === 'error');

@@ -609,3 +609,10 @@ body[data-theme="dark"] #logModal.run-compile-error .step.done {
 .run-group-menu {
   flex: 0 0 auto;
 }
+
+/* 启动期「已等待」计时与耐心提示：次要弱化，纯信息不抢眼（动效交给进度条流光） */
+.run-start-elapsed {
+  margin-left: 6px;
+  color: var(--text-muted);
+  font-size: 12px;
+}

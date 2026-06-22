@@ -961,6 +961,7 @@ async function confirmQuickRepeat() {
   document.getElementById('logTerminal').innerHTML = '';
   document.getElementById('deployResult').style.display = 'none';
   document.getElementById('progressBar').style.width = '0%';
+  document.getElementById('progressBar').parentElement?.classList.remove('is-indeterminate');
   document.getElementById('progressText').textContent = '0%';
   const steps = isDeploy
     ? ['预检', '拉取代码', '构建中', '上传中', '完成']
@@ -1558,6 +1559,7 @@ function showLogModal(buildOnly) {
   document.getElementById('logTerminal').innerHTML = '';
   document.getElementById('deployResult').style.display = 'none';
   document.getElementById('progressBar').style.width = '0%';
+  document.getElementById('progressBar').parentElement?.classList.remove('is-indeterminate');
   document.getElementById('progressText').textContent = '0%';
 
   const steps = buildOnly ? ['拉取代码', '构建中'] : ['预检', '拉取代码', '构建中', '上传中', '完成'];

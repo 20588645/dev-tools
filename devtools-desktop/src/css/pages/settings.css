@@ -750,6 +750,26 @@ body[data-theme="dark"] .run-status-panel {
   transition: width 0.22s ease;
 }
 
+/* 启动期不确定进度：一段柔光在轨道里平滑往返扫过（替代静止的 35% 填充），
+   优雅表达"正在进行、时长未知"。JS 清掉内联宽度后由此接管，无需 !important。 */
+#logModal .progress-bar-container.is-indeterminate {
+  position: relative;
+}
+
+#logModal .progress-bar-container.is-indeterminate .progress-bar {
+  position: absolute;
+  left: 0;
+  width: 42%;
+  transition: none;
+  background: linear-gradient(90deg, transparent, var(--primary) 35%, var(--accent) 65%, transparent);
+  animation: runStartSweep 1.5s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+@keyframes runStartSweep {
+  0% { left: -42%; }
+  100% { left: 100%; }
+}
+
 #logModal .progress-text {
   min-width: 42px;
   color: var(--text-secondary);

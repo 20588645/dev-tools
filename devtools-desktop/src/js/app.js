@@ -1204,6 +1204,7 @@ function clearLogHighlights() {
 
 // ========== Modal Utils ==========
 function closeModal(id) {
+  if (id === 'logModal' && typeof stopRunStartElapsed === 'function') stopRunStartElapsed();
   if (id === 'logModal' && activeTask && activeTask.isRunning) {
     document.getElementById(id).classList.remove('active');
     const title = activeTask.taskKind === 'run' ? '▶ 本地服务仍在运行' : '📌 任务仍在后台运行';
