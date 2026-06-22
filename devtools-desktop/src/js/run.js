@@ -201,7 +201,9 @@ function renderRunPage() {
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(p);
   }
-  const namedKeys = [...groups.keys()].filter(k => k !== RUN_UNGROUPED).sort((a, b) => a.localeCompare(b, 'zh'));
+  // 具名分组按用户自定义顺序（localStorage runGroupOrder）排列，新组按名称补在后；仅渲染当前可见的组
+  const allNamed = orderedRunGroups([...new Set(projects.map(p => (p.groupName || '').trim()).filter(Boolean))]);
+  const namedKeys = allNamed.filter(k => groups.has(k));
   if (namedKeys.length === 0) {
     // 当前可见项里没有任何具名分组 → 退回平铺，避免只剩一个「未分组」头
     grid.classList.remove('is-grouped');
@@ -216,6 +218,10 @@ function renderRunPage() {
     const isUngrouped = key === RUN_UNGROUPED;
     const collapsed = isRunGroupCollapsed(key);
     const runningN = items.filter(p => runningProjects[p.name]).length;
+    const gi = isUngrouped ? -1 : allNamed.indexOf(key);
+    const moveHtml = isUngrouped ? ''
+      : `<button class="btn btn--icon btn--sm run-group-move" title="上移" ${gi <= 0 ? 'disabled' : ''} onclick="moveRunGroup('${escapeOnclickArg(key)}', -1, event)">↑</button>`
+      + `<button class="btn btn--icon btn--sm run-group-move" title="下移" ${gi >= allNamed.length - 1 ? 'disabled' : ''} onclick="moveRunGroup('${escapeOnclickArg(key)}', 1, event)">↓</button>`;
     const menuHtml = isUngrouped ? ''
       : `<button class="btn btn--icon btn--sm run-group-menu" title="重命名分组" onclick="renameRunGroup('${escapeOnclickArg(key)}', event)">✎</button>`;
     const runningHtml = runningN
@@ -227,6 +233,7 @@ function renderRunPage() {
           <span class="run-group-name${isUngrouped ? ' is-ungrouped' : ''}">${escapeHtml(isUngrouped ? '未分组' : key)}</span>
           <span class="run-group-count">${items.length} 个项目</span>
           ${runningHtml}
+          ${moveHtml}
           ${menuHtml}
         </div>
         <div class="run-group-body run-project-grid"${collapsed ? ' style="display:none"' : ''}>${items.map(runProjectCardHTML).join('')}</div>
@@ -348,6 +355,34 @@ function toggleRunGroup(key, headerEl) {
   if (body) body.style.display = collapsed ? 'none' : '';
 }
 
+// —— 分组排序：用户自定义顺序存 localStorage（与折叠态同路子，纯视图偏好）——
+function getRunGroupOrder() {
+  try { return JSON.parse(localStorage.getItem('runGroupOrder') || '[]'); } catch (e) { return []; }
+}
+
+function setRunGroupOrder(order) {
+  localStorage.setItem('runGroupOrder', JSON.stringify(order));
+}
+
+// 具名分组按自定义顺序优先，未在顺序里的新组按名称补在后
+function orderedRunGroups(namedKeys) {
+  const saved = getRunGroupOrder().filter(k => namedKeys.includes(k));
+  const rest = namedKeys.filter(k => !saved.includes(k)).sort((a, b) => a.localeCompare(b, 'zh'));
+  return [...saved, ...rest];
+}
+
+// 上移/下移一个分组（dir = -1 上 / +1 下），以全部具名分组的全局顺序为基准
+function moveRunGroup(key, dir, event) {
+  if (event) event.stopPropagation();   // 别冒泡触发分区头折叠
+  const order = orderedRunGroups([...new Set(projects.map(p => (p.groupName || '').trim()).filter(Boolean))]);
+  const i = order.indexOf(key);
+  const j = i + dir;
+  if (i < 0 || j < 0 || j >= order.length) return;
+  [order[i], order[j]] = [order[j], order[i]];
+  setRunGroupOrder(order);
+  renderRunPage();
+}
+
 async function renameRunGroup(key, event) {
   if (event) event.stopPropagation();   // 别冒泡触发分区头折叠
   const input = await showPrompt('重命名分组', { defaultValue: key, confirmText: '保存', placeholder: '分组名称' });
@@ -361,6 +396,14 @@ async function renameRunGroup(key, event) {
       p.groupName = name;
     }
     if (isRunGroupCollapsed(key)) { setRunGroupCollapsed(key, false); setRunGroupCollapsed(name, true); }
+    // 同步迁移自定义排序里的条目：纯改名→原位替换；合并到已存在组→删旧条目
+    const order = getRunGroupOrder();
+    const oi = order.indexOf(key);
+    if (oi !== -1) {
+      if (order.includes(name)) order.splice(oi, 1);
+      else order[oi] = name;
+      setRunGroupOrder(order);
+    }
     showToast('分组已重命名', `${key} → ${name}`);
     renderRunPage();
   } catch (e) {

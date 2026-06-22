@@ -605,6 +605,7 @@ body[data-theme="dark"] #logModal.run-compile-error .step.done {
   color: var(--success);
 }
 
+.run-group-move,
 .run-group-menu {
   flex: 0 0 auto;
 }
