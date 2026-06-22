@@ -762,7 +762,7 @@ body[data-theme="dark"] .run-status-panel {
   width: 42%;
   transition: none;
   background: linear-gradient(90deg, transparent, var(--primary) 35%, var(--accent) 65%, transparent);
-  animation: runStartSweep 1.5s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+  animation: runStartSweep 2.4s cubic-bezier(0.65, 0, 0.35, 1) infinite;
 }
 
 @keyframes runStartSweep {
