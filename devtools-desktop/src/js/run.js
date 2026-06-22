@@ -257,8 +257,10 @@ function runProjectCardHTML(p) {
   if (job) {
     stateHtml = `<div><span class="run-dot"></span>${job.status === 'starting' ? '启动中' : '运行中'} · ${url}</div>
     <span>PID ${job.pid || '—'} · ${formatRunUptime(job.startedAt)}</span>`;
+    const canRestart = job.status === 'running';   // 仅完全运行起来后可重启；启动中/停止中（含重启中）禁用，防连点
     actionHtml = `
       <button class="btn btn--danger" onclick="stopLocalRun('${escapeOnclickArg(p.name)}', event)">■ 停止</button>
+      <button class="btn" ${canRestart ? '' : 'disabled'} title="重新运行（保留当前模块）" onclick="restartLocalRun('${escapeOnclickArg(p.name)}', event)">↻ 重启</button>
       <button class="btn" onclick="openRunLog('${escapeOnclickArg(p.name)}')">查看日志</button>
       <button class="btn btn--primary" onclick="openRunUrl('${escapeOnclickArg(p.name)}', event)">打开地址</button>
     `;
@@ -743,6 +745,27 @@ async function stopLocalRun(projectName, ev) {
       showAlert('停止失败: ' + e.message, { icon: '❌' });
     }
   });
+}
+
+// 重新运行：停掉当前进程后用同样的模块/命令就地重启（改代码需重启生效时一键搞定）
+async function restartLocalRun(projectName, ev) {
+  const job = runningProjects[projectName];
+  if (!job) { showToast('该服务已不在运行', projectName); return; }
+  if (job.status !== 'running') return;   // 仅运行中可重启（按钮已按状态禁用，这里双保险）
+  // 立即禁用本按钮，覆盖「点击 → 下一次 WS 重渲染」之间的连点窗口；
+  // 重启接口立即返回（后台才停+重启），不能用 withButtonBusy（会在接口返回即解锁）。
+  const btn = ev && ev.currentTarget;
+  if (btn) btn.disabled = true;
+  try {
+    const data = await API.post(`/api/run/${job.id}/restart`, {});
+    runningProjects[projectName] = data;   // status 转 stopping → 重渲染后重启按钮持续禁用，直到 WS 推回 running
+    showRunLogShell(data);                 // 打开日志看重启与重新编译过程
+    renderRunPage();
+    showToast('正在重新运行', job.displayName || projectName);
+  } catch (e) {
+    showAlert('重启失败: ' + e.message, { icon: '❌' });
+    renderRunPage();                       // 失败也重渲染，恢复按钮可点态
+  }
 }
 
 // ========== 批量停止 ==========

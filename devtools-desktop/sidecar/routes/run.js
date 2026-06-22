@@ -655,6 +655,14 @@ function spawnRunProcess(app, job, project, launchCommand, env, moduleArgs) {
     job.stoppedAt = Date.now();
 
     if (job.status === 'stopping') {
+      // 手动重启：旧进程已退出（端口随之释放），用原配置就地重新拉起，天然避开 EADDRINUSE
+      if (job.restartRequested) {
+        job.restartRequested = false;
+        pushLog(app, job, 'info', '正在重新运行本地服务...');
+        broadcastStatus(app, job);
+        spawnRunProcess(app, job, project, launchCommand, env, moduleArgs);
+        return;
+      }
       job.status = 'stopped';
       pushLog(app, job, 'warn', '已停止本地运行服务');
       recordRunHistory(job);
@@ -860,6 +868,33 @@ router.post('/:id/stop', (req, res) => {
       if (['starting', 'running', 'stopping'].includes(job.status)) {
         terminateJob(job, 'SIGKILL');
       }
+    }, 2500);
+  } catch {
+    try { job.child?.kill('SIGTERM'); } catch {}
+  }
+
+  res.json(publicJob(job));
+});
+
+// 重新运行：保留当前模块/命令/Node 等配置，停掉旧进程后就地重启（改了代码需重启生效的常见场景）
+router.post('/:id/restart', (req, res) => {
+  const job = runJobs.get(req.params.id);
+  if (!job) return res.status(404).json({ error: '运行任务不存在' });
+  if (!['starting', 'running'].includes(job.status)) {
+    return res.status(400).json({ error: '该服务未在运行，无法重启' });
+  }
+
+  // 打重启标记后按 stop 流程终止；进程 close 时 processJobClose 见标记会就地重启
+  job.restartRequested = true;
+  job.status = 'stopping';
+  pushLog(req.app, job, 'warn', '正在重启本地运行服务...');
+  broadcastStatus(req.app, job);
+
+  try {
+    terminateJob(job, 'SIGTERM');
+    setTimeout(() => {
+      // 仅当旧进程仍未退出（还卡在 stopping）才强杀；已重启的新进程是 starting，不受影响
+      if (job.status === 'stopping') terminateJob(job, 'SIGKILL');
     }, 2500);
   } catch {
     try { job.child?.kill('SIGTERM'); } catch {}
