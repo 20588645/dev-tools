@@ -66,22 +66,23 @@ function renderProjects() {
     if (last) {
       const icon = last.status === 'success' ? '✅' : '❌';
       const ago = timeAgo(last.timestamp);
-      const mods = (last.modules || []).join(', ');
+      const mods = (last.modules || []).map(escapeHtml).join(', ');
       const typeLabel = last.type === 'deploy' ? '部署' : '构建';
-      const info = last.type === 'deploy' ? `${typeLabel} → ${last.serverName} · ${mods}` : `${typeLabel} · ${mods}`;
-      lastDeployHtml = `<div class="card-last-deploy ${last.status}">${icon} ${ago} · ${info} · ${last.duration}</div>`;
+      const info = last.type === 'deploy' ? `${typeLabel} → ${escapeHtml(last.serverName)} · ${mods}` : `${typeLabel} · ${mods}`;
+      lastDeployHtml = `<div class="card-last-deploy ${last.status}">${icon} ${ago} · ${info} · ${escapeHtml(last.duration)}</div>`;
     }
+    const pnEsc = escapeOnclickArg(p.name);
     return `
-    <div class="project-card ${isBusy ? 'card-busy' : ''}" data-project="${p.name}" onclick="openDeployModal('${p.name}')">
+    <div class="project-card ${isBusy ? 'card-busy' : ''}" data-project="${escapeAttr(p.name)}" onclick="openDeployModal('${pnEsc}')">
       <div class="card-top">
-        <div class="card-name">${isMulti ? '📦' : '📄'} ${p.displayName || p.name}</div>
+        <div class="card-name">${isMulti ? '📦' : '📄'} ${escapeHtml(p.displayName || p.name)}</div>
         <span class="card-badge ${isMulti ? 'badge-multi' : 'badge-single'}">${isMulti ? '多模块' : '单体'}</span>
       </div>
       <div class="card-meta">
-        <span><span class="badge-tool">${p.tool}</span> ${nodeLabel} ${isMulti ? moduleCount + ' 个模块' : ''}</span>
-        <span>构建: ${p.buildCommand || 'npm run build'}</span>
+        <span><span class="badge-tool">${escapeHtml(p.tool)}</span> ${nodeLabel} ${isMulti ? moduleCount + ' 个模块' : ''}</span>
+        <span>构建: ${escapeHtml(p.buildCommand || 'npm run build')}</span>
       </div>
-      ${isMulti ? `<div class="card-modules">${(p.modules || []).slice(0, 5).map(m => `<span class="module-tag">${m.name}</span>`).join('')}${moduleCount > 5 ? `<span class="module-more">+${moduleCount - 5}</span>` : ''}</div>` : ''}
+      ${isMulti ? `<div class="card-modules">${(p.modules || []).slice(0, 5).map(m => `<span class="module-tag">${escapeHtml(m.name)}</span>`).join('')}${moduleCount > 5 ? `<span class="module-more">+${moduleCount - 5}</span>` : ''}</div>` : ''}
       <div class="card-status ${getProjectDefaultServerIds(p).length > 0 ? 'status-configured' : 'status-unconfigured'}">
         ${getProjectDefaultServerIds(p).length > 0 ? `● 已配置 ${getProjectDefaultServerIds(p).length} 台服务器` : '○ 未配置服务器'}
       </div>
@@ -90,11 +91,11 @@ function renderProjects() {
         ${isBusy ? `
         <button class="btn-deploy-card btn-progress-card" style="flex:1" onclick="event.stopPropagation();reopenLogModal()">⏳ 查看进度...</button>
         ` : `
-        <button class="btn-deploy-card btn-build-card" onclick="event.stopPropagation();openBuildModal('${p.name}')" ${disabledAttr}>🔨 构建</button>
-        <button class="btn-deploy-card" onclick="event.stopPropagation();openDeployModal('${p.name}')" ${disabledAttr}>🚀 部署</button>
-        <button class="btn-deploy-card btn-quick" onclick="event.stopPropagation();quickRepeat('${p.name}')" ${disabledAttr || !last ? 'disabled' : ''} title="快速复用上次操作">⚡</button>
-        <button class="btn-icon" onclick="event.stopPropagation();openProjectConfig('${p.name}')" title="默认配置">⚙</button>
-        <button class="btn-icon danger" onclick="event.stopPropagation();removeProject('${p.name}')" title="移除项目">🗑</button>
+        <button class="btn-deploy-card btn-build-card" onclick="event.stopPropagation();openBuildModal('${pnEsc}')" ${disabledAttr}>🔨 构建</button>
+        <button class="btn-deploy-card" onclick="event.stopPropagation();openDeployModal('${pnEsc}')" ${disabledAttr}>🚀 部署</button>
+        <button class="btn-deploy-card btn-quick" onclick="event.stopPropagation();quickRepeat('${pnEsc}')" ${disabledAttr || !last ? 'disabled' : ''} title="快速复用上次操作">⚡</button>
+        <button class="btn-icon" onclick="event.stopPropagation();openProjectConfig('${pnEsc}')" title="默认配置">⚙</button>
+        <button class="btn-icon danger" onclick="event.stopPropagation();removeProject('${pnEsc}')" title="移除项目">🗑</button>
         `}
       </div>
     </div>`;
@@ -165,8 +166,8 @@ function openProjectConfig(name) {
   document.getElementById('configDisplayName').value = project.displayName || '';
 
   const nodeSelect = document.getElementById('configNodeVersion');
-  nodeSelect.innerHTML = `<option value="">系统默认 (${currentNodeVersion})</option>`
-    + nodeVersions.map(v => `<option value="${v}" ${v === (project.nodeVersion || '') ? 'selected' : ''}>${v}</option>`).join('');
+  nodeSelect.innerHTML = `<option value="">系统默认 (${escapeHtml(currentNodeVersion)})</option>`
+    + nodeVersions.map(v => `<option value="${escapeAttr(v)}" ${v === (project.nodeVersion || '') ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('');
 
   const defaultIds = getProjectDefaultServerIds(project);
   const listEl = document.getElementById('configServerList');
@@ -176,9 +177,9 @@ function openProjectConfig(name) {
     listEl.innerHTML = servers.map(s => {
       const checked = defaultIds.includes(s.id);
       if (checked) configCheckedServers.add(s.id);
-      return `<div class="server-check-item ${checked ? 'checked' : ''}" data-sid="${s.id}" onclick="toggleConfigServer('${s.id}', this)">
+      return `<div class="server-check-item ${checked ? 'checked' : ''}" data-sid="${escapeAttr(s.id)}" onclick="toggleConfigServer('${escapeOnclickArg(s.id)}', this)">
         <span class="srv-check">${checked ? '✓' : ''}</span>
-        <span>${s.name} (${s.host})</span>
+        <span>${escapeHtml(s.name)} (${escapeHtml(s.host)})</span>
       </div>`;
     }).join('');
   }
@@ -444,8 +445,8 @@ function initModalState(ctx, name) {
 
   const nodeSelect = document.getElementById(`${prefix}NodeVersion`);
   const projectNode = currentProject.nodeVersion || '';
-  nodeSelect.innerHTML = `<option value="">系统默认 (${currentNodeVersion})</option>`
-    + nodeVersions.map(v => `<option value="${v}" ${v === projectNode ? 'selected' : ''}>${v}</option>`).join('');
+  nodeSelect.innerHTML = `<option value="">系统默认 (${escapeHtml(currentNodeVersion)})</option>`
+    + nodeVersions.map(v => `<option value="${escapeAttr(v)}" ${v === projectNode ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('');
 
   return true;
 }
@@ -468,9 +469,9 @@ function openDeployModal(name) {
     listEl.innerHTML = servers.map(s => {
       const isDefault = defaultIds.includes(s.id);
       if (isDefault) checkedServers.add(s.id);
-      return `<div class="server-check-item ${isDefault ? 'checked' : ''}" data-sid="${s.id}" onclick="toggleServerCheck('${s.id}', this)">
+      return `<div class="server-check-item ${isDefault ? 'checked' : ''}" data-sid="${escapeAttr(s.id)}" onclick="toggleServerCheck('${escapeOnclickArg(s.id)}', this)">
         <span class="srv-check">${isDefault ? '✓' : ''}</span>
-        <span>${s.name} (${s.host})</span>
+        <span>${escapeHtml(s.name)} (${escapeHtml(s.host)})</span>
       </div>`;
     }).join('');
   }
@@ -514,7 +515,7 @@ function populateDeployPathsDropdown() {
     : [server.defaultRemotePath || '/'];
 
   remotePathSelect.innerHTML = paths.map((p, i) =>
-    `<option value="${p}">${p}${i === 0 ? ' (默认)' : ''}</option>`
+    `<option value="${escapeAttr(p)}">${escapeHtml(p)}${i === 0 ? ' (默认)' : ''}</option>`
   ).join('');
 }
 
@@ -616,10 +617,10 @@ function renderModules(filter = '', ctx = activeCtx) {
 function renderModuleItem(m, isFav, ctx, checked) {
   const isChecked = checked.has(m.name);
   return `
-    <div class="module-item ${isChecked ? 'checked' : ''}" onclick="toggleModule('${m.name}','${ctx}')">
+    <div class="module-item ${isChecked ? 'checked' : ''}" onclick="toggleModule('${escapeOnclickArg(m.name)}','${ctx}')">
       <div class="checkbox">${isChecked ? '✓' : ''}</div>
-      <span>${m.name}</span>
-      <button class="fav-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite('${m.name}', event, '${ctx}')" title="${isFav ? '取消常用' : '设为常用'}">${isFav ? '★' : '☆'}</button>
+      <span>${escapeHtml(m.name)}</span>
+      <button class="fav-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite('${escapeOnclickArg(m.name)}', event, '${ctx}')" title="${isFav ? '取消常用' : '设为常用'}">${isFav ? '★' : '☆'}</button>
     </div>`;
 }
 
@@ -756,7 +757,7 @@ async function browseRemoteDir(dirPath) {
     
     let fallbackHtml = '';
     if (data.fallback) {
-      fallbackHtml = `<div style="padding:8px 14px;background:rgba(255,193,7,.1);border:1px solid rgba(255,193,7,.3);border-radius:6px;margin-bottom:8px;font-size:12px;color:#ffc107">⚠ ${data.fallback}</div>`;
+      fallbackHtml = `<div style="padding:8px 14px;background:rgba(255,193,7,.1);border:1px solid rgba(255,193,7,.3);border-radius:6px;margin-bottom:8px;font-size:12px;color:#ffc107">⚠ ${escapeHtml(data.fallback)}</div>`;
     }
     document.getElementById('browserList').innerHTML = fallbackHtml;
     const listEl = document.getElementById('browserList');
@@ -765,7 +766,7 @@ async function browseRemoteDir(dirPath) {
     document.getElementById('browserList').innerHTML = 
       `<div style="text-align:center;color:var(--danger);padding:30px">
         <div style="font-size:24px;margin-bottom:8px">⚠</div>
-        <div>${e.message || '目录读取失败'}</div>
+        <div>${escapeHtml(e.message || '目录读取失败')}</div>
         <button class="btn-text" onclick="browseRemoteDir('/')" style="margin-top:12px;color:var(--accent)">返回根目录</button>
       </div>`;
   }
@@ -778,7 +779,7 @@ function renderBreadcrumb(dirPath) {
   for (const part of parts) {
     accumulated += '/' + part;
     const fullPath = accumulated;
-    html += `<span>/</span><button onclick="browseRemoteDir('${fullPath}')">${part}</button>`;
+    html += `<span>/</span><button onclick="browseRemoteDir('${escapeOnclickArg(fullPath)}')">${escapeHtml(part)}</button>`;
   }
   document.getElementById('browserBreadcrumb').innerHTML = html;
 }
@@ -788,7 +789,7 @@ function renderBrowserListHtml(items, currentPath) {
   
   if (currentPath !== '/') {
     const parentPath = currentPath.replace(/\/[^/]+\/?$/, '') || '/';
-    html += `<div class="browser-item parent-dir" onclick="browseRemoteDir('${parentPath}')">
+    html += `<div class="browser-item parent-dir" onclick="browseRemoteDir('${escapeOnclickArg(parentPath)}')">
       <span class="item-icon">⬆</span>
       <span class="item-name">..</span>
       <span class="item-size"></span>
@@ -808,16 +809,16 @@ function renderBrowserListHtml(items, currentPath) {
     const fullPath = currentPath === '/' ? '/' + item.name : currentPath + '/' + item.name;
     
     if (item.isDir) {
-      html += `<div class="browser-item is-dir" onclick="browseRemoteDir('${fullPath}')">
+      html += `<div class="browser-item is-dir" onclick="browseRemoteDir('${escapeOnclickArg(fullPath)}')">
         <span class="item-icon">${icon}</span>
-        <span class="item-name">${item.name}</span>
+        <span class="item-name">${escapeHtml(item.name)}</span>
         <span class="item-size">${size}</span>
         <span class="item-time">${time}</span>
       </div>`;
     } else {
       html += `<div class="browser-item">
         <span class="item-icon">${icon}</span>
-        <span class="item-name">${item.name}</span>
+        <span class="item-name">${escapeHtml(item.name)}</span>
         <span class="item-size">${size}</span>
         <span class="item-time">${time}</span>
       </div>`;
@@ -903,13 +904,13 @@ function renderQuickHistoryList(records) {
         <div class="qh-info">
           <div class="qh-title">
             <span class="qh-type ${typeCls}">${typeLabel}</span>
-            ${mods}
+            ${escapeHtml(mods)}
           </div>
-          <div class="qh-detail">${detail}</div>
+          <div class="qh-detail">${escapeHtml(detail)}</div>
         </div>
         <div class="qh-time">
           <div>${time}</div>
-          <div class="qh-duration">${r.duration}</div>
+          <div class="qh-duration">${escapeHtml(r.duration)}</div>
         </div>
       </div>`;
   }).join('');
@@ -1018,15 +1019,15 @@ function renderServers() {
     </div>
     ${servers.map(s => `
     <div class="server-row server-card">
-      <div class="server-name">📦 ${s.name}</div>
-      <div class="server-host">${s.host}</div>
-      <div>${s.username}</div>
+      <div class="server-name">📦 ${escapeHtml(s.name)}</div>
+      <div class="server-host">${escapeHtml(s.host)}</div>
+      <div>${escapeHtml(s.username)}</div>
       <div>${s.port}</div>
-      <div class="server-host">${s.defaultRemotePath || '/'}</div>
+      <div class="server-host">${escapeHtml(s.defaultRemotePath || '/')}</div>
       <div class="server-actions">
-        <button class="btn-icon" title="编辑" onclick="editServer('${s.id}')">✎</button>
-        <button class="btn-icon" title="测试连接" onclick="testServer('${s.id}', this)">⚡</button>
-        <button class="btn-icon danger" title="删除" onclick="deleteServer('${s.id}')">🗑</button>
+        <button class="btn-icon" title="编辑" onclick="editServer('${escapeOnclickArg(s.id)}')">✎</button>
+        <button class="btn-icon" title="测试连接" onclick="testServer('${escapeOnclickArg(s.id)}', this)">⚡</button>
+        <button class="btn-icon danger" title="删除" onclick="deleteServer('${escapeOnclickArg(s.id)}')">🗑</button>
       </div>
     </div>`).join('')}`;
 }
@@ -1054,7 +1055,7 @@ function renderPathTags() {
   tagList.innerHTML = sfDeployPaths.map((p, i) => `
     <span class="path-tag${i === 0 ? ' is-default' : ''}" data-index="${i}">
       ${i === 0 ? '<span class="tag-badge">默认</span>' : ''}
-      <span class="tag-text" title="双击编辑" ondblclick="editPathTag(${i}, this)">${p}</span>
+      <span class="tag-text" title="双击编辑" ondblclick="editPathTag(${i}, this)">${escapeHtml(p)}</span>
       <button class="tag-remove" onclick="removePathTag(${i})" title="删除">✕</button>
     </span>
   `).join('');
@@ -1264,19 +1265,19 @@ function renderHistory() {
       const statusText = h.status === 'success' ? h.duration : '失败';
       const isSelected = selectedHistoryIds.has(h.id);
       const checkCell = batchSelectMode
-        ? `<div class="h-cell h-check"><input type="checkbox" class="ios-check" ${isSelected ? 'checked' : ''} onchange="toggleHistorySelect('${h.id}', this.checked)"></div>`
+        ? `<div class="h-cell h-check"><input type="checkbox" class="ios-check" ${isSelected ? 'checked' : ''} onchange="toggleHistorySelect('${escapeOnclickArg(h.id)}', this.checked)"></div>`
         : '';
       return `<div class="history-row ${isSelected ? 'row-selected' : ''}">
         ${checkCell}
         <div class="h-cell h-time">${time}</div>
-        <div class="h-cell h-project">${h.projectName}</div>
+        <div class="h-cell h-project">${escapeHtml(h.projectName)}</div>
         <div class="h-cell h-type"><span class="type-pill ${typeDot}">${typeLabel}</span></div>
-        <div class="h-cell h-modules"><span class="history-modules">${(h.modules || []).map(m => `<span class="module-tag">${m}</span>`).join('')}</span></div>
-        <div class="h-cell h-server">${h.serverName || '—'}</div>
+        <div class="h-cell h-modules"><span class="history-modules">${(h.modules || []).map(m => `<span class="module-tag">${escapeHtml(m)}</span>`).join('')}</span></div>
+        <div class="h-cell h-server">${escapeHtml(h.serverName || '—')}</div>
         <div class="h-cell h-status ${h.status === 'success' ? 'status-success' : 'status-fail'}"><span class="status-dot-mini"></span>${statusText}</div>
         <div class="h-cell h-actions">
-          <button class="btn-icon" onclick="viewLog('${h.id}')" title="查看日志">⌗</button>
-          <button class="btn-icon danger" onclick="event.stopPropagation();deleteSingleHistory('${h.id}')" title="删除">⌫</button>
+          <button class="btn-icon" onclick="viewLog('${escapeOnclickArg(h.id)}')" title="查看日志">⌗</button>
+          <button class="btn-icon danger" onclick="event.stopPropagation();deleteSingleHistory('${escapeOnclickArg(h.id)}')" title="删除">⌫</button>
         </div>
       </div>`;
     }).join('')}`;
@@ -1376,7 +1377,7 @@ async function viewLog(id) {
     result.style.display = 'flex';
     document.getElementById('resultIcon').textContent = record.status === 'success' ? '✅' : '❌';
     document.getElementById('resultText').innerHTML = record.status === 'success'
-      ? `部署完成！耗时 <strong>${record.duration}</strong>` : '部署失败';
+      ? `部署完成！耗时 <strong>${escapeHtml(record.duration)}</strong>` : '部署失败';
     (record.logs || []).forEach(l => appendLog(l.text, l.type));
     document.getElementById('logModal').classList.add('active');
   } catch (e) {
@@ -1443,12 +1444,12 @@ function renderFzServers() {
       : (checked ? '<span style="font-size:10px;color:var(--primary);margin-left:4px">待导入</span>' : '');
     return `
     <div class="module-item ${checked ? 'checked' : ''} ${!checked && s.exists ? 'will-remove' : ''}"
-         onclick="toggleFzServer('${s.name}')"
-         title="${s.username}@${s.host}:${s.port}">
+         onclick="toggleFzServer('${escapeOnclickArg(s.name)}')"
+         title="${escapeAttr(s.username)}@${escapeAttr(s.host)}:${escapeAttr(s.port)}">
       <div class="checkbox">${checked ? '✓' : ''}</div>
       <div style="display:flex;flex-direction:column;gap:2px">
-        <span>${s.name}${statusTag}</span>
-        <span style="font-size:11px;color:var(--text-muted)">${s.host}:${s.port}</span>
+        <span>${escapeHtml(s.name)}${statusTag}</span>
+        <span style="font-size:11px;color:var(--text-muted)">${escapeHtml(s.host)}:${escapeHtml(s.port)}</span>
       </div>
     </div>`;
   }).join('');
