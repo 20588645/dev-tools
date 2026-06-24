@@ -199,26 +199,29 @@ function toggleConfigServer(sid, el) {
   }
 }
 
-async function saveProjectConfig() {
+async function saveProjectConfig(ev) {
   const nodeVersion = document.getElementById('configNodeVersion').value;
   const displayName = document.getElementById('configDisplayName').value.trim();
   const defaultServerIds = [...configCheckedServers];
   const defaultServerId = defaultServerIds[0] || '';
-  try {
-    await API.put(`/api/projects/${configProjectName}`, { nodeVersion, defaultServerId, defaultServerIds, displayName });
-    const p = projects.find(p => p.name === configProjectName);
-    if (p) {
-      p.nodeVersion = nodeVersion;
-      p.defaultServerId = defaultServerId;
-      p.defaultServerIds = defaultServerIds;
-      p.displayName = displayName;
+  const name = configProjectName;
+  await withButtonBusy(ev && ev.currentTarget, '保存中…', async () => {
+    try {
+      await API.put(`/api/projects/${name}`, { nodeVersion, defaultServerId, defaultServerIds, displayName });
+      const p = projects.find(p => p.name === name);
+      if (p) {
+        p.nodeVersion = nodeVersion;
+        p.defaultServerId = defaultServerId;
+        p.defaultServerIds = defaultServerIds;
+        p.displayName = displayName;
+      }
+      closeModal('projectConfigModal');
+      renderProjects();
+      showToast('✅ 配置已保存', `${name} 的默认配置已更新`);
+    } catch (e) {
+      showAlert('保存失败: ' + e.message, { icon: '❌' });
     }
-    closeModal('projectConfigModal');
-    renderProjects();
-    showToast('✅ 配置已保存', `${configProjectName} 的默认配置已更新`);
-  } catch (e) {
-    showAlert('保存失败: ' + e.message, { icon: '❌' });
-  }
+  });
 }
 
 // ========== Add Project Modal ==========
@@ -358,24 +361,26 @@ function updateAddSubmitBtn() {
   document.getElementById('addProjectSubmitBtn').textContent = total > 0 ? `添加 ${total} 个项目` : '添加选中项目';
 }
 
-async function addSelectedProjects() {
+async function addSelectedProjects(ev) {
   const paths = currentAddMode === 'scan' ? [...checkedAvailableProjects] : [...checkedBrowseProjects];
   if (paths.length === 0) { await showAlert('请至少选择一个项目', { icon: '⚠️' }); return; }
-  try {
-    const result = await API.post('/api/projects/batch', { paths });
-    closeModal('addProjectModal');
-    await loadProjects();
-    // 分列：已存在跳过 vs 真失败，便于用户定位（后端对重复返回 error:'已存在'）
-    const errors = result.errors || [];
-    const skipped = errors.filter(e => e.error === '已存在');
-    const failed = errors.filter(e => e.error !== '已存在');
-    const parts = [`成功添加 ${result.added.length} 个`];
-    if (skipped.length) parts.push(`${skipped.length} 个已存在跳过`);
-    if (failed.length) parts.push(`${failed.length} 个失败`);
-    showAlert(parts.join('，'), { icon: failed.length ? '⚠️' : '✅' });
-  } catch (e) {
-    showAlert('添加失败: ' + e.message, { icon: '❌' });
-  }
+  await withButtonBusy(ev && ev.currentTarget, '添加中…', async () => {
+    try {
+      const result = await API.post('/api/projects/batch', { paths });
+      closeModal('addProjectModal');
+      await loadProjects();
+      // 分列：已存在跳过 vs 真失败，便于用户定位（后端对重复返回 error:'已存在'）
+      const errors = result.errors || [];
+      const skipped = errors.filter(e => e.error === '已存在');
+      const failed = errors.filter(e => e.error !== '已存在');
+      const parts = [`成功添加 ${result.added.length} 个`];
+      if (skipped.length) parts.push(`${skipped.length} 个已存在跳过`);
+      if (failed.length) parts.push(`${failed.length} 个失败`);
+      showAlert(parts.join('，'), { icon: failed.length ? '⚠️' : '✅' });
+    } catch (e) {
+      showAlert('添加失败: ' + e.message, { icon: '❌' });
+    }
+  });
 }
 
 // ========== Module Select Modal ==========
@@ -651,7 +656,7 @@ function filterModules(ctx = activeCtx) {
 }
 
 // ========== Deploy / Build ==========
-async function startBuildOnly() {
+async function startBuildOnly(ev) {
   const state = modalState.build;
   if (currentProject.type === 'multi-module' && state.checkedModules.size === 0) {
     await showAlert('请至少选择一个模块', { icon: '⚠️' }); return;
@@ -663,26 +668,36 @@ async function startBuildOnly() {
     currentProject.nodeVersion = selectedNodeVersion;
     API.put(`/api/projects/${currentProject.name}`, { nodeVersion: selectedNodeVersion }).catch(() => {});
   }
-  
-  setBusy(currentProject.name);
-  activeTask = { id: null, projectName: currentProject.name, isRunning: true };
-  closeModal('buildModal');
-  showLogModal(true);
-  try {
-    const data = await API.post('/api/deploy/build', {
-      projectName: currentProject.name,
-      modules: [...state.checkedModules],
-      nodeVersion: selectedNodeVersion,
-    });
-    currentDeployId = data.id;
-    if (activeTask) activeTask.id = data.id;
-    updateLogModalCloseBtn();
-  } catch (e) {
-    appendLog('请求失败: ' + e.message, 'error');
-  }
+
+  const projectName = currentProject.name;
+  const modules = [...state.checkedModules];
+  // 锁按钮防连点重复发起构建（弹窗关闭前的连点窗口）
+  await withButtonBusy(ev && ev.currentTarget, '', async () => {
+    setBusy(projectName);
+    activeTask = { id: null, projectName, isRunning: true };
+    closeModal('buildModal');
+    showLogModal(true);
+    try {
+      const data = await API.post('/api/deploy/build', {
+        projectName,
+        modules,
+        nodeVersion: selectedNodeVersion,
+      });
+      currentDeployId = data.id;
+      if (activeTask) activeTask.id = data.id;
+      updateLogModalCloseBtn();
+    } catch (e) {
+      appendLog('请求失败: ' + e.message, 'error');
+      // 请求未发出，后端不会回 WS 完成事件解锁，必须本地解锁，否则卡片永久卡在 ⏳ 需重启
+      clearBusy(projectName);
+      renderProjects();
+      activeTask = null;
+      updateLogModalCloseBtn();
+    }
+  });
 }
 
-async function startDeploy() {
+async function startDeploy(ev) {
   const state = modalState.deploy;
   if (currentProject.type === 'multi-module' && state.checkedModules.size === 0) {
     await showAlert('请至少选择一个模块', { icon: '⚠️' }); return;
@@ -703,26 +718,37 @@ async function startDeploy() {
     currentProject.nodeVersion = selectedNodeVersion;
     API.put(`/api/projects/${currentProject.name}`, { nodeVersion: selectedNodeVersion }).catch(() => {});
   }
-  
-  setBusy(currentProject.name);
-  activeTask = { id: null, projectName: currentProject.name, isRunning: true };
-  closeModal('deployModal');
-  showLogModal(false);
-  try {
-    const data = await API.post('/api/deploy/start', {
-      projectName: currentProject.name,
-      modules: [...state.checkedModules],
-      serverIds,
-      serverId: serverIds[0],
-      remotePath: document.getElementById('remotePath').value,
-      nodeVersion: selectedNodeVersion,
-    });
-    currentDeployId = data.id;
-    if (activeTask) activeTask.id = data.id;
-    updateLogModalCloseBtn();
-  } catch (e) {
-    appendLog('请求失败: ' + e.message, 'error');
-  }
+
+  const projectName = currentProject.name;
+  const modules = [...state.checkedModules];
+  const remotePath = document.getElementById('remotePath').value;
+  // 锁按钮防连点重复发起部署（多服务器确认后到弹窗关闭前的连点窗口）
+  await withButtonBusy(ev && ev.currentTarget, '', async () => {
+    setBusy(projectName);
+    activeTask = { id: null, projectName, isRunning: true };
+    closeModal('deployModal');
+    showLogModal(false);
+    try {
+      const data = await API.post('/api/deploy/start', {
+        projectName,
+        modules,
+        serverIds,
+        serverId: serverIds[0],
+        remotePath,
+        nodeVersion: selectedNodeVersion,
+      });
+      currentDeployId = data.id;
+      if (activeTask) activeTask.id = data.id;
+      updateLogModalCloseBtn();
+    } catch (e) {
+      appendLog('请求失败: ' + e.message, 'error');
+      // 请求未发出，后端不会回 WS 完成事件解锁，必须本地解锁，否则卡片永久卡在 ⏳ 需重启
+      clearBusy(projectName);
+      renderProjects();
+      activeTask = null;
+      updateLogModalCloseBtn();
+    }
+  });
 }
 
 // ========== Remote File Browser ==========
@@ -945,9 +971,11 @@ function filterQuickHistory(type) {
   document.getElementById('quickConfirmBtn').disabled = true;
 }
 
-async function confirmQuickRepeat() {
+async function confirmQuickRepeat(ev) {
   const { projectName, selectedRecord: record } = quickRepeatState;
   if (!record) return;
+  if (ev && ev.currentTarget && ev.currentTarget.disabled) return;
+  if (ev && ev.currentTarget) ev.currentTarget.disabled = true;  // 立即锁定防连点（弹窗关闭前的窗口）
 
   closeModal('quickModal');
   setBusy(projectName);
@@ -955,7 +983,8 @@ async function confirmQuickRepeat() {
 
   const isDeploy = record.type === 'deploy';
   const typeLabel = isDeploy ? '部署' : '构建';
-  const mods = (record.modules || []).join(', ');
+  const recModules = record.modules || [];   // 历史记录可能缺 modules 字段，兜底避免 includes 抛错
+  const mods = recModules.join(', ');
 
   document.getElementById('logTitle').textContent = `${typeLabel}进度`;
   document.getElementById('logSubtitle').textContent = `${projectName} · ${mods}`;
@@ -976,7 +1005,7 @@ async function confirmQuickRepeat() {
     const apiUrl = isDeploy ? '/api/deploy/start' : '/api/deploy/build';
     const body = {
       projectName,
-      modules: record.modules.includes('整体构建') ? [] : record.modules,
+      modules: recModules.includes('整体构建') ? [] : recModules,
       nodeVersion: '',
     };
     if (isDeploy) {
@@ -992,6 +1021,11 @@ async function confirmQuickRepeat() {
     updateLogModalCloseBtn();
   } catch (e) {
     appendLog(`快速${typeLabel}失败: ` + e.message, 'error');
+    // 请求未发出，后端不会回 WS 完成事件解锁，必须本地解锁，否则卡片永久卡在 ⏳ 需重启
+    clearBusy(projectName);
+    renderProjects();
+    activeTask = null;
+    updateLogModalCloseBtn();
   }
 }
 
@@ -1004,6 +1038,13 @@ async function loadServers() {
     renderServers();
   } catch (e) {
     console.error('加载服务器失败:', e);
+    // 首次加载失败给失败态+重试入口（与 loadProjects 一致）；已有数据时仅 toast，保留旧列表
+    if (!servers || servers.length === 0) {
+      const el = document.getElementById('serverList');
+      if (el) renderState(el, { kind: 'error', icon: '⚠️', title: '加载服务器失败', desc: e.message, actionHTML: '<button class="btn" onclick="loadServers()">重试</button>', block: true });
+    } else {
+      showToast('刷新服务器失败：' + e.message);
+    }
   }
 }
 
@@ -1129,7 +1170,7 @@ function editServer(id) {
   if (server) showServerForm(server);
 }
 
-async function saveServer() {
+async function saveServer(ev) {
   const id = document.getElementById('sf_id').value;
   const passwordValue = document.getElementById('sf_password').value;
 
@@ -1149,14 +1190,16 @@ async function saveServer() {
   }
 
   if (!data.name || !data.host) { await showAlert('名称和 Host 必填', { icon: '⚠️' }); return; }
-  try {
-    if (id) await API.put(`/api/servers/${id}`, data);
-    else await API.post('/api/servers', data);
-    closeModal('serverFormModal');
-    await loadServers();
-  } catch (e) {
-    showAlert('保存失败: ' + e.message, { icon: '❌' });
-  }
+  await withButtonBusy(ev && ev.currentTarget, '保存中…', async () => {
+    try {
+      if (id) await API.put(`/api/servers/${id}`, data);
+      else await API.post('/api/servers', data);
+      closeModal('serverFormModal');
+      await loadServers();
+    } catch (e) {
+      showAlert('保存失败: ' + e.message, { icon: '❌' });
+    }
+  });
 }
 
 async function deleteServer(id) {
@@ -1208,6 +1251,13 @@ async function loadHistory() {
     renderHistory();
   } catch (e) {
     console.error('加载历史失败:', e);
+    // 首次加载失败给失败态+重试入口；已有数据时仅 toast，保留旧表格
+    if (!historyData || historyData.length === 0) {
+      const el = document.getElementById('historyTable');
+      if (el) renderState(el, { kind: 'error', icon: '⚠️', title: '加载历史失败', desc: e.message, actionHTML: '<button class="btn" onclick="loadHistory()">重试</button>', block: true });
+    } else {
+      showToast('刷新历史失败：' + e.message);
+    }
   }
 }
 

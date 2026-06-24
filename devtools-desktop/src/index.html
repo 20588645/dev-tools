@@ -1327,7 +1327,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeModal('buildModal')">取消</button>
-      <button class="btn-primary" onclick="startBuildOnly()">🔨 开始构建</button>
+      <button class="btn-primary" onclick="startBuildOnly(event)">🔨 开始构建</button>
     </div>
   </div>
 </div>
@@ -1390,7 +1390,7 @@
       <button class="btn-secondary" onclick="quickTestServers()" id="btnQuickTest" style="gap:6px;display:inline-flex;align-items:center">🔗 测试连接</button>
       <div style="display:flex;gap:12px">
         <button class="btn-secondary" onclick="closeModal('deployModal')">取消</button>
-        <button class="btn-primary btn-deploy" onclick="startDeploy()">🚀 构建并部署</button>
+        <button class="btn-primary btn-deploy" onclick="startDeploy(event)">🚀 构建并部署</button>
       </div>
     </div>
   </div>
@@ -1661,7 +1661,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeModal('quickModal')">取消</button>
-      <button class="btn-primary" id="quickConfirmBtn" onclick="confirmQuickRepeat()" disabled>🚀 执行</button>
+      <button class="btn-primary" id="quickConfirmBtn" onclick="confirmQuickRepeat(event)" disabled>🚀 执行</button>
     </div>
   </div>
 </div>
@@ -1696,7 +1696,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeModal('serverFormModal')">取消</button>
-      <button class="btn-primary" onclick="saveServer()">保存</button>
+      <button class="btn-primary" onclick="saveServer(event)">保存</button>
     </div>
   </div>
 </div>
@@ -1727,7 +1727,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeModal('projectConfigModal')">取消</button>
-      <button class="btn-primary" onclick="saveProjectConfig()">💾 保存配置</button>
+      <button class="btn-primary" onclick="saveProjectConfig(event)">💾 保存配置</button>
     </div>
   </div>
 </div>
@@ -1774,7 +1774,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('addProjectModal')">取消</button>
-      <button class="btn btn--primary" id="addProjectSubmitBtn" onclick="addSelectedProjects()">添加选中项目</button>
+      <button class="btn btn--primary" id="addProjectSubmitBtn" onclick="addSelectedProjects(event)">添加选中项目</button>
     </div>
   </div>
 </div>
