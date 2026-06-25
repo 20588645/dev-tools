@@ -1309,8 +1309,8 @@
             <input type="text" placeholder="搜索模块..." id="buildModuleSearch" oninput="filterModules('build')">
           </div>
           <div class="module-actions">
-            <button class="btn-text module-filter-btn active" id="buildFilterAll" onclick="setModuleFilter('all','build')">全部</button>
-            <button class="btn-text module-filter-btn" id="buildFilterFav" onclick="setModuleFilter('fav','build')">⭐ 常用</button>
+            <button class="chip active" id="buildFilterAll" onclick="setModuleFilter('all','build')">全部</button>
+            <button class="chip" id="buildFilterFav" onclick="setModuleFilter('fav','build')">⭐ 常用</button>
             <span style="color:var(--border);margin:0 4px">|</span>
             <button class="btn btn--text" onclick="toggleAll(true,'build')">全选</button>
             <button class="btn btn--text" onclick="toggleAll(false,'build')">全不选</button>
@@ -1357,8 +1357,8 @@
             <input type="text" placeholder="搜索模块..." id="deployModuleSearch" oninput="filterModules('deploy')">
           </div>
           <div class="module-actions">
-            <button class="btn-text module-filter-btn active" id="deployFilterAll" onclick="setModuleFilter('all','deploy')">全部</button>
-            <button class="btn-text module-filter-btn" id="deployFilterFav" onclick="setModuleFilter('fav','deploy')">⭐ 常用</button>
+            <button class="chip active" id="deployFilterAll" onclick="setModuleFilter('all','deploy')">全部</button>
+            <button class="chip" id="deployFilterFav" onclick="setModuleFilter('fav','deploy')">⭐ 常用</button>
             <span style="color:var(--border);margin:0 4px">|</span>
             <button class="btn btn--text" onclick="toggleAll(true,'deploy')">全选</button>
             <button class="btn btn--text" onclick="toggleAll(false,'deploy')">全不选</button>
