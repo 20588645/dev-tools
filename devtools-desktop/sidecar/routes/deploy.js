@@ -487,32 +487,4 @@ router.get('/last/:projectName', (req, res) => {
   }
 });
 
-// GET /api/deploy/recent/:projectName — 获取项目最近 N 条成功记录（用于快速复用）
-router.get('/recent/:projectName', (req, res) => {
-  const { projectName } = req.params;
-  const limit = Math.min(parseInt(req.query.limit) || 10, 30);
-
-  try {
-    const rows = db.prepare('SELECT id, timestamp, status, type, duration, serverName, modules, remotePath FROM history WHERE projectName = ? AND status = ? ORDER BY timestamp DESC LIMIT ?')
-      .all(projectName, 'success', limit);
-
-    const filtered = rows.map(r => ({
-      id: r.id,
-      timestamp: r.timestamp,
-      status: r.status,
-      type: r.type,
-      duration: r.duration,
-      serverName: r.serverName,
-      serverIds: [],
-      remotePath: r.remotePath,
-      modules: JSON.parse(r.modules || '[]'),
-      fileCount: 0 // 兼容元数据
-    }));
-
-    res.json(filtered);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 module.exports = router;

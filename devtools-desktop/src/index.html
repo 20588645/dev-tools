@@ -1636,36 +1636,6 @@
   </div>
 </div>
 
-<!-- 快速复用弹窗 -->
-<div class="modal-overlay" id="quickModal">
-  <div class="modal modal-quick">
-    <div class="modal-header">
-      <div>
-        <h2>⚡ 快速复用</h2>
-        <p class="modal-subtitle" id="quickSubtitle"></p>
-      </div>
-      <button class="modal-close" onclick="closeModal('quickModal')">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="quick-toolbar">
-        <span style="font-size:13px;color:var(--text-muted)">选择一条历史记录，一键复用配置执行：</span>
-        <div class="quick-filters" id="quickFilters">
-          <button class="qf-btn active" data-filter="all" onclick="filterQuickHistory('all')">全部</button>
-          <button class="qf-btn" data-filter="build-only" onclick="filterQuickHistory('build-only')">构建</button>
-          <button class="qf-btn" data-filter="deploy" onclick="filterQuickHistory('deploy')">部署</button>
-        </div>
-      </div>
-      <div id="quickHistoryList" class="quick-history-list">
-        <div style="text-align:center;color:var(--text-muted);padding:32px">加载中...</div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn" onclick="closeModal('quickModal')">取消</button>
-      <button class="btn btn--primary" id="quickConfirmBtn" onclick="confirmQuickRepeat(event)" disabled>🚀 执行</button>
-    </div>
-  </div>
-</div>
-
 <!-- 服务器表单弹窗 -->
 <div class="modal-overlay" id="serverFormModal">
   <div class="modal modal-sm">

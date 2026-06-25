@@ -172,14 +172,6 @@
 
 .tag-input-field { background: transparent; border: none; outline: none; color: var(--text-primary); font-size: 13px; width: 100%; padding: 4px 2px; }
 
-/* 快速复用弹窗 */
-.quick-history-list { display: flex; flex-direction: column; gap: 6px; max-height: 360px; overflow-y: auto; }
-
-/* 快速复用筛选 */
-.quick-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-
-.quick-filters { display: flex; gap: 4px; }
-
 /* Git Log 预览 */
 .git-log-section { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
 
@@ -259,10 +251,6 @@
 
 .modal-sm {
   width: 430px !important;
-}
-
-.modal-quick {
-  width: 600px !important;
 }
 
 .modal-log {
@@ -404,11 +392,6 @@
 #projectConfigModal .modal {
   width: 500px !important;
   max-width: 500px !important;
-}
-
-#quickModal .modal {
-  width: 600px !important;
-  max-width: 600px !important;
 }
 
 #addProjectModal .modal,

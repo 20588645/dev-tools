@@ -6,7 +6,7 @@
 /* ===================== 旧按钮体系 .btn-*（技术债，逐页替换中） =====================
  * 统一新按钮组件见 css/button.css（.btn + .btn--变体，BEM）。以下 .btn-primary /
  * .btn-secondary / .btn-danger / .btn-warning / .btn-text / .btn-icon 及散落 overrides.css 的
- * 相关规则、各页平行体系（rbtn/qf-btn/seg-btn/fav-btn/btn-deploy-card 等）均为历史债：
+ * 相关规则、各页平行体系（rbtn/seg-btn/fav-btn/btn-deploy-card 等）均为历史债：
  * 随各页打磨用新 .btn 组件替换，并删除该页旧按钮代码；全部迁完后整体移除本节与 overrides 泥潭。
  * 切换/筛选用 .chip（选中态切换，非动作），单独保留。新代码一律用 css/button.css，禁止再用/再造旧类。
  * ============================================================== */
@@ -140,12 +140,6 @@
 
 .rpt-result-section tr:hover td { background: var(--accent-subtle); }
 
-.qf-btn { background: var(--bg-elevated); border: 1px solid var(--border); color: var(--text-muted); padding: 4px 12px; border-radius: 12px; font-size: 12px; cursor: pointer; transition: all 0.15s; }
-
-.qf-btn:hover { border-color: var(--primary); color: var(--text-primary); }
-
-.qf-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
-
 .seg-btn {
   border: none;
   background: transparent;
@@ -226,8 +220,7 @@
 .rbtn-primary:hover { background: var(--primary-hover) !important; }
 
 .btn-secondary:hover,
-.rbtn-outline:hover,
-.qf-btn:hover { background: var(--bg-hover) !important; color: var(--text-primary) !important; border-color: var(--border-strong) !important; }
+.rbtn-outline:hover { background: var(--bg-hover) !important; color: var(--text-primary) !important; border-color: var(--border-strong) !important; }
 
 .btn-text {
   border: none;
@@ -309,7 +302,6 @@ select:focus,
 .tag-input-container,
 .browser-breadcrumb,
 .browser-list,
-.quick-history-item,
 .server-check-item {
   background: var(--bg-input) !important;
   border: 1px solid var(--border) !important;
@@ -465,7 +457,6 @@ body[data-theme="dark"] .modal {
 .toolbar,
 .filter-tabs,
 .history-actions,
-.quick-filters,
 .report-actions {
   gap: 6px !important;
 }

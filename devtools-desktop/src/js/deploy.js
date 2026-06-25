@@ -93,7 +93,6 @@ function renderProjects() {
         ` : `
         <button class="btn" onclick="event.stopPropagation();openBuildModal('${pnEsc}')" ${disabledAttr}>🔨 构建</button>
         <button class="btn btn--primary" onclick="event.stopPropagation();openDeployModal('${pnEsc}')" ${disabledAttr}>🚀 部署</button>
-        <button class="btn btn--icon btn--warning" data-quick onclick="event.stopPropagation();quickRepeat('${pnEsc}')" ${disabledAttr || !last ? 'disabled' : ''} title="快速复用上次操作">⚡</button>
         <button class="btn btn--icon" onclick="event.stopPropagation();openProjectConfig('${pnEsc}')" title="默认配置">⚙</button>
         <button class="btn btn--icon btn--danger" onclick="event.stopPropagation();removeProject('${pnEsc}')" title="移除项目">🗑</button>
         `}
@@ -121,7 +120,6 @@ async function loadLastDeployInfos(projectList) {
     const pName = card.dataset.project;
     const last = lastDeployCache[pName];
     const el = card.querySelector('.card-last-deploy');
-    const btn = card.querySelector('[data-quick]');
     if (last && el) {
       const icon = last.status === 'success' ? '✅' : '❌';
       const ago = timeAgo(last.timestamp);
@@ -131,7 +129,6 @@ async function loadLastDeployInfos(projectList) {
       el.className = `card-last-deploy ${last.status}`;
       el.textContent = `${icon} ${ago} · ${info} · ${last.duration}`;
     }
-    if (btn) btn.disabled = !last;
   });
 }
 
@@ -879,154 +876,6 @@ function confirmRemotePath() {
     select.appendChild(newOpt);
   }
   closeModal('remoteBrowserModal');
-}
-
-// ========== Quick Repeat ==========
-let quickRepeatState = { projectName: '', selectedRecord: null };
-
-async function quickRepeat(projectName) {
-  if (busyProjects.has(projectName)) return;
-  quickRepeatState = { projectName, selectedRecord: null };
-  document.getElementById('quickSubtitle').textContent = projectName;
-  document.getElementById('quickConfirmBtn').disabled = true;
-  document.getElementById('quickHistoryList').innerHTML =
-    '<div style="text-align:center;color:var(--text-muted);padding:32px">加载中...</div>';
-  document.querySelectorAll('#quickFilters .qf-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.filter === 'all');
-  });
-  document.getElementById('quickModal').classList.add('active');
-
-  try {
-    const records = await API.get(`/api/deploy/recent/${projectName}?limit=10`);
-    if (!records || records.length === 0) {
-      document.getElementById('quickHistoryList').innerHTML =
-        '<div style="text-align:center;color:var(--text-muted);padding:32px">暂无成功的历史记录</div>';
-      return;
-    }
-    quickRepeatState.records = records;
-    renderQuickHistoryList(records);
-  } catch (e) {
-    document.getElementById('quickHistoryList').innerHTML =
-      `<div style="text-align:center;color:var(--text-muted);padding:32px">加载失败: ${e.message}</div>`;
-  }
-}
-
-function renderQuickHistoryList(records) {
-  const list = document.getElementById('quickHistoryList');
-  list.innerHTML = records.map((r, i) => {
-    const isDeploy = r.type === 'deploy';
-    const typeLabel = isDeploy ? '部署' : '构建';
-    const typeCls = isDeploy ? 'qh-type-deploy' : 'qh-type-build';
-    const mods = (r.modules || []).join(', ');
-    const detail = isDeploy
-      ? `${r.serverName} · ${r.remotePath} · ${mods}`
-      : mods;
-    const time = new Date(r.timestamp).toLocaleString('zh-CN', {
-      month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
-    });
-    return `
-      <div class="quick-history-item" data-index="${i}" onclick="selectQuickRecord(${i})">
-        <div class="qh-radio"></div>
-        <div class="qh-info">
-          <div class="qh-title">
-            <span class="qh-type ${typeCls}">${typeLabel}</span>
-            ${escapeHtml(mods)}
-          </div>
-          <div class="qh-detail">${escapeHtml(detail)}</div>
-        </div>
-        <div class="qh-time">
-          <div>${time}</div>
-          <div class="qh-duration">${escapeHtml(r.duration)}</div>
-        </div>
-      </div>`;
-  }).join('');
-  quickRepeatState.filteredRecords = records;
-}
-
-function selectQuickRecord(index) {
-  document.querySelectorAll('.quick-history-item').forEach((el, i) => {
-    el.classList.toggle('selected', i === index);
-  });
-  quickRepeatState.selectedRecord = quickRepeatState.filteredRecords[index];
-  document.getElementById('quickConfirmBtn').disabled = false;
-}
-
-function filterQuickHistory(type) {
-  document.querySelectorAll('#quickFilters .qf-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.filter === type);
-  });
-  if (!quickRepeatState.records) return;
-  const filtered = type === 'all'
-    ? quickRepeatState.records
-    : quickRepeatState.records.filter(r => r.type === type);
-  if (filtered.length === 0) {
-    document.getElementById('quickHistoryList').innerHTML =
-      '<div style="text-align:center;color:var(--text-muted);padding:32px">无匹配记录</div>';
-    quickRepeatState.selectedRecord = null;
-    document.getElementById('quickConfirmBtn').disabled = true;
-    return;
-  }
-  renderQuickHistoryList(filtered);
-  quickRepeatState.selectedRecord = null;
-  document.getElementById('quickConfirmBtn').disabled = true;
-}
-
-async function confirmQuickRepeat(ev) {
-  const { projectName, selectedRecord: record } = quickRepeatState;
-  if (!record) return;
-  if (ev && ev.currentTarget && ev.currentTarget.disabled) return;
-  if (ev && ev.currentTarget) ev.currentTarget.disabled = true;  // 立即锁定防连点（弹窗关闭前的窗口）
-
-  closeModal('quickModal');
-  setBusy(projectName);
-  activeTask = { id: null, projectName, isRunning: true };
-
-  const isDeploy = record.type === 'deploy';
-  const typeLabel = isDeploy ? '部署' : '构建';
-  const recModules = record.modules || [];   // 历史记录可能缺 modules 字段，兜底避免 includes 抛错
-  const mods = recModules.join(', ');
-
-  document.getElementById('logTitle').textContent = `${typeLabel}进度`;
-  document.getElementById('logSubtitle').textContent = `${projectName} · ${mods}`;
-  document.getElementById('logTerminal').innerHTML = '';
-  document.getElementById('deployResult').style.display = 'none';
-  document.getElementById('progressBar').style.width = '0%';
-  document.getElementById('progressBar').parentElement?.classList.remove('is-indeterminate');
-  document.getElementById('progressText').textContent = '0%';
-  const steps = isDeploy
-    ? ['预检', '拉取代码', '构建中', '上传中', '完成']
-    : ['拉取代码', '构建中'];
-  document.getElementById('progressSteps').innerHTML = steps.map((s, i) =>
-    `<div class="step${i === 0 ? ' active' : ''}" id="step${i}"><div class="step-dot"></div>${s}</div>`
-  ).join('');
-  document.getElementById('logModal').classList.add('active');
-
-  try {
-    const apiUrl = isDeploy ? '/api/deploy/start' : '/api/deploy/build';
-    const body = {
-      projectName,
-      modules: recModules.includes('整体构建') ? [] : recModules,
-      nodeVersion: '',
-    };
-    if (isDeploy) {
-      body.serverIds = record.serverIds && record.serverIds.length > 0
-        ? record.serverIds
-        : (record.serverId ? [record.serverId] : []);
-      body.serverId = body.serverIds[0] || '';
-      body.remotePath = record.remotePath || '/';
-    }
-    const data = await API.post(apiUrl, body);
-    currentDeployId = data.id;
-    if (activeTask) activeTask.id = data.id;
-    updateLogModalCloseBtn();
-  } catch (e) {
-    appendLog(`快速${typeLabel}失败: ` + e.message, 'error');
-    // 请求未发出，后端不会回 WS 完成事件解锁，必须本地解锁，否则卡片永久卡在 ⏳ 需重启
-    clearBusy(projectName);
-    renderProjects();
-    activeTask = null;
-    updateLogModalCloseBtn();
-  }
 }
 
 // ========== Server Management ==========

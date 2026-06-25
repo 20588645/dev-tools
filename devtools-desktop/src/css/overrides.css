@@ -29,7 +29,6 @@
 .btn-secondary,
 .btn-text,
 .rbtn,
-.qf-btn,
 .pill-btn,
 .seg-btn {
   border-radius: 6px !important;
@@ -52,7 +51,6 @@
 
 .btn-secondary,
 .rbtn-outline,
-.qf-btn,
 .pill-btn {
   min-height: 28px;
   padding: 6px 11px !important;
@@ -80,7 +78,6 @@ button:disabled,
 .btn-secondary,
 .btn-deploy-card,
 .rbtn,
-.qf-btn,
 .seg-btn,
 .chip {
   display: inline-flex !important;
@@ -147,7 +144,6 @@ input[type="number"] {
 .btn-primary,
 .btn-secondary,
 .rbtn,
-.qf-btn,
 .pill-btn {
   min-height: 28px;
   border-radius: 5px !important;
@@ -197,7 +193,6 @@ input[type="number"] {
 .btn-secondary,
 .btn-deploy-card,
 .rbtn,
-.qf-btn,
 .pill-btn {
   min-height: 27px !important;
   padding: 0 10px !important;
@@ -212,7 +207,6 @@ input[type="number"] {
 }
 
 .btn-secondary,
-.qf-btn,
 .rbtn,
 .pill-btn,
 .seg-btn,
@@ -223,7 +217,6 @@ input[type="number"] {
 }
 
 .btn-secondary:hover,
-.qf-btn:hover,
 .rbtn:hover,
 .pill-btn:hover,
 .seg-btn:hover,
@@ -235,7 +228,6 @@ input[type="number"] {
 .sub-tab.active,
 .seg-btn.active,
 .pill-btn.active,
-.qf-btn.active,
 .rpt-mode-btn.active,
 .rpt-view-btn.active {
   color: var(--primary) !important;
@@ -513,7 +505,6 @@ select {
 .btn-secondary,
 .rbtn-outline,
 .btn-text,
-.qf-btn,
 .pill-btn {
   min-height: 26px !important;
   padding: 5px 10px !important;
@@ -774,7 +765,6 @@ textarea,
 
 /* --- 10. 统一 chip/filter 样式 --- */
 .chip,
-.qf-btn,
 .rpt-preset,
 .seg-btn {
   border-radius: 6px !important;
