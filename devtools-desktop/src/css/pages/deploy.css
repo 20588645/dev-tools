@@ -757,6 +757,13 @@
   padding: 0 12px !important;
 }
 
+/* 批次6B：批量选择模式多出 ☑ 勾选列时，给 grid 头部补一条 32px 轨道，避免第 8 个
+   cell 撑破 7 列模板换行错位；表头与数据行同步加 .with-check 保持列对齐 */
+.history-row.with-check,
+.history-row.history-header.with-check {
+  grid-template-columns: 32px 94px minmax(170px, 1.35fr) 78px minmax(150px, 1.1fr) minmax(130px, 1fr) 88px 72px !important;
+}
+
 /* 历史表头：批次5B 已移出滚动容器到 #historyHeader，flex 静态置顶（禁用 sticky，铁律禁用——
    WKWebView 子滚动容器惯性滚动会抖）；此处只定义表头行视觉，列宽与数据行共用上面的 grid */
 .history-row.history-header {

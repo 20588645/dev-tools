@@ -1159,7 +1159,7 @@ function renderHistory() {
   // 表头行渲到固定容器 #historyHeader（不随数据滚动），数据行渲到独立滚动的 #historyTable，
   // 二者共用同一套 .history-row grid 列宽以保证对齐
   if (headerEl) headerEl.innerHTML = `
-    <div class="history-row history-header">
+    <div class="history-row history-header${batchSelectMode ? ' with-check' : ''}">
       ${checkHeader}
       <div class="h-cell h-time">时间</div>
       <div class="h-cell h-project">项目</div>
@@ -1179,7 +1179,7 @@ function renderHistory() {
       const checkCell = batchSelectMode
         ? `<div class="h-cell h-check"><input type="checkbox" class="ios-check" ${isSelected ? 'checked' : ''} onchange="toggleHistorySelect('${escapeOnclickArg(h.id)}', this.checked)"></div>`
         : '';
-      return `<div class="history-row ${isSelected ? 'row-selected' : ''}">
+      return `<div class="history-row ${isSelected ? 'row-selected' : ''}${batchSelectMode ? ' with-check' : ''}">
         ${checkCell}
         <div class="h-cell h-time">${time}</div>
         <div class="h-cell h-project">${escapeHtml(h.projectName)}</div>
