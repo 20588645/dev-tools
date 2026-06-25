@@ -391,8 +391,18 @@
 
 .history-table {
   border: 1px solid var(--border);
+  border-top: none;
   overflow: hidden auto !important;
   min-height: 320px;
+}
+
+/* 固定表头容器：批次5B 把列表头移出滚动容器，flex 静态置顶（禁用 sticky，铁律）；
+   与 .history-table 共用 .history-row grid 列宽保证对齐，表体 #historyTable 独立滚动。
+   边框：本容器出顶边+两侧，表体出两侧+底边，拼成一个连续表框（表头行自带底分隔线） */
+.history-header-fixed {
+  flex: 0 0 auto;
+  border: 1px solid var(--border);
+  border-bottom: none;
 }
 
 @media (max-width: 1080px) {
@@ -741,8 +751,8 @@
   padding: 0 12px !important;
 }
 
-/* 历史表头不用 position:sticky（WKWebView 子滚动容器惯性滚动会抖，铁律禁用）；随列表滚动。
-   完整「固定表头」待批次5 page-fixed-header 结构归位时把表头移出滚动容器再做 */
+/* 历史表头：批次5B 已移出滚动容器到 #historyHeader，flex 静态置顶（禁用 sticky，铁律禁用——
+   WKWebView 子滚动容器惯性滚动会抖）；此处只定义表头行视觉，列宽与数据行共用上面的 grid */
 .history-row.history-header {
   min-height: 32px !important;
   color: var(--text-muted) !important;
@@ -902,8 +912,9 @@
 .card-name,
 .server-name { font-size: 11px !important; font-weight: 680 !important; color: var(--text-primary) !important; }
 
-#page-deploy .server-list,
-#page-deploy .history-table {
+/* 注：批次5B 把 .history-table 移出本组——它需作为独立滚动容器（见上方 flex:1/overflow-y:auto），
+   不能被这里的 overflow:hidden/flex:0 0 auto 压成不可滚动（原为隐性 bug，历史列表会被裁切看不全） */
+#page-deploy .server-list {
   flex: 0 0 auto !important;
   height: auto !important;
   max-height: none !important;

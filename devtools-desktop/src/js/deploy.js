@@ -1103,6 +1103,8 @@ async function loadHistory() {
     // 首次加载失败给失败态+重试入口；已有数据时仅 toast，保留旧表格
     if (!historyData || historyData.length === 0) {
       const el = document.getElementById('historyTable');
+      const hd = document.getElementById('historyHeader');
+      if (hd) hd.innerHTML = '';
       if (el) renderState(el, { kind: 'error', icon: '⚠️', title: '加载历史失败', desc: e.message, actionHTML: '<button class="btn" onclick="loadHistory()">重试</button>', block: true });
     } else {
       showToast('刷新历史失败：' + e.message);
@@ -1139,14 +1141,18 @@ function renderHistory() {
   }
 
   const table = document.getElementById('historyTable');
+  const headerEl = document.getElementById('historyHeader');
   if (filtered.length === 0) {
+    if (headerEl) headerEl.innerHTML = '';
     table.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:60px">暂无匹配的部署记录</div>';
     return;
   }
 
   const checkHeader = batchSelectMode ? '<div class="h-cell h-check"></div>' : '';
 
-  table.innerHTML = `
+  // 表头行渲到固定容器 #historyHeader（不随数据滚动），数据行渲到独立滚动的 #historyTable，
+  // 二者共用同一套 .history-row grid 列宽以保证对齐
+  if (headerEl) headerEl.innerHTML = `
     <div class="history-row history-header">
       ${checkHeader}
       <div class="h-cell h-time">时间</div>
@@ -1156,8 +1162,9 @@ function renderHistory() {
       <div class="h-cell h-server">服务器</div>
       <div class="h-cell h-status">状态</div>
       <div class="h-cell h-actions">操作</div>
-    </div>
-    ${filtered.map(h => {
+    </div>`;
+
+  table.innerHTML = `${filtered.map(h => {
       const time = new Date(h.timestamp).toLocaleString('zh-CN', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
       const typeLabel = h.type === 'deploy' ? '部署' : '构建';
       const typeDot = h.type === 'deploy' ? 'deploy' : 'build';
