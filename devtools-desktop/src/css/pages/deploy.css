@@ -405,6 +405,12 @@
   border-bottom: none;
 }
 
+/* 服务器列表固定表头（批次6A，与历史表同策略）：表头移出滚动容器、flex 静态置顶；
+   服务器列表本身无外框，故此容器也不出边框，仅靠 .server-head 底色成头部条 */
+.server-header-fixed {
+  flex: 0 0 auto;
+}
+
 @media (max-width: 1080px) {
 .project-grid { grid-template-columns: repeat(2, minmax(230px, 1fr)) !important; }
 
@@ -911,15 +917,6 @@
 
 .card-name,
 .server-name { font-size: 11px !important; font-weight: 680 !important; color: var(--text-primary) !important; }
-
-/* 注：批次5B 把 .history-table 移出本组——它需作为独立滚动容器（见上方 flex:1/overflow-y:auto），
-   不能被这里的 overflow:hidden/flex:0 0 auto 压成不可滚动（原为隐性 bug，历史列表会被裁切看不全） */
-#page-deploy .server-list {
-  flex: 0 0 auto !important;
-  height: auto !important;
-  max-height: none !important;
-  overflow: hidden !important;
-}
 
 .server-check-item {
   border-radius: var(--radius-sm);

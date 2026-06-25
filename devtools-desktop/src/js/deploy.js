@@ -890,6 +890,8 @@ async function loadServers() {
     // 首次加载失败给失败态+重试入口（与 loadProjects 一致）；已有数据时仅 toast，保留旧列表
     if (!servers || servers.length === 0) {
       const el = document.getElementById('serverList');
+      const hd = document.getElementById('serverHeader');
+      if (hd) hd.innerHTML = '';
       if (el) renderState(el, { kind: 'error', icon: '⚠️', title: '加载服务器失败', desc: e.message, actionHTML: '<button class="btn" onclick="loadServers()">重试</button>', block: true });
     } else {
       showToast('刷新服务器失败：' + e.message);
@@ -899,15 +901,19 @@ async function loadServers() {
 
 function renderServers() {
   const list = document.getElementById('serverList');
+  const headerEl = document.getElementById('serverHeader');
   if (servers.length === 0) {
+    if (headerEl) headerEl.innerHTML = '';
     list.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:60px">暂无服务器，点击"添加服务器"按钮</div>';
     return;
   }
-  list.innerHTML = `
+  // 表头行渲到固定容器 #serverHeader（不随数据滚动），数据行渲到独立滚动的 #serverList，
+  // 二者共用同一套 .server-row grid 列宽以保证对齐
+  if (headerEl) headerEl.innerHTML = `
     <div class="server-row server-head">
       <div>名称</div><div>Host</div><div>用户</div><div>端口</div><div>目标路径</div><div>操作</div>
-    </div>
-    ${servers.map(s => `
+    </div>`;
+  list.innerHTML = `${servers.map(s => `
     <div class="server-row server-card">
       <div class="server-name">📦 ${escapeHtml(s.name)}</div>
       <div class="server-host">${escapeHtml(s.host)}</div>
