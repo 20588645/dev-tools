@@ -19,12 +19,6 @@
   -webkit-backdrop-filter: blur(18px);
 }
 
-.btn-deploy-card,
-.btn-icon {
-  min-height: 28px;
-  border-radius: 6px !important;
-}
-
 .btn-primary,
 .btn-secondary,
 .btn-text,
@@ -65,9 +59,7 @@
 
 button:disabled,
 .btn-primary:disabled,
-.btn-secondary:disabled,
-.btn-deploy-card:disabled,
-.btn-icon:disabled {
+.btn-secondary:disabled {
   opacity: 0.42 !important;
   cursor: not-allowed !important;
   filter: grayscale(0.15);
@@ -76,7 +68,6 @@ button:disabled,
 
 .btn-primary,
 .btn-secondary,
-.btn-deploy-card,
 .rbtn,
 .seg-btn,
 .chip {
@@ -141,14 +132,6 @@ input[type="number"] {
   margin-bottom: 12px;
 }
 
-.btn-primary,
-.btn-secondary,
-.rbtn,
-.pill-btn {
-  min-height: 28px;
-  border-radius: 5px !important;
-}
-
 .chip,
 .sub-tab,
 .seg-btn,
@@ -191,7 +174,6 @@ input[type="number"] {
 
 .btn-primary,
 .btn-secondary,
-.btn-deploy-card,
 .rbtn,
 .pill-btn {
   min-height: 27px !important;
@@ -286,19 +268,6 @@ select {
   color: var(--text-muted) !important;
   font-size: 10px !important;
   font-weight: 650 !important;
-}
-
-.server-actions .btn-icon,
-.history-row .btn-icon,
-.project-card .btn-icon,
-.btn-quick,
-.icon-button {
-  width: 26px !important;
-  height: 26px !important;
-  min-width: 26px !important;
-  border-radius: 5px !important;
-  background: var(--bg-input) !important;
-  border: 1px solid var(--border-color) !important;
 }
 
 .rpt-repo-item,
@@ -548,15 +517,6 @@ textarea,
   line-height: 15px !important;
 }
 
-.btn-deploy-card {
-  transition: all 0.12s;
-  color: #fff;
-  padding: 0 9px !important;
-  font-size: 10.5px !important;
-  height: 25px !important;
-  min-height: 25px !important;
-}
-
 .card-meta,
 .card-status,
 .card-last-deploy,
@@ -574,20 +534,6 @@ textarea,
   border: 1px solid var(--border) !important;
   color: var(--text-secondary) !important;
   font-size: 9.5px !important;
-}
-
-.btn-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.12s;
-  width: 25px !important;
-  height: 25px !important;
-  border: 1px solid var(--border) !important;
-  background: var(--bg-input) !important;
-  color: var(--text-secondary) !important;
-  border-radius: 6px !important;
-  min-height: 25px !important;
 }
 
 .server-row {
@@ -719,9 +665,7 @@ textarea,
 
 /* --- 按钮点击反馈 --- */
 .btn-primary:active,
-.btn-secondary:active,
-.btn-deploy-card:active,
-.btn-build-card:active {
+.btn-secondary:active {
   transform: scale(0.96) !important;
   transition-duration: 0.08s !important;
 }
