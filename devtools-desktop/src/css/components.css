@@ -90,10 +90,7 @@
 }
 
 /* --- Server List --- */
-.btn-icon { /* 保留：与穿插规则存在层叠依赖 */
-  cursor: pointer;
-  font-size: 13px;
-}
+/* .btn-icon 旧图标按钮已迁到统一 .btn .btn--icon（button.css），此处不再定义 */
 
 .status-success { color: var(--success); font-weight: 600; }
 
@@ -223,18 +220,6 @@
   color: var(--text-secondary) !important;
   font-size: 10px !important;
   line-height: 1.35;
-}
-
-.btn-icon:hover {
-  border-color: color-mix(in srgb, var(--primary) 35%, transparent) !important;
-  color: var(--primary) !important;
-  background: var(--primary-light) !important;
-}
-
-.btn-icon.danger:hover {
-  border-color: color-mix(in srgb, var(--danger) 35%, transparent) !important;
-  color: var(--danger) !important;
-  background: var(--danger-subtle) !important;
 }
 
 .btn-primary:hover,

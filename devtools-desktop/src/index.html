@@ -293,7 +293,7 @@
       <div class="page-subtitle">项目构建与 SFTP 部署管理</div>
     </div>
     <div class="page-header-actions">
-      <button class="btn-primary" onclick="showAddProject()">+ 添加项目</button>
+      <button class="btn btn--primary" onclick="showAddProject()">+ 添加项目</button>
     </div>
   </div>
 
@@ -333,8 +333,8 @@
     <div class="page-sticky-header">
       <div class="page-header">
         <div class="header-actions">
-          <button class="btn-secondary" onclick="showFileZillaImport()">📂 从 FileZilla 导入</button>
-          <button class="btn-primary" onclick="showServerForm()">+ 添加服务器</button>
+          <button class="btn" onclick="showFileZillaImport()">📂 从 FileZilla 导入</button>
+          <button class="btn btn--primary" onclick="showServerForm()">+ 添加服务器</button>
         </div>
       </div>
     </div>
@@ -346,9 +346,9 @@
     <div class="page-sticky-header">
       <div class="page-header">
         <div class="header-actions">
-          <button class="btn-secondary" id="btnToggleSelect" onclick="toggleBatchSelect()" style="padding:8px 16px">☑ 选择</button>
-          <button class="btn-primary" id="btnBatchDelete" onclick="batchDeleteHistory()" style="display:none;padding:8px 16px;background:var(--danger)">🗑 删除 <span id="batchCount" style="font-weight:700">0</span></button>
-          <button class="btn-secondary" onclick="showCleanupDialog()" style="padding:8px 16px">🧹 整理</button>
+          <button class="btn" id="btnToggleSelect" onclick="toggleBatchSelect()">☑ 选择</button>
+          <button class="btn btn--danger" id="btnBatchDelete" onclick="batchDeleteHistory()" style="display:none">🗑 删除 <span id="batchCount" style="font-weight:700">0</span></button>
+          <button class="btn" onclick="showCleanupDialog()">🧹 整理</button>
         </div>
       </div>
       <div class="filter-chips" style="margin-bottom:16px">
@@ -1310,8 +1310,8 @@
             <button class="btn-text module-filter-btn active" id="buildFilterAll" onclick="setModuleFilter('all','build')">全部</button>
             <button class="btn-text module-filter-btn" id="buildFilterFav" onclick="setModuleFilter('fav','build')">⭐ 常用</button>
             <span style="color:var(--border);margin:0 4px">|</span>
-            <button class="btn-text" onclick="toggleAll(true,'build')">全选</button>
-            <button class="btn-text" onclick="toggleAll(false,'build')">全不选</button>
+            <button class="btn btn--text" onclick="toggleAll(true,'build')">全选</button>
+            <button class="btn btn--text" onclick="toggleAll(false,'build')">全不选</button>
             <span class="selected-count" id="buildSelectedCount">已选 0 个</span>
           </div>
         </div>
@@ -1326,8 +1326,8 @@
       <div class="git-log-section" id="buildGitLog" style="display:none"></div>
     </div>
     <div class="modal-footer">
-      <button class="btn-secondary" onclick="closeModal('buildModal')">取消</button>
-      <button class="btn-primary" onclick="startBuildOnly(event)">🔨 开始构建</button>
+      <button class="btn" onclick="closeModal('buildModal')">取消</button>
+      <button class="btn btn--primary" onclick="startBuildOnly(event)">🔨 开始构建</button>
     </div>
   </div>
 </div>
@@ -1358,8 +1358,8 @@
             <button class="btn-text module-filter-btn active" id="deployFilterAll" onclick="setModuleFilter('all','deploy')">全部</button>
             <button class="btn-text module-filter-btn" id="deployFilterFav" onclick="setModuleFilter('fav','deploy')">⭐ 常用</button>
             <span style="color:var(--border);margin:0 4px">|</span>
-            <button class="btn-text" onclick="toggleAll(true,'deploy')">全选</button>
-            <button class="btn-text" onclick="toggleAll(false,'deploy')">全不选</button>
+            <button class="btn btn--text" onclick="toggleAll(true,'deploy')">全选</button>
+            <button class="btn btn--text" onclick="toggleAll(false,'deploy')">全不选</button>
             <span class="selected-count" id="deploySelectedCount">已选 0 个</span>
           </div>
         </div>
@@ -1380,17 +1380,17 @@
           <label>发布目录</label>
           <div style="display:flex;gap:8px;flex:1">
             <select id="remotePath" style="flex:1"></select>
-            <button class="btn-secondary" onclick="openRemoteBrowser()" style="white-space:nowrap;padding:8px 14px" title="浏览服务器目录并选择路径">📂 浏览</button>
+            <button class="btn" onclick="openRemoteBrowser()" title="浏览服务器目录并选择路径">📂 浏览</button>
           </div>
         </div>
       </div>
       <div class="git-log-section" id="deployGitLog" style="display:none"></div>
     </div>
     <div class="modal-footer" style="justify-content:space-between">
-      <button class="btn-secondary" onclick="quickTestServers()" id="btnQuickTest" style="gap:6px;display:inline-flex;align-items:center">🔗 测试连接</button>
+      <button class="btn" onclick="quickTestServers()" id="btnQuickTest">🔗 测试连接</button>
       <div style="display:flex;gap:12px">
-        <button class="btn-secondary" onclick="closeModal('deployModal')">取消</button>
-        <button class="btn-primary btn-deploy" onclick="startDeploy(event)">🚀 构建并部署</button>
+        <button class="btn" onclick="closeModal('deployModal')">取消</button>
+        <button class="btn btn--primary" onclick="startDeploy(event)">🚀 构建并部署</button>
       </div>
     </div>
   </div>
@@ -1416,8 +1416,8 @@
     </div>
     <div class="modal-footer">
       <div style="flex:1;font-size:13px;color:var(--text-muted)" id="browserCurrentPath">/</div>
-      <button class="btn-secondary" onclick="closeModal('remoteBrowserModal')">取消</button>
-      <button class="btn-primary" onclick="confirmRemotePath()">✓ 选择此目录</button>
+      <button class="btn" onclick="closeModal('remoteBrowserModal')">取消</button>
+      <button class="btn btn--primary" onclick="confirmRemotePath()">✓ 选择此目录</button>
     </div>
   </div>
 </div>
@@ -1631,7 +1631,7 @@
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn-primary" onclick="closeModal('projectIntroModal')">知道了</button>
+      <button class="btn btn--primary" onclick="closeModal('projectIntroModal')">知道了</button>
     </div>
   </div>
 </div>
@@ -1660,8 +1660,8 @@
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn-secondary" onclick="closeModal('quickModal')">取消</button>
-      <button class="btn-primary" id="quickConfirmBtn" onclick="confirmQuickRepeat(event)" disabled>🚀 执行</button>
+      <button class="btn" onclick="closeModal('quickModal')">取消</button>
+      <button class="btn btn--primary" id="quickConfirmBtn" onclick="confirmQuickRepeat(event)" disabled>🚀 执行</button>
     </div>
   </div>
 </div>
@@ -1695,8 +1695,8 @@
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn-secondary" onclick="closeModal('serverFormModal')">取消</button>
-      <button class="btn-primary" onclick="saveServer(event)">保存</button>
+      <button class="btn" onclick="closeModal('serverFormModal')">取消</button>
+      <button class="btn btn--primary" onclick="saveServer(event)">保存</button>
     </div>
   </div>
 </div>
@@ -1726,8 +1726,8 @@
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn-secondary" onclick="closeModal('projectConfigModal')">取消</button>
-      <button class="btn-primary" onclick="saveProjectConfig(event)">💾 保存配置</button>
+      <button class="btn" onclick="closeModal('projectConfigModal')">取消</button>
+      <button class="btn btn--primary" onclick="saveProjectConfig(event)">💾 保存配置</button>
     </div>
   </div>
 </div>
@@ -1754,8 +1754,8 @@
             <input type="text" placeholder="搜索项目..." id="availableProjectSearch" oninput="filterAvailableProjects()">
           </div>
           <div class="module-actions">
-            <button class="btn-text" onclick="toggleAllAvailable(true)">全选</button>
-            <button class="btn-text" onclick="toggleAllAvailable(false)">全不选</button>
+            <button class="btn btn--text" onclick="toggleAllAvailable(true)">全选</button>
+            <button class="btn btn--text" onclick="toggleAllAvailable(false)">全不选</button>
             <span class="selected-count" id="selectedProjectCount">已选 0 个</span>
           </div>
         </div>
@@ -1821,22 +1821,22 @@
     <div class="modal-body">
       <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
         <input type="file" id="fzFileInput" accept=".xml" style="display:none" onchange="loadFzFromFile(this)">
-        <button class="btn-secondary" onclick="document.getElementById('fzFileInput').click()" style="white-space:nowrap;padding:8px 16px">📁 选择 XML 文件</button>
+        <button class="btn" onclick="document.getElementById('fzFileInput').click()">📁 选择 XML 文件</button>
         <span id="fzFileName" style="color:var(--text-secondary);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
       </div>
       <p style="color:var(--text-secondary);font-size:13px;margin-bottom:12px">仅显示 SFTP 协议的服务器，FTP 已自动过滤</p>
       <div class="module-toolbar">
         <div class="module-actions">
-          <button class="btn-text" onclick="toggleAllFz(true)">全选</button>
-          <button class="btn-text" onclick="toggleAllFz(false)">全不选</button>
+          <button class="btn btn--text" onclick="toggleAllFz(true)">全选</button>
+          <button class="btn btn--text" onclick="toggleAllFz(false)">全不选</button>
           <span class="selected-count" id="fzSelectedCount">已选 0 个</span>
         </div>
       </div>
       <div class="module-grid" id="fzServerGrid" style="max-height:360px"></div>
     </div>
     <div class="modal-footer">
-      <button class="btn-secondary" onclick="closeModal('filezillaModal')">取消</button>
-      <button class="btn-primary" onclick="importFileZillaServers()">同步服务器</button>
+      <button class="btn" onclick="closeModal('filezillaModal')">取消</button>
+      <button class="btn btn--primary" onclick="importFileZillaServers()">同步服务器</button>
     </div>
   </div>
 </div>
@@ -1862,8 +1862,8 @@
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn-secondary" onclick="closeModal('cleanupModal')">取消</button>
-      <button class="btn-primary" onclick="executeCleanup()" style="background:var(--warning)">🧹 执行整理</button>
+      <button class="btn" onclick="closeModal('cleanupModal')">取消</button>
+      <button class="btn btn--warning" onclick="executeCleanup()">🧹 执行整理</button>
     </div>
   </div>
 </div>

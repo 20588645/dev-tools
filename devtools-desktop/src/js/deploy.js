@@ -89,13 +89,13 @@ function renderProjects() {
       ${lastDeployHtml}
       <div class="card-actions">
         ${isBusy ? `
-        <button class="btn-deploy-card btn-progress-card" style="flex:1" onclick="event.stopPropagation();reopenLogModal()">⏳ 查看进度...</button>
+        <button class="btn btn--warning" style="flex:1" onclick="event.stopPropagation();reopenLogModal()">⏳ 查看进度...</button>
         ` : `
-        <button class="btn-deploy-card btn-build-card" onclick="event.stopPropagation();openBuildModal('${pnEsc}')" ${disabledAttr}>🔨 构建</button>
-        <button class="btn-deploy-card" onclick="event.stopPropagation();openDeployModal('${pnEsc}')" ${disabledAttr}>🚀 部署</button>
-        <button class="btn-deploy-card btn-quick" onclick="event.stopPropagation();quickRepeat('${pnEsc}')" ${disabledAttr || !last ? 'disabled' : ''} title="快速复用上次操作">⚡</button>
-        <button class="btn-icon" onclick="event.stopPropagation();openProjectConfig('${pnEsc}')" title="默认配置">⚙</button>
-        <button class="btn-icon danger" onclick="event.stopPropagation();removeProject('${pnEsc}')" title="移除项目">🗑</button>
+        <button class="btn" onclick="event.stopPropagation();openBuildModal('${pnEsc}')" ${disabledAttr}>🔨 构建</button>
+        <button class="btn btn--primary" onclick="event.stopPropagation();openDeployModal('${pnEsc}')" ${disabledAttr}>🚀 部署</button>
+        <button class="btn btn--icon btn--warning" data-quick onclick="event.stopPropagation();quickRepeat('${pnEsc}')" ${disabledAttr || !last ? 'disabled' : ''} title="快速复用上次操作">⚡</button>
+        <button class="btn btn--icon" onclick="event.stopPropagation();openProjectConfig('${pnEsc}')" title="默认配置">⚙</button>
+        <button class="btn btn--icon btn--danger" onclick="event.stopPropagation();removeProject('${pnEsc}')" title="移除项目">🗑</button>
         `}
       </div>
     </div>`;
@@ -121,7 +121,7 @@ async function loadLastDeployInfos(projectList) {
     const pName = card.dataset.project;
     const last = lastDeployCache[pName];
     const el = card.querySelector('.card-last-deploy');
-    const btn = card.querySelector('.btn-quick');
+    const btn = card.querySelector('[data-quick]');
     if (last && el) {
       const icon = last.status === 'success' ? '✅' : '❌';
       const ago = timeAgo(last.timestamp);
@@ -1066,9 +1066,9 @@ function renderServers() {
       <div>${s.port}</div>
       <div class="server-host">${escapeHtml(s.defaultRemotePath || '/')}</div>
       <div class="server-actions">
-        <button class="btn-icon" title="编辑" onclick="editServer('${escapeOnclickArg(s.id)}')">✎</button>
-        <button class="btn-icon" title="测试连接" onclick="testServer('${escapeOnclickArg(s.id)}', this)">⚡</button>
-        <button class="btn-icon danger" title="删除" onclick="deleteServer('${escapeOnclickArg(s.id)}')">🗑</button>
+        <button class="btn btn--icon btn--sm" title="编辑" onclick="editServer('${escapeOnclickArg(s.id)}')">✎</button>
+        <button class="btn btn--icon btn--sm" title="测试连接" onclick="testServer('${escapeOnclickArg(s.id)}', this)">⚡</button>
+        <button class="btn btn--icon btn--sm btn--danger" title="删除" onclick="deleteServer('${escapeOnclickArg(s.id)}')">🗑</button>
       </div>
     </div>`).join('')}`;
 }
@@ -1326,8 +1326,8 @@ function renderHistory() {
         <div class="h-cell h-server">${escapeHtml(h.serverName || '—')}</div>
         <div class="h-cell h-status ${h.status === 'success' ? 'status-success' : 'status-fail'}"><span class="status-dot-mini"></span>${statusText}</div>
         <div class="h-cell h-actions">
-          <button class="btn-icon" onclick="viewLog('${escapeOnclickArg(h.id)}')" title="查看日志">⌗</button>
-          <button class="btn-icon danger" onclick="event.stopPropagation();deleteSingleHistory('${escapeOnclickArg(h.id)}')" title="删除">⌫</button>
+          <button class="btn btn--icon btn--sm" onclick="viewLog('${escapeOnclickArg(h.id)}')" title="查看日志">⌗</button>
+          <button class="btn btn--icon btn--sm btn--danger" onclick="event.stopPropagation();deleteSingleHistory('${escapeOnclickArg(h.id)}')" title="删除">⌫</button>
         </div>
       </div>`;
     }).join('')}`;
@@ -1340,13 +1340,11 @@ function toggleBatchSelect() {
   const delBtn = document.getElementById('btnBatchDelete');
   if (batchSelectMode) {
     btn.textContent = '✕ 取消';
-    btn.className = 'btn-primary';
-    btn.style.cssText = 'padding:8px 16px';
+    btn.className = 'btn btn--primary';
     delBtn.style.display = 'inline-flex';
   } else {
     btn.textContent = '☑ 选择';
-    btn.className = 'btn-secondary';
-    btn.style.cssText = 'padding:8px 16px';
+    btn.className = 'btn';
     delBtn.style.display = 'none';
   }
   updateBatchCount();
