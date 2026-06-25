@@ -624,11 +624,6 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
   flex-shrink: 0;
 }
 
-/* 部署面板子Tabs在toolbar内时去掉外边距 */
-.page-toolbar .sub-tabs {
-  margin-bottom: 0 !important;
-}
-
 /* 侧栏自动更新提示气泡药丸 */
 /* 侧栏折叠状态下的更新气泡样式重置 */
 .sidebar-item {

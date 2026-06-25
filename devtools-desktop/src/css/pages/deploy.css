@@ -1,10 +1,6 @@
 /* ===== pages/deploy：页面专属样式（批次5 拆分自 style.css，规则保持原始相对顺序） ===== */
 
-/* 部署面板：头部固定，内容滚动 */
-#page-deploy .page-header-bar { flex-shrink: 0; }
-
-#page-deploy .sub-tabs { flex-shrink: 0; }
-
+/* 部署面板：头部固定，内容滚动（page-header-bar 的 flex:0 0 auto 见下方 flex 布局段） */
 #page-deploy .sub-page .page-sticky-header {
   flex-shrink: 0;
   padding-bottom: 14px;
@@ -28,9 +24,6 @@
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
 }
-
-/* ---------- Sub Tabs — Cockpit Floating Capsule ---------- */
-.sub-tab:hover { color: var(--text-primary); background: var(--bg-hover); }
 
 /* ---------- Sub Pages ---------- */
 .sub-page { display: none; }
@@ -231,29 +224,6 @@
 
 .git-log-msg { color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-.sub-tab {
-  font-weight: 500;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 12px !important;
-  background: transparent !important;
-  color: var(--text-secondary) !important;
-  font-size: 11px !important;
-  border-radius: 6px !important;
-  min-height: 24px;
-}
-
-.sub-tab.active {
-  font-weight: 600;
-  background: var(--bg-elevated) !important;
-  color: var(--primary) !important;
-  box-shadow: var(--shadow-sm);
-}
-
 .header-actions {
   display: flex;
   align-items: center;
@@ -449,20 +419,6 @@
   color: var(--text-muted);
   font-weight: 650;
   min-height: 32px;
-}
-
-.sub-tabs {
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  display: inline-flex !important;
-  box-shadow: none !important;
-  width: max-content;
-  margin-bottom: 12px !important;
-  gap: 4px !important;
-  background: color-mix(in srgb, var(--bg-card) 84%, var(--bg-input)) !important;
-  border: 1px solid var(--border-color) !important;
-  border-radius: 7px !important;
-  padding: 3px !important;
 }
 
 .server-row,
@@ -685,8 +641,7 @@
   min-height: 0 !important;
 }
 
-#page-deploy .page-header-bar,
-#page-deploy .sub-tabs {
+#page-deploy .page-header-bar {
   flex: 0 0 auto !important;
 }
 

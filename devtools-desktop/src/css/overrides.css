@@ -133,7 +133,6 @@ input[type="number"] {
 }
 
 .chip,
-.sub-tab,
 .seg-btn,
 .rpt-mode-btn,
 .rpt-view-btn {
@@ -161,7 +160,6 @@ input[type="number"] {
   font-size: 12px !important;
 }
 
-.sub-tab,
 .seg-btn,
 .pill-btn,
 .rpt-mode-btn,
@@ -191,8 +189,7 @@ input[type="number"] {
 .btn-secondary,
 .rbtn,
 .pill-btn,
-.seg-btn,
-.sub-tab {
+.seg-btn {
   background: var(--bg-input) !important;
   border-color: var(--border-color) !important;
   color: var(--text-secondary) !important;
@@ -201,13 +198,11 @@ input[type="number"] {
 .btn-secondary:hover,
 .rbtn:hover,
 .pill-btn:hover,
-.seg-btn:hover,
-.sub-tab:hover {
+.seg-btn:hover {
   color: var(--text-primary) !important;
   border-color: var(--border-strong) !important;
 }
 
-.sub-tab.active,
 .seg-btn.active,
 .pill-btn.active,
 .rpt-mode-btn.active,
@@ -427,7 +422,6 @@ select {
   text-transform: none !important;
 }
 
-.sub-tabs,
 .rpt-mode-switcher,
 .rpt-view-switcher {
   background: var(--bg-input) !important;
@@ -437,7 +431,6 @@ select {
   gap: 2px !important;
 }
 
-.sub-tab,
 .rpt-mode-btn,
 .rpt-view-btn,
 .chip {
@@ -449,7 +442,6 @@ select {
   border: 0 !important;
 }
 
-.sub-tab.active,
 .rpt-mode-btn.active,
 .rpt-view-btn.active,
 .chip.active {

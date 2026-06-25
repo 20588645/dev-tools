@@ -824,7 +824,7 @@ function switchPage(page, el) {
     if (scrollBody) scrollBody.scrollTop = 0;
   }
   if (page === 'deploy') {
-    const activeSub = document.querySelector('.sub-tab.active');
+    const activeSub = document.querySelector('#page-deploy .seg__item.is-active');
     if (activeSub) switchSubTab(activeSub.dataset.sub, activeSub);
   }
   if (page === 'run') {
@@ -847,9 +847,9 @@ function switchPage(page, el) {
 
 // ========== 子 Tab 切换 ==========
 function switchSubTab(sub, btn) {
-  document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('#page-deploy .seg__item').forEach(t => t.classList.remove('is-active'));
   document.querySelectorAll('.sub-page').forEach(p => p.classList.remove('active'));
-  btn.classList.add('active');
+  btn.classList.add('is-active');
   const subPage = document.getElementById('sub-' + sub);
   subPage.classList.add('active');
   subPage.scrollTop = 0;
