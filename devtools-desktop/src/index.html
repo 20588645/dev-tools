@@ -1119,6 +1119,16 @@
       </div>
       <div class="setting-item">
         <div class="setting-info">
+          <div class="setting-label">服务器连接超时</div>
+          <div class="setting-desc">测试连接 / 远程浏览 / 部署等 SSH 操作的连接超时（5–300 秒，默认 60）</div>
+        </div>
+        <div class="setting-control">
+          <input type="number" id="settingConnTimeout" min="5" max="300" step="5" onchange="saveConnTimeout(this)" style="width:72px;height:32px;text-align:center">
+          <span class="setting-value" style="margin-left:6px">秒</span>
+        </div>
+      </div>
+      <div class="setting-item">
+        <div class="setting-info">
           <div class="setting-label">Live2D 看板娘</div>
           <div class="setting-desc">在页面右下角显示 Live2D 看板娘（需联网加载）</div>
         </div>

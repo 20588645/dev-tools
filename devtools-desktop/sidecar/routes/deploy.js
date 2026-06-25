@@ -64,7 +64,7 @@ function preflightCheck(serverConfig, remotePath) {
       username: serverConfig.username,
       password: decryptedPwd,
       tryKeyboard: true,
-      readyTimeout: 60000,
+      readyTimeout: db.getConnTimeoutMs(),
       authHandler: (() => {
         let attempts = 0;
         return (methodsLeft, partialSuccess, callback) => {

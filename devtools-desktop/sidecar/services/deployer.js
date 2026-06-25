@@ -6,6 +6,7 @@ const { Client } = require('ssh2');
 const fs = require('fs');
 const path = require('path');
 const { decrypt } = require('./crypto');
+const db = require('./database');
 
 /**
  * SFTP 部署
@@ -113,7 +114,7 @@ function deploy({ serverConfig, localDistDir, remotePath, modules, onLog, onProg
       host: serverConfig.host,
       port: serverConfig.port,
       username: serverConfig.username,
-      readyTimeout: 60000,
+      readyTimeout: db.getConnTimeoutMs(),
       tryKeyboard: true,
       authHandler: (() => {
         let attempts = 0;

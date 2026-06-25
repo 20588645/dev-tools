@@ -240,6 +240,7 @@ function showPrompt(msg, opts = {}) {
 document.addEventListener('DOMContentLoaded', async () => {
   initTheme();
   await initAPI();
+  loadAppSettings();
   WS.connect();
   setupWSHandlers();
   setupNavigation();

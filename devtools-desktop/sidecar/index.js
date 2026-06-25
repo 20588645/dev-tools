@@ -86,6 +86,7 @@ app.use('/api/upgrade', require('./routes/upgrade'));
 app.use('/api/terminal', require('./routes/terminal'));
 app.use('/api/usage', require('./routes/usage'));
 app.use('/api/backup', require('./routes/backup'));
+app.use('/api/settings', require('./routes/settings'));
 
 // 用量统计后台兜底同步：Claude 桌面端会快速清理已关闭会话的日志文件，
 // 必须趁文件还在时抢先入库，不能只依赖用量页面被打开时的按需同步

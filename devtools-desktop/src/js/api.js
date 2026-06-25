@@ -59,9 +59,9 @@ async function handleResponse(res) {
 }
 
 const API = {
-  async get(url) {
+  async get(url, timeout) {
     try {
-      const res = await fetchWithTimeout(API_BASE + url);
+      const res = await fetchWithTimeout(API_BASE + url, {}, timeout);
       return handleResponse(res);
     } catch (e) {
       if (e.name === 'AbortError') throw new Error('请求超时，请检查 Sidecar 状态');
@@ -70,13 +70,13 @@ const API = {
     }
   },
 
-  async post(url, data) {
+  async post(url, data, timeout) {
     try {
       const res = await fetchWithTimeout(API_BASE + url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
-      });
+      }, timeout);
       return handleResponse(res);
     } catch (e) {
       if (e.name === 'AbortError') throw new Error('请求超时，请检查 Sidecar 状态');
@@ -119,3 +119,20 @@ const API = {
 
 // 保持向后兼容：API.delete 指向 API.del
 API.delete = API.del;
+
+// ========== 服务器连接超时（可配置，默认 60s）==========
+// 后端 /api/settings 为权威；前端缓存一份，供「测试连接 / 远程目录浏览」这类同步等响应的
+// 请求把 fetch 超时拉到与后端一致——否则旧的全局 15s 会先 abort，误判连接失败
+let connTimeoutSec = 60;
+function getConnTimeoutMs() {
+  const s = Number(connTimeoutSec);
+  return (Number.isFinite(s) ? Math.min(Math.max(s, 5), 300) : 60) * 1000;
+}
+async function loadAppSettings() {
+  try {
+    const s = await API.get('/api/settings');
+    if (s && Number.isFinite(Number(s.connTimeoutSec))) connTimeoutSec = Number(s.connTimeoutSec);
+  } catch (e) {
+    console.warn('[Settings] 应用设置加载失败，连接超时沿用默认 60s');
+  }
+}

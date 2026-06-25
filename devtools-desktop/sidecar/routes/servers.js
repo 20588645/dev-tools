@@ -255,10 +255,11 @@ router.post('/:id/quick-test', async (req, res) => {
     res.json(data);
   };
 
+  const connTimeoutMs = db.getConnTimeoutMs();
   const timeout = setTimeout(() => {
     conn.end();
-    safeRes({ success: false, error: '连接超时 (60s)', duration: Date.now() - startTime });
-  }, 60000);
+    safeRes({ success: false, error: `连接超时 (${connTimeoutMs / 1000}s)`, duration: Date.now() - startTime });
+  }, connTimeoutMs);
 
   conn.on('ready', () => {
     clearTimeout(timeout);
@@ -280,7 +281,7 @@ router.post('/:id/quick-test', async (req, res) => {
     username: server.username,
     password: decryptedPwd,
     tryKeyboard: true,
-    readyTimeout: 60000,
+    readyTimeout: connTimeoutMs,
     authHandler: (() => {
       let attempts = 0;
       return (methodsLeft, partialSuccess, callback) => {
@@ -319,7 +320,7 @@ router.post('/:id/test', (req, res) => {
   log('info', `状态:    正在连接到 ${server.host}:${server.port}...`);
 
   const conn = new Client();
-  const CONN_TIMEOUT = 60000;
+  const CONN_TIMEOUT = db.getConnTimeoutMs();
   const timeout = setTimeout(() => {
     conn.end();
     log('error', `状态:    连接超时 (${CONN_TIMEOUT / 1000}s)`);
@@ -397,7 +398,7 @@ router.post('/:id/test', (req, res) => {
     username: server.username,
     password: decryptedPwd,
     tryKeyboard: true,
-    readyTimeout: 60000,
+    readyTimeout: CONN_TIMEOUT,
     // 跳过 none 探测，部分 SSH 服务器不响应 none 请求会导致超时
     authHandler: (() => {
       let attempts = 0;
@@ -485,9 +486,10 @@ router.post('/:id/browse', (req, res) => {
   }
 
   const conn = new Client();
+  const connTimeoutMs = db.getConnTimeoutMs();
   const timeout = setTimeout(() => {
-    safeJson(504, { error: '连接超时 (60s)' });
-  }, 60000);
+    safeJson(504, { error: `连接超时 (${connTimeoutMs / 1000}s)` });
+  }, connTimeoutMs);
 
   conn.on('ready', () => {
     conn.sftp((err, sftp) => {
@@ -539,7 +541,7 @@ router.post('/:id/browse', (req, res) => {
     username: server.username,
     password: decryptedPwd,
     tryKeyboard: true,
-    readyTimeout: 60000,
+    readyTimeout: connTimeoutMs,
     authHandler: (() => {
       let attempts = 0;
       return (methodsLeft, partialSuccess, callback) => {

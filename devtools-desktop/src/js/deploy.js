@@ -550,7 +550,7 @@ async function quickTestServers() {
   const results = await Promise.allSettled(
     serverIds.map(async sid => {
       try {
-        const result = await API.post(`/api/servers/${sid}/quick-test`);
+        const result = await API.post(`/api/servers/${sid}/quick-test`, undefined, getConnTimeoutMs() + 5000);
         return { sid, ...result };
       } catch (e) {
         return { sid, success: false, error: e.message };
@@ -773,7 +773,7 @@ async function browseRemoteDir(dirPath) {
   renderBreadcrumb(dirPath);
   
   try {
-    const data = await API.post(`/api/servers/${serverId}/browse`, { path: dirPath });
+    const data = await API.post(`/api/servers/${serverId}/browse`, { path: dirPath }, getConnTimeoutMs() + 5000);
     browserCurrentDir = data.path;
     document.getElementById('browserCurrentPath').textContent = data.path;
     renderBreadcrumb(data.path);

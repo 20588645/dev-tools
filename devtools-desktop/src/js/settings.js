@@ -139,6 +139,13 @@ async function loadSettings() {
     renderSettingRepos(cfg.repos || []);
   } catch (e) { console.warn("[Settings] GitLab配置加载失败"); }
 
+  // 服务器连接超时
+  try {
+    const s = await API.get('/api/settings');
+    const inp = document.getElementById('settingConnTimeout');
+    if (inp) inp.value = s.connTimeoutSec || 60;
+  } catch (e) { console.warn("[Settings] 连接超时加载失败"); }
+
   // Live2D 看板娘开关同步
   const live2dCb = document.getElementById('settingLive2dEnabled');
   if (live2dCb) live2dCb.checked = isLive2dEnabled();
@@ -283,6 +290,21 @@ async function saveAllSettings() {
     // 同步更新周报模块的 repos
     rptRepos = repos.length ? repos.map(r => ({...r})) : [{ repo: '', branch: '', group: '' }];
     showToast('✅ 设置已保存');
+  } catch (e) {
+    showAlert('保存失败: ' + e.message, { icon: '❌' });
+  }
+}
+
+// 服务器连接超时：onchange 即存（钳制 5–300s），并同步更新前端缓存 connTimeoutSec
+async function saveConnTimeout(input) {
+  let sec = parseInt(input.value, 10);
+  if (!Number.isFinite(sec)) sec = 60;
+  sec = Math.min(Math.max(sec, 5), 300);
+  input.value = sec;
+  try {
+    const r = await API.put('/api/settings', { connTimeoutSec: sec });
+    connTimeoutSec = r.connTimeoutSec;
+    showToast(`✅ 服务器连接超时已设为 ${connTimeoutSec}s`);
   } catch (e) {
     showAlert('保存失败: ' + e.message, { icon: '❌' });
   }

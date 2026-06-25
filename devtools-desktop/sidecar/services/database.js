@@ -205,6 +205,11 @@ db.exec(`
     cacheReadPerM REAL DEFAULT 0,
     cacheCreationPerM REAL DEFAULT 0
   );
+
+  CREATE TABLE IF NOT EXISTS app_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT DEFAULT ''
+  );
 `);
 
 // 确保 sortOrder 列存在（兼容旧数据库）
@@ -233,5 +238,32 @@ try {
 } catch {
   db.exec("ALTER TABLE usage_sync ADD COLUMN stateJson TEXT DEFAULT ''");
 }
+
+// ========== 通用应用设置（key/value） ==========
+const _getSettingStmt = db.prepare('SELECT value FROM app_settings WHERE key = ?');
+const _setSettingStmt = db.prepare(
+  'INSERT INTO app_settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value'
+);
+
+db.getSetting = function (key, defaultValue = null) {
+  try {
+    const row = _getSettingStmt.get(key);
+    return row ? row.value : defaultValue;
+  } catch {
+    return defaultValue;
+  }
+};
+
+db.setSetting = function (key, value) {
+  _setSettingStmt.run(key, String(value));
+};
+
+// 服务器 SSH 连接超时（秒→毫秒）：默认 60s，钳制 5–300s；所有 SSH 连接点统一取用，
+// 保证前端「测试连接/浏览」与后端 readyTimeout 一致可配
+db.getConnTimeoutMs = function () {
+  const raw = parseInt(db.getSetting('connTimeoutSec', '60'), 10);
+  const sec = Number.isFinite(raw) ? Math.min(Math.max(raw, 5), 300) : 60;
+  return sec * 1000;
+};
 
 module.exports = db;
