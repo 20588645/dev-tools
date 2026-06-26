@@ -1,0 +1,214 @@
+/* ===== pages/filetransfer：文件传输页（FileZilla 式双栏 SFTP 文件管理） =====
+ * 结构：page-fixed-header（标题 + 会话连接栏）/ page-scroll-body（双栏工作区 + 传输队列）。
+ * 这里覆盖默认 page-scroll-body 的整体滚动——文件管理要两栏各自独立滚动，整页不滚，
+ * 故把 scroll-body 改成 flex 定高容器（与笔记本页同思路）。全 token 驱动、明暗自适配。 */
+
+/* 整页 flex 定高：头部固定，工作区填满，队列贴底；整体不滚（交给两栏 body 各自滚） */
+#page-filetransfer .page-scroll-body.ft-scroll-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: hidden;
+  padding: 8px 2px 4px;
+}
+
+/* ---------- 会话连接栏（复用 .page-toolbar 的 flex 容器，这里只补细节） ---------- */
+#page-filetransfer .ft-session-bar {
+  gap: 10px;
+}
+
+.ft-session-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.ft-server-select {
+  min-width: 240px;
+  height: 32px;
+}
+
+.ft-session-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.ft-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* 连接态用语义色（绿=已连，黄=连接中）——真实状态着色，非装饰 */
+.ft-session-status.is-connected { color: var(--success); }
+.ft-session-status.is-connected .ft-status-dot { background: var(--success); }
+.ft-session-status.is-connecting { color: var(--warning); }
+.ft-session-status.is-connecting .ft-status-dot { background: var(--warning); }
+
+.ft-session-spacer { flex: 1; }
+
+.ft-session-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 40%;
+}
+
+/* ---------- 双栏工作区：本地 | 传输轴 | 远程 ---------- */
+.ft-workspace {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 10px;
+}
+
+.ft-pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  overflow: hidden;
+}
+
+.ft-pane-head {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.ft-pane-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--text-primary);
+  flex-shrink: 0;
+}
+
+.ft-pane-icon { font-size: 14px; line-height: 1; }
+
+/* 当前路径：等宽字体、右对齐、超长省略 + title 悬浮全名 */
+.ft-pane-path {
+  flex: 1;
+  min-width: 0;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ft-pane-toolbar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.ft-pane-toolbar-spacer { flex: 1; }
+
+/* 文件列表区：填满剩余、独立滚动；空态用 .state 居中（list 渲染在 T5 接入） */
+.ft-pane-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.ft-pane-body > .state { margin: auto; }
+
+/* ---------- 中间传输方向轴（T5 接入实际上传/下载按钮） ---------- */
+.ft-transfer-axis {
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ---------- 传输队列 ---------- */
+.ft-queue {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  overflow: hidden;
+}
+
+.ft-queue-head {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.ft-queue-title {
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--text-primary);
+}
+
+.ft-queue-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  margin-left: 4px;
+  border-radius: 999px;
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-family: var(--font-mono);
+}
+
+.ft-queue-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ft-queue-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 96px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.ft-queue-body > .state { margin: auto; }
+
+/* ---------- 窄屏回退：取消三栏，纵向堆叠，隐藏方向轴 ---------- */
+@media (max-width: 880px) {
+  .ft-workspace {
+    grid-template-columns: 1fr;
+  }
+  .ft-transfer-axis { display: none; }
+}

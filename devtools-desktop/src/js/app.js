@@ -623,6 +623,7 @@ const SIDEBAR_MENU_ITEMS = [
   { page: 'home', label: '应用首页', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>', fixed: 'first' },
   { page: 'run', label: '本地运行', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/><line x1="19" y1="5" x2="19" y2="19"/></svg>' },
   { page: 'deploy', label: '部署面板', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>' },
+  { page: 'filetransfer', label: '文件传输', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 11 21 7 17 3"/><line x1="21" y1="7" x2="9" y2="7"/><polyline points="7 13 3 17 7 21"/><line x1="3" y1="17" x2="15" y2="17"/></svg>' },
   { page: 'terminal', label: '快捷命令', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>' },
   { page: 'todo', label: '待办事项', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>' },
   { page: 'report', label: '代码周报', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>' },
@@ -635,7 +636,7 @@ const SIDEBAR_MENU_ITEMS = [
 ];
 
 const MENU_ORDER_KEY = 'devtools-menu-order';
-const DEFAULT_MENU_ORDER = ['run', 'deploy', 'terminal', 'todo', 'report', 'notes', 'notebook', 'editor', 'ipcheck', 'usage'];
+const DEFAULT_MENU_ORDER = ['run', 'deploy', 'filetransfer', 'terminal', 'todo', 'report', 'notes', 'notebook', 'editor', 'ipcheck', 'usage'];
 
 function getMenuOrder() {
   try {
@@ -828,6 +829,7 @@ function switchPage(page, el) {
     const activeSub = document.querySelector('#page-deploy .seg__item.is-active');
     if (activeSub) switchSubTab(activeSub.dataset.sub, activeSub);
   }
+  if (page === 'filetransfer') initFileTransfer();
   if (page === 'run') {
     loadRunStatuses().then(() => renderRunPage());
     startRunPagePolling();

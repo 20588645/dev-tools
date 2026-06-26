@@ -31,6 +31,7 @@
 <link rel="stylesheet" href="css/pages/ipcheck.css">
 <link rel="stylesheet" href="css/pages/usage.css">
 <link rel="stylesheet" href="css/pages/settings.css">
+<link rel="stylesheet" href="css/pages/filetransfer.css">
 <link rel="stylesheet" href="css/overrides.css">
 <link rel="stylesheet" href="css/xterm.css">
 <link rel="stylesheet" href="js/vendor/codemirror/cm.bundle.css">
@@ -365,6 +366,89 @@
     </div>
     <div id="historyHeader" class="history-header-fixed"></div>
     <div class="history-table" id="historyTable"></div>
+  </div>
+</section>
+
+<!-- 文件传输（FileZilla 式双栏 SFTP 文件管理） -->
+<section class="page" id="page-filetransfer">
+  <div class="page-fixed-header">
+    <div class="page-header-bar page-header-simple">
+      <div>
+        <div class="page-title">📂 文件传输</div>
+        <div class="page-subtitle">FileZilla 式双栏文件管理：本地 ⇄ 远程服务器，连接后可浏览与互传（建设中）</div>
+      </div>
+      <div class="page-header-actions">
+        <button class="btn" id="ftRefreshBtn" onclick="ftRefreshAll()" disabled title="刷新两栏目录">↻ 刷新</button>
+      </div>
+    </div>
+
+    <!-- 会话连接栏 -->
+    <div class="page-toolbar ft-session-bar">
+      <span class="ft-session-label">服务器</span>
+      <select id="ftServerSelect" class="ft-server-select" onchange="ftOnServerChange()"></select>
+      <button class="btn btn--primary" id="ftConnectBtn" onclick="ftToggleConnect(event)">连接</button>
+      <span class="ft-session-status" id="ftSessionStatus">
+        <span class="ft-status-dot"></span>
+        <span class="ft-status-text">未连接</span>
+      </span>
+      <span class="ft-session-spacer"></span>
+      <span class="ft-session-hint" id="ftSessionHint"></span>
+    </div>
+  </div>
+
+  <div class="page-scroll-body ft-scroll-body">
+    <!-- 双栏工作区：本地 | 传输轴 | 远程 -->
+    <div class="ft-workspace">
+      <!-- 本地栏 -->
+      <section class="ft-pane ft-pane--local" id="ftLocalPane">
+        <header class="ft-pane-head">
+          <span class="ft-pane-title"><span class="ft-pane-icon">💻</span>本地</span>
+          <span class="ft-pane-path" id="ftLocalPath" title="">—</span>
+        </header>
+        <div class="ft-pane-toolbar">
+          <button class="btn btn--sm" disabled title="上一级目录">⬆ 上一级</button>
+          <button class="btn btn--sm" disabled title="回到主目录">🏠 主目录</button>
+          <button class="btn btn--sm" disabled title="新建文件夹">＋ 新建</button>
+          <span class="ft-pane-toolbar-spacer"></span>
+          <button class="btn btn--sm btn--icon" disabled title="刷新">↻</button>
+        </div>
+        <div class="ft-pane-body" id="ftLocalBody"></div>
+      </section>
+
+      <!-- 中间传输方向轴（T5 接入实际上传/下载） -->
+      <div class="ft-transfer-axis">
+        <button class="btn btn--icon btn--round btn--sm" disabled title="上传到远程">›</button>
+        <button class="btn btn--icon btn--round btn--sm" disabled title="下载到本地">‹</button>
+      </div>
+
+      <!-- 远程栏 -->
+      <section class="ft-pane ft-pane--remote" id="ftRemotePane">
+        <header class="ft-pane-head">
+          <span class="ft-pane-title"><span class="ft-pane-icon">🖥</span>远程</span>
+          <span class="ft-pane-path" id="ftRemotePath" title="">—</span>
+        </header>
+        <div class="ft-pane-toolbar">
+          <button class="btn btn--sm" disabled title="上一级目录">⬆ 上一级</button>
+          <button class="btn btn--sm" disabled title="回到默认目录">🏠 默认</button>
+          <button class="btn btn--sm" disabled title="新建文件夹">＋ 新建</button>
+          <span class="ft-pane-toolbar-spacer"></span>
+          <button class="btn btn--sm btn--icon" disabled title="刷新">↻</button>
+        </div>
+        <div class="ft-pane-body" id="ftRemoteBody"></div>
+      </section>
+    </div>
+
+    <!-- 传输队列 -->
+    <section class="ft-queue" id="ftQueue">
+      <header class="ft-queue-head">
+        <span class="ft-queue-title">传输队列 <span class="ft-queue-count" id="ftQueueCount">0</span></span>
+        <div class="ft-queue-actions">
+          <button class="btn btn--sm" disabled>清除已完成</button>
+          <button class="btn btn--sm btn--danger" disabled>全部取消</button>
+        </div>
+      </header>
+      <div class="ft-queue-body" id="ftQueueBody"></div>
+    </section>
   </div>
 </section>
 
@@ -1926,6 +2010,7 @@
 <script src="js/app.js"></script>
 <script src="js/home.js"></script>
 <script src="js/deploy.js"></script>
+<script src="js/filetransfer.js"></script>
 <script src="js/run.js"></script>
 <script src="js/todo.js"></script>
 <script src="js/report.js"></script>
