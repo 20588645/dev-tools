@@ -397,7 +397,7 @@
   </div>
 
   <div class="page-scroll-body ft-scroll-body">
-    <!-- 双栏工作区：本地 | 传输轴 | 远程 -->
+    <!-- 双栏工作区：本地 | 可拖拽分隔条 | 远程 -->
     <div class="ft-workspace">
       <!-- 本地栏 -->
       <section class="ft-pane ft-pane--local" id="ftLocalPane">
@@ -416,11 +416,8 @@
         <div class="ft-pane-body" id="ftLocalBody"></div>
       </section>
 
-      <!-- 中间传输方向轴（T5 接入实际上传/下载） -->
-      <div class="ft-transfer-axis">
-        <button class="btn btn--icon btn--round btn--sm" disabled title="上传到远程">›</button>
-        <button class="btn btn--icon btn--round btn--sm" disabled title="下载到本地">‹</button>
-      </div>
+      <!-- 中间可拖拽分隔条：拖动调整本地/远程两栏宽度（双击复位 50/50） -->
+      <div class="ft-splitter" id="ftSplitter" title="拖拽调整左右栏宽度（双击复位）"></div>
 
       <!-- 远程栏 -->
       <section class="ft-pane ft-pane--remote" id="ftRemotePane">
@@ -445,8 +442,13 @@
       <header class="ft-queue-head">
         <span class="ft-queue-title">传输队列 <span class="ft-queue-count" id="ftQueueCount">0</span></span>
         <div class="ft-queue-actions">
-          <button class="btn btn--sm" disabled>清除已完成</button>
-          <button class="btn btn--sm btn--danger" disabled>全部取消</button>
+          <select id="ftConflictPolicy" class="ft-conflict-select" title="目标已存在时如何处理">
+            <option value="overwrite">冲突：覆盖</option>
+            <option value="skip">冲突：跳过</option>
+            <option value="rename">冲突：重命名</option>
+          </select>
+          <button class="btn btn--sm" id="ftQueueClear" onclick="ftClearFinished()" disabled>清除已完成</button>
+          <button class="btn btn--sm btn--danger" id="ftQueueCancelAll" onclick="ftCancelAll()" disabled>全部取消</button>
         </div>
       </header>
       <div class="ft-queue-body" id="ftQueueBody"></div>

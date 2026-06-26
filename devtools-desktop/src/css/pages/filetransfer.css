@@ -61,14 +61,18 @@
   max-width: 40%;
 }
 
-/* ---------- 双栏工作区：本地 | 传输轴 | 远程 ---------- */
+/* ---------- 双栏工作区：本地 | 可拖拽分隔条 | 远程 ----------
+ * flex 布局：本地栏宽度由 --ft-left 控制（拖拽分隔条时 JS 改写、存 localStorage），
+ * 远程栏 flex:1 吃掉剩余；分隔条本身有固定宽度充当两栏间距。 */
 .ft-workspace {
   flex: 1;
   min-height: 0;
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  gap: 10px;
+  display: flex;
+  gap: 0;
 }
+
+.ft-pane--local { flex: 0 0 var(--ft-left, 50%); }
+.ft-pane--remote { flex: 1 1 0; }
 
 .ft-pane {
   display: flex;
@@ -138,13 +142,30 @@
 
 .ft-pane-body > .state { margin: auto; }
 
-/* ---------- 中间传输方向轴（T5 接入实际上传/下载按钮） ---------- */
-.ft-transfer-axis {
-  align-self: center;
+/* ---------- 中间可拖拽分隔条（拖动调整两栏宽度，双击复位 50/50） ----------
+ * col-resize 手型 + hover/拖拽时中线高亮＝可拖拽的功能性提示（非装饰）。 */
+.ft-splitter {
+  flex: 0 0 14px;
+  align-self: stretch;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  cursor: col-resize;
+}
+
+.ft-splitter::before {
+  content: "";
+  width: 2px;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--border);
+  transition: background 0.15s, width 0.15s;
+}
+
+.ft-splitter:hover::before,
+.ft-splitter.is-dragging::before {
+  width: 3px;
+  background: var(--primary);
 }
 
 /* ---------- 传输队列 ---------- */
@@ -308,10 +329,51 @@
 .ft-ctx-item.is-danger { color: var(--danger); }
 .ft-ctx-item.is-danger:hover { background: var(--danger-subtle); }
 
-/* ---------- 窄屏回退：取消三栏，纵向堆叠，隐藏方向轴 ---------- */
+/* ---------- 行选中态（T7 传输源选择） ---------- */
+.ft-row.is-selected { background: var(--primary-light); }
+.ft-row.is-selected .ft-row-name { color: var(--primary); }
+
+/* ---------- 传输队列：冲突策略 + 任务行进度（T7） ---------- */
+.ft-conflict-select { height: 28px; font-size: 12px; }
+
+.ft-queue-list { display: flex; flex-direction: column; }
+
+.ft-task {
+  display: grid;
+  grid-template-columns: 20px 1fr auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+}
+
+.ft-task-icon { text-align: center; color: var(--text-secondary); line-height: 1; }
+.ft-task-main { min-width: 0; }
+
+.ft-task-name {
+  font-size: 12px;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-bottom: 5px;
+}
+
+.ft-task-state { color: var(--text-muted); font-size: 11px; margin-left: 4px; }
+
+/* 进度条：功能性指示（非装饰），完成转绿、失败转红＝真实状态 */
+.ft-task-bar { height: 5px; border-radius: 999px; background: var(--bg-input); overflow: hidden; }
+.ft-task-fill { height: 100%; width: 0; background: var(--primary); border-radius: 999px; transition: width 0.2s ease; }
+.ft-task.is-done .ft-task-fill { background: var(--success); }
+.ft-task.is-failed .ft-task-fill { background: var(--danger); }
+
+.ft-task-meta { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+
+/* ---------- 窄屏回退：纵向堆叠两栏、隐藏分隔条（比例宽度仅横向生效） ---------- */
 @media (max-width: 880px) {
   .ft-workspace {
-    grid-template-columns: 1fr;
+    flex-direction: column;
   }
-  .ft-transfer-axis { display: none; }
+  .ft-pane--local { flex: 1 1 0; }
+  .ft-splitter { display: none; }
 }

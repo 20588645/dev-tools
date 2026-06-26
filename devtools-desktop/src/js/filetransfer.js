@@ -16,12 +16,18 @@ let ftLocalHomeDir = '';
 let ftRemotePath = '';
 let ftRemoteDefault = '.';
 
+// 传输（T7）：选中行 + 任务表（taskId -> 进度态）
+let ftLocalSel = null;
+let ftRemoteSel = null;
+const ftTasks = new Map();
+
 let ftWired = false; // 事件委托只绑一次
 
 // 进入页面：绑事件 + 刷新服务器下拉 + 同步会话态；本地栏首次自动列家目录
 function initFileTransfer() {
   ftWireOnce();
   ftRenderServerOptions();
+  ftRenderQueue();
   ftSyncSessionUI();
   if (!ftLocalPath) ftLoadLocal('');
 }
@@ -36,17 +42,78 @@ function ftWireOnce() {
   const rc = document.getElementById('ftRemoteCrumb');
   if (lb) lb.addEventListener('dblclick', (e) => ftOnRowDblClick(e, 'local'));
   if (rb) rb.addEventListener('dblclick', (e) => ftOnRowDblClick(e, 'remote'));
+  if (lb) lb.addEventListener('click', (e) => ftOnRowClick(e, 'local'));
+  if (rb) rb.addEventListener('click', (e) => ftOnRowClick(e, 'remote'));
   if (lc) lc.addEventListener('click', (e) => ftOnCrumbClick(e, 'local'));
   if (rc) rc.addEventListener('click', (e) => ftOnCrumbClick(e, 'remote'));
   if (lb) lb.addEventListener('contextmenu', (e) => ftOnRowContext(e, 'local'));
   if (rb) rb.addEventListener('contextmenu', (e) => ftOnRowContext(e, 'remote'));
+  const qb = document.getElementById('ftQueueBody');
+  if (qb) qb.addEventListener('click', ftOnQueueClick);
+  ftInitSplitter();
+  if (typeof WS !== 'undefined') WS.on('transfer', ftOnTransferEvent);
+}
+
+// 中间分隔条拖拽：调整本地/远程两栏宽度（min 20%/max 80%），比例存 localStorage，双击复位 50/50
+function ftInitSplitter() {
+  const ws = document.querySelector('#page-filetransfer .ft-workspace');
+  const sp = document.getElementById('ftSplitter');
+  if (!ws || !sp) return;
+  const KEY = 'ft.splitRatio';
+  const clamp = (r) => Math.max(0.2, Math.min(0.8, r));
+  const apply = (r) => ws.style.setProperty('--ft-left', (clamp(r) * 100).toFixed(2) + '%');
+  const saved = parseFloat(localStorage.getItem(KEY));
+  if (saved >= 0.2 && saved <= 0.8) apply(saved);
+
+  let dragging = false;
+  const onMove = (e) => {
+    if (!dragging) return;
+    const rect = ws.getBoundingClientRect();
+    if (rect.width > 0) apply((e.clientX - rect.left) / rect.width);
+  };
+  const onUp = () => {
+    if (!dragging) return;
+    dragging = false;
+    sp.classList.remove('is-dragging');
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+    const r = parseFloat(ws.style.getPropertyValue('--ft-left')) / 100;
+    if (r >= 0.2 && r <= 0.8) localStorage.setItem(KEY, r.toFixed(4));
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+  };
+  sp.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    dragging = true;
+    sp.classList.add('is-dragging');
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+  sp.addEventListener('dblclick', () => { apply(0.5); localStorage.setItem(KEY, '0.5'); });
 }
 
 function ftOnRowDblClick(e, side) {
   const row = e.target.closest('.ft-row');
-  if (!row || row.dataset.dir !== '1') return; // 只进目录
+  if (!row) return;
+  // 仅目录双击进入；文件不再双击直传，传输统一走右键菜单（FileZilla 式）
+  if (row.dataset.dir !== '1') return;
   const name = row.dataset.name;
   if (side === 'local') ftEnterLocal(name); else ftEnterRemote(name);
+}
+
+// 单击高亮当前行（纯视觉，实际传输/改名/删除均走右键菜单）
+function ftOnRowClick(e, side) {
+  const row = e.target.closest('.ft-row');
+  if (!row) return;
+  ftSetSelection(side, row.dataset.name);
+}
+
+function ftSetSelection(side, name) {
+  if (side === 'local') ftLocalSel = name; else ftRemoteSel = name;
+  const body = document.getElementById(side === 'local' ? 'ftLocalBody' : 'ftRemoteBody');
+  if (body) body.querySelectorAll('.ft-row').forEach(r => r.classList.toggle('is-selected', r.dataset.name === name));
 }
 
 function ftOnCrumbClick(e, side) {
@@ -206,6 +273,7 @@ async function ftLoadLocal(path) {
     ftLocalPath = data.path;
     ftLocalParent = data.parent;
     if (data.home) ftLocalHomeDir = data.home;
+    ftLocalSel = null;
     ftBuildCrumb('local', data.path);
     ftRenderList('local', data.items);
     ftSetCount('ftLocalCount', data.items.length);
@@ -240,6 +308,7 @@ async function ftLoadRemote(path) {
   try {
     const data = await API.get(`/api/sftp/${ftSessionId}/list?path=` + encodeURIComponent(path || '.'));
     ftRemotePath = data.path;
+    ftRemoteSel = null;
     ftBuildCrumb('remote', data.path);
     ftRenderList('remote', data.items);
     ftSetCount('ftRemoteCount', data.items.length);
@@ -398,9 +467,12 @@ function ftOnRowContext(e, side) {
   if (side === 'remote' && !ftSessionId) return;
   e.preventDefault();
   const name = row.dataset.name;
+  ftSetSelection(side, name); // 右键即高亮该行，明确操作目标
   const isDir = row.dataset.dir === '1';
   const items = [];
   if (isDir) items.push({ label: '打开', fn: () => (side === 'local' ? ftEnterLocal(name) : ftEnterRemote(name)) });
+  if (side === 'local' && ftSessionId) items.push({ label: '上传到远程', fn: () => ftUpload(name) });
+  if (side === 'remote') items.push({ label: '下载到本地', fn: () => ftDownload(name) });
   items.push({ label: '重命名', fn: () => ftRename(side, name) });
   items.push({ label: '删除', danger: true, fn: () => ftDelete(side, name, isDir) });
   ftShowContextMenu(e.clientX, e.clientY, items);
@@ -438,6 +510,126 @@ function ftHideContextMenu() {
   document.removeEventListener('mousedown', ftCtxDismiss, true);
   document.removeEventListener('keydown', ftCtxEsc, true);
   window.removeEventListener('blur', ftHideContextMenu);
+}
+
+// ====================== 传输（T7）：上传/下载 + 队列进度 ======================
+
+// 上传：本地 name（缺省取选中）→ 远程当前目录
+function ftUpload(name) {
+  if (!ftSessionId) { showToast('请先连接服务器'); return; }
+  name = name || ftLocalSel;
+  if (!name) { showToast('请先在本地栏选中要上传的项'); return; }
+  ftStartTransfer('upload', [{ from: ftJoin(ftLocalPath, name), to: ftPosixJoin(ftRemotePath, name) }], name);
+}
+
+// 下载：远程 name（缺省取选中）→ 本地当前目录
+function ftDownload(name) {
+  if (!ftSessionId) return;
+  name = name || ftRemoteSel;
+  if (!name) { showToast('请先在远程栏选中要下载的项'); return; }
+  ftStartTransfer('download', [{ from: ftPosixJoin(ftRemotePath, name), to: ftJoin(ftLocalPath, name) }], name);
+}
+
+async function ftStartTransfer(direction, items, label) {
+  const onConflict = (document.getElementById('ftConflictPolicy') || {}).value || 'overwrite';
+  try {
+    const res = await API.post(`/api/sftp/${ftSessionId}/transfer`, { direction, items, onConflict });
+    // 预登记任务（WS 进度随后填充）；已存在则不覆盖，避免与早到的事件抢
+    if (!ftTasks.has(res.taskId)) {
+      ftTasks.set(res.taskId, { taskId: res.taskId, direction, state: 'queued', filesTotal: 0, filesDone: 0, curName: label || '', curPercent: 0, speed: 0, etaSec: 0, startedAt: Date.now() });
+    }
+    ftRenderQueue();
+    showToast(direction === 'upload' ? '⬆ 开始上传' : '⬇ 开始下载', label || `${items.length} 项`);
+  } catch (e) { ftOpError('remote', e, '传输启动失败'); }
+}
+
+// WS 'transfer' 事件：驱动队列任务进度（事件形态见后端 transferQueue.emit）
+function ftOnTransferEvent(d) {
+  if (!d || !d.taskId) return;
+  let t = ftTasks.get(d.taskId);
+  if (!t) { t = { taskId: d.taskId, direction: d.direction, state: 'transferring', filesTotal: 0, filesDone: 0, curName: '', curPercent: 0, speed: 0, etaSec: 0, startedAt: Date.now() }; ftTasks.set(d.taskId, t); }
+  if (typeof d.filesTotal === 'number' && d.filesTotal) t.filesTotal = d.filesTotal;
+  if (typeof d.filesDone === 'number') t.filesDone = d.filesDone;
+  switch (d.phase) {
+    case 'started': t.state = 'transferring'; break;
+    case 'progress': t.state = 'transferring'; t.curName = d.name || t.curName; t.curPercent = d.percent || 0; t.speed = d.speed || 0; t.etaSec = d.etaSec || 0; break;
+    case 'file-done': case 'file-skipped': case 'file-failed': t.curName = d.name || t.curName; t.curPercent = 100; if (d.phase === 'file-failed') t.lastError = d.error; break;
+    case 'done': t.state = 'done'; t.curPercent = 100; ftAfterTransferDone(t); break;
+    case 'failed': t.state = 'failed'; t.error = d.error; ftAfterTransferDone(t); break;
+    case 'cancelled': t.state = 'cancelled'; ftAfterTransferDone(t); break;
+    default: break;
+  }
+  ftRenderQueue();
+}
+
+// 传输结束：刷新目标栏让结果出现 + 收尾提示
+function ftAfterTransferDone(t) {
+  if (t.direction === 'upload') { if (ftSessionId) ftRemoteRefresh(); } else ftLocalRefresh();
+  const label = t.state === 'done' ? '✅ 传输完成' : (t.state === 'cancelled' ? '已取消传输' : '❌ 传输失败');
+  showToast(label, t.error || t.curName || '');
+}
+
+function ftRenderQueue() {
+  const body = document.getElementById('ftQueueBody');
+  if (!body) return;
+  const tasks = [...ftTasks.values()].sort((a, b) => b.startedAt - a.startedAt);
+  const countEl = document.getElementById('ftQueueCount');
+  if (countEl) countEl.textContent = String(tasks.length);
+  const hasFinished = tasks.some(t => ['done', 'failed', 'cancelled'].includes(t.state));
+  const hasActive = tasks.some(t => t.state === 'queued' || t.state === 'transferring');
+  setDisabled('ftQueueClear', !hasFinished);
+  setDisabled('ftQueueCancelAll', !hasActive);
+  if (tasks.length === 0) {
+    renderState(body, { kind: 'empty', icon: '📭', title: '暂无传输任务', desc: '右键文件 → 上传到远程 / 下载到本地，进度在此显示。', sm: true });
+    return;
+  }
+  body.innerHTML = `<div class="ft-queue-list">${tasks.map(ftTaskRowHtml).join('')}</div>`;
+}
+
+function ftTaskRowHtml(t) {
+  const active = t.state === 'queued' || t.state === 'transferring';
+  const pct = t.filesTotal ? Math.min(100, Math.round(((t.filesDone + (t.curPercent || 0) / 100) / t.filesTotal) * 100)) : (t.state === 'done' ? 100 : 0);
+  const icon = t.direction === 'upload' ? '⬆' : '⬇';
+  const stateText = { queued: '排队', transferring: '传输中', done: '完成', failed: '失败', cancelled: '已取消' }[t.state] || t.state;
+  const meta = active
+    ? `${t.filesDone}/${t.filesTotal || '?'} · ${ftFmtSize(t.speed)}/s · 剩 ${ftFmtEta(t.etaSec)}`
+    : `${t.filesDone}/${t.filesTotal || t.filesDone}`;
+  const cls = 'ft-task' + (t.state === 'failed' ? ' is-failed' : '') + (t.state === 'done' ? ' is-done' : '');
+  const btn = active
+    ? `<button class="btn btn--sm btn--danger ft-task-act" data-act="cancel" data-task="${escapeAttr(t.taskId)}">取消</button>`
+    : `<button class="btn btn--sm btn--icon ft-task-act" data-act="clear" data-task="${escapeAttr(t.taskId)}" title="移除">✕</button>`;
+  return `<div class="${cls}">`
+    + `<span class="ft-task-icon">${icon}</span>`
+    + `<div class="ft-task-main"><div class="ft-task-name">${escapeHtml(t.curName || (t.direction === 'upload' ? '上传' : '下载'))}<span class="ft-task-state">${stateText}</span></div>`
+    + `<div class="ft-task-bar"><div class="ft-task-fill" style="width:${pct}%"></div></div></div>`
+    + `<span class="ft-task-meta">${meta}</span>`
+    + btn
+    + '</div>';
+}
+
+function ftOnQueueClick(e) {
+  const b = e.target.closest('.ft-task-act');
+  if (!b) return;
+  const taskId = b.dataset.task;
+  if (b.dataset.act === 'cancel') ftCancelTask(taskId);
+  else { ftTasks.delete(taskId); ftRenderQueue(); }
+}
+
+async function ftCancelTask(taskId) {
+  try { await API.post(`/api/sftp/transfer/${taskId}/cancel`); } catch (e) { /* 已结束/不存在，忽略 */ }
+}
+
+function ftClearFinished() {
+  for (const [id, t] of ftTasks) if (['done', 'failed', 'cancelled'].includes(t.state)) ftTasks.delete(id);
+  ftRenderQueue();
+}
+
+async function ftCancelAll() {
+  for (const t of ftTasks.values()) {
+    if (t.state === 'queued' || t.state === 'transferring') {
+      try { await API.post(`/api/sftp/transfer/${t.taskId}/cancel`); } catch (e) { /* ignore */ }
+    }
+  }
 }
 
 // ====================== 工具 ======================
@@ -485,4 +677,12 @@ function ftFmtTime(ms) {
   const d = new Date(ms);
   const p = (x) => String(x).padStart(2, '0');
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+function ftFmtEta(sec) {
+  if (!sec || sec < 0) return '0s';
+  if (sec < 60) return `${Math.round(sec)}s`;
+  const m = Math.floor(sec / 60);
+  const s = Math.round(sec % 60);
+  return `${m}m${String(s).padStart(2, '0')}s`;
 }
