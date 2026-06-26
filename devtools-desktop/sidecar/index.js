@@ -71,6 +71,7 @@ app.use((req, res, next) => {
 // API 路由
 app.use('/api/projects', require('./routes/projects'));
 app.use('/api/servers', require('./routes/servers'));
+app.use('/api/sftp', require('./routes/sftp'));
 app.use('/api/deploy', require('./routes/deploy'));
 app.use('/api/run', require('./routes/run'));
 app.use('/api/history', require('./routes/history'));
