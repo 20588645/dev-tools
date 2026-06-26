@@ -16,9 +16,11 @@ let ftLocalHomeDir = '';
 let ftRemotePath = '';
 let ftRemoteDefault = '.';
 
-// 传输（T7）：选中行 + 任务表（taskId -> 进度态）
-let ftLocalSel = null;
-let ftRemoteSel = null;
+// 传输（T7）：选中集 + 任务表（taskId -> 进度态）
+// T10：单选改多选 —— ftLocalSel/ftRemoteSel 为 Set<name>；anchor 供 Shift 范围选（鼠标多选用）
+let ftLocalSel = new Set();
+let ftRemoteSel = new Set();
+const ftSelAnchor = { local: null, remote: null };
 const ftTasks = new Map();
 
 // T8：列表缓存（点列头重排时复用，不重拉）+ 排序态（key: name|size|mtime，dir: 1 升/-1 降；localStorage 记忆）
@@ -44,6 +46,8 @@ function initFileTransfer() {
   ftSyncSessionUI();
   ftUpdateListhead('local');
   ftUpdateListhead('remote');
+  ftUpdateStatusBar('local');
+  ftUpdateStatusBar('remote');
   if (!ftLocalPath) ftLoadLocal('');
 }
 
@@ -135,17 +139,70 @@ function ftOnRowDblClick(e, side) {
   if (side === 'local') ftEnterLocal(name); else ftEnterRemote(name);
 }
 
-// 单击高亮当前行（纯视觉，实际传输/改名/删除均走右键菜单）
+function ftSelSet(side) { return side === 'local' ? ftLocalSel : ftRemoteSel; }
+function ftSelNames(side) { return [...ftSelSet(side)]; }
+
+// 单击：普通=单选；Ctrl/Cmd=切换；Shift=从锚点范围选；点空白=清选
 function ftOnRowClick(e, side) {
   const row = e.target.closest('.ft-row');
-  if (!row) return;
-  ftSetSelection(side, row.dataset.name);
+  const set = ftSelSet(side);
+  if (!row) { if (set.size) { set.clear(); ftApplySelectionUI(side); ftUpdateStatusBar(side); } return; }
+  const name = row.dataset.name;
+  if (e.shiftKey && ftSelAnchor[side]) {
+    ftSelectRange(side, ftSelAnchor[side], name);
+  } else if (e.metaKey || e.ctrlKey) {
+    if (set.has(name)) set.delete(name); else set.add(name);
+    ftSelAnchor[side] = name;
+  } else {
+    set.clear(); set.add(name); ftSelAnchor[side] = name;
+  }
+  ftApplySelectionUI(side);
+  ftUpdateStatusBar(side);
 }
 
+// 设为单选（右键命中未选项 / 程序化选中用）
 function ftSetSelection(side, name) {
-  if (side === 'local') ftLocalSel = name; else ftRemoteSel = name;
+  const set = ftSelSet(side);
+  set.clear();
+  if (name) set.add(name);
+  ftSelAnchor[side] = name || null;
+  ftApplySelectionUI(side);
+  ftUpdateStatusBar(side);
+}
+
+// 按当前显示顺序选 from..to 区间（含两端）
+function ftSelectRange(side, fromName, toName) {
   const body = document.getElementById(side === 'local' ? 'ftLocalBody' : 'ftRemoteBody');
-  if (body) body.querySelectorAll('.ft-row').forEach(r => r.classList.toggle('is-selected', r.dataset.name === name));
+  if (!body) return;
+  const names = [...body.querySelectorAll('.ft-row')].map((r) => r.dataset.name);
+  let i = names.indexOf(fromName); let j = names.indexOf(toName);
+  const set = ftSelSet(side);
+  if (i < 0 || j < 0) { set.clear(); set.add(toName); return; }
+  if (i > j) { const t = i; i = j; j = t; }
+  set.clear();
+  for (let k = i; k <= j; k++) set.add(names[k]);
+}
+
+function ftApplySelectionUI(side) {
+  const body = document.getElementById(side === 'local' ? 'ftLocalBody' : 'ftRemoteBody');
+  const set = ftSelSet(side);
+  if (body) body.querySelectorAll('.ft-row').forEach((r) => r.classList.toggle('is-selected', set.has(r.dataset.name)));
+}
+
+// 底部状态栏：默认「共 N 项 · 总大小」；有选中时「已选 M 项 · 大小 / 共 N 项」
+function ftUpdateStatusBar(side) {
+  const foot = document.getElementById(side === 'local' ? 'ftLocalFoot' : 'ftRemoteFoot');
+  if (!foot) return;
+  const items = side === 'local' ? ftLocalItems : ftRemoteItems;
+  const set = ftSelSet(side);
+  if (set.size) {
+    let selSize = 0;
+    items.forEach((it) => { if (set.has(it.name) && !it.isDir) selSize += (it.size || 0); });
+    foot.textContent = `已选 ${set.size} 项 · ${ftFmtSize(selSize)}　/　共 ${items.length} 项`;
+  } else {
+    const total = items.reduce((s, it) => s + (it.isDir ? 0 : (it.size || 0)), 0);
+    foot.textContent = items.length ? `共 ${items.length} 项 · ${ftFmtSize(total)}` : '';
+  }
 }
 
 // 路径输入栏键盘：联想开时 ↑↓ 选择 / Enter 进入选中项 / Tab 补全 / Esc 关联想；
@@ -431,8 +488,10 @@ function ftSyncSessionUI() {
     ftSetStatus('idle', '未连接');
     ftRemotePath = '';
     ftRemoteItems = [];
+    ftRemoteSel.clear(); ftSelAnchor.remote = null;
     ftSetCount('ftRemoteCount', null);
     ftSetPath('remote', '');
+    ftUpdateStatusBar('remote');
     ftRenderRemoteBody({ kind: 'empty', icon: '🖥', title: '远程文件浏览', desc: '未连接，请选择服务器后点击「连接」。' });
   }
 }
@@ -474,7 +533,7 @@ async function ftLoadLocal(path) {
     ftLocalPath = data.path;
     ftLocalParent = data.parent;
     if (data.home) ftLocalHomeDir = data.home;
-    ftLocalSel = null;
+    ftLocalSel.clear(); ftSelAnchor.local = null;
     ftSetPath('local', data.path);
     ftRenderList('local', data.items);
     ftSetCount('ftLocalCount', data.items.length);
@@ -509,7 +568,7 @@ async function ftLoadRemote(path) {
   try {
     const data = await API.get(`/api/sftp/${ftSessionId}/list?path=` + encodeURIComponent(path || '.'));
     ftRemotePath = data.path;
-    ftRemoteSel = null;
+    ftRemoteSel.clear(); ftSelAnchor.remote = null;
     ftSetPath('remote', data.path);
     ftRenderList('remote', data.items);
     ftSetCount('ftRemoteCount', data.items.length);
@@ -567,17 +626,20 @@ function ftRenderList(side, items) {
   ftUpdateListhead(side);
   if (!list || list.length === 0) {
     renderState(body, { kind: 'empty', icon: '📂', title: '空目录', desc: '该目录下没有文件。', sm: true });
+    ftUpdateStatusBar(side);
     return;
   }
-  body.innerHTML = `<div class="ft-list">${ftSortItems(list, sort).map(ftRowHtml).join('')}</div>`;
+  body.innerHTML = `<div class="ft-list">${ftSortItems(list, sort).map((it) => ftRowHtml(it, side)).join('')}</div>`;
+  ftUpdateStatusBar(side);
 }
 
-function ftRowHtml(item) {
+function ftRowHtml(item, side) {
   const isDir = !!item.isDir;
   const icon = item.isSymlink ? '🔗' : (isDir ? '📁' : '📄');
   const size = isDir ? '' : ftFmtSize(item.size);
   const time = item.mtime ? ftFmtTime(item.mtime) : '';
-  const cls = 'ft-row' + (isDir ? ' is-dir' : '') + (item.isSymlink ? ' is-link' : '');
+  const sel = ftSelSet(side).has(item.name) ? ' is-selected' : '';
+  const cls = 'ft-row' + (isDir ? ' is-dir' : '') + (item.isSymlink ? ' is-link' : '') + sel;
   const linkTip = item.isSymlink && item.target ? ` <span class="ft-row-link">→ ${escapeHtml(item.target)}</span>` : '';
   return `<div class="${cls}" data-name="${escapeAttr(item.name)}" data-dir="${isDir ? '1' : '0'}" title="${escapeAttr(item.name)}">`
     + `<span class="ft-row-icon">${icon}</span>`
@@ -622,22 +684,36 @@ async function ftRename(side, name) {
   } catch (e) { ftOpError(side, e, '重命名失败'); }
 }
 
-// 删除：文件直接删；目录二次确认并递归删（含内容）
-async function ftDelete(side, name, isDir) {
+// 删除：支持批量；目录递归删（含内容）。names 为名称数组或单个名称
+async function ftDelete(side, names) {
+  const list = Array.isArray(names) ? names : (names ? [names] : []);
+  if (!list.length) return;
   const dir = side === 'local' ? ftLocalPath : ftRemotePath;
-  const path = side === 'local' ? ftJoin(dir, name) : ftPosixJoin(dir, name);
-  const msg = isDir
-    ? `确定删除目录「${name}」及其全部内容？此操作不可恢复。`
-    : `确定删除「${name}」？此操作不可恢复。`;
+  const items = side === 'local' ? ftLocalItems : ftRemoteItems;
+  const byName = new Map(items.map((it) => [it.name, it]));
+  const msg = list.length === 1
+    ? ((byName.get(list[0]) || {}).isDir
+      ? `确定删除目录「${list[0]}」及其全部内容？此操作不可恢复。`
+      : `确定删除「${list[0]}」？此操作不可恢复。`)
+    : `确定删除选中的 ${list.length} 项？其中的目录会连同内容一并删除，此操作不可恢复。`;
   const ok = await showConfirm(msg, { danger: true, confirmText: '删除' });
   if (!ok) return;
-  try {
-    const body = { path, recursive: !!isDir };
-    if (side === 'local') await API.post('/api/fs/local/delete', body);
-    else await API.post(`/api/sftp/${ftSessionId}/delete`, body);
-    showToast('🗑 已删除', name);
-    ftRefreshSide(side);
-  } catch (e) { ftOpError(side, e, '删除失败'); }
+  let fail = 0;
+  for (const n of list) {
+    const isDir = !!(byName.get(n) || {}).isDir;
+    const path = side === 'local' ? ftJoin(dir, n) : ftPosixJoin(dir, n);
+    try {
+      if (side === 'local') await API.post('/api/fs/local/delete', { path, recursive: isDir });
+      else await API.post(`/api/sftp/${ftSessionId}/delete`, { path, recursive: isDir });
+    } catch (e) {
+      fail++;
+      if (side === 'remote' && /会话/.test(e.message)) { ftHandleSessionLost(); return; }
+    }
+  }
+  ftSelSet(side).clear();
+  if (fail) showToast(`❌ 部分删除失败（${fail}/${list.length}）`);
+  else showToast('🗑 已删除', list.length === 1 ? list[0] : `${list.length} 项`);
+  ftRefreshSide(side);
 }
 
 function ftRefreshSide(side) { if (side === 'local') ftLocalRefresh(); else ftRemoteRefresh(); }
@@ -647,21 +723,24 @@ function ftOpError(side, e, title) {
   showToast('❌ ' + title, e.message);
 }
 
-// 行右键 → 上下文菜单（打开/重命名/删除）
+// 行右键 → 上下文菜单（多选时批量）。右键命中未选中的行→改为只选它；命中已选→保持多选
 function ftOnRowContext(e, side) {
   const row = e.target.closest('.ft-row');
   if (!row) return;
   if (side === 'remote' && !ftSessionId) return;
   e.preventDefault();
   const name = row.dataset.name;
-  ftSetSelection(side, name); // 右键即高亮该行，明确操作目标
+  if (!ftSelSet(side).has(name)) ftSetSelection(side, name); // 右键即高亮该行，明确操作目标
+  const names = ftSelNames(side);
+  const n = names.length;
+  const multi = n > 1;
   const isDir = row.dataset.dir === '1';
   const items = [];
-  if (isDir) items.push({ label: '打开', fn: () => (side === 'local' ? ftEnterLocal(name) : ftEnterRemote(name)) });
-  if (side === 'local' && ftSessionId) items.push({ label: '上传到远程', fn: () => ftUpload(name) });
-  if (side === 'remote') items.push({ label: '下载到本地', fn: () => ftDownload(name) });
-  items.push({ label: '重命名', fn: () => ftRename(side, name) });
-  items.push({ label: '删除', danger: true, fn: () => ftDelete(side, name, isDir) });
+  if (!multi && isDir) items.push({ label: '打开', fn: () => (side === 'local' ? ftEnterLocal(name) : ftEnterRemote(name)) });
+  if (side === 'local' && ftSessionId) items.push({ label: multi ? `上传到远程（${n}）` : '上传到远程', fn: () => ftUpload(names) });
+  if (side === 'remote') items.push({ label: multi ? `下载到本地（${n}）` : '下载到本地', fn: () => ftDownload(names) });
+  if (!multi) items.push({ label: '重命名', fn: () => ftRename(side, name) });
+  items.push({ label: multi ? `删除（${n}）` : '删除', danger: true, fn: () => ftDelete(side, names) });
   ftShowContextMenu(e.clientX, e.clientY, items);
 }
 
@@ -701,20 +780,22 @@ function ftHideContextMenu() {
 
 // ====================== 传输（T7）：上传/下载 + 队列进度 ======================
 
-// 上传：本地 name（缺省取选中）→ 远程当前目录
-function ftUpload(name) {
+// 上传：names 名称数组（或单个/缺省取本地选中）→ 远程当前目录
+function ftUpload(names) {
   if (!ftSessionId) { showToast('请先连接服务器'); return; }
-  name = name || ftLocalSel;
-  if (!name) { showToast('请先在本地栏选中要上传的项'); return; }
-  ftStartTransfer('upload', [{ from: ftJoin(ftLocalPath, name), to: ftPosixJoin(ftRemotePath, name) }], name);
+  const list = Array.isArray(names) ? names : (names ? [names] : ftSelNames('local'));
+  if (!list.length) { showToast('请先在本地栏选中要上传的项'); return; }
+  const items = list.map((n) => ({ from: ftJoin(ftLocalPath, n), to: ftPosixJoin(ftRemotePath, n) }));
+  ftStartTransfer('upload', items, list.length === 1 ? list[0] : `${list.length} 项`);
 }
 
-// 下载：远程 name（缺省取选中）→ 本地当前目录
-function ftDownload(name) {
+// 下载：names 名称数组（或单个/缺省取远程选中）→ 本地当前目录
+function ftDownload(names) {
   if (!ftSessionId) return;
-  name = name || ftRemoteSel;
-  if (!name) { showToast('请先在远程栏选中要下载的项'); return; }
-  ftStartTransfer('download', [{ from: ftPosixJoin(ftRemotePath, name), to: ftJoin(ftLocalPath, name) }], name);
+  const list = Array.isArray(names) ? names : (names ? [names] : ftSelNames('remote'));
+  if (!list.length) { showToast('请先在远程栏选中要下载的项'); return; }
+  const items = list.map((n) => ({ from: ftPosixJoin(ftRemotePath, n), to: ftJoin(ftLocalPath, n) }));
+  ftStartTransfer('download', items, list.length === 1 ? list[0] : `${list.length} 项`);
 }
 
 async function ftStartTransfer(direction, items, label) {
@@ -749,11 +830,23 @@ function ftOnTransferEvent(d) {
   ftRenderQueue();
 }
 
-// 传输结束：刷新目标栏让结果出现 + 收尾提示
+// 传输结束：刷新目标栏让结果出现 + 收尾提示 + 系统通知
 function ftAfterTransferDone(t) {
   if (t.direction === 'upload') { if (ftSessionId) ftRemoteRefresh(); } else ftLocalRefresh();
+  const dir = t.direction === 'upload' ? '上传' : '下载';
+  const place = t.direction === 'upload' ? '远程' : '本地';
+  // 传了什么：多文件给数量，单文件给文件名（兜底「文件」，避免出现空白）
+  const what = t.filesTotal > 1 ? `${t.filesTotal} 个文件` : (t.curName || '文件');
   const label = t.state === 'done' ? '✅ 传输完成' : (t.state === 'cancelled' ? '已取消传输' : '❌ 传输失败');
-  showToast(label, t.error || t.curName || '');
+  showToast(label, t.state === 'failed' ? (t.error || what) : what);
+  // 系统通知（复用 app.js 的统一通知，尊重用户通知开关；取消不打扰）
+  if (t.state !== 'cancelled' && typeof sendDesktopNotification === 'function') {
+    const title = t.state === 'done' ? `${dir}完成` : `${dir}失败`;
+    const body = t.state === 'done'
+      ? `${what} 已${dir}到${place}`
+      : `${what} ${dir}失败${t.error ? '：' + t.error : ''}`;
+    sendDesktopNotification(title, body, t.state === 'done', { target: 'filetransfer' });
+  }
 }
 
 function ftRenderQueue() {

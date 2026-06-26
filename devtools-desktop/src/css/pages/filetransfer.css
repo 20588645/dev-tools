@@ -142,6 +142,20 @@
 
 .ft-pane-body > .state { margin: auto; }
 
+/* 底部状态栏：项数/总大小；有选中时显示已选统计 */
+.ft-pane-foot {
+  flex: 0 0 auto;
+  min-height: 16px;
+  padding: 4px 12px;
+  border-top: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* ---------- 中间可拖拽分隔条（拖动调整两栏宽度，双击复位 50/50） ----------
  * col-resize 手型 + hover/拖拽时中线高亮＝可拖拽的功能性提示（非装饰）。 */
 .ft-splitter {
