@@ -1,24 +1,61 @@
 // ========== filetransfer.js — 文件传输页（FileZilla 式双栏 SFTP）==========
-// T4 范围：页面骨架 + 菜单 + 会话连接栏。本地/远程目录浏览与上传下载在后续批次接入。
-// 会话连接栏直接驱动后端持久 SFTP 会话（/api/sftp/connect|disconnect|keepalive，T0 基建）。
+// T4：页面骨架 + 菜单 + 会话连接栏（驱动 /api/sftp 持久会话）。
+// T5：双栏目录浏览 —— 本地 /api/fs/local/list、远程 /api/sftp/:sid/list；双击进目录、
+//     上一级 / 主目录(默认目录) / 刷新 / 面包屑导航。新建/删除在 T6，上传下载在 T7。
 
-// 当前会话：sessionId 为后端持久会话标识，断开/失效后置空
+// 会话
 let ftSessionId = null;
 let ftCurrentServer = null;
 let ftKeepaliveTimer = null;
+const FT_KEEPALIVE_MS = 60 * 1000; // 1min 心跳，远低于后端 5min 空闲回收
 
-// 1min 心跳：远低于后端 5min 空闲回收阈值，避免翻目录间隙会话被回收
-const FT_KEEPALIVE_MS = 60 * 1000;
+// 当前目录态
+let ftLocalPath = '';
+let ftLocalParent = null;
+let ftLocalHomeDir = '';
+let ftRemotePath = '';
+let ftRemoteDefault = '.';
 
-// 页面进入时初始化：刷新服务器下拉 + 渲染两栏/队列占位 + 按当前会话态同步 UI（幂等）
+let ftWired = false; // 事件委托只绑一次
+
+// 进入页面：绑事件 + 刷新服务器下拉 + 同步会话态；本地栏首次自动列家目录
 function initFileTransfer() {
+  ftWireOnce();
   ftRenderServerOptions();
-  ftRenderLocalPlaceholder();
-  ftRenderQueuePlaceholder();
   ftSyncSessionUI();
+  if (!ftLocalPath) ftLoadLocal('');
 }
 
-// 用全局 servers（部署面板已加载）填充服务器下拉；连接中锁定下拉，断开后才能切换
+// 双击进目录 / 点面包屑跳转：用事件委托，避免给每行内联 onclick（转义 + 重绑都麻烦）
+function ftWireOnce() {
+  if (ftWired) return;
+  ftWired = true;
+  const lb = document.getElementById('ftLocalBody');
+  const rb = document.getElementById('ftRemoteBody');
+  const lc = document.getElementById('ftLocalCrumb');
+  const rc = document.getElementById('ftRemoteCrumb');
+  if (lb) lb.addEventListener('dblclick', (e) => ftOnRowDblClick(e, 'local'));
+  if (rb) rb.addEventListener('dblclick', (e) => ftOnRowDblClick(e, 'remote'));
+  if (lc) lc.addEventListener('click', (e) => ftOnCrumbClick(e, 'local'));
+  if (rc) rc.addEventListener('click', (e) => ftOnCrumbClick(e, 'remote'));
+}
+
+function ftOnRowDblClick(e, side) {
+  const row = e.target.closest('.ft-row');
+  if (!row || row.dataset.dir !== '1') return; // 只进目录
+  const name = row.dataset.name;
+  if (side === 'local') ftEnterLocal(name); else ftEnterRemote(name);
+}
+
+function ftOnCrumbClick(e, side) {
+  const seg = e.target.closest('.ft-crumb-seg');
+  if (!seg) return;
+  const p = seg.dataset.path;
+  if (side === 'local') ftLoadLocal(p); else ftLoadRemote(p);
+}
+
+// ====================== 会话连接栏 ======================
+
 function ftRenderServerOptions() {
   const sel = document.getElementById('ftServerSelect');
   if (!sel) return;
@@ -41,7 +78,6 @@ function ftOnServerChange() {
   if (hint) hint.textContent = '';
 }
 
-// 连接/断开切换：按当前会话态分发
 function ftToggleConnect(event) {
   return ftSessionId ? ftDisconnect(event) : ftConnect(event);
 }
@@ -58,7 +94,6 @@ async function ftConnect(event) {
 
   try {
     await withButtonBusy(btn, '连接中…', async () => {
-      // 建连可能较慢，超时与后端一致（避免默认 15s 误杀慢连接）
       const res = await API.post('/api/sftp/connect', { serverId }, getConnTimeoutMs());
       ftSessionId = res.sessionId;
       ftCurrentServer = server;
@@ -66,6 +101,9 @@ async function ftConnect(event) {
     ftStartKeepalive();
     ftSyncSessionUI();
     showToast('✅ 已连接', server.name || server.host);
+    // 进入默认目录（服务器配置的「默认打开目录」，没有则后端按 home 解析）
+    ftRemoteDefault = ftCurrentServer.defaultRemotePath || '.';
+    ftLoadRemote(ftRemoteDefault);
   } catch (e) {
     ftSessionId = null;
     ftCurrentServer = null;
@@ -84,7 +122,6 @@ async function ftDisconnect(event) {
       if (sid) await API.post('/api/sftp/disconnect', { sessionId: sid });
     });
   } catch (e) {
-    // 断开失败不阻塞前端复位（会话最终会被后端空闲回收）
     console.warn('[FileTransfer] 断开失败:', e.message);
   } finally {
     ftSessionId = null;
@@ -94,12 +131,20 @@ async function ftDisconnect(event) {
   }
 }
 
-// 按当前会话态同步：连接按钮文案/变体、下拉锁定、状态药丸、远程栏路径与占位
+// 会话失效（keepalive/列目录 410）：复位为未连接并提示重连
+function ftHandleSessionLost() {
+  ftStopKeepalive();
+  ftSessionId = null;
+  ftCurrentServer = null;
+  ftSyncSessionUI();
+  ftRenderRemoteBody({ kind: 'error', title: '连接已断开', desc: '会话失效，请重新连接。' });
+  showToast('⚠️ SFTP 会话已断开', '请重新连接');
+}
+
+// 按会话态同步：连接按钮、下拉锁定、状态药丸、远程栏工具栏与（断开时）占位
 function ftSyncSessionUI() {
   const btn = document.getElementById('ftConnectBtn');
   const sel = document.getElementById('ftServerSelect');
-  const refresh = document.getElementById('ftRefreshBtn');
-  const remotePath = document.getElementById('ftRemotePath');
   const connected = !!ftSessionId;
 
   if (btn) {
@@ -108,22 +153,20 @@ function ftSyncSessionUI() {
     btn.classList.toggle('btn--danger', connected);
   }
   if (sel) sel.disabled = connected || !(Array.isArray(servers) && servers.length);
-  if (refresh) refresh.disabled = true; // 目录刷新随 T5 列目录一起启用
+  ftUpdateRemoteToolbar();
 
   if (connected && ftCurrentServer) {
-    const where = `${ftCurrentServer.username || ''}@${ftCurrentServer.host || ''}`;
-    ftSetStatus('connected', `已连接 · ${where}`);
-    const dir = ftCurrentServer.defaultRemotePath || '~';
-    if (remotePath) { remotePath.textContent = dir; remotePath.title = dir; }
-    ftRenderRemoteBody({ kind: 'empty', icon: '✅', title: '会话已建立', desc: '持久 SFTP 会话已连接，远程目录浏览将在下一批（T5）接入。' });
+    ftSetStatus('connected', `已连接 · ${ftCurrentServer.username || ''}@${ftCurrentServer.host || ''}`);
   } else {
     ftSetStatus('idle', '未连接');
-    if (remotePath) { remotePath.textContent = '—'; remotePath.title = ''; }
+    ftRemotePath = '';
+    ftSetCount('ftRemoteCount', null);
+    const crumb = document.getElementById('ftRemoteCrumb');
+    if (crumb) crumb.innerHTML = '';
     ftRenderRemoteBody({ kind: 'empty', icon: '🖥', title: '远程文件浏览', desc: '未连接，请选择服务器后点击「连接」。' });
   }
 }
 
-// 状态药丸：idle 灰 / connecting 黄 / connected 绿（真实语义着色）
 function ftSetStatus(kind, text) {
   const wrap = document.getElementById('ftSessionStatus');
   if (!wrap) return;
@@ -134,7 +177,6 @@ function ftSetStatus(kind, text) {
   if (t) t.textContent = text;
 }
 
-// ---------- 心跳：保活会话，失效则复位为未连接 ----------
 function ftStartKeepalive() {
   ftStopKeepalive();
   ftKeepaliveTimer = setInterval(ftDoKeepalive, FT_KEEPALIVE_MS);
@@ -149,39 +191,185 @@ async function ftDoKeepalive() {
   try {
     await API.post(`/api/sftp/${ftSessionId}/keepalive`);
   } catch (e) {
-    // 410（会话已回收）或网络错误：复位为未连接，提示重连
-    ftStopKeepalive();
-    ftSessionId = null;
-    ftCurrentServer = null;
-    ftSyncSessionUI();
-    ftRenderRemoteBody({ kind: 'error', title: '连接已断开', desc: '会话失效，请重新连接。' });
-    showToast('⚠️ SFTP 会话已断开', '请重新连接');
+    ftHandleSessionLost();
   }
 }
 
-// ---------- 占位渲染（list/queue 实体在后续批次接入） ----------
-function ftRenderLocalPlaceholder() {
-  renderState(document.getElementById('ftLocalBody'), {
-    kind: 'empty', icon: '💻',
-    title: '本地文件浏览',
-    desc: '本地目录浏览与新建/重命名/删除将在下一批（T5）接入；当前为页面骨架。',
-  });
+// ====================== 本地栏 ======================
+
+async function ftLoadLocal(path) {
+  ftRenderLoading('local');
+  try {
+    const data = await API.get('/api/fs/local/list?path=' + encodeURIComponent(path || ''));
+    ftLocalPath = data.path;
+    ftLocalParent = data.parent;
+    if (data.home) ftLocalHomeDir = data.home;
+    ftBuildCrumb('local', data.path);
+    ftRenderList('local', data.items);
+    ftSetCount('ftLocalCount', data.items.length);
+    ftUpdateLocalToolbar();
+  } catch (e) {
+    ftSetCount('ftLocalCount', null);
+    renderState(document.getElementById('ftLocalBody'), {
+      kind: 'error', icon: '⚠️', title: '读取失败', desc: e.message,
+      actionHTML: '<button class="btn btn--sm" onclick="ftLocalRefresh()">重试</button>',
+    });
+  }
+}
+
+function ftLocalUp() { if (ftLocalParent) ftLoadLocal(ftLocalParent); }
+function ftLocalHome() { ftLoadLocal(ftLocalHomeDir || ''); }
+function ftLocalRefresh() { ftLoadLocal(ftLocalPath || ''); }
+function ftEnterLocal(name) { ftLoadLocal(ftJoin(ftLocalPath, name)); }
+
+function ftUpdateLocalToolbar() {
+  setDisabled('ftLocalUp', !ftLocalParent);
+  setDisabled('ftLocalHome', !ftLocalHomeDir);
+  setDisabled('ftLocalRefresh', false);
+  setDisabled('ftRefreshBtn', false); // 顶部「刷新」随本地就绪启用（刷新两栏）
+}
+
+// ====================== 远程栏 ======================
+
+async function ftLoadRemote(path) {
+  if (!ftSessionId) return;
+  ftRenderLoading('remote');
+  try {
+    const data = await API.get(`/api/sftp/${ftSessionId}/list?path=` + encodeURIComponent(path || '.'));
+    ftRemotePath = data.path;
+    ftBuildCrumb('remote', data.path);
+    ftRenderList('remote', data.items);
+    ftSetCount('ftRemoteCount', data.items.length);
+    ftUpdateRemoteToolbar();
+  } catch (e) {
+    if (/会话/.test(e.message)) { ftHandleSessionLost(); return; }
+    ftSetCount('ftRemoteCount', null);
+    renderState(document.getElementById('ftRemoteBody'), {
+      kind: 'error', icon: '⚠️', title: '读取失败', desc: e.message,
+      actionHTML: '<button class="btn btn--sm" onclick="ftRemoteRefresh()">重试</button>',
+    });
+  }
+}
+
+function ftRemoteUp() {
+  const p = ftPosixDirname(ftRemotePath);
+  if (p && p !== ftRemotePath) ftLoadRemote(p);
+}
+function ftRemoteHome() { ftLoadRemote(ftRemoteDefault || '.'); }
+function ftRemoteRefresh() { if (ftRemotePath) ftLoadRemote(ftRemotePath); }
+function ftEnterRemote(name) { ftLoadRemote(ftPosixJoin(ftRemotePath, name)); }
+
+function ftUpdateRemoteToolbar() {
+  const connected = !!ftSessionId;
+  const atRoot = !ftRemotePath || ftRemotePath === '/';
+  setDisabled('ftRemoteUp', !connected || atRoot);
+  setDisabled('ftRemoteHome', !connected);
+  setDisabled('ftRemoteRefresh', !connected || !ftRemotePath);
+}
+
+// 顶部「刷新」：两栏一起刷
+function ftRefreshAll() {
+  ftLocalRefresh();
+  if (ftSessionId) ftRemoteRefresh();
+}
+
+// ====================== 渲染 ======================
+
+function ftRenderLoading(side) {
+  renderState(document.getElementById(side === 'local' ? 'ftLocalBody' : 'ftRemoteBody'), { kind: 'loading', title: '加载中…' });
 }
 
 function ftRenderRemoteBody(opts) {
   renderState(document.getElementById('ftRemoteBody'), opts);
 }
 
-function ftRenderQueuePlaceholder() {
-  renderState(document.getElementById('ftQueueBody'), {
-    kind: 'empty', icon: '📭',
-    title: '暂无传输任务',
-    desc: '上传 / 下载任务会显示在这里（含字节级进度），随传输接入。',
-    sm: true,
-  });
+function ftRenderList(side, items) {
+  const body = document.getElementById(side === 'local' ? 'ftLocalBody' : 'ftRemoteBody');
+  if (!body) return;
+  if (!items || items.length === 0) {
+    renderState(body, { kind: 'empty', icon: '📂', title: '空目录', desc: '该目录下没有文件。', sm: true });
+    return;
+  }
+  body.innerHTML = `<div class="ft-list">${items.map(ftRowHtml).join('')}</div>`;
 }
 
-// 刷新两栏目录：占位（T5 列目录接入后启用，按钮当前 disabled）
-function ftRefreshAll() {
-  // T5：分别刷新本地与远程目录列表
+function ftRowHtml(item) {
+  const isDir = !!item.isDir;
+  const icon = item.isSymlink ? '🔗' : (isDir ? '📁' : '📄');
+  const size = isDir ? '' : ftFmtSize(item.size);
+  const time = item.mtime ? ftFmtTime(item.mtime) : '';
+  const cls = 'ft-row' + (isDir ? ' is-dir' : '') + (item.isSymlink ? ' is-link' : '');
+  const linkTip = item.isSymlink && item.target ? ` <span class="ft-row-link">→ ${escapeHtml(item.target)}</span>` : '';
+  return `<div class="${cls}" data-name="${escapeAttr(item.name)}" data-dir="${isDir ? '1' : '0'}" title="${escapeAttr(item.name)}">`
+    + `<span class="ft-row-icon">${icon}</span>`
+    + `<span class="ft-row-name">${escapeHtml(item.name)}${linkTip}</span>`
+    + `<span class="ft-row-size">${size}</span>`
+    + `<span class="ft-row-time">${time}</span>`
+    + '</div>';
+}
+
+// 面包屑：把绝对路径切成可点的层级（POSIX/mac 本地均以 / 分隔）
+function ftBuildCrumb(side, fullPath) {
+  const el = document.getElementById(side === 'local' ? 'ftLocalCrumb' : 'ftRemoteCrumb');
+  if (!el) return;
+  const segs = ftPathSegments(fullPath);
+  el.innerHTML = segs
+    .map(s => `<span class="ft-crumb-seg" data-path="${escapeAttr(s.path)}" title="${escapeAttr(s.path)}">${escapeHtml(s.label)}</span>`)
+    .join('<span class="ft-crumb-sep">/</span>');
+}
+
+function ftPathSegments(full) {
+  if (!full || full === '/') return [{ label: '/', path: '/' }];
+  const parts = full.split('/').filter(Boolean);
+  const segs = [{ label: '/', path: '/' }];
+  let acc = '';
+  for (const p of parts) { acc += '/' + p; segs.push({ label: p, path: acc }); }
+  return segs;
+}
+
+// ====================== 工具 ======================
+
+function setDisabled(id, disabled) {
+  const el = document.getElementById(id);
+  if (el) el.disabled = !!disabled;
+}
+
+function ftSetCount(id, n) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = (n === null || n === undefined) ? '' : `${n} 项`;
+}
+
+// 本地路径拼接（mac 用 /，后端 path.resolve 兜底归一）
+function ftJoin(dir, name) {
+  if (!dir) return name;
+  return (dir.endsWith('/') ? dir : dir + '/') + name;
+}
+
+function ftPosixJoin(dir, name) {
+  if (!dir || dir === '/') return '/' + name;
+  return (dir.endsWith('/') ? dir : dir + '/') + name;
+}
+
+function ftPosixDirname(p) {
+  if (!p || p === '/') return '/';
+  const trimmed = p.replace(/\/+$/, '');
+  const i = trimmed.lastIndexOf('/');
+  if (i <= 0) return '/';
+  return trimmed.slice(0, i);
+}
+
+function ftFmtSize(n) {
+  if (!n) return '0 B';
+  const u = ['B', 'KB', 'MB', 'GB', 'TB'];
+  let i = 0;
+  let v = n;
+  while (v >= 1024 && i < u.length - 1) { v /= 1024; i++; }
+  return (i === 0 ? v : v.toFixed(v < 10 ? 2 : 1)) + ' ' + u[i];
+}
+
+function ftFmtTime(ms) {
+  if (!ms) return '';
+  const d = new Date(ms);
+  const p = (x) => String(x).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
 }
