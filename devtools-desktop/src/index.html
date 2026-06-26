@@ -412,7 +412,16 @@
           <span class="ft-pane-toolbar-spacer"></span>
           <button class="btn btn--sm btn--icon" id="ftLocalRefresh" onclick="ftLocalRefresh()" disabled title="刷新">↻</button>
         </div>
-        <div class="ft-pane-crumb" id="ftLocalCrumb"></div>
+        <div class="ft-pathbar">
+          <input type="text" class="ft-path-input" id="ftLocalPathInput" placeholder="输入路径回车跳转，输入时提示子目录" spellcheck="false" autocomplete="off" title="输入路径回车直达；输入时自动提示子目录，↑↓ 选择、Enter 进入、Esc 关闭">
+          <div class="ft-path-suggest" id="ftLocalSuggest" hidden></div>
+        </div>
+        <div class="ft-listhead" id="ftLocalListhead">
+          <span class="ft-lh-icon"></span>
+          <span class="ft-lh-col" data-sort="name">名称<span class="ft-lh-arr"></span></span>
+          <span class="ft-lh-col ft-lh-size" data-sort="size">大小<span class="ft-lh-arr"></span></span>
+          <span class="ft-lh-col ft-lh-time" data-sort="mtime">修改时间<span class="ft-lh-arr"></span></span>
+        </div>
         <div class="ft-pane-body" id="ftLocalBody"></div>
       </section>
 
@@ -432,7 +441,16 @@
           <span class="ft-pane-toolbar-spacer"></span>
           <button class="btn btn--sm btn--icon" id="ftRemoteRefresh" onclick="ftRemoteRefresh()" disabled title="刷新">↻</button>
         </div>
-        <div class="ft-pane-crumb" id="ftRemoteCrumb"></div>
+        <div class="ft-pathbar">
+          <input type="text" class="ft-path-input" id="ftRemotePathInput" placeholder="输入远程路径回车跳转，输入时提示子目录" spellcheck="false" autocomplete="off" title="输入路径回车直达；输入时自动提示子目录，↑↓ 选择、Enter 进入、Esc 关闭">
+          <div class="ft-path-suggest" id="ftRemoteSuggest" hidden></div>
+        </div>
+        <div class="ft-listhead" id="ftRemoteListhead">
+          <span class="ft-lh-icon"></span>
+          <span class="ft-lh-col" data-sort="name">名称<span class="ft-lh-arr"></span></span>
+          <span class="ft-lh-col ft-lh-size" data-sort="size">大小<span class="ft-lh-arr"></span></span>
+          <span class="ft-lh-col ft-lh-time" data-sort="mtime">修改时间<span class="ft-lh-arr"></span></span>
+        </div>
         <div class="ft-pane-body" id="ftRemoteBody"></div>
       </section>
     </div>
