@@ -8,6 +8,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../services/database');
 const sftpSession = require('../services/sftpSession');
+const transferQueue = require('../services/transferQueue');
 
 // 读服务器记录（含加密密码，供建连用，不脱敏；不经网络返回明文）
 function readServers() {
@@ -236,5 +237,38 @@ async function rmrf(sftp, dir) {
   }
   await new Promise((resolve, reject) => sftp.rmdir(dir, (e) => (e ? reject(e) : resolve())));
 }
+
+// ========== T3：传输队列（上传/下载，字节级进度经 WS） ==========
+
+// POST /api/sftp/:sid/transfer { direction, items:[{from,to,isDir?}], onConflict } — 入队
+router.post('/:sid/transfer', (req, res) => {
+  const s = getSessionOr410(req, res); if (!s) return;
+  const { direction, items, onConflict } = req.body || {};
+  if (direction !== 'upload' && direction !== 'download') {
+    return res.status(400).json({ error: 'direction 必须为 upload 或 download' });
+  }
+  if (!Array.isArray(items) || items.length === 0) return res.status(400).json({ error: 'items 不能为空' });
+  for (const it of items) {
+    if (!it || !it.from || !it.to) return res.status(400).json({ error: '每个 item 需含 from 和 to' });
+  }
+  const conflict = ['overwrite', 'skip', 'rename'].includes(onConflict) ? onConflict : 'overwrite';
+  const broadcast = req.app.get('broadcast');
+  const taskId = transferQueue.enqueue({ broadcast, sessionId: req.params.sid, direction, items, onConflict: conflict });
+  res.json({ taskId, status: 'started' });
+});
+
+// GET /api/sftp/transfer/:taskId — 任务状态（刷新/对账用）
+router.get('/transfer/:taskId', (req, res) => {
+  const t = transferQueue.get(req.params.taskId);
+  if (!t) return res.status(404).json({ error: '任务不存在或已清理' });
+  res.json(t);
+});
+
+// POST /api/sftp/transfer/:taskId/cancel — 取消任务
+router.post('/transfer/:taskId/cancel', (req, res) => {
+  const ok = transferQueue.cancel(req.params.taskId);
+  if (!ok) return res.status(404).json({ error: '任务不存在或已结束' });
+  res.json({ ok: true });
+});
 
 module.exports = router;
