@@ -38,6 +38,8 @@ function ftWireOnce() {
   if (rb) rb.addEventListener('dblclick', (e) => ftOnRowDblClick(e, 'remote'));
   if (lc) lc.addEventListener('click', (e) => ftOnCrumbClick(e, 'local'));
   if (rc) rc.addEventListener('click', (e) => ftOnCrumbClick(e, 'remote'));
+  if (lb) lb.addEventListener('contextmenu', (e) => ftOnRowContext(e, 'local'));
+  if (rb) rb.addEventListener('contextmenu', (e) => ftOnRowContext(e, 'remote'));
 }
 
 function ftOnRowDblClick(e, side) {
@@ -226,6 +228,7 @@ function ftUpdateLocalToolbar() {
   setDisabled('ftLocalUp', !ftLocalParent);
   setDisabled('ftLocalHome', !ftLocalHomeDir);
   setDisabled('ftLocalRefresh', false);
+  setDisabled('ftLocalMkdir', !ftLocalPath);
   setDisabled('ftRefreshBtn', false); // 顶部「刷新」随本地就绪启用（刷新两栏）
 }
 
@@ -265,6 +268,7 @@ function ftUpdateRemoteToolbar() {
   setDisabled('ftRemoteUp', !connected || atRoot);
   setDisabled('ftRemoteHome', !connected);
   setDisabled('ftRemoteRefresh', !connected || !ftRemotePath);
+  setDisabled('ftRemoteMkdir', !connected || !ftRemotePath);
 }
 
 // 顶部「刷新」：两栏一起刷
@@ -325,6 +329,115 @@ function ftPathSegments(full) {
   let acc = '';
   for (const p of parts) { acc += '/' + p; segs.push({ label: p, path: acc }); }
   return segs;
+}
+
+// ====================== 增删改（T6）+ 行右键菜单 ======================
+
+// 新建文件夹：当前目录下，名称走系统弹窗
+async function ftMkdir(side) {
+  if (side === 'remote' && !ftSessionId) return;
+  const dir = side === 'local' ? ftLocalPath : ftRemotePath;
+  if (!dir) return;
+  const name = await showPrompt('新建文件夹', { placeholder: '文件夹名称', confirmText: '新建' });
+  if (!name || !name.trim()) return;
+  const path = side === 'local' ? ftJoin(dir, name.trim()) : ftPosixJoin(dir, name.trim());
+  try {
+    if (side === 'local') await API.post('/api/fs/local/mkdir', { path });
+    else await API.post(`/api/sftp/${ftSessionId}/mkdir`, { path });
+    showToast('✅ 已新建文件夹', name.trim());
+    ftRefreshSide(side);
+  } catch (e) { ftOpError(side, e, '新建失败'); }
+}
+function ftLocalMkdir() { ftMkdir('local'); }
+function ftRemoteMkdir() { ftMkdir('remote'); }
+
+// 重命名：同目录内换名
+async function ftRename(side, name) {
+  const dir = side === 'local' ? ftLocalPath : ftRemotePath;
+  const next = await showPrompt('重命名', { defaultValue: name, confirmText: '重命名' });
+  if (!next || !next.trim() || next.trim() === name) return;
+  const from = side === 'local' ? ftJoin(dir, name) : ftPosixJoin(dir, name);
+  const to = side === 'local' ? ftJoin(dir, next.trim()) : ftPosixJoin(dir, next.trim());
+  try {
+    if (side === 'local') await API.post('/api/fs/local/rename', { from, to });
+    else await API.post(`/api/sftp/${ftSessionId}/rename`, { from, to });
+    showToast('✅ 已重命名', `${name} → ${next.trim()}`);
+    ftRefreshSide(side);
+  } catch (e) { ftOpError(side, e, '重命名失败'); }
+}
+
+// 删除：文件直接删；目录二次确认并递归删（含内容）
+async function ftDelete(side, name, isDir) {
+  const dir = side === 'local' ? ftLocalPath : ftRemotePath;
+  const path = side === 'local' ? ftJoin(dir, name) : ftPosixJoin(dir, name);
+  const msg = isDir
+    ? `确定删除目录「${name}」及其全部内容？此操作不可恢复。`
+    : `确定删除「${name}」？此操作不可恢复。`;
+  const ok = await showConfirm(msg, { danger: true, confirmText: '删除' });
+  if (!ok) return;
+  try {
+    const body = { path, recursive: !!isDir };
+    if (side === 'local') await API.post('/api/fs/local/delete', body);
+    else await API.post(`/api/sftp/${ftSessionId}/delete`, body);
+    showToast('🗑 已删除', name);
+    ftRefreshSide(side);
+  } catch (e) { ftOpError(side, e, '删除失败'); }
+}
+
+function ftRefreshSide(side) { if (side === 'local') ftLocalRefresh(); else ftRemoteRefresh(); }
+
+function ftOpError(side, e, title) {
+  if (side === 'remote' && /会话/.test(e.message)) { ftHandleSessionLost(); return; }
+  showToast('❌ ' + title, e.message);
+}
+
+// 行右键 → 上下文菜单（打开/重命名/删除）
+function ftOnRowContext(e, side) {
+  const row = e.target.closest('.ft-row');
+  if (!row) return;
+  if (side === 'remote' && !ftSessionId) return;
+  e.preventDefault();
+  const name = row.dataset.name;
+  const isDir = row.dataset.dir === '1';
+  const items = [];
+  if (isDir) items.push({ label: '打开', fn: () => (side === 'local' ? ftEnterLocal(name) : ftEnterRemote(name)) });
+  items.push({ label: '重命名', fn: () => ftRename(side, name) });
+  items.push({ label: '删除', danger: true, fn: () => ftDelete(side, name, isDir) });
+  ftShowContextMenu(e.clientX, e.clientY, items);
+}
+
+function ftShowContextMenu(x, y, items) {
+  ftHideContextMenu();
+  const menu = document.createElement('div');
+  menu.className = 'ft-ctx-menu';
+  menu.id = 'ftCtxMenu';
+  menu.innerHTML = items.map((it, i) => `<button class="ft-ctx-item${it.danger ? ' is-danger' : ''}" data-i="${i}">${escapeHtml(it.label)}</button>`).join('');
+  document.body.appendChild(menu);
+  const w = menu.offsetWidth || 150;
+  const h = menu.offsetHeight || (items.length * 34 + 8);
+  menu.style.left = Math.min(x, window.innerWidth - w - 8) + 'px';
+  menu.style.top = Math.min(y, window.innerHeight - h - 8) + 'px';
+  menu.addEventListener('click', (ev) => {
+    const b = ev.target.closest('.ft-ctx-item');
+    if (!b) return;
+    const it = items[Number(b.dataset.i)];
+    ftHideContextMenu();
+    if (it && it.fn) it.fn();
+  });
+  document.addEventListener('mousedown', ftCtxDismiss, true);
+  document.addEventListener('keydown', ftCtxEsc, true);
+  window.addEventListener('blur', ftHideContextMenu);
+}
+
+function ftCtxDismiss(e) { if (!e.target.closest('#ftCtxMenu')) ftHideContextMenu(); }
+function ftCtxEsc(e) { if (e.key === 'Escape') ftHideContextMenu(); }
+
+function ftHideContextMenu() {
+  const m = document.getElementById('ftCtxMenu');
+  if (m) m.remove();
+  document.removeEventListener('mousedown', ftCtxDismiss, true);
+  document.removeEventListener('keydown', ftCtxEsc, true);
+  window.removeEventListener('blur', ftHideContextMenu);
 }
 
 // ====================== 工具 ======================
