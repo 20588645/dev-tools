@@ -166,10 +166,24 @@ async function uploadDirectory(sftp, localDir, remoteDir, onFile) {
 
 /**
  * 上传单个文件（覆盖同名文件）
+ * 加单文件超时兜底：网络僵死/服务端无响应时 fastPut 可能永不回调，
+ * 不设超时会让整个部署无限挂起（任务卡死、连接泄漏）。超时即判失败上抛，
+ * 由 doUpload 的 try/catch 统一兜底为 success:false。上限取可配连接超时的 4 倍
+ * 并兜底不小于 120s，给大文件留足传输时间。
  */
 function uploadFile(sftp, localPath, remotePath) {
   return new Promise((resolve, reject) => {
+    const timeoutMs = Math.max(db.getConnTimeoutMs() * 4, 120000);
+    let settled = false;
+    const timer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      reject(new Error(`上传超时 ${remotePath} (${Math.round(timeoutMs / 1000)}s 无响应)`));
+    }, timeoutMs);
     sftp.fastPut(localPath, remotePath, (err) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
       if (err) reject(new Error(`上传失败 ${remotePath}: ${err.message}`));
       else resolve();
     });
