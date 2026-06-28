@@ -142,6 +142,38 @@
 
 .ft-pane-body > .state { margin: auto; }
 
+/* T11 多服务器标签条：连了才显示（.has-tabs），点切换、× 断开；active 用主色高亮（标签态指示，非装饰） */
+.ft-tabs { display: none; }
+.ft-tabs.has-tabs {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 6px 12px 0;
+}
+.ft-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 180px;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-hover);
+  color: var(--text-muted);
+  font-size: 12px;
+  cursor: pointer;
+}
+.ft-tab:hover { color: var(--text-primary); }
+.ft-tab.is-active {
+  background: var(--primary-light);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.ft-tab-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ft-tab-close { flex-shrink: 0; font-size: 14px; line-height: 1; opacity: 0.55; }
+.ft-tab-close:hover { opacity: 1; color: var(--danger); }
+
 /* 底部状态栏：项数/总大小；有选中时显示已选统计 */
 .ft-pane-foot {
   flex: 0 0 auto;

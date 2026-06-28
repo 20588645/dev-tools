@@ -386,7 +386,7 @@
     <div class="page-toolbar ft-session-bar">
       <span class="ft-session-label">服务器</span>
       <select id="ftServerSelect" class="ft-server-select" onchange="ftOnServerChange()"></select>
-      <button class="btn btn--primary" id="ftConnectBtn" onclick="ftToggleConnect(event)">连接</button>
+      <button class="btn btn--primary" id="ftConnectBtn" onclick="ftConnect(event)" title="连接所选服务器（可同时连多个，每个一个标签）">连接</button>
       <span class="ft-session-status" id="ftSessionStatus">
         <span class="ft-status-dot"></span>
         <span class="ft-status-text">未连接</span>
@@ -435,6 +435,8 @@
           <span class="ft-pane-title"><span class="ft-pane-icon">🖥</span>远程</span>
           <span class="ft-pane-count" id="ftRemoteCount"></span>
         </header>
+        <!-- T11：多服务器标签条（连了才显示，点切换、× 断开） -->
+        <div class="ft-tabs" id="ftRemoteTabs"></div>
         <div class="ft-pane-toolbar">
           <button class="btn btn--sm" id="ftRemoteUp" onclick="ftRemoteUp()" disabled title="上一级目录">⬆ 上一级</button>
           <button class="btn btn--sm" id="ftRemoteHome" onclick="ftRemoteHome()" disabled title="回到默认目录">🏠 默认</button>

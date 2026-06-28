@@ -3,11 +3,16 @@
 // T5：双栏目录浏览 —— 本地 /api/fs/local/list、远程 /api/sftp/:sid/list；双击进目录、
 //     上一级 / 主目录(默认目录) / 刷新 / 路径栏直达 / 列排序。新建/删除在 T6，上传下载在 T7。
 
-// 会话
+// 会话（T11 多服务器标签）：下面 ftSessionId/ftCurrentServer/ftRemote* 是「当前活动标签」的镜像——
+// 切标签时先把镜像存回 ftTabs[当前]，再把目标标签装载进镜像；原有远程代码无感知地照常操作镜像即可。
 let ftSessionId = null;
 let ftCurrentServer = null;
-let ftKeepaliveTimer = null;
 const FT_KEEPALIVE_MS = 60 * 1000; // 1min 心跳，远低于后端 5min 空闲回收
+
+// T11：标签列表 —— 每个标签 = 一个已连 SFTP 会话 + 各自远程态（路径/列表/选中/排序/补全缓存/独立心跳）。本地栏共享。
+let ftTabs = [];
+let ftActiveTabId = null;
+let ftTabSeq = 0;
 
 // 当前目录态
 let ftLocalPath = '';
@@ -43,6 +48,7 @@ function initFileTransfer() {
   ftWireOnce();
   ftRenderServerOptions();
   ftRenderQueue();
+  ftRenderTabs();
   ftSyncSessionUI();
   ftUpdateListhead('local');
   ftUpdateListhead('remote');
@@ -86,6 +92,8 @@ function ftWireOnce() {
   if (rb) rb.addEventListener('contextmenu', (e) => ftOnRowContext(e, 'remote'));
   const qb = document.getElementById('ftQueueBody');
   if (qb) qb.addEventListener('click', ftOnQueueClick);
+  const tabs = document.getElementById('ftRemoteTabs');
+  if (tabs) tabs.addEventListener('click', ftOnTabsClick);
   ftInitSplitter();
   if (typeof WS !== 'undefined') WS.on('transfer', ftOnTransferEvent);
 }
@@ -392,12 +400,12 @@ function ftRenderServerOptions() {
     sel.disabled = true;
     return;
   }
-  const keep = ftSessionId ? (ftCurrentServer && ftCurrentServer.id) : sel.value;
+  const keep = sel.value;
   sel.innerHTML = list.map(s =>
     `<option value="${escapeAttr(s.id)}">${escapeHtml(s.name)} · ${escapeHtml(s.username)}@${escapeHtml(s.host)}:${s.port || 22}</option>`
   ).join('');
   if (keep) sel.value = keep;
-  sel.disabled = !!ftSessionId;
+  sel.disabled = false; // T11：连接后仍可选下一个服务器再连，开新标签
 }
 
 function ftOnServerChange() {
@@ -405,67 +413,178 @@ function ftOnServerChange() {
   if (hint) hint.textContent = '';
 }
 
-function ftToggleConnect(event) {
-  return ftSessionId ? ftDisconnect(event) : ftConnect(event);
+// ---- T11 标签：数据模型 + 活动标签镜像 save/restore ----
+function ftMakeTab(sessionId, server) {
+  return {
+    id: ++ftTabSeq,
+    sessionId,
+    server,
+    path: '',
+    items: [],
+    sel: new Set(),
+    anchor: null,
+    sort: ftLoadSort('ft.remoteSort'),
+    sug: { dir: null, items: [], list: [], active: -1, open: false },
+    defaultPath: (server && server.defaultRemotePath) || '.',
+    keepaliveTimer: null,
+  };
 }
 
+function ftActiveTabObj() { return ftTabs.find((t) => t.id === ftActiveTabId) || null; }
+
+// 把镜像（当前活动标签的远程视图）存回标签对象
+function ftSaveActiveTab() {
+  const t = ftActiveTabObj();
+  if (!t) return;
+  t.sessionId = ftSessionId;
+  t.server = ftCurrentServer;
+  t.path = ftRemotePath;
+  t.items = ftRemoteItems;
+  t.sel = ftRemoteSel;
+  t.anchor = ftSelAnchor.remote;
+  t.sort = ftRemoteSort;
+  t.defaultPath = ftRemoteDefault;
+  t.sug = ftSug.remote;
+}
+
+// 把标签对象装载进镜像（之后远程代码照常操作镜像即可）
+function ftLoadTabIntoView(t) {
+  ftSessionId = t.sessionId;
+  ftCurrentServer = t.server;
+  ftRemotePath = t.path;
+  ftRemoteItems = t.items;
+  ftRemoteSel = t.sel;
+  ftSelAnchor.remote = t.anchor;
+  ftRemoteSort = t.sort;
+  ftRemoteDefault = t.defaultPath;
+  ftSug.remote = t.sug;
+}
+
+// 按当前镜像把远程栏 DOM 重渲染（切标签/关标签后用）
+function ftRenderActiveRemote() {
+  ftSyncSessionUI(); // 无会话时由它渲染未连接空态
+  if (!ftSessionId) return;
+  ftSetPath('remote', ftRemotePath);
+  ftSetCount('ftRemoteCount', ftRemoteItems ? ftRemoteItems.length : 0);
+  ftRenderList('remote', ftRemoteItems || []);
+  ftUpdateStatusBar('remote');
+  ftUpdateRemoteToolbar();
+}
+
+function ftSwitchTab(id) {
+  if (id === ftActiveTabId) return;
+  const t = ftTabs.find((x) => x.id === id);
+  if (!t) return;
+  ftHideSuggest('remote');
+  ftSaveActiveTab();
+  ftActiveTabId = id;
+  ftLoadTabIntoView(t);
+  ftRenderTabs();
+  ftRenderActiveRemote();
+}
+
+// 关闭标签 = 断开该会话；活动标签关掉后切相邻标签，没了回未连接空态
+async function ftCloseTab(id) {
+  const t = ftTabs.find((x) => x.id === id);
+  if (!t) return;
+  ftStopKeepaliveFor(t);
+  if (t.sessionId) API.post('/api/sftp/disconnect', { sessionId: t.sessionId }).catch(() => {});
+  const wasActive = (id === ftActiveTabId);
+  ftTabs = ftTabs.filter((x) => x.id !== id);
+  showToast('已断开连接', (t.server && (t.server.name || t.server.host)) || '');
+  ftActivateFallback(wasActive);
+}
+
+function ftRenderTabs() {
+  const box = document.getElementById('ftRemoteTabs');
+  if (!box) return;
+  if (!ftTabs.length) { box.innerHTML = ''; box.classList.remove('has-tabs'); return; }
+  box.classList.add('has-tabs');
+  box.innerHTML = ftTabs.map((t) => {
+    const active = t.id === ftActiveTabId;
+    const name = (t.server && (t.server.name || t.server.host)) || '连接';
+    const host = (t.server && t.server.host) || '';
+    return `<div class="ft-tab${active ? ' is-active' : ''}" data-id="${t.id}" title="${escapeAttr(name + (host ? ' · ' + host : ''))}">`
+      + `<span class="ft-tab-name">${escapeHtml(name)}</span>`
+      + `<span class="ft-tab-close" data-close="${t.id}" title="断开此连接">×</span>`
+      + '</div>';
+  }).join('');
+}
+
+function ftOnTabsClick(e) {
+  const close = e.target.closest('[data-close]');
+  if (close) { e.stopPropagation(); ftCloseTab(Number(close.dataset.close)); return; }
+  const tab = e.target.closest('.ft-tab');
+  if (tab) ftSwitchTab(Number(tab.dataset.id));
+}
+
+// 连接：开一个新标签（已连同一服务器则切过去）。本地栏共享、不随标签变。
 async function ftConnect(event) {
   const sel = document.getElementById('ftServerSelect');
   const serverId = sel && sel.value;
   if (!serverId) { showToast('请先选择服务器'); return; }
-  const server = (servers || []).find(s => s.id === serverId) || { id: serverId };
+  const server = (servers || []).find((s) => s.id === serverId) || { id: serverId };
+  const exist = ftTabs.find((t) => t.server && t.server.id === serverId);
+  if (exist) { ftSwitchTab(exist.id); showToast('已切到该连接', server.name || server.host || ''); return; }
   const btn = event ? event.currentTarget : document.getElementById('ftConnectBtn');
+  const hadActive = !!ftActiveTabObj();
 
   ftSetStatus('connecting', `连接中 · ${server.name || ''}`);
-  ftRenderRemoteBody({ kind: 'loading', title: '正在连接服务器', desc: `${server.username || ''}@${server.host || ''}` });
+  if (!hadActive) ftRenderRemoteBody({ kind: 'loading', title: '正在连接服务器', desc: `${server.username || ''}@${server.host || ''}` });
 
   try {
+    let sessionId;
     await withButtonBusy(btn, '连接中…', async () => {
       const res = await API.post('/api/sftp/connect', { serverId }, getConnTimeoutMs());
-      ftSessionId = res.sessionId;
-      ftCurrentServer = server;
+      sessionId = res.sessionId;
     });
-    ftStartKeepalive();
+    ftSaveActiveTab(); // 先存住旧活动标签，再切到新标签
+    const tab = ftMakeTab(sessionId, server);
+    ftTabs.push(tab);
+    ftActiveTabId = tab.id;
+    ftLoadTabIntoView(tab);
+    ftStartKeepaliveFor(tab);
+    ftRenderTabs();
     ftSyncSessionUI();
     showToast('✅ 已连接', server.name || server.host);
-    // 进入默认目录（服务器配置的「默认打开目录」，没有则后端按 home 解析）
-    ftRemoteDefault = ftCurrentServer.defaultRemotePath || '.';
+    ftRemoteDefault = tab.defaultPath; // 默认目录：服务器配置，没有则后端按 home 解析
     ftLoadRemote(ftRemoteDefault);
   } catch (e) {
-    ftSessionId = null;
-    ftCurrentServer = null;
-    ftSyncSessionUI();
-    ftRenderRemoteBody({ kind: 'error', title: '连接失败', desc: e.message });
+    if (hadActive) { ftRenderActiveRemote(); } // 失败不开标签，恢复原活动视图
+    else { ftSyncSessionUI(); ftRenderRemoteBody({ kind: 'error', title: '连接失败', desc: e.message }); }
     showToast('❌ 连接失败', e.message);
   }
 }
 
-async function ftDisconnect(event) {
-  const sid = ftSessionId;
-  const btn = event ? event.currentTarget : document.getElementById('ftConnectBtn');
-  ftStopKeepalive();
-  try {
-    await withButtonBusy(btn, '断开中…', async () => {
-      if (sid) await API.post('/api/sftp/disconnect', { sessionId: sid });
-    });
-  } catch (e) {
-    console.warn('[FileTransfer] 断开失败:', e.message);
-  } finally {
-    ftSessionId = null;
-    ftCurrentServer = null;
-    ftSyncSessionUI();
-    showToast('已断开连接');
-  }
+// 会话失效（keepalive/列目录 410）：关掉对应标签并提示
+function ftHandleTabSessionLost(t) {
+  if (!t) return;
+  ftStopKeepaliveFor(t);
+  const wasActive = (t.id === ftActiveTabId);
+  ftTabs = ftTabs.filter((x) => x.id !== t.id);
+  showToast('⚠️ SFTP 会话已断开', (t.server && (t.server.name || t.server.host)) || '请重新连接');
+  ftActivateFallback(wasActive);
 }
 
-// 会话失效（keepalive/列目录 410）：复位为未连接并提示重连
-function ftHandleSessionLost() {
-  ftStopKeepalive();
-  ftSessionId = null;
-  ftCurrentServer = null;
-  ftSyncSessionUI();
-  ftRenderRemoteBody({ kind: 'error', title: '连接已断开', desc: '会话失效，请重新连接。' });
-  showToast('⚠️ SFTP 会话已断开', '请重新连接');
+// 兼容旧调用点（ftLoadRemote 列目录遇“会话”失效）：作用于当前活动标签
+function ftHandleSessionLost() { ftHandleTabSessionLost(ftActiveTabObj()); }
+
+// 移除活动标签后：切到相邻标签，没了则回未连接空态
+function ftActivateFallback(wasActive) {
+  if (!wasActive) { ftRenderTabs(); return; }
+  if (ftTabs.length) {
+    const next = ftTabs[ftTabs.length - 1];
+    ftActiveTabId = next.id;
+    ftLoadTabIntoView(next);
+    ftRenderTabs();
+    ftRenderActiveRemote();
+  } else {
+    ftActiveTabId = null;
+    ftSessionId = null;
+    ftCurrentServer = null;
+    ftRenderTabs();
+    ftSyncSessionUI();
+  }
 }
 
 // 按会话态同步：连接按钮、下拉锁定、状态药丸、远程栏工具栏与（断开时）占位
@@ -474,12 +593,12 @@ function ftSyncSessionUI() {
   const sel = document.getElementById('ftServerSelect');
   const connected = !!ftSessionId;
 
-  if (btn) {
-    btn.textContent = connected ? '断开' : '连接';
-    btn.classList.toggle('btn--primary', !connected);
-    btn.classList.toggle('btn--danger', connected);
+  if (btn) { // T11：按钮恒为「连接」（开新标签），断开走标签上的 ×
+    btn.textContent = '连接';
+    btn.classList.add('btn--primary');
+    btn.classList.remove('btn--danger');
   }
-  if (sel) sel.disabled = connected || !(Array.isArray(servers) && servers.length);
+  if (sel) sel.disabled = !(Array.isArray(servers) && servers.length);
   ftUpdateRemoteToolbar();
 
   if (connected && ftCurrentServer) {
@@ -506,21 +625,22 @@ function ftSetStatus(kind, text) {
   if (t) t.textContent = text;
 }
 
-function ftStartKeepalive() {
-  ftStopKeepalive();
-  ftKeepaliveTimer = setInterval(ftDoKeepalive, FT_KEEPALIVE_MS);
+// T11：每标签独立心跳（保活各自的 SFTP 会话，即使不是当前标签）
+function ftStartKeepaliveFor(t) {
+  ftStopKeepaliveFor(t);
+  t.keepaliveTimer = setInterval(() => ftDoKeepaliveFor(t), FT_KEEPALIVE_MS);
 }
 
-function ftStopKeepalive() {
-  if (ftKeepaliveTimer) { clearInterval(ftKeepaliveTimer); ftKeepaliveTimer = null; }
+function ftStopKeepaliveFor(t) {
+  if (t && t.keepaliveTimer) { clearInterval(t.keepaliveTimer); t.keepaliveTimer = null; }
 }
 
-async function ftDoKeepalive() {
-  if (!ftSessionId) { ftStopKeepalive(); return; }
+async function ftDoKeepaliveFor(t) {
+  if (!t.sessionId) { ftStopKeepaliveFor(t); return; }
   try {
-    await API.post(`/api/sftp/${ftSessionId}/keepalive`);
+    await API.post(`/api/sftp/${t.sessionId}/keepalive`);
   } catch (e) {
-    ftHandleSessionLost();
+    ftHandleTabSessionLost(t);
   }
 }
 
@@ -800,12 +920,15 @@ function ftDownload(names) {
 
 async function ftStartTransfer(direction, items, label) {
   const onConflict = (document.getElementById('ftConflictPolicy') || {}).value || 'overwrite';
+  const sid = ftSessionId; // 绑定发起时的标签会话：跨标签传输各归各，结束只刷对应标签
+  const srvName = ftCurrentServer && (ftCurrentServer.name || ftCurrentServer.host);
   try {
-    const res = await API.post(`/api/sftp/${ftSessionId}/transfer`, { direction, items, onConflict });
-    // 预登记任务（WS 进度随后填充）；已存在则不覆盖，避免与早到的事件抢
-    if (!ftTasks.has(res.taskId)) {
-      ftTasks.set(res.taskId, { taskId: res.taskId, direction, state: 'queued', filesTotal: 0, filesDone: 0, curName: label || '', curPercent: 0, speed: 0, etaSec: 0, startedAt: Date.now() });
-    }
+    const res = await API.post(`/api/sftp/${sid}/transfer`, { direction, items, onConflict });
+    // 预登记任务（WS 进度随后填充）。若 WS 事件已抢先建好任务，必须补登 sessionId，
+    // 否则结束时判不出归属（t.sessionId 为空）→ 当前标签不会自动刷新出现新文件。
+    const exist = ftTasks.get(res.taskId);
+    if (exist) { exist.sessionId = sid; exist.serverName = srvName; }
+    else { ftTasks.set(res.taskId, { taskId: res.taskId, direction, sessionId: sid, serverName: srvName, state: 'queued', filesTotal: 0, filesDone: 0, curName: label || '', curPercent: 0, speed: 0, etaSec: 0, startedAt: Date.now() }); }
     ftRenderQueue();
     showToast(direction === 'upload' ? '⬆ 开始上传' : '⬇ 开始下载', label || `${items.length} 项`);
   } catch (e) { ftOpError('remote', e, '传输启动失败'); }
@@ -832,7 +955,8 @@ function ftOnTransferEvent(d) {
 
 // 传输结束：刷新目标栏让结果出现 + 收尾提示 + 系统通知
 function ftAfterTransferDone(t) {
-  if (t.direction === 'upload') { if (ftSessionId) ftRemoteRefresh(); } else ftLocalRefresh();
+  // 上传只刷「发起该传输的那个标签」当前是活动标签时的远程栏；下载刷共享本地栏
+  if (t.direction === 'upload') { if (ftSessionId && t.sessionId === ftSessionId) ftRemoteRefresh(); } else ftLocalRefresh();
   const dir = t.direction === 'upload' ? '上传' : '下载';
   const place = t.direction === 'upload' ? '远程' : '本地';
   // 传了什么：多文件给数量，单文件给文件名（兜底「文件」，避免出现空白）
