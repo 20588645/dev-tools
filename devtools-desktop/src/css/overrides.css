@@ -492,8 +492,9 @@ textarea,
 
 .module-tag,
 .module-more {
+  /* line-height 去 important：本选择器唯一设定，去后靠源序仍生效，0 回归（B1 安全最小）。padding 保留 important——与上方 .module-tag 标签组 important 竞争，去则被覆为 2px 6px */
   padding: 1px 5px !important;
-  line-height: 15px !important;
+  line-height: 15px;
 }
 
 .card-meta,
@@ -547,9 +548,10 @@ textarea,
 }
 
 .history-stats {
+  /* font-size/min-height 去 important：本选择器唯一设定（#sub-history 高特异性 important 始终接管，源序仍生效），0 回归（B1 安全最小）。border/border-radius/background 保留——与上方 .stat-card 卡片组 important 同选择器竞争且值不同，去则变值 */
   color: var(--text-secondary);
-  font-size: 10px !important;
-  min-height: 40px !important;
+  font-size: 10px;
+  min-height: 40px;
   border: 1px solid var(--border) !important;
   border-radius: 8px !important;
   background: var(--bg-card) !important;
