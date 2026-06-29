@@ -372,14 +372,16 @@
   font-size: 12px;
 }
 
+/* font-size 权威值由 overrides.css 同选择器接管（同值），此处去掉 important 标记、留普通声明，零回归；勿再加回否则重启覆盖战争 */
 .card-meta,
 .card-status,
 .card-last-deploy {
-  font-size: 10px !important;
+  font-size: 10px;
 }
 
 .server-head {
-  background: var(--bg-input) !important;
+  /* background 实际由 overrides.css .server-head 规则接管（本就没显示过），此处去掉 important 标记，零回归；勿再加回 */
+  background: var(--bg-input);
   color: var(--text-muted);
   font-weight: 650;
   min-height: 32px;
