@@ -369,9 +369,7 @@ select {
   display: block !important;
 }
 
-.history-row { /* 保留：与穿插规则存在层叠依赖 */
-  color: var(--text-secondary) !important;
-}
+/* B3b：原 .history-row 的 color:text-secondary（带 important）已删——被下方 .history-row 混合组的 color:text-muted（同样 important）同特异性后置压制、本就是死规则，0 回归 */
 
 .stat-card,
 .home-activity-card,
@@ -540,11 +538,12 @@ textarea,
 }
 
 .history-row {
+  /* B3b：height/padding/min-height 为 .history-row 唯一 setter，去 important 靠源序仍生效，0 回归。font-size 保留 important——需压制上方 .history-row 混合组(.setting-desc 等)的 10px important，去则被覆为 10px */
   transition: background 0.1s;
-  height: auto !important;
-  padding: 0 10px !important;
+  height: auto;
+  padding: 0 10px;
   font-size: 10.5px !important;
-  min-height: 34px !important;
+  min-height: 34px;
 }
 
 .history-stats {

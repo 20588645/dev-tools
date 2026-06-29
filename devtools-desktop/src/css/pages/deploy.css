@@ -692,11 +692,8 @@
 /* 历史表头：批次5B 已移出滚动容器到 #historyHeader，flex 静态置顶（禁用 sticky，铁律禁用——
    WKWebView 子滚动容器惯性滚动会抖）；此处只定义表头行视觉，列宽与数据行共用上面的 grid */
 .history-row.history-header {
+  /* B3b：color/font-weight/background/border-bottom 已删——color(text-muted)/font-weight(650) 与 overrides 表头组(.ha-table th,.history-row.history-header,…)同值；background(本条 bg-card84% 被 overrides bg-input88% 同特异性后置压制、本就死)；border-bottom 由 .server-row,.history-row 同值(--border-color)接管。min-height 保留 important——需压制 overrides .history-row 的 34px important（去则表头变 34px） */
   min-height: 32px !important;
-  color: var(--text-muted) !important;
-  font-weight: 650 !important;
-  background: color-mix(in srgb, var(--bg-card) 84%, var(--bg-input)) !important;
-  border-bottom: 1px solid var(--border-color) !important;
 }
 
 .history-row:not(.history-header):hover {
@@ -704,13 +701,13 @@
 }
 
 .history-row .h-cell {
+  /* B3b：width/overflow/text-overflow/white-space/min-width 为本选择器(0,2,0)唯一 setter，去 important 靠特异性即生效，0 回归。font-size 删除——由 components.css 同选择器同值(10px) important 接管 */
   padding: 0 6px;
-  width: auto !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  white-space: nowrap !important;
-  min-width: 0 !important;
-  font-size: 10px !important;
+  width: auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .history-row .h-project {
