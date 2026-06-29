@@ -140,30 +140,6 @@
 
 .rpt-result-section tr:hover td { background: var(--accent-subtle); }
 
-.seg-btn {
-  border: none;
-  background: transparent;
-  color: var(--text-secondary);
-  font-size: 12px;
-  padding: 5px 14px;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: all 0.15s;
-  font-weight: 500;
-  font-family: inherit;
-}
-
-.seg-btn:hover {
-  color: var(--text-primary);
-}
-
-.seg-btn.active {
-  background: var(--bg-elevated);
-  color: var(--primary);
-  font-weight: 600;
-  box-shadow: var(--shadow-sm);
-}
-
 .page-subtitle,
 .home-date {
   margin: 0 !important;
@@ -272,12 +248,10 @@ select:focus,
 }
 
 .rpt-mode-btn,
-.rpt-view-btn,
-.seg-btn { color: var(--text-secondary) !important; }
+.rpt-view-btn { color: var(--text-secondary) !important; }
 
 .rpt-mode-btn.active,
-.rpt-view-btn.active,
-.seg-btn.active {
+.rpt-view-btn.active {
   background: var(--bg-elevated) !important;
   color: var(--primary) !important;
   box-shadow: var(--shadow-sm) !important;

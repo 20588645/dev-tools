@@ -23,8 +23,7 @@
 .btn-secondary,
 .btn-text,
 .rbtn,
-.pill-btn,
-.seg-btn {
+.pill-btn {
   border-radius: 6px !important;
   font-family: inherit;
   transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease, box-shadow 0.16s ease;
@@ -69,7 +68,6 @@ button:disabled,
 .btn-primary,
 .btn-secondary,
 .rbtn,
-.seg-btn,
 .chip {
   display: inline-flex !important;
   align-items: center;
@@ -132,13 +130,6 @@ input[type="number"] {
   margin-bottom: 12px;
 }
 
-.chip,
-.seg-btn,
-.rpt-mode-btn,
-.rpt-view-btn {
-  border-radius: 5px !important;
-}
-
 .stat-card,
 .project-card,
 .home-activity-card,
@@ -160,7 +151,6 @@ input[type="number"] {
   font-size: 12px !important;
 }
 
-.seg-btn,
 .pill-btn,
 .rpt-mode-btn,
 .rpt-view-btn {
@@ -188,8 +178,7 @@ input[type="number"] {
 
 .btn-secondary,
 .rbtn,
-.pill-btn,
-.seg-btn {
+.pill-btn {
   background: var(--bg-input) !important;
   border-color: var(--border-color) !important;
   color: var(--text-secondary) !important;
@@ -197,13 +186,11 @@ input[type="number"] {
 
 .btn-secondary:hover,
 .rbtn:hover,
-.pill-btn:hover,
-.seg-btn:hover {
+.pill-btn:hover {
   color: var(--text-primary) !important;
   border-color: var(--border-strong) !important;
 }
 
-.seg-btn.active,
 .pill-btn.active,
 .rpt-mode-btn.active,
 .rpt-view-btn.active {
@@ -701,8 +688,7 @@ textarea,
 
 /* --- 10. 统一 chip/filter 样式 --- */
 .chip,
-.rpt-preset,
-.seg-btn {
+.rpt-preset {
   border-radius: 6px !important;
   font-size: 11px !important;
   padding: 4px 10px !important;
