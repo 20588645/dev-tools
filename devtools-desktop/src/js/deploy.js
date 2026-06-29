@@ -54,7 +54,7 @@ function renderProjects() {
   const grid = document.getElementById('projectGrid');
   if (!grid) return;
   if (filtered.length === 0) {
-    grid.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:60px;grid-column:1/-1">暂无项目，点击右上角「+ 添加项目」开始</div>';
+    grid.innerHTML = '<div class="deploy-empty-state deploy-empty-state--grid">暂无项目，点击右上角「+ 添加项目」开始</div>';
     return;
   }
 
@@ -269,7 +269,7 @@ function renderAvailableProjects(filter = '') {
         <div class="checkbox">${checkedAvailableProjects.has(p.path) ? '✓' : ''}</div>
         <span title="${escapeAttr(p.name)}">${escapeHtml(p.name)}</span>
       </div>`).join('')
-    : `<div style="text-align:center;color:var(--text-muted);padding:24px;grid-column:1/-1">${emptyMsg}</div>`;
+    : `<div class="deploy-empty-state deploy-empty-state--grid">${emptyMsg}</div>`;
   document.getElementById('selectedProjectCount').textContent = `已选 ${checkedAvailableProjects.size} 个`;
   updateAddSubmitBtn();
 }
@@ -315,7 +315,7 @@ function renderBrowseBreadcrumb(currentDir, root) {
 
 function renderBrowseList(entries) {
   if (!entries.length) {
-    document.getElementById('addBrowseList').innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:24px">此目录下没有子文件夹</div>';
+    document.getElementById('addBrowseList').innerHTML = '<div class="deploy-empty-state">此目录下没有子文件夹</div>';
     return;
   }
   document.getElementById('addBrowseList').innerHTML = entries.map(e => {
@@ -617,7 +617,7 @@ function renderModules(filter = '', ctx = activeCtx) {
   if (state.moduleFilter === 'fav') {
     html = favModules.map(m => renderModuleItem(m, true, ctx, state.checkedModules)).join('');
     if (favModules.length === 0) {
-      html = '<div style="text-align:center;color:var(--text-muted);padding:24px;grid-column:1/-1">暂无常用模块，点击模块右上角 ☆ 添加</div>';
+      html = '<div class="deploy-empty-state deploy-empty-state--grid">暂无常用模块，点击模块右上角 ☆ 添加</div>';
     }
   }
 
@@ -789,7 +789,7 @@ async function browseRemoteDir(dirPath) {
     
     let fallbackHtml = '';
     if (data.fallback) {
-      fallbackHtml = `<div style="padding:8px 14px;background:rgba(255,193,7,.1);border:1px solid rgba(255,193,7,.3);border-radius:6px;margin-bottom:8px;font-size:12px;color:#ffc107">⚠ ${escapeHtml(data.fallback)}</div>`;
+      fallbackHtml = `<div class="deploy-fallback">⚠ ${escapeHtml(data.fallback)}</div>`;
     }
     document.getElementById('browserList').innerHTML = fallbackHtml;
     const listEl = document.getElementById('browserList');
@@ -858,7 +858,7 @@ function renderBrowserListHtml(items, currentPath) {
   }
   
   if (items.length === 0) {
-    html = '<div style="text-align:center;color:var(--text-muted);padding:30px">空目录</div>';
+    html = '<div class="deploy-empty-state">空目录</div>';
   }
   
   return html;
@@ -913,7 +913,7 @@ function renderServers() {
   const headerEl = document.getElementById('serverHeader');
   if (servers.length === 0) {
     if (headerEl) headerEl.innerHTML = '';
-    list.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:60px">暂无服务器，点击"添加服务器"按钮</div>';
+    list.innerHTML = '<div class="deploy-empty-state">暂无服务器，点击"添加服务器"按钮</div>';
     return;
   }
   // 表头行渲到固定容器 #serverHeader（不随数据滚动），数据行渲到独立滚动的 #serverList，
@@ -1159,7 +1159,7 @@ function renderHistory() {
   const headerEl = document.getElementById('historyHeader');
   if (filtered.length === 0) {
     if (headerEl) headerEl.innerHTML = '';
-    table.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:60px">暂无匹配的部署记录</div>';
+    table.innerHTML = '<div class="deploy-empty-state">暂无匹配的部署记录</div>';
     return;
   }
 
@@ -1361,7 +1361,7 @@ function loadFzFromFile(input) {
 function renderFzServers() {
   const grid = document.getElementById('fzServerGrid');
   if (fzServers.length === 0) {
-    grid.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:24px;grid-column:1/-1">未找到 SFTP 服务器配置</div>';
+    grid.innerHTML = '<div class="deploy-empty-state deploy-empty-state--grid">未找到 SFTP 服务器配置</div>';
     return;
   }
   grid.innerHTML = fzServers.map(s => {

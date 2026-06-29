@@ -149,7 +149,7 @@
 
 .ios-check:checked { background: var(--accent); border-color: var(--accent); }
 
-.ios-check:checked::after { content: '✓'; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); color: #fff; font-size: 10px; font-weight: 700; }
+.ios-check:checked::after { content: '✓'; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); color: var(--text-on-primary); font-size: 10px; font-weight: 700; }
 
 .module-item:hover { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 6%, transparent); }
 
@@ -161,10 +161,25 @@
   flex-shrink: 0; font-size: 10px; color: transparent; transition: all 0.15s;
 }
 
-.module-item.checked .checkbox { background: var(--primary); border-color: var(--primary); color: #fff; }
+.module-item.checked .checkbox { background: var(--primary); border-color: var(--primary); color: var(--text-on-primary); }
 
 /* 收藏星定位：推到模块行尾（视觉/激活态已归 button.css 的 .btn--fav 变体） */
 .module-item .btn--fav { margin-left: auto; flex-shrink: 0; }
+
+/* 部署页通用空态占位：原散落 8 处居中灰字内联样式收口（按全站 .{page}-empty-state 约定，padding 归一） */
+.deploy-empty-state { text-align: center; color: var(--text-muted); padding: 40px 24px; }
+.deploy-empty-state--grid { grid-column: 1 / -1; }
+
+/* 远程目录兜底提示条：替代内联样式 + 硬编码 #ffc107，改用 warning token */
+.deploy-fallback {
+  padding: 8px 14px;
+  margin-bottom: 8px;
+  background: var(--warning-subtle);
+  border: 1px solid color-mix(in srgb, var(--warning) 30%, transparent);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  color: var(--warning);
+}
 
 .module-divider { grid-column: 1/-1; display: flex; align-items: center; gap: 8px; padding: 4px 0; color: var(--text-muted); font-size: 11px; }
 
@@ -180,7 +195,7 @@
 
 .server-check-item.checked { border-color: color-mix(in srgb, var(--primary) 40%, transparent); background: var(--primary-light); color: var(--primary); }
 
-.server-check-item.checked .srv-check { background: var(--primary); border-color: var(--primary); color: #fff; }
+.server-check-item.checked .srv-check { background: var(--primary); border-color: var(--primary); color: var(--text-on-primary); }
 
 /* 连接状态徽章 */
 .conn-badge { font-size: 11px; padding: 2px 8px; border-radius: 8px; margin-left: auto; font-weight: 600; white-space: nowrap; }

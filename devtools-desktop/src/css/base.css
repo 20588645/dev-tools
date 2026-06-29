@@ -11,6 +11,7 @@
   --primary-hover: #1e40af;
   --primary-light: rgba(29, 78, 216, 0.12);
   --accent: #0ea5a5;
+  --text-on-primary: #fff; /* 白字/勾选标记压在 primary/accent 底色上的统一前景色（明暗同值） */
 
   --success: #22c55e;
   --success-subtle: rgba(34, 197, 94, 0.1);
