@@ -8,6 +8,9 @@ async function loadNodeVersions() {
     currentNodeVersion = data.current || '';
   } catch (e) {
     console.error('加载 Node 版本失败:', e);
+    // 不静默失败：兜底空列表（各处版本下拉仍能用"系统默认"，不至于崩），并 toast 告知此次拿不到可选版本
+    nodeVersions = [];
+    showToast('加载 Node 版本列表失败', (e.message || '稍后重试') + '，当前仅可用系统默认版本');
   }
 }
 
@@ -529,8 +532,8 @@ async function quickTestServers() {
   }
 
   const btn = document.getElementById('btnQuickTest');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:4px"></span> 测试中...';
+  // 防连点：上次测试未结束（按钮仍 disabled）直接忽略，避免重复并发测试与 badge 抖动
+  if (btn && btn.disabled) return;
 
   const serverIds = [...checkedServers];
 
@@ -547,40 +550,46 @@ async function quickTestServers() {
     badge.innerHTML = '<span class="spinner" style="width:10px;height:10px;border-width:1.5px;display:inline-block;vertical-align:middle"></span>';
   });
 
-  const results = await Promise.allSettled(
-    serverIds.map(async sid => {
-      try {
-        const result = await API.post(`/api/servers/${sid}/quick-test`, undefined, getConnTimeoutMs() + 5000);
-        return { sid, ...result };
-      } catch (e) {
-        return { sid, success: false, error: e.message };
-      }
-    })
-  );
-
   let allOk = true;
-  results.forEach(r => {
-    const data = r.status === 'fulfilled' ? r.value : { sid: null, success: false, error: '请求失败' };
-    if (!data.sid) return;
-    const el = document.querySelector(`#targetServerList .server-check-item[data-sid="${data.sid}"]`);
-    if (!el) return;
-    const badge = el.querySelector('.conn-badge');
-    if (!badge) return;
+  const busyHtml = '<span class="spinner" style="width:14px;height:14px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:4px"></span> 测试中...';
+  // Promise.allSettled 已吞掉单服务器异常，这里 withButtonBusy 只为防连点 + 进行态；按钮恢复后再叠加结果态
+  await withButtonBusy(btn, busyHtml, async () => {
+    const results = await Promise.allSettled(
+      serverIds.map(async sid => {
+        try {
+          const result = await API.post(`/api/servers/${sid}/quick-test`, undefined, getConnTimeoutMs() + 5000);
+          return { sid, ...result };
+        } catch (e) {
+          return { sid, success: false, error: e.message };
+        }
+      })
+    );
 
-    if (data.success) {
-      badge.className = 'conn-badge conn-ok';
-      badge.textContent = `✓ ${data.duration}ms`;
-    } else {
-      allOk = false;
-      badge.className = 'conn-badge conn-fail';
-      badge.textContent = '✗ 失败';
-      badge.title = data.error || '连接失败';
-    }
+    results.forEach(r => {
+      const data = r.status === 'fulfilled' ? r.value : { sid: null, success: false, error: '请求失败' };
+      if (!data.sid) return;
+      const el = document.querySelector(`#targetServerList .server-check-item[data-sid="${data.sid}"]`);
+      if (!el) return;
+      const badge = el.querySelector('.conn-badge');
+      if (!badge) return;
+
+      if (data.success) {
+        badge.className = 'conn-badge conn-ok';
+        badge.textContent = `✓ ${data.duration}ms`;
+      } else {
+        allOk = false;
+        badge.className = 'conn-badge conn-fail';
+        badge.textContent = '✗ 失败';
+        badge.title = data.error || '连接失败';
+      }
+    });
   });
 
-  btn.disabled = false;
-  btn.innerHTML = allOk ? '✅ 全部连通' : '⚠️ 部分失败';
-  setTimeout(() => { btn.innerHTML = '🔗 测试连接'; }, 3000);
+  // withButtonBusy 已复位按钮原文案/可用态；这里叠加 3s 结果态反馈后再复位
+  if (btn && btn.isConnected) {
+    btn.innerHTML = allOk ? '✅ 全部连通' : '⚠️ 部分失败';
+    setTimeout(() => { if (btn.isConnected) btn.innerHTML = '🔗 测试连接'; }, 3000);
+  }
 }
 
 function renderModules(filter = '', ctx = activeCtx) {
@@ -1263,14 +1272,18 @@ function showCleanupDialog() {
 async function executeCleanup() {
   const keepDays = parseInt(document.getElementById('cleanupKeepDays').value) || 30;
   const keepPerProject = parseInt(document.getElementById('cleanupKeepPerProject').value) || 5;
-  try {
-    const result = await API.post('/api/history/cleanup', { keepDays, keepPerProject });
-    closeModal('cleanupModal');
-    showToast('🧹 整理完成', `清理了 ${result.deleted} 条，剩余 ${result.after} 条`);
-    await loadHistory();
-  } catch (e) {
-    showAlert('整理失败: ' + e.message, { icon: '❌' });
-  }
+  // index.html 的 onclick 未传 event 且本批不动 index.html，按稳定选择器取按钮防连点
+  const btn = document.querySelector('#cleanupModal .modal-footer .btn--warning');
+  await withButtonBusy(btn, '整理中…', async () => {
+    try {
+      const result = await API.post('/api/history/cleanup', { keepDays, keepPerProject });
+      closeModal('cleanupModal');
+      showToast('🧹 整理完成', `清理了 ${result.deleted} 条，剩余 ${result.after} 条`);
+      await loadHistory();
+    } catch (e) {
+      showAlert('整理失败: ' + e.message, { icon: '❌' });
+    }
+  });
 }
 
 async function viewLog(id) {
@@ -1338,6 +1351,10 @@ function loadFzFromFile(input) {
     }
     renderFzServers();
   };
+  // 不静默失败：文件本身读取出错（权限/损坏/编码）时也要给反馈，否则点了"没反应"
+  reader.onerror = () => {
+    showAlert('读取文件失败：' + ((reader.error && reader.error.message) || '无法读取所选文件'), { icon: '❌' });
+  };
   reader.readAsText(file, 'utf-8');
 }
 
@@ -1394,31 +1411,35 @@ async function importFileZillaServers() {
     if (!await showConfirm(`将删除 ${toRemove.length} 个服务器：${names}\n确定继续？`, { icon: '🗑️', danger: true, confirmText: '继续删除' })) return;
   }
 
-  try {
-    const msgs = [];
+  // index.html 的 onclick 未传 event 且本批不动 index.html，按稳定选择器取按钮防连点
+  const btn = document.querySelector('#filezillaModal .modal-footer .btn--primary');
+  await withButtonBusy(btn, '同步中…', async () => {
+    try {
+      const msgs = [];
 
-    if (toRemove.length > 0) {
-      for (const s of toRemove) {
-        const existing = servers.find(e => e.host === s.host && String(e.port) === String(s.port));
-        if (existing) await API.del(`/api/servers/${existing.id}`);
+      if (toRemove.length > 0) {
+        for (const s of toRemove) {
+          const existing = servers.find(e => e.host === s.host && String(e.port) === String(s.port));
+          if (existing) await API.del(`/api/servers/${existing.id}`);
+        }
+        msgs.push(`删除 ${toRemove.length} 个`);
       }
-      msgs.push(`删除 ${toRemove.length} 个`);
-    }
 
-    if (toAdd.length > 0) {
-      const body = { selected: toAdd };
-      if (currentFzXmlContent) body.xmlContent = currentFzXmlContent;
-      const result = await API.post('/api/servers/filezilla/import', body);
-      msgs.push(`新增 ${result.added.length} 个`);
-      if (result.skipped.length) msgs.push(`${result.skipped.length} 个已存在被跳过`);
-    }
+      if (toAdd.length > 0) {
+        const body = { selected: toAdd };
+        if (currentFzXmlContent) body.xmlContent = currentFzXmlContent;
+        const result = await API.post('/api/servers/filezilla/import', body);
+        msgs.push(`新增 ${result.added.length} 个`);
+        if (result.skipped.length) msgs.push(`${result.skipped.length} 个已存在被跳过`);
+      }
 
-    closeModal('filezillaModal');
-    await loadServers();
-    showAlert('同步完成：' + msgs.join('，'), { icon: '✅' });
-  } catch (e) {
-    showAlert('操作失败: ' + e.message, { icon: '❌' });
-  }
+      closeModal('filezillaModal');
+      await loadServers();
+      showAlert('同步完成：' + msgs.join('，'), { icon: '✅' });
+    } catch (e) {
+      showAlert('操作失败: ' + e.message, { icon: '❌' });
+    }
+  });
 }
 
 // ========== Git Log 预览 ==========
