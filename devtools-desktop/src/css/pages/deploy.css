@@ -163,11 +163,8 @@
 
 .module-item.checked .checkbox { background: var(--primary); border-color: var(--primary); color: #fff; }
 
-.fav-btn { background: none; border: none; cursor: pointer; font-size: 14px; color: var(--text-muted); margin-left: auto; padding: 2px 4px; opacity: 0.5; transition: all 0.15s; flex-shrink: 0; }
-
-.fav-btn:hover { opacity: 1; transform: scale(1.2); }
-
-.fav-btn.active { color: var(--warning); opacity: 1; }
+/* 收藏星定位：推到模块行尾（视觉/激活态已归 button.css 的 .btn--fav 变体） */
+.module-item .btn--fav { margin-left: auto; flex-shrink: 0; }
 
 .module-divider { grid-column: 1/-1; display: flex; align-items: center; gap: 8px; padding: 4px 0; color: var(--text-muted); font-size: 11px; }
 

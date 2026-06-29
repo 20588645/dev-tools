@@ -241,15 +241,15 @@ async function showAddProject() {
   renderAvailableProjects();
   document.getElementById('addPanelScan').style.display = '';
   document.getElementById('addPanelBrowse').style.display = 'none';
-  const btns = document.querySelectorAll('#addProjectModal .seg-btn');
-  btns.forEach((b, i) => { b.classList.toggle('active', i === 0); });
+  const btns = document.querySelectorAll('#addProjectModal .seg__item');
+  btns.forEach((b, i) => { b.classList.toggle('is-active', i === 0); });
   document.getElementById('addProjectModal').classList.add('active');
 }
 
 function switchAddMode(mode, btn) {
   currentAddMode = mode;
-  btn.parentElement.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
+  btn.parentElement.querySelectorAll('.seg__item').forEach(b => b.classList.remove('is-active'));
+  btn.classList.add('is-active');
   document.getElementById('addPanelScan').style.display = mode === 'scan' ? '' : 'none';
   document.getElementById('addPanelBrowse').style.display = mode === 'browse' ? '' : 'none';
   if (mode === 'browse') browseTo();
@@ -631,7 +631,7 @@ function renderModuleItem(m, isFav, ctx, checked) {
     <div class="module-item ${isChecked ? 'checked' : ''}" onclick="toggleModule('${escapeOnclickArg(m.name)}','${ctx}')">
       <div class="checkbox">${isChecked ? '✓' : ''}</div>
       <span>${escapeHtml(m.name)}</span>
-      <button class="fav-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite('${escapeOnclickArg(m.name)}', event, '${ctx}')" title="${isFav ? '取消常用' : '设为常用'}">${isFav ? '★' : '☆'}</button>
+      <button class="btn btn--fav ${isFav ? 'is-active' : ''}" onclick="toggleFavorite('${escapeOnclickArg(m.name)}', event, '${ctx}')" title="${isFav ? '取消常用' : '设为常用'}">${isFav ? '★' : '☆'}</button>
     </div>`;
 }
 

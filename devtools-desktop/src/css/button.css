@@ -112,6 +112,26 @@
   padding: 0 10px;
 }
 
+/* 收藏星：无边框透明、默认弱化灰、hover/激活转金的紧凑切换钮（替代各页旧 .fav-btn 平行类）
+ * 自带紧凑尺寸（26px 方），不与 .btn--icon/--sm 组合以免源序覆盖星字号；放行尾的 margin 归调用页 */
+.btn--fav {
+  --_btn-bg: transparent;
+  --_btn-fg: var(--text-muted);
+  --_btn-bd: transparent;
+  --_btn-bg-hover: transparent;
+  --_btn-fg-hover: var(--warning);
+  --_btn-bd-hover: transparent;
+  min-height: 26px;
+  width: 26px;
+  min-width: 26px;
+  padding: 0;
+  font-size: 15px;
+  opacity: 0.55;
+  transition: color .18s ease, opacity .18s ease;
+}
+.btn--fav:hover { opacity: 1; }
+.btn--fav.is-active { --_btn-fg: var(--warning); opacity: 1; }
+
 /* ---------- 尺寸 ---------- */
 .btn--sm { min-height: 28px; padding: 0 11px; font-size: 12px; }
 .btn--lg { min-height: 40px; padding: 0 20px; font-size: 14px; }
