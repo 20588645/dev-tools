@@ -90,12 +90,22 @@ function renderProjects() {
     const items = groups.get(key);
     const isUngrouped = key === RUN_UNGROUPED;
     const collapsed = isDeployGroupCollapsed(key);
+    const keyEsc = escapeOnclickArg(key);
+    // 排序/重命名作用于共享的 groupName / runGroupOrder，故会同步反映到本地运行页（与用户预期一致）
+    const gi = isUngrouped ? -1 : allNamed.indexOf(key);
+    const moveHtml = isUngrouped ? ''
+      : `<button class="btn btn--icon btn--sm run-group-move" title="上移" ${gi <= 0 ? 'disabled' : ''} onclick="moveDeployGroup('${keyEsc}', -1, event)">↑</button>`
+      + `<button class="btn btn--icon btn--sm run-group-move" title="下移" ${gi >= allNamed.length - 1 ? 'disabled' : ''} onclick="moveDeployGroup('${keyEsc}', 1, event)">↓</button>`;
+    const menuHtml = isUngrouped ? ''
+      : `<button class="btn btn--icon btn--sm run-group-menu" title="重命名分组" onclick="renameDeployGroup('${keyEsc}', event)">✎</button>`;
     return `
       <div class="run-group">
-        <div class="run-group-header${collapsed ? ' is-collapsed' : ''}" onclick="toggleDeployGroup('${escapeOnclickArg(key)}', this)">
+        <div class="run-group-header${collapsed ? ' is-collapsed' : ''}" onclick="toggleDeployGroup('${keyEsc}', this)">
           <span class="run-group-chevron">${collapsed ? '▸' : '▾'}</span>
           <span class="run-group-name${isUngrouped ? ' is-ungrouped' : ''}">${escapeHtml(isUngrouped ? '未分组' : key)}</span>
           <span class="run-group-count">${items.length} 个项目</span>
+          ${moveHtml}
+          ${menuHtml}
         </div>
         <div class="deploy-group-grid"${collapsed ? ' style="display:none"' : ''}>${items.map(deployProjectCardHTML).join('')}</div>
       </div>`;
@@ -172,6 +182,46 @@ function toggleDeployGroup(key, headerEl) {
   if (chevron) chevron.textContent = collapsed ? '▸' : '▾';
   const body = headerEl.nextElementSibling;
   if (body) body.style.display = collapsed ? 'none' : '';
+}
+
+// 上移/下移分组：复用共享的 runGroupOrder（与本地运行页同源，故同步生效），仅本页重渲
+function moveDeployGroup(key, dir, event) {
+  if (event) event.stopPropagation();   // 别冒泡触发分区头折叠
+  const order = orderedRunGroups([...new Set(projects.map(p => (p.groupName || '').trim()).filter(Boolean))]);
+  const i = order.indexOf(key);
+  const j = i + dir;
+  if (i < 0 || j < 0 || j >= order.length) return;
+  [order[i], order[j]] = [order[j], order[i]];
+  setRunGroupOrder(order);
+  renderProjects();
+}
+
+// 重命名分组：改的是项目的 groupName（与本地运行页同源），故两页同步；折叠态/排序条目一并迁移
+async function renameDeployGroup(key, event) {
+  if (event) event.stopPropagation();   // 别冒泡触发分区头折叠
+  const input = await showPrompt('重命名分组', { defaultValue: key, confirmText: '保存', placeholder: '分组名称' });
+  if (input === null) return;
+  const name = input.trim();
+  if (!name || name === key) return;
+  const affected = projects.filter(p => (p.groupName || '').trim() === key);
+  try {
+    for (const p of affected) {
+      await API.put(`/api/projects/${p.name}`, { groupName: name });
+      p.groupName = name;
+    }
+    if (isDeployGroupCollapsed(key)) { setDeployGroupCollapsed(key, false); setDeployGroupCollapsed(name, true); }
+    const order = getRunGroupOrder();
+    const oi = order.indexOf(key);
+    if (oi !== -1) {
+      if (order.includes(name)) order.splice(oi, 1);
+      else order[oi] = name;
+      setRunGroupOrder(order);
+    }
+    showToast('分组已重命名', `${key} → ${name}`);
+    renderProjects();
+  } catch (e) {
+    showAlert('重命名失败: ' + e.message, { icon: '❌' });
+  }
 }
 
 // 加载项目最近部署信息（批量异步，不阻塞渲染）
