@@ -517,17 +517,17 @@ textarea,
 }
 
 .server-row {
-  display: grid !important;
+  /* B3a：本块各声明均为 .server-row 元素级唯一 setter（deploy 仅设 border/border-bottom，列宽权威在 #page-deploy .server-row；components 只管子级 .server-row > div），overrides 末位加载靠源序即生效，故全去 important，0 回归。原 7 列 grid 被 #page-deploy 6 列(id)压制、属死规则，已删 */
+  display: grid;
   align-items: center;
   gap: 10px;
-  border-radius: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
   color: var(--text-secondary);
-  grid-template-columns: minmax(120px, 1.1fr) minmax(110px, 1fr) 64px 52px minmax(145px, 1.2fr) 62px 86px !important;
-  min-height: 40px !important;
-  padding: 0 11px !important;
-  font-size: 10.5px !important;
+  min-height: 40px;
+  padding: 0 11px;
+  font-size: 10.5px;
 }
 
 .server-list,

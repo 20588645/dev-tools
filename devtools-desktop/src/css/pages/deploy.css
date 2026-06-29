@@ -449,7 +449,8 @@
 
 /* ========== Server List Without Synthetic Status ========== */
 #page-deploy .server-row {
-  grid-template-columns: minmax(130px, 1.1fr) minmax(130px, 1fr) 72px 54px minmax(180px, 1.35fr) 100px !important;
+  /* B3a：overrides 的 .server-row 7 列死规则已删，本条成列宽唯一 setter，靠 id 特异性即生效，去 important，0 回归 */
+  grid-template-columns: minmax(130px, 1.1fr) minmax(130px, 1fr) 72px 54px minmax(180px, 1.35fr) 100px;
 }
 
 #page-deploy .server-actions {
