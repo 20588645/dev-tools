@@ -54,28 +54,75 @@ function renderProjects() {
   const grid = document.getElementById('projectGrid');
   if (!grid) return;
   if (filtered.length === 0) {
+    grid.classList.remove('is-grouped');
     grid.innerHTML = '<div class="deploy-empty-state deploy-empty-state--grid">暂无项目，点击右上角「+ 添加项目」开始</div>';
     return;
   }
 
-  grid.innerHTML = filtered.map(p => {
-    const isMulti = p.type === 'multi-module';
-    const moduleCount = (p.modules || []).length;
-    const nodeLabel = p.nodeVersion ? `<span class="badge-tool">${p.nodeVersion}</span>` : '';
-    const isBusy = busyProjects.has(p.name);
-    const disabledAttr = isBusy ? 'disabled' : '';
-    const last = lastDeployCache[p.name];
-    let lastDeployHtml = '<div class="card-last-deploy">○ 暂无构建/部署记录</div>';
-    if (last) {
-      const icon = last.status === 'success' ? '✅' : '❌';
-      const ago = timeAgo(last.timestamp);
-      const mods = (last.modules || []).map(escapeHtml).join(', ');
-      const typeLabel = last.type === 'deploy' ? '部署' : '构建';
-      const info = last.type === 'deploy' ? `${typeLabel} → ${escapeHtml(last.serverName)} · ${mods}` : `${typeLabel} · ${mods}`;
-      lastDeployHtml = `<div class="card-last-deploy ${last.status}">${icon} ${ago} · ${info} · ${escapeHtml(last.duration)}</div>`;
-    }
-    const pnEsc = escapeOnclickArg(p.name);
+  // 复刻本地运行页：项目带 groupName 才分组（分组名与自定义顺序复用本地运行页的 groupName / runGroupOrder，折叠态本页独立），否则维持平铺
+  const hasGroups = projects.some(p => (p.groupName || '').trim());
+  if (!hasGroups) {
+    grid.classList.remove('is-grouped');
+    grid.innerHTML = filtered.map(deployProjectCardHTML).join('');
+    loadLastDeployInfos(filtered);
+    return;
+  }
+
+  const groups = new Map();
+  for (const p of filtered) {
+    const key = (p.groupName || '').trim() || RUN_UNGROUPED;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(p);
+  }
+  // 仅渲染过滤后仍有项目的具名分组；当前可见项里无任何具名分组 → 退回平铺，避免只剩一个「未分组」头
+  const allNamed = orderedRunGroups([...new Set(projects.map(p => (p.groupName || '').trim()).filter(Boolean))]);
+  const namedKeys = allNamed.filter(k => groups.has(k));
+  if (namedKeys.length === 0) {
+    grid.classList.remove('is-grouped');
+    grid.innerHTML = filtered.map(deployProjectCardHTML).join('');
+    loadLastDeployInfos(filtered);
+    return;
+  }
+  const orderedKeys = groups.has(RUN_UNGROUPED) ? [...namedKeys, RUN_UNGROUPED] : namedKeys;
+
+  grid.classList.add('is-grouped');
+  grid.innerHTML = orderedKeys.map(key => {
+    const items = groups.get(key);
+    const isUngrouped = key === RUN_UNGROUPED;
+    const collapsed = isDeployGroupCollapsed(key);
     return `
+      <div class="run-group">
+        <div class="run-group-header${collapsed ? ' is-collapsed' : ''}" onclick="toggleDeployGroup('${escapeOnclickArg(key)}', this)">
+          <span class="run-group-chevron">${collapsed ? '▸' : '▾'}</span>
+          <span class="run-group-name${isUngrouped ? ' is-ungrouped' : ''}">${escapeHtml(isUngrouped ? '未分组' : key)}</span>
+          <span class="run-group-count">${items.length} 个项目</span>
+        </div>
+        <div class="deploy-group-grid"${collapsed ? ' style="display:none"' : ''}>${items.map(deployProjectCardHTML).join('')}</div>
+      </div>`;
+  }).join('');
+
+  loadLastDeployInfos(filtered);
+}
+
+// 单张部署项目卡片（平铺与分组视图共用）
+function deployProjectCardHTML(p) {
+  const isMulti = p.type === 'multi-module';
+  const moduleCount = (p.modules || []).length;
+  const nodeLabel = p.nodeVersion ? `<span class="badge-tool">${p.nodeVersion}</span>` : '';
+  const isBusy = busyProjects.has(p.name);
+  const disabledAttr = isBusy ? 'disabled' : '';
+  const last = lastDeployCache[p.name];
+  let lastDeployHtml = '<div class="card-last-deploy">○ 暂无构建/部署记录</div>';
+  if (last) {
+    const icon = last.status === 'success' ? '✅' : '❌';
+    const ago = timeAgo(last.timestamp);
+    const mods = (last.modules || []).map(escapeHtml).join(', ');
+    const typeLabel = last.type === 'deploy' ? '部署' : '构建';
+    const info = last.type === 'deploy' ? `${typeLabel} → ${escapeHtml(last.serverName)} · ${mods}` : `${typeLabel} · ${mods}`;
+    lastDeployHtml = `<div class="card-last-deploy ${last.status}">${icon} ${ago} · ${info} · ${escapeHtml(last.duration)}</div>`;
+  }
+  const pnEsc = escapeOnclickArg(p.name);
+  return `
     <div class="project-card ${isBusy ? 'card-busy' : ''}" data-project="${escapeAttr(p.name)}" onclick="openDeployModal('${pnEsc}')">
       <div class="card-top">
         <div class="card-name">${isMulti ? '📦' : '📄'} ${escapeHtml(p.displayName || p.name)}</div>
@@ -101,10 +148,30 @@ function renderProjects() {
         `}
       </div>
     </div>`;
-  }).join('');
+}
 
-  // 异步加载每个项目的最近部署信息
-  loadLastDeployInfos(filtered);
+// —— 部署页项目分组：折叠态存 localStorage（独立于本地运行页）；分组名与自定义顺序复用本地运行页的 groupName / runGroupOrder ——
+function isDeployGroupCollapsed(key) {
+  try { return JSON.parse(localStorage.getItem('deployCollapsedGroups') || '[]').includes(key); } catch (e) { return false; }
+}
+
+function setDeployGroupCollapsed(key, collapsed) {
+  let arr = [];
+  try { arr = JSON.parse(localStorage.getItem('deployCollapsedGroups') || '[]'); } catch (e) { arr = []; }
+  const i = arr.indexOf(key);
+  if (collapsed && i === -1) arr.push(key);
+  else if (!collapsed && i !== -1) arr.splice(i, 1);
+  localStorage.setItem('deployCollapsedGroups', JSON.stringify(arr));
+}
+
+function toggleDeployGroup(key, headerEl) {
+  const collapsed = !isDeployGroupCollapsed(key);
+  setDeployGroupCollapsed(key, collapsed);
+  headerEl.classList.toggle('is-collapsed', collapsed);
+  const chevron = headerEl.querySelector('.run-group-chevron');
+  if (chevron) chevron.textContent = collapsed ? '▸' : '▾';
+  const body = headerEl.nextElementSibling;
+  if (body) body.style.display = collapsed ? 'none' : '';
 }
 
 // 加载项目最近部署信息（批量异步，不阻塞渲染）
