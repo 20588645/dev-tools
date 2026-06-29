@@ -916,7 +916,7 @@ async function browseRemoteDir(dirPath) {
       `<div style="text-align:center;color:var(--danger);padding:30px">
         <div style="font-size:24px;margin-bottom:8px">⚠</div>
         <div>${escapeHtml(e.message || '目录读取失败')}</div>
-        <button class="btn-text" onclick="browseRemoteDir('/')" style="margin-top:12px;color:var(--accent)">返回根目录</button>
+        <button class="btn btn--text" onclick="browseRemoteDir('/')" style="margin-top:12px;color:var(--accent)">返回根目录</button>
       </div>`;
   }
 }
