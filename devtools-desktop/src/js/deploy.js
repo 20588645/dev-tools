@@ -1151,8 +1151,8 @@ function renderHistory() {
     const total = historyData.length;
     const successCount = historyData.filter(h => h.status === 'success').length;
     const failCount = total - successCount;
-    const filterNote = filtered.length !== total ? ` · 当前筛选 ${filtered.length} 条` : '';
-    statsEl.textContent = `共 ${total} 条记录 · ✅ ${successCount} 成功 · ❌ ${failCount} 失败${filterNote}`;
+    const filterNote = filtered.length !== total ? ` · 当前筛选 <span class="deploy-stat-num">${filtered.length}</span> 条` : '';
+    statsEl.innerHTML = `共 <span class="deploy-stat-num">${total}</span> 条记录 · ✅ <span class="deploy-stat-num">${successCount}</span> 成功 · ❌ <span class="deploy-stat-num">${failCount}</span> 失败${filterNote}`;
   }
 
   const table = document.getElementById('historyTable');

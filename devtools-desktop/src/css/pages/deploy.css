@@ -181,6 +181,9 @@
   color: var(--warning);
 }
 
+/* 历史统计数字用等宽字体（数值 font-mono 约定；计数为小整数，万/亿分级不适用） */
+.deploy-stat-num { font-family: var(--font-mono); }
+
 .module-divider { grid-column: 1/-1; display: flex; align-items: center; gap: 8px; padding: 4px 0; color: var(--text-muted); font-size: 11px; }
 
 .module-divider::before, .module-divider::after { content: ''; flex: 1; border-top: 1px solid var(--border); }
