@@ -595,31 +595,24 @@
 
 }
 
-#page-deploy {
-  display: none !important;
-  flex-direction: column;
-  height: 100% !important;
-  overflow: hidden !important;
-  min-height: 0 !important;
-}
+/* 外层（页头+子Tab）已迁标准固定头：index.html 用 .page-fixed-header 包裹，#page-deploy 由
+   app.js initPageStickyHeaders 自动加 has-fixed-header，flex 列/定高/overflow 由 layout.css
+   .page.has-fixed-header.active 统一提供，不再在此重复定义 + !important。 */
 
-#page-deploy .page-header-bar {
-  flex: 0 0 auto !important;
-}
-
+/* 部署页第 2 级固定头（受控自定义）：标准 has-fixed-header 是单层、覆盖不到子页这层。
+   每个子页填满外层 flex 余量、自身再做 flex 列（子头定高见 .page-sticky-header；列表独立滚动见下方 grid/list/table）。
+   #page-deploy 的 id 已压过基础 .sub-page 且无 overrides 竞争，故不需 !important。 */
 #page-deploy .sub-page {
+  display: none;
+  flex: 1;
+  min-height: 0;
   flex-direction: column;
-  display: none !important;
-  padding-bottom: 0 !important;
-  flex: 1 1 auto !important;
-  overflow: hidden !important;
-  min-height: 0 !important;
+  overflow: hidden;
+  padding-bottom: 0;
 }
 
 #page-deploy .sub-page.active {
-  display: flex !important;
-  flex-direction: column !important;
-  min-height: 0 !important;
+  display: flex;
 }
 
 #page-deploy .page-sticky-header {
@@ -873,30 +866,9 @@
   white-space: nowrap !important;
 }
 
-/* 4. 部署面板 */
-#page-deploy.active {
-  display: flex !important;
-  flex-direction: column !important;
-  overflow: hidden !important;
-  height: 100% !important;
-}
-
-#page-deploy > .page-header-bar,
-#page-deploy > .page-toolbar {
-  flex-shrink: 0 !important;
-}
-
-#page-deploy > .sub-page {
-  flex: 1 !important;
-  min-height: 0 !important;
-  display: none !important;
-  flex-direction: column !important;
-  overflow: hidden !important;
-}
-
-#page-deploy > .sub-page.active {
-  display: flex !important;
-}
+/* 4. 部署面板：外层固定头/滚动已迁标准 has-fixed-header（index.html .page-fixed-header
+   + layout.css .page.has-fixed-header.active）；子页两级布局见上方 #page-deploy .sub-page 段。
+   原 #page-deploy.active / > .page-header-bar / > .sub-page 等重复 !important 块已删除。 */
 
 /* 项目卡片悬浮：仅描边变化提示可点，去掉抬升+阴影（用户反感装饰性抬升、克制优先） */
 .project-card:hover {

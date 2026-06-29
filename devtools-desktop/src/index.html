@@ -288,22 +288,25 @@
 
 <!-- 部署面板 -->
 <section class="page" id="page-deploy">
-  <div class="page-header-bar page-header-simple">
-    <div>
-      <div class="page-title">🚀 部署面板</div>
-      <div class="page-subtitle">项目构建与 SFTP 部署管理</div>
+  <!-- 标题区 + 子 Tab：接入约定的标准固定头（app.js initPageStickyHeaders 自动加 has-fixed-header，固定头布局复用 layout.css，不再各页手写 flex+!important） -->
+  <div class="page-fixed-header">
+    <div class="page-header-bar page-header-simple">
+      <div>
+        <div class="page-title">🚀 部署面板</div>
+        <div class="page-subtitle">项目构建与 SFTP 部署管理</div>
+      </div>
+      <div class="page-header-actions">
+        <button class="btn btn--primary" onclick="showAddProject()">+ 添加项目</button>
+      </div>
     </div>
-    <div class="page-header-actions">
-      <button class="btn btn--primary" onclick="showAddProject()">+ 添加项目</button>
-    </div>
-  </div>
 
-  <!-- 子 Tab 栏 -->
-  <div class="page-toolbar">
-    <div class="seg">
-      <button class="seg__item is-active" data-sub="dashboard" onclick="switchSubTab('dashboard', this)">📦 项目总览</button>
-      <button class="seg__item" data-sub="servers" onclick="switchSubTab('servers', this)">🖥 服务器管理</button>
-      <button class="seg__item" data-sub="history" onclick="switchSubTab('history', this)">📋 部署历史</button>
+    <!-- 子 Tab 栏 -->
+    <div class="page-toolbar">
+      <div class="seg">
+        <button class="seg__item is-active" data-sub="dashboard" onclick="switchSubTab('dashboard', this)">📦 项目总览</button>
+        <button class="seg__item" data-sub="servers" onclick="switchSubTab('servers', this)">🖥 服务器管理</button>
+        <button class="seg__item" data-sub="history" onclick="switchSubTab('history', this)">📋 部署历史</button>
+      </div>
     </div>
   </div>
 
