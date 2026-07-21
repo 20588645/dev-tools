@@ -2,10 +2,13 @@ import { mount } from '@vue/test-utils'
 import { createPinia } from 'pinia'
 import { describe, expect, it } from 'vitest'
 
+import '@/styles/tokens/index.css'
 import BaseButton from './base/BaseButton.vue'
 import BaseInput from './form/BaseInput.vue'
 import BaseTabs from './navigation/BaseTabs.vue'
 import PageFrame from './layout/PageFrame.vue'
+import NaiveUiShowcase from './vendor/NaiveUiShowcase.vue'
+import UiLibraryProvider from './vendor/UiLibraryProvider.vue'
 import UiFoundationPreview from '@/views/UiFoundationPreview.vue'
 
 describe('shared UI foundation', () => {
@@ -68,5 +71,23 @@ describe('shared UI foundation', () => {
     })
     await tabs.findAll('[role="tab"]')[1].trigger('click')
     expect(tabs.emitted('update:modelValue')).toEqual([['two']])
+  })
+
+  it('mounts and exposes third-party complex controls through the adapter layer', async () => {
+    const wrapper = mount(UiLibraryProvider, {
+      global: { plugins: [createPinia()] },
+      slots: { default: NaiveUiShowcase },
+    })
+
+    expect(wrapper.find('.vendor-showcase').exists()).toBe(true)
+    expect(wrapper.find('input').exists()).toBe(true)
+    expect(wrapper.find('table').text()).toContain('personalTools')
+    expect(wrapper.findAll('input').length).toBeGreaterThanOrEqual(2)
+    expect(wrapper.text()).toContain('Naive UI 适配层')
+    const projectInput = wrapper.findAll('input')[0]
+    if (!projectInput) throw new Error('项目输入框未渲染')
+    await projectInput.setValue('新的项目')
+    expect((projectInput.element as HTMLInputElement).value).toBe('新的项目')
+    wrapper.unmount()
   })
 })

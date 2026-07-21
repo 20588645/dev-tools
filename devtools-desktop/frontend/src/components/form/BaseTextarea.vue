@@ -57,8 +57,9 @@ const messageId = computed(() => `${textareaId.value}-message`)
 .field-control { display: grid; gap: var(--space-2); min-width: 0; }
 .field-control__label { color: var(--color-text); font-size: var(--font-size-sm); font-weight: var(--font-weight-medium); }
 .field-control__label span { color: var(--color-danger); }
-.field-control__textarea { width: 100%; min-height: 88px; padding: var(--space-3); color: var(--color-text); background: var(--color-surface); border: 1px solid var(--color-border-strong); border-radius: var(--component-control-radius); outline: 0; resize: vertical; font: inherit; line-height: var(--line-height-normal); transition: border-color var(--duration-normal) var(--ease-standard), box-shadow var(--duration-normal) var(--ease-standard); }
-.field-control__textarea:focus-visible { border-color: var(--color-focus-ring); box-shadow: var(--component-focus-outline); }
+.field-control__textarea { width: 100%; min-height: 88px; padding: var(--space-3); color: var(--color-text); background: var(--component-control-surface); border: 1px solid var(--component-control-border); border-radius: var(--component-control-radius); outline: 0; resize: vertical; font: inherit; line-height: var(--line-height-normal); transition: border-color var(--duration-normal) var(--ease-standard), box-shadow var(--duration-normal) var(--ease-standard), background var(--duration-normal) var(--ease-standard); }
+.field-control__textarea:hover { border-color: var(--component-control-border-hover); }
+.field-control__textarea:focus-visible { border-color: var(--component-control-border-focus); box-shadow: var(--component-control-focus-ring); }
 .field-control__textarea::placeholder { color: var(--color-text-subtle); }
 .field-control__textarea--error { border-color: var(--color-danger); }
 .field-control__textarea:disabled { background: var(--color-surface-subtle); opacity: 0.65; cursor: not-allowed; }

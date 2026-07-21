@@ -1,4 +1,6 @@
-:root {
+:root,
+[data-theme="light"],
+[data-theme="dark"] {
   --component-page-padding: var(--space-6);
   --component-control-height-sm: 28px;
   --component-control-height-md: 34px;
@@ -7,5 +9,27 @@
   --component-card-padding: var(--space-4);
   --component-card-radius: var(--radius-lg);
   --component-dialog-width: 520px;
-  --component-focus-outline: 0 0 0 3px color-mix(in srgb, var(--color-focus-ring) 30%, transparent);
+  --component-focus-outline: 0 0 0 2px color-mix(in srgb, var(--color-focus-ring) 16%, transparent);
+  --component-control-surface: color-mix(in srgb, var(--color-surface) 76%, var(--color-surface-raised));
+  --component-control-border: var(--color-border);
+  --component-control-border-hover: var(--color-border-strong);
+  --component-control-border-focus: color-mix(in srgb, var(--color-focus-ring) 68%, var(--color-border));
+  --component-control-focus-ring: 0 0 0 2px color-mix(in srgb, var(--color-focus-ring) 14%, transparent);
+
+  /* Third-party UI adapter aliases. The adapter resolves these to concrete
+     colors because Naive UI derives alpha variants in JavaScript. */
+  --component-vendor-page: var(--color-page);
+  --component-vendor-surface: var(--color-surface);
+  --component-vendor-surface-raised: var(--color-surface-raised);
+  --component-vendor-surface-subtle: var(--color-surface-subtle);
+  --component-vendor-text: var(--color-text);
+  --component-vendor-text-muted: var(--color-text-muted);
+  --component-vendor-text-subtle: var(--color-text-subtle);
+  --component-vendor-border: var(--color-border);
+  --component-vendor-action: var(--color-action);
+  --component-vendor-action-hover: var(--color-action-hover);
+  --component-vendor-info: var(--color-info);
+  --component-vendor-success: var(--color-success);
+  --component-vendor-warning: var(--color-warning);
+  --component-vendor-danger: var(--color-danger);
 }

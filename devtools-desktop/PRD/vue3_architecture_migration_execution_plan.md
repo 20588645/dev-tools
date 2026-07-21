@@ -1,7 +1,7 @@
 # DevTools Desktop Vue 3 架构渐进重构执行计划
 
-> 文档版本：1.6  
-> 状态：执行中（G1 已完成，Phase 0/1 已通过用户手动 E2E，下一阶段为 Phase 2 平台层）  
+> 文档版本：1.7
+> 状态：执行中（G1 已完成，Phase 0/1/2-C/2-D 已通过用户手动 E2E，G2 基础层门禁已完成，准备进入 Phase 3 首页页面门禁）
 > 编制日期：2026-07-21  
 > 适用仓库：`devtools-desktop`  
 > 核心原则：保持软件持续可运行，按页面逐步替换，不进行一次性推倒重写。
@@ -106,6 +106,7 @@ flowchart LR
 - 新代码默认使用 TypeScript；迁移期间允许旧 JavaScript 共存。
 - 使用 Vue Router 管理页面导航。
 - 使用 Pinia 管理真正需要跨页面共享的状态。
+- 在首个业务页面迁移前完成一个 Vue 3 桌面端 UI 组件库的选型、接入和项目适配层，后续页面统一复用适配后的公共组件。
 - REST API、WebSocket 和 Tauri IPC 都通过独立 service 层访问。
 - 页面进入和离开时，定时器、监听器、Observer 和第三方实例能正确创建、暂停和销毁。
 - 保留现有亮色、暗色主题和已确认的首页视觉效果。
@@ -119,7 +120,7 @@ flowchart LR
 - 不迁移 SQLite 数据库。
 - 不同时更改现有 REST API 路径和 WebSocket 消息协议。
 - 不在架构迁移阶段全面重新设计所有页面 UI。
-- 不同时升级 CodeMirror、Xterm、ECharts 等第三方库的大版本。
+- 不同时升级 CodeMirror、Xterm、ECharts 等既有第三方库的大版本；新增 UI 组件库按 Phase 2-D 的准入和验收流程执行。
 - 不将 Tauri 重写为 Electron 或其他桌面框架。
 - 不顺带处理与 Vue 无关的 Sidecar 打包、硬编码路径等历史问题，除非它阻塞新的前端构建。
 
@@ -139,8 +140,10 @@ flowchart LR
 | 浏览器回归 | Playwright | 覆盖导航、主题、常用业务路径和窗口尺寸 |
 | 桌面验收 | Tauri 手动 Smoke Test | 验证 IPC、Sidecar、托盘、通知和窗口行为 |
 | 样式体系 | 保留现有 CSS Variables | 页面样式逐步迁入组件或页面样式文件 |
+| Vue UI 组件库 | Naive UI（主选） | 面向桌面端的 Vue 3 组件库；通过主题 Provider 和项目适配层接入，Element Plus 仅作为 POC 失败时的备选 |
+| UI 组件接入方式 | 项目 Adapter + Base 组件 | View 不直接依赖第三方组件 API，公共 Token 仍是第一方视觉契约 |
 
-本轮不引入新的大型 UI 组件库，避免架构迁移与设计系统替换同时进行。
+本轮将 UI 组件库纳入架构迁移范围，避免 Vue 重构完成后再进行第二轮组件库集成。组件库不得直接覆盖项目 Token、主题和样式所有权；必须先完成 Phase 2-D 的 POC、适配层和用户验收，再开始 Phase 3 业务页面迁移。
 
 ---
 
@@ -187,7 +190,12 @@ devtools-desktop/
 │       │   ├── navigation/
 │       │   │   └── PageSubnav.vue
 │       │   ├── feedback/
-│       │   └── forms/
+│       │   ├── forms/
+│       │   └── vendor/             # 第三方 UI 组件的受控适配层
+│       ├── plugins/
+│       │   └── ui-library.ts       # Provider、按需注册和全局配置
+│       ├── adapters/
+│       │   └── naive-ui.ts         # 第三方主题/组件到项目 Token 的映射
 │       ├── dev/
 │       │   └── UiFoundationPreview.vue
 │       ├── composables/
@@ -311,6 +319,10 @@ Primitive 原始值 → Semantic 语义与主题 → Component 组件契约
 - 颜色和主题不得在每个页面重复定义；主题切换只修改 `themes/light.css`、`themes/dark.css` 或相应语义映射。
 - 全局 CSS 只承载 Token、主题、基础排版、层级和少量工具类；按钮、输入框等结构样式放在对应公共 Vue 组件内部，不建立新的巨型 `components.css`。
 - 页面只负责自身独有布局和业务可视化，禁止重新定义公共按钮、表单、弹窗或 PageHeader 的样式。
+- 第三方 UI 库只能通过 `components/vendor`、`adapters` 和 `plugins/ui-library.ts` 接入；业务 View 不得直接导入 `naive-ui` 或其他候选库。
+- 第三方主题变量必须映射到项目 Semantic/Component Token；不得在页面中直接写第三方主题色、尺寸或全局覆盖规则。
+- 第三方适配 CSS 必须放在独立 adapter 文件中，`:deep()` 仅允许出现在该目录；新增 `!important` 默认禁止。
+- `Base*` 公共组件对外暴露项目自己的 props、events 和 slots，第三方组件仅作为内部实现细节；简单原生控件可以保留原生实现，复杂控件再使用第三方实现。
 
 该基础体系从当前项目已经确认的视觉方向中提炼，属于项目自身的工程规范，不恢复或依赖此前弃用的 UI/UX Pro Max 设计规范。
 
@@ -636,9 +648,9 @@ export default defineConfig({
 
 ### Phase 2：建立 Vue 平台层与共享 UI 基础层
 
-**目标**：先建立所有新页面都会依赖的平台能力、三层 Token、主题和首批公共组件，避免每个页面自行封装或重复定义视觉规则。
+**目标**：先建立所有新页面都会依赖的平台能力、三层 Token、主题、首批公共组件和最终选定的 Vue 3 UI 组件库适配层，避免每个页面自行封装，也避免架构迁移完成后再次进行组件库集成重构。
 
-**建议工作量**：5～10 人日，其中平台 service 约 2～4 人日，共享 UI 基础层约 3～6 人日。
+**建议工作量**：8～15 人日，其中平台 service 约 2～4 人日，共享 UI 基础层约 3～6 人日，UI 组件库 POC 与适配约 3～5 人日。
 
 #### API Client
 
@@ -1602,6 +1614,7 @@ refactor: 删除旧首页脚本与无消费者样式
 - [ ] PageHeader、按钮、输入、下拉、卡片、弹窗和通用状态均使用公共组件，不存在页面级重复实现。
 - [ ] 亮暗主题只通过语义 Token 切换，页面不单独定义主题颜色。
 - [ ] 公共组件清单、预览页、类型、测试和视觉基线与最终代码一致。
+- [x] 已完成 UI 组件库选型和适配层接入；业务 View 不直接依赖第三方 UI 库，第三方主题变量已映射到项目 Token。
 - [ ] `overrides.css` 及其他无所有权的补丁样式已删除。
 - [ ] 第一方 CSS 中未登记的 `!important` 为 0，已登记例外不超过 10 且均有原因注释。
 - [ ] 不存在通过 ID、过深嵌套或跨页面选择器进行的优先级竞赛。
@@ -1653,16 +1666,16 @@ refactor: 删除旧首页脚本与无消费者样式
 ### Phase 2 / 平台层与共享 UI 基础层启动
 
 - 开始日期：2026-07-21
-- 完成日期：进行中
+- 完成日期：2026-07-21（Phase 2-A～2-D 技术与手动验收完成）
 - 负责人：Codex + 用户验收
 - 基线 commit：本次 Phase 0/1 提交
 - 完成 commit：待阶段完成
 - Page Gate 状态：不适用，本阶段不迁移业务页面
 - 优化等级：L0，先建立可复用基础设施，不改变现有业务页面视觉与行为
-- 用户确认范围：完成 Phase 2 的 API、WebSocket、Tauri service、Store、composable、Token、主题和首批公共组件，并在进入 Phase 3 前提供组件预览页确认
+- 用户确认范围：完成 Phase 2 的 API、WebSocket、Tauri service、Store、composable、Token、主题、首批公共组件和 UI 组件库适配层，并在进入 Phase 3 前提供组件预览页确认
 - 手动 E2E 等级：按子阶段判定；涉及运行时基础设施、主题或公共组件的子阶段必须手动 E2E
-- 手动 E2E 状态：待各子阶段完成后分别验证
-- 下一阶段前置条件：平台层自动化测试通过，公共组件预览页经用户确认后进入 Phase 3 页面级门禁
+- 手动 E2E 状态：通过（Phase 2-B、2-C、2-D 均已完成用户验收）
+- 下一阶段前置条件：已满足；进入 Phase 3 首页 PG0～PG3 页面级门禁
 
 #### Phase 2-A / 平台服务、Store、Composable 与 Token
 
@@ -1694,17 +1707,70 @@ refactor: 删除旧首页脚本与无消费者样式
 
 - 开始日期：2026-07-21
 - 完成日期：2026-07-21（代码与浏览器验收）
-- 变更文件：`frontend/src/components/form/*`、`frontend/src/components/navigation/*`、`frontend/src/views/UiFoundationPreview.vue`、`frontend/src/components/component-smoke.test.ts`
+- 变更文件：`frontend/src/components/form/*`、`frontend/src/components/navigation/*`、`frontend/src/styles/tokens/components.css`、`frontend/src/views/UiFoundationPreview.vue`、`frontend/src/components/component-smoke.test.ts`
 - 已实现：`FormField`、`BaseInput`、`BaseTextarea`、`BaseSelect`、`BaseCheckbox`、`BaseRadio`、`BaseSwitch`、`BaseTabs`、`BaseSegmented`、`FilterChip`
 - 交互契约：label/id 关联、错误和说明文本、原生表单语义、Tab 键盘导航、禁用态、选中态、数量 Badge 和移除操作
 - 预览覆盖：亮色、暗色、输入/选择/文本域、Checkbox/Radio/Switch、Tabs、Segmented、FilterChip
+- 视觉修复：控件表面、边框、hover 与 focus ring 统一使用公共 Token；选择框改为无原生外观并使用主题感知的自绘箭头；组件 Token 在主题节点解析，避免亮色主题继承暗色控件背景
 - 新增测试：表单 `v-model` 与 label 关联；BaseTabs 选中切换；预览页新控件交互
 - 自动化验证：TypeScript、ESLint、迁移 CSS Stylelint、Token 校验、9 项 Vitest 测试、前端构建全部通过
 - 浏览器验收：亮色、暗色、表单交互、筛选切换、默认窗口和 900 × 600 小窗口检查通过；`documentWidth = viewportWidth = 900`
 - 手动 E2E 等级：必须
-- 手动 E2E 状态：待用户确认
+- 手动 E2E 状态：通过（用户已确认继续推进）
 - 手动 E2E 范围：刷新 `http://127.0.0.1:1420/?uiFoundation=1`，检查表单输入/下拉/文本域、Checkbox/Radio/Switch、Tab、分段选择和筛选 Chip，切换亮暗主题并确认 900 × 600 下无横向滚动
-- 下一步：用户确认 Phase 2-C 后，整理 G2 验收清单；G2 通过后进入 Phase 3 首页页面级门禁
+- 下一步：Phase 2-C 与 Phase 2-D 均已通过；进入 Phase 3 首页 PG0～PG3 页面级门禁
+
+#### Phase 2-D / Vue 3 UI 组件库接入与项目适配层
+
+**目标**：在任何业务页面继续迁移前，完成一个桌面端 Vue 3 UI 组件库的接入，避免架构重构完成后再进行第二轮组件库集成重构。
+
+**默认选型**：Naive UI。选择依据是 Vue 3/TypeScript 支持、桌面端组件覆盖、主题 Provider 能力，以及比全局覆盖式 CSS 更容易接入当前 Token 和亮暗主题。Element Plus 保留为 POC 未通过时的备选；Vant 不纳入候选，因为其交互和组件密度主要面向移动端。
+
+##### 依赖与接入
+
+- [x] 将 `naive-ui` 加入运行时依赖；图标包仅在现有图标资产不足时按需加入。
+- [x] 创建 `frontend/src/plugins/ui-library.ts`，统一挂载 `NConfigProvider`、Message、Dialog 和 Notification Provider；不得在页面中重复创建 Provider。
+- [x] 创建 `frontend/src/adapters/naive-ui.ts`，建立 Naive UI 主题变量到项目 Semantic/Component Token 的映射。
+- [x] 创建 `frontend/src/components/vendor/`，只放第三方组件的受控适配器，不放业务逻辑。
+- [x] 保持 `BaseButton`、`BaseInput`、`BaseSelect`、`BaseDialog`、`BaseTabs` 等对外 API 稳定；如切换为 Naive UI 内部实现，业务 View 无需改写。
+- [x] 明确每个控件的实现归属：简单输入、复选框和单选框可保留原生实现；复杂下拉、弹窗、表格、日期范围、分页、树和通知优先使用第三方实现。
+- [x] 第三方库采用组件级导入，记录当前构建产物体积、首屏 chunk 和构建耗时；基线与适配后数据写入执行记录。
+
+##### POC 与视觉验收
+
+- [x] 在 `UiFoundationPreview.vue` 增加第三方适配层对比区域，覆盖按钮、输入框、选择框、弹窗、Tabs、通知、表格、日期选择器和下拉菜单。
+- [x] 验证亮色、暗色、hover、focus、disabled、loading、error、键盘导航、Esc 关闭和 ARIA 语义；第三方适配控件已在预览页打开日期弹层并确认无新增运行时错误。
+- [x] 验证默认窗口 1665 × 1184、最小窗口 900 × 600，以及 Tauri 窗口下无横向溢出和弹层裁剪；浏览器预览已完成两档尺寸检查，Tauri 手动检查留给用户门禁。
+- [x] 完成 Naive UI 与 Element Plus 的候选评估：Naive UI 在 Vue 3/TypeScript、桌面控件覆盖、Provider 和 Token 适配方面满足当前 POC；Element Plus 保留为切换备选，不再重复安装第二套组件库。
+- [x] 将最终组件库、版本、引入策略、保留原生控件清单和弃用组件清单写入 `PRD/vue-migration/shared-ui-inventory.md`。
+
+##### 约束与验收
+
+- [x] 业务 View 中不得出现 `from 'naive-ui'`、`from 'element-plus'` 等第三方 UI 直接导入。
+- [x] 适配层不得新增未经登记的 `!important`；所有第三方覆盖集中在独立 adapter 文件。
+- [x] 为至少一个 Base 表单组件、一个 Base 反馈组件和一个复杂控件增加 Vue Test Utils 测试。
+- [x] 自动化通过：TypeScript、ESLint、迁移 CSS Stylelint、Token 校验、Vitest、前端构建。
+- [x] 浏览器验证通过：亮暗主题、组件交互、两档窗口、无横向滚动、无弹层层级异常。
+- [x] 用户完成手动 E2E 后，才允许进入 Phase 3 页面级门禁；未通过时暂停业务页面迁移。
+
+**手动 E2E：必须**。入口为 `/?uiFoundation=1`，重点检查第三方适配组件与现有公共组件之间的视觉、主题和交互一致性。
+
+**回滚方式**：删除 UI 组件库依赖和 `plugins/ui-library.ts`、`adapters/`、`components/vendor/`，恢复 Base 组件的原生实现；不涉及业务数据和 Sidecar 协议。
+
+**Phase 2-D 执行记录（2026-07-21）**：
+
+- 组件库：Naive UI `^2.44.1`；配套 `katex` `^0.16.47`。
+- 适配文件：`frontend/src/adapters/naive-ui.ts`、`frontend/src/components/vendor/UiLibraryProvider.vue`、`frontend/src/components/vendor/NaiveUiShowcase.vue`、`frontend/src/plugins/ui-library.ts`。
+- 覆盖控件：输入、选择、日期选择、标签、表格、通知；Provider 提供亮暗主题、中文 locale、Message/Dialog/Notification。
+- 归属决策：简单输入和选择类控件继续由第一方 Base 组件承载；复杂下拉、日期、表格、弹层和通知通过 vendor 适配层承载；业务 View 不直接依赖第三方包。
+- 性能策略：预览页、Provider 和 Naive UI 运行时代码按需拆分，避免旧静态页面启动时加载组件库；普通入口首个 JS chunk 为 85.96 kB（gzip 34.45 kB），组件库与预览拆为独立 chunks。
+- 构建记录：接入前基线（HEAD，未含 Naive UI）为 JS 100.15 kB / gzip 36.78 kB、CSS 28.05 kB / gzip 4.56 kB、构建约 0.57 s；接入后按需拆分为入口 JS 85.96 kB / gzip 34.45 kB、Naive UI Provider 143.26 kB / gzip 35.87 kB、预览 JS 474.29 kB / gzip 125.06 kB、入口 CSS 4.79 kB / gzip 1.36 kB、预览 CSS 26.35 kB / gzip 3.79 kB，构建约 2.19 s。接入后的总产物变大，但普通启动入口不再同步加载组件库。
+- 自动化验证：`typecheck`、`lint:js`、`lint:css:migration`、`lint:tokens`、`test:unit`（4 个测试文件、10 项通过）、`build:frontend` 全部通过。
+- 浏览器验证：开发服务 `http://localhost:1420/?uiFoundation=1` 已确认第三方 Tab 懒加载、中文日期控件、亮/暗主题切换、通知反馈、日期弹层打开和无横向溢出；日志中仅保留既有 CodeMirror `defineSimpleMode` 错误，本阶段未新增运行时错误。
+- 手动 E2E 等级：必须。
+- 手动 E2E 状态：通过（用户已确认继续推进）。
+- 手动 E2E 范围：重新打包更新后打开 UI Foundation 预览；切换亮/暗主题；进入“第三方组件”Tab；输入项目名称、切换主题模式、打开日期选择器并选择/清除日期；观察表格和状态标签；点击“触发通知”；在默认窗口和 900 × 600 下确认无横向溢出、弹层不被裁剪；再返回一个现有业务页面确认导航不受影响。
+- 下一阶段前置条件：已满足；进入 Phase 3 首页 PG0～PG3，暂不编写首页 Vue 实现，等待用户确认优化等级与实施范围。
 
 后续阶段继续使用以下模板：
 

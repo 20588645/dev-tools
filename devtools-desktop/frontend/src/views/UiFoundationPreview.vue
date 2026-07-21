@@ -24,16 +24,18 @@ import BaseSwitch from '@/components/form/BaseSwitch.vue'
 import BaseTabs from '@/components/navigation/BaseTabs.vue'
 import BaseSegmented from '@/components/navigation/BaseSegmented.vue'
 import FilterChip from '@/components/navigation/FilterChip.vue'
+import NaiveUiShowcase from '@/components/vendor/NaiveUiShowcase.vue'
 import { useAppStore } from '@/stores/app'
 
 const app = useAppStore()
 const dialogOpen = ref(false)
-type PreviewTab = '基础控件' | '反馈状态' | '页面骨架'
+type PreviewTab = '基础控件' | '反馈状态' | '页面骨架' | '第三方组件'
 const selectedTab = ref<PreviewTab>('基础控件')
 const tabs = [
   { label: '基础控件', value: '基础控件' },
   { label: '反馈状态', value: '反馈状态' },
   { label: '页面骨架', value: '页面骨架' },
+  { label: '第三方组件', value: '第三方组件' },
 ]
 const inputValue = ref('personalTools')
 const textareaValue = ref('这里是一段可编辑的说明。')
@@ -131,7 +133,7 @@ const filterSelected = ref(true)
 
       </template>
 
-      <template v-else>
+      <template v-else-if="selectedTab === '页面骨架'">
         <PageSection title="页面骨架">
           <BaseCard variant="raised">
             <div class="skeleton-preview">
@@ -141,6 +143,14 @@ const filterSelected = ref(true)
               </PageHeader>
               <PageToolbar><StatusIndicator status="online" label="服务在线" /></PageToolbar>
             </div>
+          </BaseCard>
+        </PageSection>
+      </template>
+
+      <template v-else>
+        <PageSection title="第三方组件适配">
+          <BaseCard variant="raised">
+            <NaiveUiShowcase />
           </BaseCard>
         </PageSection>
       </template>

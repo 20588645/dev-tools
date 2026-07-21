@@ -1,6 +1,10 @@
 <script setup lang="ts">
+import { defineAsyncComponent } from 'vue'
+
+import { UiLibraryProvider } from './plugins/ui-library'
 import MigrationHost from './legacy/MigrationHost.vue'
-import UiFoundationPreview from './views/UiFoundationPreview.vue'
+
+const UiFoundationPreview = defineAsyncComponent(() => import('./views/UiFoundationPreview.vue'))
 
 const showUiFoundationPreview = import.meta.env.DEV
   && new URLSearchParams(window.location.search).get('uiFoundation') === '1'
@@ -8,7 +12,9 @@ const showUiFoundationPreview = import.meta.env.DEV
 
 <template>
   <div v-if="showUiFoundationPreview" class="ui-foundation-preview">
-    <UiFoundationPreview />
+    <UiLibraryProvider>
+      <UiFoundationPreview />
+    </UiLibraryProvider>
   </div>
   <MigrationHost v-else />
 </template>

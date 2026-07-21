@@ -45,6 +45,8 @@
   },
   "dependencies": {
     "@tauri-apps/api": "^2.11.1",
+    "katex": "^0.16.47",
+    "naive-ui": "^2.44.1",
     "pinia": "^4.0.2",
     "vue": "^3.5.39",
     "vue-router": "4.6.4"

@@ -71,8 +71,9 @@ const messageId = computed(() => `${inputId.value}-message`)
 .field-control { display: grid; gap: var(--space-2); min-width: 0; }
 .field-control__label { color: var(--color-text); font-size: var(--font-size-sm); font-weight: var(--font-weight-medium); }
 .field-control__label span { color: var(--color-danger); }
-.field-control__input-wrap { display: flex; align-items: center; min-height: var(--component-control-height-md); color: var(--color-text); background: var(--color-surface); border: 1px solid var(--color-border-strong); border-radius: var(--component-control-radius); transition: border-color var(--duration-normal) var(--ease-standard), box-shadow var(--duration-normal) var(--ease-standard); }
-.field-control__input-wrap:focus-within { border-color: var(--color-focus-ring); box-shadow: var(--component-focus-outline); }
+.field-control__input-wrap { display: flex; align-items: center; min-height: var(--component-control-height-md); color: var(--color-text); background: var(--component-control-surface); border: 1px solid var(--component-control-border); border-radius: var(--component-control-radius); transition: border-color var(--duration-normal) var(--ease-standard), box-shadow var(--duration-normal) var(--ease-standard), background var(--duration-normal) var(--ease-standard); }
+.field-control__input-wrap:hover { border-color: var(--component-control-border-hover); }
+.field-control__input-wrap:focus-within { border-color: var(--component-control-border-focus); box-shadow: var(--component-control-focus-ring); }
 .field-control__input-wrap:has(.field-control__input:disabled) { background: var(--color-surface-subtle); opacity: 0.65; }
 .field-control__input { flex: 1; min-width: 0; height: calc(var(--component-control-height-md) - 2px); padding: 0 var(--space-3); color: inherit; background: transparent; border: 0; outline: 0; font: inherit; }
 .field-control__input::placeholder { color: var(--color-text-subtle); }
