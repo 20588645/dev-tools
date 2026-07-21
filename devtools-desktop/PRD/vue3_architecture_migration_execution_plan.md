@@ -682,12 +682,12 @@ export default defineConfig({
 
 #### 公共反馈组件
 
-- [ ] `AppToastHost.vue`
-- [ ] `BaseDialog.vue`
-- [ ] `ConfirmDialog.vue`
-- [ ] `EmptyState.vue`
-- [ ] `LoadingState.vue`
-- [ ] `ErrorState.vue`
+- [x] `AppToastHost.vue`
+- [x] `BaseDialog.vue`
+- [x] `ConfirmDialog.vue`
+- [x] `EmptyState.vue`
+- [x] `LoadingState.vue`
+- [x] `ErrorState.vue`
 
 #### 共享 UI 现状盘点
 
@@ -1689,6 +1689,22 @@ refactor: 删除旧首页脚本与无消费者样式
 - 手动 E2E 状态：通过（用户已确认）
 - 手动 E2E 范围：打开 `http://127.0.0.1:1420/?uiFoundation=1`，检查亮/暗主题、按钮状态、反馈卡片、弹窗 Esc/关闭和 900 × 600 下无横向滚动；现有业务页不受预览入口影响
 - 下一步：补齐表单、导航筛选类基础组件和完整预览覆盖，用户确认后进入 Phase 3 首页页面门禁
+
+#### Phase 2-C / 表单、导航与筛选基础组件
+
+- 开始日期：2026-07-21
+- 完成日期：2026-07-21（代码与浏览器验收）
+- 变更文件：`frontend/src/components/form/*`、`frontend/src/components/navigation/*`、`frontend/src/views/UiFoundationPreview.vue`、`frontend/src/components/component-smoke.test.ts`
+- 已实现：`FormField`、`BaseInput`、`BaseTextarea`、`BaseSelect`、`BaseCheckbox`、`BaseRadio`、`BaseSwitch`、`BaseTabs`、`BaseSegmented`、`FilterChip`
+- 交互契约：label/id 关联、错误和说明文本、原生表单语义、Tab 键盘导航、禁用态、选中态、数量 Badge 和移除操作
+- 预览覆盖：亮色、暗色、输入/选择/文本域、Checkbox/Radio/Switch、Tabs、Segmented、FilterChip
+- 新增测试：表单 `v-model` 与 label 关联；BaseTabs 选中切换；预览页新控件交互
+- 自动化验证：TypeScript、ESLint、迁移 CSS Stylelint、Token 校验、9 项 Vitest 测试、前端构建全部通过
+- 浏览器验收：亮色、暗色、表单交互、筛选切换、默认窗口和 900 × 600 小窗口检查通过；`documentWidth = viewportWidth = 900`
+- 手动 E2E 等级：必须
+- 手动 E2E 状态：待用户确认
+- 手动 E2E 范围：刷新 `http://127.0.0.1:1420/?uiFoundation=1`，检查表单输入/下拉/文本域、Checkbox/Radio/Switch、Tab、分段选择和筛选 Chip，切换亮暗主题并确认 900 × 600 下无横向滚动
+- 下一步：用户确认 Phase 2-C 后，整理 G2 验收清单；G2 通过后进入 Phase 3 首页页面级门禁
 
 后续阶段继续使用以下模板：
 

@@ -3,6 +3,8 @@ import { createPinia } from 'pinia'
 import { describe, expect, it } from 'vitest'
 
 import BaseButton from './base/BaseButton.vue'
+import BaseInput from './form/BaseInput.vue'
+import BaseTabs from './navigation/BaseTabs.vue'
 import PageFrame from './layout/PageFrame.vue'
 import UiFoundationPreview from '@/views/UiFoundationPreview.vue'
 
@@ -50,5 +52,21 @@ describe('shared UI foundation', () => {
     await openButton.trigger('click')
     expect(document.body.querySelector('[role="dialog"]')).not.toBeNull()
     wrapper.unmount()
+  })
+
+  it('provides accessible form and navigation contracts', async () => {
+    const input = mount(BaseInput, { props: { label: '名称', modelValue: '' } })
+    await input.get('input').setValue('新名称')
+    expect(input.emitted('update:modelValue')).toEqual([['新名称']])
+    expect(input.get('label').attributes('for')).toBe(input.get('input').attributes('id'))
+
+    const tabs = mount(BaseTabs, {
+      props: {
+        modelValue: 'one',
+        items: [{ label: '一', value: 'one' }, { label: '二', value: 'two' }],
+      },
+    })
+    await tabs.findAll('[role="tab"]')[1].trigger('click')
+    expect(tabs.emitted('update:modelValue')).toEqual([['two']])
   })
 })

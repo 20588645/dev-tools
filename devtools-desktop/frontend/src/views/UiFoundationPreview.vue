@@ -15,18 +15,34 @@ import PageHeader from '@/components/layout/PageHeader.vue'
 import PageSection from '@/components/layout/PageSection.vue'
 import PageToolbar from '@/components/layout/PageToolbar.vue'
 import PageTop from '@/components/layout/PageTop.vue'
+import BaseInput from '@/components/form/BaseInput.vue'
+import BaseTextarea from '@/components/form/BaseTextarea.vue'
+import BaseSelect from '@/components/form/BaseSelect.vue'
+import BaseCheckbox from '@/components/form/BaseCheckbox.vue'
+import BaseRadio from '@/components/form/BaseRadio.vue'
+import BaseSwitch from '@/components/form/BaseSwitch.vue'
+import BaseTabs from '@/components/navigation/BaseTabs.vue'
+import BaseSegmented from '@/components/navigation/BaseSegmented.vue'
+import FilterChip from '@/components/navigation/FilterChip.vue'
 import { useAppStore } from '@/stores/app'
 
 const app = useAppStore()
 const dialogOpen = ref(false)
 type PreviewTab = '基础控件' | '反馈状态' | '页面骨架'
 const selectedTab = ref<PreviewTab>('基础控件')
-const tabs: PreviewTab[] = ['基础控件', '反馈状态', '页面骨架']
-
-const selectNextTab = (direction: 1 | -1) => {
-  const currentIndex = tabs.indexOf(selectedTab.value)
-  selectedTab.value = tabs[(currentIndex + direction + tabs.length) % tabs.length]
-}
+const tabs = [
+  { label: '基础控件', value: '基础控件' },
+  { label: '反馈状态', value: '反馈状态' },
+  { label: '页面骨架', value: '页面骨架' },
+]
+const inputValue = ref('personalTools')
+const textareaValue = ref('这里是一段可编辑的说明。')
+const selectValue = ref('dark')
+const checked = ref(true)
+const radioValue = ref('local')
+const switchValue = ref(true)
+const segmentedValue = ref('全部')
+const filterSelected = ref(true)
 </script>
 
 <template>
@@ -40,19 +56,7 @@ const selectNextTab = (direction: 1 | -1) => {
           </template>
         </PageHeader>
         <PageToolbar>
-          <div class="preview-tabs" role="tablist" aria-label="预览分类">
-            <button
-              v-for="tab in tabs"
-              :key="tab"
-              type="button"
-              role="tab"
-              :aria-selected="selectedTab === tab"
-              :tabindex="selectedTab === tab ? 0 : -1"
-              @click="selectedTab = tab"
-              @keydown.right.prevent="selectNextTab(1)"
-              @keydown.left.prevent="selectNextTab(-1)"
-            >{{ tab }}</button>
-          </div>
+          <BaseTabs v-model="selectedTab" :items="tabs" aria-label="预览分类" />
           <StatusIndicator :status="app.theme === 'dark' ? 'idle' : 'online'" :label="`${app.theme === 'dark' ? '暗色' : '亮色'}主题`" />
         </PageToolbar>
       </PageTop>
@@ -87,6 +91,31 @@ const selectNextTab = (direction: 1 | -1) => {
           <div class="card-preview">
             <div><strong>可交互卡片</strong><p>所有公共展示组件从语义 Token 读取颜色和间距。</p></div>
             <BaseButton size="sm" @click="dialogOpen = true">打开弹窗</BaseButton>
+          </div>
+        </BaseCard>
+      </PageSection>
+
+      <PageSection title="表单控件">
+        <BaseCard variant="raised">
+          <div class="form-grid">
+            <BaseInput v-model="inputValue" label="项目名称" help-text="用于列表和页面标题。" />
+            <BaseSelect v-model="selectValue" label="默认主题" :options="[{ label: '暗色主题', value: 'dark' }, { label: '亮色主题', value: 'light' }]" />
+            <BaseTextarea v-model="textareaValue" label="描述" :rows="3" />
+            <div class="choice-stack">
+              <BaseCheckbox v-model="checked" label="自动保存" description="离开页面前保存当前设置。" />
+              <BaseRadio v-model="radioValue" name="preview-source" value="local" label="本地数据" />
+              <BaseRadio v-model="radioValue" name="preview-source" value="remote" label="远程数据" />
+              <BaseSwitch v-model="switchValue" label="启用通知" description="允许显示操作反馈。" />
+            </div>
+          </div>
+        </BaseCard>
+      </PageSection>
+
+      <PageSection title="导航与筛选">
+        <BaseCard>
+          <div class="navigation-row">
+            <BaseSegmented v-model="segmentedValue" :options="[{ label: '全部', value: '全部' }, { label: '运行中', value: '运行中' }, { label: '已停止', value: '已停止' }]" />
+            <FilterChip v-model:selected="filterSelected" label="收藏项目" :count="3" removable />
           </div>
         </BaseCard>
       </PageSection>
@@ -127,13 +156,12 @@ const selectNextTab = (direction: 1 | -1) => {
 .preview-grid { display: grid; gap: var(--space-6); max-width: 1120px; margin: 0 auto; }
 .component-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
 .component-row + .component-row { margin-top: var(--space-4); }
-.preview-tabs { display: flex; gap: var(--space-1); }
-.preview-tabs button { min-height: var(--component-control-height-sm); padding: 0 var(--space-3); color: var(--color-text-muted); background: transparent; border: 1px solid transparent; border-radius: var(--radius-sm); cursor: pointer; }
-.preview-tabs button[aria-selected="true"] { color: var(--color-action); background: var(--color-surface-subtle); border-color: var(--color-border); }
-.preview-tabs button:focus-visible { outline: none; box-shadow: var(--component-focus-outline); }
 .card-preview { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); }
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
+.choice-stack { display: grid; align-content: start; gap: var(--space-3); }
+.navigation-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
 strong { color: var(--color-text); font-size: var(--font-size-lg); }
 p { margin: var(--space-2) 0 0; color: var(--color-text-muted); font-size: var(--font-size-sm); line-height: var(--line-height-relaxed); }
 .dialog-copy { margin: 0; }
-@media (max-width: 720px) { .card-preview { align-items: flex-start; flex-direction: column; } }
+@media (max-width: 720px) { .card-preview { align-items: flex-start; flex-direction: column; } .form-grid { grid-template-columns: 1fr; } }
 </style>
