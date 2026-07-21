@@ -19,8 +19,14 @@ import { useAppStore } from '@/stores/app'
 
 const app = useAppStore()
 const dialogOpen = ref(false)
-const selectedTab = ref('基础控件')
-const tabs = ['基础控件', '反馈状态', '页面骨架']
+type PreviewTab = '基础控件' | '反馈状态' | '页面骨架'
+const selectedTab = ref<PreviewTab>('基础控件')
+const tabs: PreviewTab[] = ['基础控件', '反馈状态', '页面骨架']
+
+const selectNextTab = (direction: 1 | -1) => {
+  const currentIndex = tabs.indexOf(selectedTab.value)
+  selectedTab.value = tabs[(currentIndex + direction + tabs.length) % tabs.length]
+}
 </script>
 
 <template>
@@ -35,7 +41,17 @@ const tabs = ['基础控件', '反馈状态', '页面骨架']
         </PageHeader>
         <PageToolbar>
           <div class="preview-tabs" role="tablist" aria-label="预览分类">
-            <button v-for="tab in tabs" :key="tab" type="button" :aria-selected="selectedTab === tab" @click="selectedTab = tab">{{ tab }}</button>
+            <button
+              v-for="tab in tabs"
+              :key="tab"
+              type="button"
+              role="tab"
+              :aria-selected="selectedTab === tab"
+              :tabindex="selectedTab === tab ? 0 : -1"
+              @click="selectedTab = tab"
+              @keydown.right.prevent="selectNextTab(1)"
+              @keydown.left.prevent="selectNextTab(-1)"
+            >{{ tab }}</button>
           </div>
           <StatusIndicator :status="app.theme === 'dark' ? 'idle' : 'online'" :label="`${app.theme === 'dark' ? '暗色' : '亮色'}主题`" />
         </PageToolbar>
@@ -43,6 +59,7 @@ const tabs = ['基础控件', '反馈状态', '页面骨架']
     </template>
 
     <div class="preview-grid">
+      <template v-if="selectedTab === '基础控件'">
       <PageSection title="按钮与状态">
         <BaseCard variant="raised">
           <div class="component-row">
@@ -65,12 +82,6 @@ const tabs = ['基础控件', '反馈状态', '页面骨架']
         </BaseCard>
       </PageSection>
 
-      <PageSection title="反馈状态">
-        <BaseCard><LoadingState compact label="正在读取 Sidecar 状态…" /></BaseCard>
-        <BaseCard><EmptyState title="还没有项目" description="添加第一个项目后，它会显示在这里。" /></BaseCard>
-        <BaseCard><ErrorState title="连接失败" description="Sidecar 暂时没有响应。" @retry="app.markSidecarOffline()" /></BaseCard>
-      </PageSection>
-
       <PageSection title="卡片与弹窗">
         <BaseCard variant="subtle" interactive>
           <div class="card-preview">
@@ -79,6 +90,31 @@ const tabs = ['基础控件', '反馈状态', '页面骨架']
           </div>
         </BaseCard>
       </PageSection>
+
+      </template>
+
+      <template v-else-if="selectedTab === '反馈状态'">
+        <PageSection title="反馈状态">
+        <BaseCard><LoadingState compact label="正在读取 Sidecar 状态…" /></BaseCard>
+        <BaseCard><EmptyState title="还没有项目" description="添加第一个项目后，它会显示在这里。" /></BaseCard>
+        <BaseCard><ErrorState title="连接失败" description="Sidecar 暂时没有响应。" @retry="app.markSidecarOffline()" /></BaseCard>
+        </PageSection>
+
+      </template>
+
+      <template v-else>
+        <PageSection title="页面骨架">
+          <BaseCard variant="raised">
+            <div class="skeleton-preview">
+              <PageHeader title="页面标题" description="公共 PageHeader 负责统一标题、说明和操作布局">
+                <template #icon>⌁</template>
+                <template #actions><BaseButton size="sm">主操作</BaseButton></template>
+              </PageHeader>
+              <PageToolbar><StatusIndicator status="online" label="服务在线" /></PageToolbar>
+            </div>
+          </BaseCard>
+        </PageSection>
+      </template>
     </div>
   </PageFrame>
 

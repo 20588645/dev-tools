@@ -1684,6 +1684,7 @@ refactor: 删除旧首页脚本与无消费者样式
 - 新增测试：公共组件 smoke test（按钮 loading/disabled、PageFrame 顶部与正文结构）
 - 自动化验证：TypeScript、ESLint、迁移 CSS Stylelint、Token 校验、7 项 Vitest 测试、前端构建全部通过
 - 浏览器验收：亮色、暗色、弹窗打开/关闭、默认窗口和 900 × 600 小窗口检查通过；小窗口无横向溢出
+- 交互修复：Tab 改为真实 `role=tab` 与内容切换，支持左右方向键；修复 Teleport 弹窗层级被旧壳遮挡的问题；补充 Tab/弹窗 smoke test
 - 手动 E2E 等级：必须
 - 手动 E2E 状态：待用户确认
 - 手动 E2E 范围：打开 `http://127.0.0.1:1420/?uiFoundation=1`，检查亮/暗主题、按钮状态、反馈卡片、弹窗 Esc/关闭和 900 × 600 下无横向滚动；现有业务页不受预览入口影响
