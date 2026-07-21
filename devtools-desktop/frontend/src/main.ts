@@ -20,6 +20,8 @@ function mountMigrationHost(root: Element | null = document.querySelector('#vue-
 }
 
 const legacyHomeRootPresent = Boolean(document.querySelector('#vue-home-root'))
+const uiFoundationPreviewRequested = import.meta.env.DEV
+  && new URLSearchParams(window.location.search).get('uiFoundation') === '1'
 
 window.__DEVTOOLS_MIGRATION__ = {
   pinia,
@@ -30,7 +32,7 @@ window.__DEVTOOLS_MIGRATION__ = {
   mount: mountMigrationHost,
 }
 
-if (!legacyHomeRootPresent) {
+if (!legacyHomeRootPresent || uiFoundationPreviewRequested) {
   mountMigrationHost()
 }
 

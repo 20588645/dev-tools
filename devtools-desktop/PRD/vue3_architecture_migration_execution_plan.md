@@ -1675,6 +1675,20 @@ refactor: 删除旧首页脚本与无消费者样式
 - 手动 E2E 状态：不适用
 - 下一步：实现首批公共组件和开发环境组件预览页，完成亮暗主题与 1665 × 1184 / 900 × 600 验收
 
+#### Phase 2-B / 首批公共组件与预览页
+
+- 完成日期：2026-07-21（代码与浏览器验收）
+- 变更文件：`frontend/src/components/layout/*`、`frontend/src/components/base/*`、`frontend/src/components/feedback/*`、`frontend/src/views/UiFoundationPreview.vue`、`frontend/src/App.vue`
+- 已实现：`PageFrame`、`PageBody`、`PageTop`、`PageHeader`、`PageToolbar`、`PageSection`、`BaseButton`、`BaseIconButton`、`BaseCard`、`BaseBadge`、`StatusIndicator`、`BaseDialog`、`ConfirmDialog`、`LoadingState`、`EmptyState`、`ErrorState`、`AppToastHost`
+- 预览入口：开发服务 `/?uiFoundation=1`；不加入正式侧边栏，不接管业务页面
+- 新增测试：公共组件 smoke test（按钮 loading/disabled、PageFrame 顶部与正文结构）
+- 自动化验证：TypeScript、ESLint、迁移 CSS Stylelint、Token 校验、7 项 Vitest 测试、前端构建全部通过
+- 浏览器验收：亮色、暗色、弹窗打开/关闭、默认窗口和 900 × 600 小窗口检查通过；小窗口无横向溢出
+- 手动 E2E 等级：必须
+- 手动 E2E 状态：待用户确认
+- 手动 E2E 范围：打开 `http://127.0.0.1:1420/?uiFoundation=1`，检查亮/暗主题、按钮状态、反馈卡片、弹窗 Esc/关闭和 900 × 600 下无横向滚动；现有业务页不受预览入口影响
+- 下一步：补齐表单、导航筛选类基础组件和完整预览覆盖，用户确认后进入 Phase 3 首页页面门禁
+
 后续阶段继续使用以下模板：
 
 ```markdown

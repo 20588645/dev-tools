@@ -3,6 +3,7 @@
   --color-surface: var(--color-neutral-900);
   --color-surface-raised: var(--color-neutral-800);
   --color-surface-subtle: rgb(148 163 184 / 8%);
+  --color-overlay: rgb(2 6 23 / 48%);
   --color-text: var(--color-neutral-100);
   --color-text-muted: var(--color-neutral-400);
   --color-text-subtle: var(--color-neutral-500);
