@@ -15,6 +15,11 @@ const usageState = {
   lastBucket: 'min10',
 };
 
+const usagePricingState = {
+  rows: [],
+  candidates: [],
+};
+
 const USAGE_APP_NAMES = { claude: 'Claude Code', codex: 'Codex' };
 const USAGE_APP_SERIES = [
   { key: 'claude', name: 'Claude Code', cssVar: '--primary' },
@@ -713,23 +718,129 @@ async function toggleUsagePricing() {
 }
 
 async function loadUsagePricing() {
+  const table = document.getElementById('usagePricingTable');
+  if (!table) return;
+  const [rows, candidates] = await Promise.all([
+    API.get('/api/usage/pricing'),
+    API.get('/api/usage/pricing/candidates?pendingOnly=true'),
+  ]);
+  usagePricingState.rows = Array.isArray(rows) ? rows : [];
+  usagePricingState.candidates = Array.isArray(candidates) ? candidates : [];
+  renderUsagePricingCandidates();
+  renderUsagePricingTable();
+}
+
+function usagePricingSourceLabel(source) {
+  return ({ 'models.dev': 'models.dev', LiteLLM: 'LiteLLM', OpenRouter: 'OpenRouter' }[source]) || source || '未知来源';
+}
+
+function usagePricingConfidenceLabel(confidence) {
+  return ({
+    verified: '多源一致',
+    'single-source': '单一来源',
+    conflict: '来源有差异',
+    unmatched: '未匹配',
+  }[confidence]) || confidence || '待确认';
+}
+
+function usagePricingFormat(n) {
+  const value = Number(n) || 0;
+  return value >= 1 ? value.toFixed(4).replace(/0+$/, '').replace(/\.$/, '') : value.toFixed(6).replace(/0+$/, '').replace(/\.$/, '');
+}
+
+function usagePricingParseSources(row) {
+  try {
+    const sources = JSON.parse(row.sourcesJson || '[]');
+    return Array.isArray(sources) ? sources : [];
+  } catch { return []; }
+}
+
+function renderUsagePricingCandidates() {
+  const el = document.getElementById('usagePricingCandidates');
+  if (!el) return;
+  const candidates = usagePricingState.candidates.filter(c => c.confidence !== 'unmatched');
+  if (!candidates.length) {
+    el.innerHTML = '<div class="usage-pricing-candidates-empty">暂无待确认的远程价格。点击“自动同步价格”获取公开目录中的 API 价格参考。</div>';
+    return;
+  }
+  el.innerHTML = `
+    <div class="usage-pricing-candidates">
+      <div class="usage-pricing-candidates-title">待确认价格 <span>远程数据不会自动覆盖当前单价</span></div>
+      <table class="usage-table usage-pricing-candidate-table">
+        <thead><tr><th>模型</th><th>建议单价（输入 / 输出 / 命中 / 创建）</th><th>来源</th><th>状态</th><th></th></tr></thead>
+        <tbody>${candidates.map(c => {
+          const sources = usagePricingParseSources(c);
+          const sourceText = sources.length > 1
+            ? sources.map(s => usagePricingSourceLabel(s.source)).join(' + ')
+            : usagePricingSourceLabel(c.source);
+          const statusClass = c.confidence === 'conflict' ? 'usage-pricing-status-warn' : 'usage-pricing-status-ok';
+          const actionText = c.confidence === 'conflict' ? '应用主来源' : '应用';
+          return `<tr>
+            <td><div class="usage-pricing-candidate-model">${escapeHtml(c.modelId)}</div><div class="usage-mini-sub">${escapeHtml(c.displayName || c.remoteModelId || '')}</div></td>
+            <td class="usage-mono">$${usagePricingFormat(c.inputPerM)} / $${usagePricingFormat(c.outputPerM)} / $${usagePricingFormat(c.cacheReadPerM)} / $${usagePricingFormat(c.cacheCreationPerM)}</td>
+            <td><span class="usage-pricing-source">${escapeHtml(sourceText)}</span></td>
+            <td><span class="usage-pricing-status ${statusClass}">${escapeHtml(usagePricingConfidenceLabel(c.confidence))}</span></td>
+            <td><button class="btn-secondary usage-pager-btn" onclick="applyUsagePricingCandidate('${escapeOnclickArg(c.modelId)}')">${actionText}</button></td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>
+      <div class="usage-pricing-candidates-note">价格按 USD / 百万 Token 展示；“来源有差异”时仅应用优先来源，建议先到供应商定价页核对。</div>
+    </div>`;
+}
+
+function renderUsagePricingTable() {
   const el = document.getElementById('usagePricingTable');
   if (!el) return;
-  const rows = await API.get('/api/usage/pricing');
+  const rows = usagePricingState.rows;
+  if (!rows.length) {
+    el.innerHTML = '<div class="usage-empty">暂无本地模型价格记录</div>';
+    return;
+  }
   el.innerHTML = `<table class="usage-table">
     <thead><tr>
-      <th>模型 ID</th><th>显示名</th><th>输入</th><th>输出</th><th>缓存命中</th><th>缓存创建</th><th></th>
+      <th>模型 ID</th><th>显示名</th><th>输入</th><th>输出</th><th>缓存命中</th><th>缓存创建</th><th>来源</th><th></th>
     </tr></thead>
-    <tbody>${rows.map((r, i) => `<tr data-model="${r.modelId}">
-      <td class="usage-mono">${r.modelId}</td>
-      <td><input class="usage-price-input usage-price-name" id="upName${i}" value="${r.displayName}"></td>
-      <td><input class="usage-price-input" id="upIn${i}" type="number" step="0.01" value="${r.inputPerM}"></td>
-      <td><input class="usage-price-input" id="upOut${i}" type="number" step="0.01" value="${r.outputPerM}"></td>
-      <td><input class="usage-price-input" id="upCr${i}" type="number" step="0.001" value="${r.cacheReadPerM}"></td>
-      <td><input class="usage-price-input" id="upCc${i}" type="number" step="0.01" value="${r.cacheCreationPerM}"></td>
-      <td><button class="btn-secondary usage-pager-btn" onclick="saveUsagePricing('${r.modelId}', ${i})">保存</button></td>
+    <tbody>${rows.map((r, i) => `<tr data-model="${escapeAttr(r.modelId)}">
+      <td class="usage-mono">${escapeHtml(r.modelId)}</td>
+      <td><input class="usage-price-input usage-price-name" id="upName${i}" value="${escapeAttr(r.displayName)}"></td>
+      <td><input class="usage-price-input" id="upIn${i}" type="number" step="0.01" value="${escapeAttr(String(r.inputPerM))}"></td>
+      <td><input class="usage-price-input" id="upOut${i}" type="number" step="0.01" value="${escapeAttr(String(r.outputPerM))}"></td>
+      <td><input class="usage-price-input" id="upCr${i}" type="number" step="0.001" value="${escapeAttr(String(r.cacheReadPerM))}"></td>
+      <td><input class="usage-price-input" id="upCc${i}" type="number" step="0.01" value="${escapeAttr(String(r.cacheCreationPerM))}"></td>
+      <td><span class="usage-pricing-source">${escapeHtml(usagePricingSourceLabel(r.source))}</span><div class="usage-mini-sub">${escapeHtml(usagePricingConfidenceLabel(r.confidence))}</div></td>
+      <td><button class="btn-secondary usage-pager-btn" onclick="saveUsagePricing('${escapeOnclickArg(r.modelId)}', ${i})">保存</button></td>
     </tr>`).join('')}</tbody>
   </table>`;
+}
+
+async function syncUsagePricing() {
+  const info = document.getElementById('usagePricingSyncInfo');
+  const button = document.querySelector('.usage-pricing-sync-btn');
+  if (button) button.disabled = true;
+  if (info) info.textContent = '正在同步…';
+  try {
+    const result = await API.post('/api/usage/pricing/sync', {});
+    const okSources = (result.sources || []).filter(s => s.ok).map(s => usagePricingSourceLabel(s.source));
+    if (info) info.textContent = `已更新 ${okSources.length} 个来源 · ${new Date((result.fetchedAt || 0) * 1000).toLocaleString()}`;
+    showToast('✅ 价格目录已同步', `${result.pending || 0} 条候选待确认${okSources.length ? ` · ${okSources.join('、')}` : ''}`);
+    await loadUsagePricing();
+  } catch (e) {
+    if (info) info.textContent = '同步失败';
+    showToast('❌ 价格同步失败', e.message);
+  } finally {
+    if (button) button.disabled = false;
+  }
+}
+
+async function applyUsagePricingCandidate(modelId) {
+  try {
+    const result = await API.post('/api/usage/pricing/candidates/' + encodeURIComponent(modelId) + '/apply', {});
+    showToast('✅ 价格已应用', `历史成本已重算 ${usageFmtNum(result.repriced || 0)} 条记录`);
+    await loadUsagePricing();
+    refreshUsage(true);
+  } catch (e) {
+    showToast('❌ 应用失败', e.message);
+  }
 }
 
 async function saveUsagePricing(modelId, i) {
@@ -742,7 +853,8 @@ async function saveUsagePricing(modelId, i) {
       cacheCreationPerM: parseFloat(document.getElementById('upCc' + i).value) || 0,
     });
     showToast('✅ 单价已保存', '历史成本已按新单价重算');
-    refreshUsage();
+    await loadUsagePricing();
+    refreshUsage(true);
   } catch (e) {
     showToast('❌ 保存失败', e.message);
   }

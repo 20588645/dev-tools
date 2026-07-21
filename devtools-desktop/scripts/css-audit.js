@@ -67,7 +67,8 @@ for (const file of cssFiles) {
 }
 
 // ---------- 2. 收集全源码 token（HTML + 全部 JS 含 vendor），含动态前缀 ----------
-const sources = [path.join(ROOT, 'index.html')];
+const legacyHtml = path.resolve(__dirname, '../frontend/index.html');
+const sources = [legacyHtml];
 const walkJs = (dir) => {
   for (const f of fs.readdirSync(dir, { withFileTypes: true })) {
     const full = path.join(dir, f.name);

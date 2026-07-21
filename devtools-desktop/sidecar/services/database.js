@@ -184,6 +184,7 @@ db.exec(`
     cacheReadTokens INTEGER DEFAULT 0,
     cacheCreationTokens INTEGER DEFAULT 0,
     costMicroUsd INTEGER DEFAULT 0,
+    pricingSnapshotJson TEXT DEFAULT '',
     createdAt INTEGER NOT NULL
   );
   CREATE INDEX IF NOT EXISTS idx_usage_logs_createdAt ON usage_logs(createdAt);
@@ -203,13 +204,58 @@ db.exec(`
     inputPerM REAL DEFAULT 0,
     outputPerM REAL DEFAULT 0,
     cacheReadPerM REAL DEFAULT 0,
-    cacheCreationPerM REAL DEFAULT 0
+    cacheCreationPerM REAL DEFAULT 0,
+    source TEXT DEFAULT 'manual',
+    sourceUrl TEXT DEFAULT '',
+    provider TEXT DEFAULT '',
+    confidence TEXT DEFAULT 'manual',
+    fetchedAt INTEGER DEFAULT 0,
+    pricingVersion TEXT DEFAULT '',
+    tiersJson TEXT DEFAULT '[]'
+  );
+
+  CREATE TABLE IF NOT EXISTS pricing_candidates (
+    modelId TEXT PRIMARY KEY,
+    displayName TEXT DEFAULT '',
+    inputPerM REAL DEFAULT 0,
+    outputPerM REAL DEFAULT 0,
+    cacheReadPerM REAL DEFAULT 0,
+    cacheCreationPerM REAL DEFAULT 0,
+    source TEXT DEFAULT '',
+    sourceUrl TEXT DEFAULT '',
+    provider TEXT DEFAULT '',
+    remoteModelId TEXT DEFAULT '',
+    confidence TEXT DEFAULT 'unmatched',
+    status TEXT DEFAULT 'pending',
+    fetchedAt INTEGER DEFAULT 0,
+    tiersJson TEXT DEFAULT '[]',
+    sourcesJson TEXT DEFAULT '[]'
   );
 
   CREATE TABLE IF NOT EXISTS app_settings (
     key TEXT PRIMARY KEY,
     value TEXT DEFAULT ''
   );
+
+  CREATE TABLE IF NOT EXISTS twofa_accounts (
+    id TEXT PRIMARY KEY,
+    issuer TEXT NOT NULL,
+    accountName TEXT NOT NULL,
+    tag TEXT DEFAULT '',
+    groupName TEXT DEFAULT '其他',
+    secretCipherJson TEXT NOT NULL,
+    algorithm TEXT DEFAULT 'SHA1',
+    period INTEGER DEFAULT 30,
+    digits INTEGER DEFAULT 6,
+    favorite INTEGER DEFAULT 0,
+    lastUsedAt INTEGER DEFAULT 0,
+    sortOrder INTEGER DEFAULT 0,
+    createdAt INTEGER NOT NULL,
+    updatedAt INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_twofa_accounts_groupName ON twofa_accounts(groupName);
+  CREATE INDEX IF NOT EXISTS idx_twofa_accounts_lastUsedAt ON twofa_accounts(lastUsedAt);
+  CREATE INDEX IF NOT EXISTS idx_twofa_accounts_sortOrder ON twofa_accounts(sortOrder);
 `);
 
 // 确保 sortOrder 列存在（兼容旧数据库）
@@ -237,6 +283,29 @@ try {
   db.prepare("SELECT stateJson FROM usage_sync LIMIT 1").get();
 } catch {
   db.exec("ALTER TABLE usage_sync ADD COLUMN stateJson TEXT DEFAULT ''");
+}
+
+// 用量价格元数据与历史价格快照（兼容旧数据库）
+const pricingColumns = [
+  ['source', "TEXT DEFAULT 'manual'"],
+  ['sourceUrl', "TEXT DEFAULT ''"],
+  ['provider', "TEXT DEFAULT ''"],
+  ['confidence', "TEXT DEFAULT 'manual'"],
+  ['fetchedAt', 'INTEGER DEFAULT 0'],
+  ['pricingVersion', "TEXT DEFAULT ''"],
+  ['tiersJson', "TEXT DEFAULT '[]'"],
+];
+for (const [name, definition] of pricingColumns) {
+  try {
+    db.prepare(`SELECT ${name} FROM model_pricing LIMIT 1`).get();
+  } catch {
+    db.exec(`ALTER TABLE model_pricing ADD COLUMN ${name} ${definition}`);
+  }
+}
+try {
+  db.prepare('SELECT pricingSnapshotJson FROM usage_logs LIMIT 1').get();
+} catch {
+  db.exec("ALTER TABLE usage_logs ADD COLUMN pricingSnapshotJson TEXT DEFAULT ''");
 }
 
 // ========== 通用应用设置（key/value） ==========

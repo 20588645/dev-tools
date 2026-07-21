@@ -3,16 +3,49 @@
   "version": "0.1.93",
   "private": true,
   "description": "DevTools Desktop - 轻量级开发工具集",
+  "engines": {
+    "node": "^18.19.1 || ^20.19.0 || >=22.12.0"
+  },
   "scripts": {
-    "dev": "npx serve src -l 1420 -s",
+    "dev": "vite --config vite.config.ts",
+    "preview": "vite preview --config vite.config.ts",
     "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "build:frontend": "vue-tsc --noEmit && vite build --config vite.config.ts",
     "build": "node scripts/sync-version.js && tauri build -b app",
     "sync-version": "node scripts/sync-version.js",
+    "typecheck": "vue-tsc --noEmit",
+    "test": "npm run test:unit",
+    "test:unit": "vitest run --config vitest.config.ts",
+    "test:e2e": "playwright test --config playwright.config.ts",
     "lint": "npm run lint:js && npm run lint:css",
-    "lint:js": "npx --yes eslint@9 sidecar scripts src/js",
-    "lint:css": "npx --yes stylelint@16 \"src/css/**/*.css\""
+    "lint:js": "eslint sidecar scripts src/js frontend/src tests vite.config.ts vitest.config.ts playwright.config.ts",
+    "lint:css": "npm run lint:css:legacy && npm run lint:css:migration",
+    "lint:css:legacy": "node scripts/verify-legacy-stylelint-baseline.mjs",
+    "lint:css:migration": "stylelint \"frontend/src/**/*.{vue,css}\""
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^2.0.0"
+    "@playwright/test": "^1.61.1",
+    "@tauri-apps/cli": "^2.0.0",
+    "@types/node": "^26.1.1",
+    "@vitejs/plugin-vue": "5.2.4",
+    "@vue/test-utils": "^2.4.11",
+    "eslint": "^9.39.5",
+    "eslint-plugin-vue": "^10.10.0",
+    "jsdom": "26.1.0",
+    "postcss-html": "^1.8.1",
+    "stylelint": "^16.26.1",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.65.0",
+    "vite": "6.4.3",
+    "vitest": "3.2.7",
+    "vue-eslint-parser": "10.4.1",
+    "vue-tsc": "^3.3.7"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.11.1",
+    "pinia": "^4.0.2",
+    "vue": "^3.5.39",
+    "vue-router": "4.6.4"
   }
 }

@@ -1,179 +1,78 @@
 # DevTools Desktop
 
-> 轻量级 Mac 桌面开发工具集，整合前端项目构建部署和 Git 周报生成。
+个人开发工具集，使用 Tauri 2 + Vue 3 + Vite + Node.js Sidecar 构建，面向 macOS 本地开发、项目运行、部署和开发日志管理。
 
-![Platform](https://img.shields.io/badge/platform-macOS-blue)
-![Tech](https://img.shields.io/badge/tech-Tauri%20%2B%20Node.js-purple)
-![Version](https://img.shields.io/badge/version-0.1.93-green)
+## 当前状态
 
-基于 Tauri 2.x + Node.js Sidecar 架构，双击 .app 即可使用，无需终端操作。
+前端正在按页面渐进式迁移到 Vue 3。Vite、TypeScript、Pinia、Vue Router、Vitest 和 Playwright 已接入；迁移期间旧页面仍通过兼容外壳运行，Sidecar API、WebSocket 协议和 SQLite 数据保持兼容。
 
-## ✨ 功能特性
+## 主要功能
 
-### 🚀 部署面板
+- 项目构建、运行、部署和部署历史
+- 本地/远程文件传输与终端
+- Git 周报、待办、笔记本、个人笔记和文件编辑器
+- IP 纯净检测、2FA 账号验证码和 AI 工具用量统计
+- 亮色/暗色主题、系统通知、Sidecar 状态与自动更新
 
-- **项目自动扫描** — 自动检测项目类型（Webpack / Vite / parallel-webpack），识别多模块结构
-- **多模块选择性构建** — 支持 parallel-webpack 多入口项目，可选择性构建指定模块
-- **Node 版本切换** — 集成 NVM，按项目记忆 Node 版本，构建时自动切换
-- **SFTP 一键部署** — 构建产物自动上传到远程服务器，支持 folder / root 两种上传策略
-- **实时构建日志** — 基于 WebSocket 推送，构建和上传过程实时可见
-- **远程目录浏览** — 内置远程文件浏览器，可视化查看服务器文件结构
-- **部署历史记录** — 完整记录每次构建/部署的状态、耗时、日志
-- **服务器管理** — 支持多服务器管理，多发布路径配置
-- **模块收藏** — 常用模块标记收藏，快速选择
+## 技术结构
 
-### ▶ 本地运行
+```text
+Tauri 2 (Rust)
+├── frontend/       Vue 3 + Vite + TypeScript
+├── sidecar/        Node.js + Express + WebSocket + SQLite
+└── src-tauri/      窗口、托盘、IPC 与 Sidecar 生命周期
+```
 
-- **一键启动** — 快速启动前端开发服务，自动检测启动命令
-- **模块管理** — 多模块项目可选择性运行指定模块
-- **实时日志** — WebSocket 推送运行日志，编译错误即时通知
-- **状态监控** — 运行中项目状态一目了然
+## 开发命令
 
-### 📋 Git 周报
-
-- **多仓库聚合** — 同时配置多个 GitLab 仓库，一键拉取指定时间范围内的 commit 记录
-- **智能分类** — 自动解析 feat/fix/refactor 等 commit 前缀，彩色标签展示
-- **Markdown 导出** — 生成结构化 Markdown 报告，支持复制到剪贴板
-- **按仓库/日期分组** — 灵活的数据展示方式
-- **配置持久化** — Token、作者名、仓库列表自动保存
-
-### 📊 用量统计
-
-- **多应用本地日志解析** — 解析 Claude Code (`~/.claude/projects`) 与 Codex (`~/.codex/sessions`) 会话日志，去重/差分计量，文件级增量扫描，支持应用维度筛选
-- **精准成本计算** — 内置各模型官方单价（支持可视化编辑，改价自动重算历史），微美元整数计费避免浮点误差
-- **趋势可视化** — ECharts 趋势图（Tokens / 成本双轴、悬浮明细）、模型统计、分页请求日志、多时间范围切换
-- **CC Switch 迁移** — 一键导入 CC Switch 历史用量与完整定价表；后台每 5 分钟兜底同步，防会话日志被清理导致丢数据
-
-### ⚙️ 通用
-
-- **侧边栏导航** — 多功能模块统一管理，支持折叠
-- **全局搜索** — `Cmd+K` 快速搜索项目、服务器、操作
-- **服务状态监控** — 实时查看后端服务运行状态和日志
-- **macOS 原生通知** — 构建/部署完成后发送系统通知
-- **快捷键** — `Cmd+1` 部署面板、`Cmd+2` 周报、`Cmd+,` 设置
-
-## 🛠 技术栈
-
-| 层 | 技术 |
-|------|------|
-| 应用框架 | Tauri 2.x (Rust) |
-| 后端服务 | Node.js + Express (Sidecar 模式) |
-| 前端 | 原生 HTML/CSS/JS（零框架依赖） |
-| 实时通信 | WebSocket (ws) |
-| 远程连接 | ssh2（SFTP 上传 + SSH 连接测试） |
-| 加密 | AES-256-GCM（服务器密码加密存储） |
-| 数据存储 | 本地 JSON 文件 |
-
-## 📦 安装 & 启动
-
-### 环境要求
-
-- macOS 12+ (Monterey 及以上)
-- Node.js 18+
-- Rust 工具链（开发时需要）
-- NVM（可选，用于 Node 版本切换）
-
-### 开发模式
+在 `devtools-desktop/` 目录执行：
 
 ```bash
-# 克隆项目
-git clone https://gitee.com/ldy1103/dev-tools.git
-cd dev-tools/devtools-desktop
-
-# 安装 sidecar 依赖
-cd sidecar && npm install && cd ..
-
-# 开发运行
-cargo tauri dev
+npm install
+npm run dev              # Vite 浏览器开发服务
+npm run typecheck       # TypeScript/Vue 类型检查
+npm run lint            # ESLint + Stylelint
+npm run test:unit       # Vitest 单元测试
+npm run test:e2e        # Playwright 浏览器回归
+npm run tauri:dev       # Tauri 桌面开发模式
+npm run build           # 前端构建并打包 macOS App
 ```
 
-### 构建发布
+Sidecar 依赖首次安装：
 
 ```bash
-# 构建 .app 和 .dmg
-cargo tauri build
-
-# 产出位置
-# src-tauri/target/release/bundle/macos/DevTools.app
-# src-tauri/target/release/bundle/dmg/DevTools_0.1.93_aarch64.dmg
+cd sidecar && npm install
 ```
 
-### 安装到 Applications
+开发测试时优先使用隔离沙箱：
 
 ```bash
-cp -R src-tauri/target/release/bundle/macos/DevTools.app /Applications/
+DEVTOOLS_TEST=1 node sidecar/index.js
 ```
 
-## 📁 项目结构
+## 目录说明
 
-```
+```text
 devtools-desktop/
-├── src/                          # 前端 UI
-│   ├── index.html                # 主页面
-│   ├── css/style.css             # 全局样式
-│   └── js/
-│       ├── app.js                # 核心业务逻辑
-│       ├── api.js                # HTTP 请求封装
-│       └── websocket.js          # WebSocket 客户端
-├── sidecar/                      # Node.js 后端
-│   ├── index.js                  # Express + WebSocket 入口
-│   ├── routes/
-│   │   ├── projects.js           # 项目管理 API
-│   │   ├── servers.js            # 服务器管理 API
-│   │   ├── deploy.js             # 构建 & 部署 API
-│   │   ├── history.js            # 部署历史 API
-│   │   ├── run.js                # 本地运行 API
-│   │   └── report.js             # 周报生成 API
-│   ├── services/
-│   │   ├── scanner.js            # 项目扫描引擎
-│   │   ├── builder.js            # 构建引擎（支持 NVM）
-│   │   ├── deployer.js           # SFTP 部署引擎
-│   │   ├── crypto.js             # AES 加密/解密
-│   │   └── gitlab.js             # GitLab API 封装
-│   └── data/                     # 运行时数据
-├── src-tauri/                    # Tauri/Rust 层
-│   ├── src/lib.rs                # 主进程（启动 sidecar）
-│   ├── tauri.conf.json           # 应用配置
-│   └── icons/                    # 应用图标
-└── design-references/            # 设计参考稿
+├── frontend/          # Vue 入口、路由和迁移中的页面组件
+├── src/                # 迁移期间保留的旧 CSS、JavaScript 和 vendor 资源
+├── sidecar/            # REST API、WebSocket、业务服务和 SQLite
+├── src-tauri/          # Tauri/Rust 桌面层
+├── scripts/            # 构建、版本同步和质量检查
+├── tests/              # 自动化测试
+├── PRD/                # 当前迁移计划、测试基线和证据
+└── design-preview/     # 当前仍在使用的设计参考与视觉验收素材
 ```
 
-## 🔧 架构说明
+## 架构迁移文档
 
-```
-┌─────────────────────────────────────┐
-│        Tauri 主进程 (Rust)          │  窗口管理、启动 sidecar
-├─────────────────────────────────────┤
-│       系统 WebKit (WebView)         │  渲染前端 UI
-├─────────────────────────────────────┤
-│       前端 (HTML/CSS/JS)            │  用户交互界面
-├─────────────────────────────────────┤
-│     Node.js Sidecar 子进程          │  业务逻辑、SSH/SFTP、GitLab API
-└─────────────────────────────────────┘
-```
+- [Vue 3 架构渐进重构执行计划](devtools-desktop/PRD/vue3_architecture_migration_execution_plan.md)
+- [Vue 迁移测试基线](devtools-desktop/PRD/vue-migration-test-baseline.md)
 
-应用启动时，Tauri 主进程自动 spawn Node sidecar 子进程，前端通过 HTTP + WebSocket 与 sidecar 通信。关闭应用时 sidecar 随之退出。
+重构遵循“逐页研究、用户确认、组件复用、自动化验证、手动 E2E 验收”的流程，不一次性重写所有页面。
 
-## ⚡ 性能
+## 数据与安全
 
-| 指标 | 数值 |
-|------|------|
-| 空闲内存 | ~160MB |
-| 空闲 CPU | 0% |
-| 应用包体 | ~15MB（不含 node_modules） |
-| 启动时间 | < 2s |
-
-## ⚠️ 注意事项
-
-- 本工具定位为**个人开发工具**，仅绑定 127.0.0.1 本机访问
-- 服务器密码经 AES-256-GCM 加密后存储，密钥保存在 `sidecar/data/.secret`
-- 首次启动会自动生成加密密钥，请勿删除 `.secret` 文件
-- 未签名应用首次打开需要在「系统设置 → 隐私与安全性」中允许
-
-## 📌 历史版本
-
-早期的两个独立 Web 工具（deploy-panel、git-weekly-report）已归档至 `archive/web-standalone` 分支。
-
-## 📄 License
-
-MIT
+- Sidecar 默认只监听 `127.0.0.1`。
+- 用户数据保存在 `devtools-desktop/sidecar/data/`，不要提交数据库、密钥或备份文件。
+- `dist/`、`src-tauri/target/`、`test-results/` 等均为可再生构建/测试产物，不手工维护。

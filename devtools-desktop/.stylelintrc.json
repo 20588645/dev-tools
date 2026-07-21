@@ -9,5 +9,20 @@
     "font-family-no-duplicate-names": true,
     "keyframe-block-no-duplicate-selectors": true,
     "no-descending-specificity": null
-  }
+  },
+  "overrides": [
+    {
+      "files": ["frontend/src/**/*.vue"],
+      "customSyntax": "postcss-html",
+      "rules": {
+        "declaration-no-important": true
+      }
+    },
+    {
+      "files": ["frontend/src/**/*.css"],
+      "rules": {
+        "declaration-no-important": true
+      }
+    }
+  ]
 }

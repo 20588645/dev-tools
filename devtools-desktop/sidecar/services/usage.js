@@ -19,6 +19,7 @@ const CODEX_SESSION_DIRS = [
 ];
 const SYNC_THROTTLE_MS = 15000;
 let lastSyncAt = 0;
+let snapshotsBackfilled = false;
 
 // 默认单价（USD / 百万 token），与 cc-switch (MIT) 的 seed 数据对齐
 // 格式: [modelId, displayName, input, output, cacheRead, cacheCreation]
@@ -101,6 +102,25 @@ function calcCostMicroUsd(entry, pricing) {
   );
 }
 
+// 将本次成本计算使用的价格固化到用量记录中，避免远程目录更新后无法追溯。
+function pricingSnapshot(pricing) {
+  if (!pricing) return '';
+  let tiers = [];
+  try {
+    tiers = Array.isArray(pricing.tiers) ? pricing.tiers : JSON.parse(pricing.tiersJson || '[]');
+  } catch { tiers = []; }
+  return JSON.stringify({
+    modelId: pricing.modelId || '',
+    inputPerM: Number(pricing.inputPerM) || 0,
+    outputPerM: Number(pricing.outputPerM) || 0,
+    cacheReadPerM: Number(pricing.cacheReadPerM) || 0,
+    cacheCreationPerM: Number(pricing.cacheCreationPerM) || 0,
+    source: pricing.source || 'manual',
+    pricingVersion: pricing.pricingVersion || '',
+    tiers,
+  });
+}
+
 // ========== 会话日志解析 ==========
 
 function listLogFiles() {
@@ -151,11 +171,20 @@ function codexSessionId(filePath) {
   return m ? m[1] : path.basename(filePath, '.jsonl');
 }
 
+function usageToInt(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? Math.max(0, Math.trunc(n)) : 0;
+}
+
 /**
- * Codex 解析：token_count 事件携带会话累计值，相邻事件差分得到单次用量。
+ * Codex 解析：优先使用 token_count 事件中的 last_token_usage（单次用量）。
  * OpenAI 语义下 input_tokens 已包含 cached_input_tokens，入库前归一化为
- * "新增输入 = input - cached"，与 Claude 口径对齐。state（当前模型/工作目录/
- * 上一次累计值）随 usage_sync.stateJson 持久化，保证跨次增量扫描差分正确。
+ * "新增输入 = input - cached"，与 Claude 口径对齐。
+ *
+ * 旧版日志可能没有 last_token_usage，此时才回退到 total_token_usage 差分。
+ * Codex 会并行写入多个 turn 的 token_count 事件，累计值可能短暂回退；
+ * 这种回退不能当作会话重置，否则会把数十亿累计值重复计入。回退事件只
+ * 更新游标并跳过，后续单次用量仍会正常统计。
  */
 function parseCodexLines(lines, state, sessionId) {
   const entries = [];
@@ -174,20 +203,37 @@ function parseCodexLines(lines, state, sessionId) {
     if (obj.type !== 'event_msg' || p.type !== 'token_count' || !p.info) continue;
     const tot = p.info.total_token_usage;
     if (!tot) continue;
-    const prev = state.prevTotal || {};
-    let dIn = Math.trunc(tot.input_tokens || 0) - Math.trunc(prev.input || 0);
-    let dCache = Math.trunc(tot.cached_input_tokens || 0) - Math.trunc(prev.cached || 0);
-    let dOut = Math.trunc(tot.output_tokens || 0) - Math.trunc(prev.output || 0);
-    if (dIn < 0 || dCache < 0 || dOut < 0) {
-      // 会话内计数被重置：当前累计值即本段增量
-      dIn = Math.trunc(tot.input_tokens || 0);
-      dCache = Math.trunc(tot.cached_input_tokens || 0);
-      dOut = Math.trunc(tot.output_tokens || 0);
+
+    let dIn;
+    let dCache;
+    let dOut;
+
+    // 新版 Codex 已直接提供当前事件的单次用量，避免对并行累计值做差分。
+    const last = p.info.last_token_usage;
+    if (last && typeof last === 'object') {
+      dIn = usageToInt(last.input_tokens);
+      dCache = usageToInt(last.cached_input_tokens);
+      dOut = usageToInt(last.output_tokens);
+    } else {
+      // 兼容没有 last_token_usage 的旧日志：只接受单调递增的累计值。
+      const prev = state.prevTotal || {};
+      dIn = usageToInt(tot.input_tokens) - usageToInt(prev.input);
+      dCache = usageToInt(tot.cached_input_tokens) - usageToInt(prev.cached);
+      dOut = usageToInt(tot.output_tokens) - usageToInt(prev.output);
+      if (dIn < 0 || dCache < 0 || dOut < 0) {
+        state.nonMonotonicCount = (state.nonMonotonicCount || 0) + 1;
+        state.prevTotal = {
+          input: usageToInt(tot.input_tokens),
+          cached: usageToInt(tot.cached_input_tokens),
+          output: usageToInt(tot.output_tokens),
+        };
+        continue;
+      }
     }
     state.prevTotal = {
-      input: Math.trunc(tot.input_tokens || 0),
-      cached: Math.trunc(tot.cached_input_tokens || 0),
-      output: Math.trunc(tot.output_tokens || 0),
+      input: usageToInt(tot.input_tokens),
+      cached: usageToInt(tot.cached_input_tokens),
+      output: usageToInt(tot.output_tokens),
     };
     if (dIn + dOut <= 0) continue;
     const ts = Date.parse(obj.timestamp);
@@ -210,9 +256,11 @@ function parseCodexLines(lines, state, sessionId) {
 const insertLog = () => db.prepare(`
   INSERT OR REPLACE INTO usage_logs
     (requestId, sessionId, projectDir, appType, model, pricingModel,
-     inputTokens, outputTokens, cacheReadTokens, cacheCreationTokens, costMicroUsd, createdAt)
+     inputTokens, outputTokens, cacheReadTokens, cacheCreationTokens, costMicroUsd,
+     pricingSnapshotJson, createdAt)
   VALUES (@requestId, @sessionId, @projectDir, @appType, @model, @pricingModel,
-     @inputTokens, @outputTokens, @cacheReadTokens, @cacheCreationTokens, @costMicroUsd, @createdAt)
+     @inputTokens, @outputTokens, @cacheReadTokens, @cacheCreationTokens, @costMicroUsd,
+     @pricingSnapshotJson, @createdAt)
 `);
 
 function syncFile(filePath, app) {
@@ -254,6 +302,7 @@ function syncFile(filePath, app) {
     const pricing = findPricing(entry.model);
     entry.pricingModel = pricing ? pricing.modelId : '';
     entry.costMicroUsd = calcCostMicroUsd(entry, pricing);
+    entry.pricingSnapshotJson = pricingSnapshot(pricing);
   }
 
   const insert = insertLog();
@@ -281,6 +330,10 @@ function syncUsage(force = false) {
   lastSyncAt = now;
   ensurePricingSeed();
   pricingCache.clear();
+  if (!snapshotsBackfilled) {
+    backfillPricingSnapshots();
+    snapshotsBackfilled = true;
+  }
   const files = listLogFiles();
   let upserted = 0;
   for (const f of files) upserted += syncFile(f.file, f.app);
@@ -377,9 +430,11 @@ function importFromCcSwitch() {
   const insert = db.prepare(`
     INSERT OR IGNORE INTO usage_logs
       (requestId, sessionId, projectDir, appType, model, pricingModel,
-       inputTokens, outputTokens, cacheReadTokens, cacheCreationTokens, costMicroUsd, createdAt)
-    VALUES (@requestId, @sessionId, '', 'claude', @model, @pricingModel,
-       @inputTokens, @outputTokens, @cacheReadTokens, @cacheCreationTokens, @costMicroUsd, @createdAt)
+       inputTokens, outputTokens, cacheReadTokens, cacheCreationTokens, costMicroUsd,
+       pricingSnapshotJson, createdAt)
+  VALUES (@requestId, @sessionId, '', 'claude', @model, @pricingModel,
+       @inputTokens, @outputTokens, @cacheReadTokens, @cacheCreationTokens, @costMicroUsd,
+       @pricingSnapshotJson, @createdAt)
   `);
   let imported = 0;
   const tx = db.transaction(() => {
@@ -388,6 +443,7 @@ function importFromCcSwitch() {
       const pricing = findPricing(r.model);
       r.pricingModel = pricing ? pricing.modelId : '';
       r.costMicroUsd = calcCostMicroUsd(r, pricing);
+      r.pricingSnapshotJson = pricingSnapshot(pricing);
       imported += insert.run(r).changes;
     }
   });
@@ -401,15 +457,32 @@ function importFromCcSwitch() {
 function repriceAll() {
   pricingCache.clear();
   const rows = db.prepare('SELECT requestId, model, inputTokens, outputTokens, cacheReadTokens, cacheCreationTokens FROM usage_logs').all();
-  const update = db.prepare('UPDATE usage_logs SET pricingModel = ?, costMicroUsd = ? WHERE requestId = ?');
+  const update = db.prepare('UPDATE usage_logs SET pricingModel = ?, costMicroUsd = ?, pricingSnapshotJson = ? WHERE requestId = ?');
   const tx = db.transaction(() => {
     for (const r of rows) {
       const pricing = findPricing(r.model);
-      update.run(pricing ? pricing.modelId : '', calcCostMicroUsd(r, pricing), r.requestId);
+      update.run(pricing ? pricing.modelId : '', calcCostMicroUsd(r, pricing), pricingSnapshot(pricing), r.requestId);
     }
   });
   tx();
   return { repriced: rows.length };
+}
+
+// 兼容升级前的旧记录：价格表有匹配项但尚未保存快照时，补写当前价格版本。
+// 不主动改变无匹配记录的成本，只有手动保存/应用价格时才会全量重算。
+function backfillPricingSnapshots() {
+  const rows = db.prepare(`
+    SELECT l.requestId, p.*
+    FROM usage_logs l JOIN model_pricing p ON p.modelId = l.pricingModel
+    WHERE l.pricingSnapshotJson = '' AND l.pricingModel <> ''
+  `).all();
+  if (!rows.length) return 0;
+  const update = db.prepare('UPDATE usage_logs SET pricingSnapshotJson = ? WHERE requestId = ?');
+  const tx = db.transaction(() => {
+    for (const row of rows) update.run(pricingSnapshot(row), row.requestId);
+  });
+  tx();
+  return rows.length;
 }
 
 // ========== 聚合查询 ==========

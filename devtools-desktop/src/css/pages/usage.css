@@ -111,6 +111,38 @@
 
 .usage-mini-sub { font-size: .74rem; color: var(--text-muted); margin-top: 3px; font-family: var(--font-mono); }
 
+.usage-pricing-card-title { justify-content: space-between; }
+
+.usage-pricing-actions { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+
+.usage-pricing-sync-btn { padding: 5px 12px; font-size: .78rem; }
+
+.usage-pricing-candidates {
+  margin: 0 0 16px; padding: 12px 14px;
+  border: 1px solid var(--primary-light); border-radius: var(--radius-xs);
+  background: color-mix(in srgb, var(--primary-light) 14%, var(--bg-card));
+}
+
+.usage-pricing-candidates-title { font-size: .84rem; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; }
+
+.usage-pricing-candidates-title span { margin-left: 8px; font-size: .74rem; font-weight: 400; color: var(--text-muted); }
+
+.usage-pricing-candidate-table { margin-top: 2px; }
+
+.usage-pricing-candidate-model { color: var(--text-primary); font-family: var(--font-mono); font-size: .8rem; }
+
+.usage-pricing-source { color: var(--text-secondary); font-size: .78rem; white-space: nowrap; }
+
+.usage-pricing-status { display: inline-block; padding: 2px 7px; border-radius: 10px; font-size: .7rem; white-space: nowrap; }
+
+.usage-pricing-status-ok { background: var(--success-subtle); color: var(--success); }
+
+.usage-pricing-status-warn { background: var(--warning-subtle); color: var(--warning); }
+
+.usage-pricing-candidates-note, .usage-pricing-candidates-empty { color: var(--text-muted); font-size: .74rem; margin-top: 8px; }
+
+.usage-pricing-candidates-empty { padding: 10px 0 16px; }
+
 /* 用量统计 - 应用维度筛选与标识 */
 .usage-chip-groups { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 

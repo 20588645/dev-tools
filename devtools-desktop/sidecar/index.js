@@ -87,6 +87,7 @@ app.use('/api/ipcheck', require('./routes/ipcheck'));
 app.use('/api/upgrade', require('./routes/upgrade'));
 app.use('/api/terminal', require('./routes/terminal'));
 app.use('/api/usage', require('./routes/usage'));
+app.use('/api/twofa', require('./routes/twofa'));
 app.use('/api/backup', require('./routes/backup'));
 app.use('/api/settings', require('./routes/settings'));
 

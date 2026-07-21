@@ -1,6 +1,7 @@
 # Dependencies
 node_modules/
 package-lock.json
+!devtools-desktop/package-lock.json
 
 # Rust build artifacts
 devtools-desktop/src-tauri/target/
@@ -29,6 +30,12 @@ devtools-desktop/scripts/rebuild.log
 .vscode/
 .idea/
 
+# AI/editor local metadata
+.claude/
+.cursor/
+.kiro/
+CLAUDE.md
+
 # Python
 __pycache__/
 *.pyc
@@ -37,5 +44,15 @@ reports/
 # Build output
 devtools-desktop/icon-1024.png
 devtools-desktop/icon.svg
+devtools-desktop/dist/
+devtools-desktop/coverage/
+devtools-desktop/test-results/
+devtools-desktop/playwright-report/
 devtools-desktop/sidecar/data/backups/
 devtools-desktop/sidecar/data/restore-pending.db
+
+# Development and verification visuals (do not commit generated captures)
+devtools-desktop/design-preview/screenshots/
+devtools-desktop/PRD/vue-migration/**/evidence/
+devtools-desktop/PRD/vue-migration/**/contact-sheets/
+devtools-desktop/PRD/vue-migration/**/measurements-*.json

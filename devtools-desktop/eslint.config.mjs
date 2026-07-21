@@ -1,10 +1,18 @@
-// ESLint 守门配置 — 最小高信号规则集
-// 定位：拦截真 bug 级问题（重复键/重复声明/不可达代码），不做风格警察。
-// 前端是无模块系统的全局函数风格，跨文件引用无法静态分析，故不启用 no-undef / no-unused-vars。
+import pluginVue from 'eslint-plugin-vue';
+import tseslint from 'typescript-eslint';
+
+// ESLint 守门配置：旧代码保留高信号 bug 规则，新 Vue/TypeScript 代码使用官方推荐规则。
+const vueFiles = ['frontend/src/**/*.vue'];
+const typescriptFiles = ['frontend/src/**/*.ts', 'tests/**/*.ts', '*.config.ts'];
+
 export default [
   {
     ignores: [
       '**/node_modules/**',
+      'dist/**',
+      'coverage/**',
+      'playwright-report/**',
+      'test-results/**',
       'src/js/vendor/**',
       'src/js/xterm*.js',
       'src/js/sortable.min.js',
@@ -14,7 +22,7 @@ export default [
     ],
   },
   {
-    // sidecar / scripts：CommonJS，文件自包含，可多查一项未使用变量
+    // sidecar / 旧 scripts：CommonJS，文件自包含，可多查一项未使用变量
     files: ['sidecar/**/*.js', 'scripts/**/*.js'],
     languageOptions: { ecmaVersion: 2023, sourceType: 'commonjs' },
     rules: {
@@ -26,6 +34,16 @@ export default [
       'no-compare-neg-zero': 'error',
       'use-isnan': 'error',
       'valid-typeof': 'error',
+      'no-unused-vars': ['warn', { args: 'none', varsIgnorePattern: '^_' }],
+    },
+  },
+  {
+    files: ['scripts/**/*.mjs'],
+    languageOptions: { ecmaVersion: 2023, sourceType: 'module' },
+    rules: {
+      'no-dupe-keys': 'error',
+      'no-unreachable': 'error',
+      'no-redeclare': 'error',
       'no-unused-vars': ['warn', { args: 'none', varsIgnorePattern: '^_' }],
     },
   },
@@ -42,6 +60,38 @@ export default [
       'no-compare-neg-zero': 'error',
       'use-isnan': 'error',
       'valid-typeof': 'error',
+    },
+  },
+  ...pluginVue.configs['flat/essential'].map(config => ({
+    ...config,
+    files: vueFiles,
+  })),
+  ...tseslint.configs.recommended.map(config => ({
+    ...config,
+    files: typescriptFiles,
+  })),
+  {
+    files: vueFiles,
+    plugins: {
+      '@typescript-eslint': tseslint.plugin,
+    },
+    languageOptions: {
+      parserOptions: {
+        parser: tseslint.parser,
+        ecmaVersion: 2023,
+        sourceType: 'module',
+        extraFileExtensions: ['.vue'],
+      },
+    },
+    rules: {
+      'vue/multi-word-component-names': 'off',
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+    },
+  },
+  {
+    files: typescriptFiles,
+    rules: {
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
     },
   },
 ];
