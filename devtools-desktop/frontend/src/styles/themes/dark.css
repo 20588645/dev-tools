@@ -1,0 +1,4 @@
+:root,
+[data-theme="dark"] {
+  /* Dark semantic values are declared in semantic.css; this file keeps the theme hook explicit. */
+}

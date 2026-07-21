@@ -1,0 +1,11 @@
+:root {
+  --component-page-padding: var(--space-6);
+  --component-control-height-sm: 28px;
+  --component-control-height-md: 34px;
+  --component-control-height-lg: 40px;
+  --component-control-radius: var(--radius-md);
+  --component-card-padding: var(--space-4);
+  --component-card-radius: var(--radius-lg);
+  --component-dialog-width: 520px;
+  --component-focus-outline: 0 0 0 3px color-mix(in srgb, var(--color-focus-ring) 30%, transparent);
+}

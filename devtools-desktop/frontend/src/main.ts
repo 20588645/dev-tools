@@ -2,6 +2,7 @@ import { createPinia } from 'pinia'
 import { createApp, type App as VueApp } from 'vue'
 
 import App from './App.vue'
+import './styles/tokens/index.css'
 
 const pinia = createPinia()
 let migrationApp: VueApp<Element> | null = null

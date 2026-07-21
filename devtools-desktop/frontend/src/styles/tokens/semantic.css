@@ -1,0 +1,19 @@
+:root {
+  --color-page: var(--color-neutral-950);
+  --color-surface: var(--color-neutral-900);
+  --color-surface-raised: var(--color-neutral-800);
+  --color-surface-subtle: rgb(148 163 184 / 8%);
+  --color-text: var(--color-neutral-100);
+  --color-text-muted: var(--color-neutral-400);
+  --color-text-subtle: var(--color-neutral-500);
+  --color-border: rgb(148 163 184 / 22%);
+  --color-border-strong: rgb(148 163 184 / 38%);
+  --color-focus-ring: var(--color-indigo-400);
+  --color-action: var(--color-indigo-500);
+  --color-action-hover: var(--color-indigo-400);
+  --color-action-contrast: var(--color-neutral-0);
+  --color-success: var(--color-green-400);
+  --color-warning: var(--color-amber-400);
+  --color-danger: var(--color-red-400);
+  --color-info: var(--color-cyan-400);
+}

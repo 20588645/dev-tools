@@ -19,6 +19,7 @@
     "test:unit": "vitest run --config vitest.config.ts",
     "test:e2e": "playwright test --config playwright.config.ts",
     "lint": "npm run lint:js && npm run lint:css",
+    "lint:tokens": "node scripts/validate-design-tokens.mjs",
     "lint:js": "eslint sidecar scripts src/js frontend/src tests vite.config.ts vitest.config.ts playwright.config.ts",
     "lint:css": "npm run lint:css:legacy && npm run lint:css:migration",
     "lint:css:legacy": "node scripts/verify-legacy-stylelint-baseline.mjs",

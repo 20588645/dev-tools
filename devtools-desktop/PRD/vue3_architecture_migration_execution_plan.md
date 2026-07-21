@@ -642,7 +642,7 @@ export default defineConfig({
 
 #### API Client
 
-- [ ] 创建 `frontend/src/services/api-client.ts`。
+- [x] 创建 `frontend/src/services/api-client.ts`。
 - [ ] 保留当前动态读取 Sidecar 端口和浏览器 `?apiPort=` 调试能力。
 - [ ] 统一 `GET/POST/PUT/DELETE`、超时、AbortSignal 和错误映射。
 - [ ] 为长连接测试、SSH、SFTP 等请求允许独立超时。
@@ -651,7 +651,7 @@ export default defineConfig({
 
 #### WebSocket Client
 
-- [ ] 创建 `frontend/src/services/websocket-client.ts`。
+- [x] 创建 `frontend/src/services/websocket-client.ts`。
 - [ ] 保留指数退避重连策略。
 - [ ] 使用类型化事件映射替代任意字符串和任意数据。
 - [ ] `on()` 必须返回取消订阅函数。
@@ -660,25 +660,25 @@ export default defineConfig({
 
 #### Tauri Client
 
-- [ ] 创建 `frontend/src/services/tauri-client.ts`。
+- [x] 创建 `frontend/src/services/tauri-client.ts`。
 - [ ] 封装 `get_sidecar_port`、`restart_sidecar`、托盘更新和退出动作。
 - [ ] 浏览器模式提供明确的 fallback，不在组件中判断 `window.__TAURI__`。
 - [ ] 迁移完成后关闭 `withGlobalTauri` 的可行性另行评估。
 
 #### 基础 Stores
 
-- [ ] `useAppStore`：主题、Sidecar 状态、应用初始化状态。
-- [ ] `useNotificationStore`：Toast、操作通知、错误提示。
-- [ ] `useSettingsStore`：全局设置及连接超时。
+- [x] `useAppStore`：主题、Sidecar 状态、应用初始化状态。
+- [x] `useNotificationStore`：Toast、操作通知、错误提示。
+- [x] `useSettingsStore`：全局设置及连接超时。
 - [ ] 暂不把每个页面的本地状态放入 Pinia。
 
 #### 公共 Composables
 
-- [ ] `useInterval`：自动清理 timer。
-- [ ] `useEventListener`：自动解绑事件。
-- [ ] `useResizeObserver`：自动 disconnect。
-- [ ] `usePageVisibility`：兼容旧壳激活/隐藏状态。
-- [ ] `useAsyncState`：统一 loading、error、retry。
+- [x] `useInterval`：自动清理 timer。
+- [x] `useEventListener`：自动解绑事件。
+- [x] `useResizeObserver`：自动 disconnect。
+- [x] `usePageVisibility`：兼容旧壳激活/隐藏状态。
+- [x] `useAsyncState`：统一 loading、error、retry。
 
 #### 公共反馈组件
 
@@ -698,7 +698,7 @@ export default defineConfig({
 - `PRD/vue-migration/page-header-audit/assessment.md`
 - `PRD/vue-migration/page-header-audit/page-top-component-spec.md`
 
-- [ ] 建立 `PRD/vue-migration/shared-ui-inventory.md`。
+- [x] 建立 `PRD/vue-migration/shared-ui-inventory.md`。
 - [ ] 盘点 14 个页面中的标题区、工具栏、按钮、表单、筛选、卡片、状态、弹窗、表格和空状态。
 - [ ] 记录同一语义当前存在的尺寸、颜色、间距、图标和交互差异。
 - [ ] 将候选项分为“首批基础组件 / 随页面提炼 / 页面私有”三类。
@@ -706,13 +706,13 @@ export default defineConfig({
 
 #### 三层 Design Token
 
-- [ ] 创建 `tokens/primitives.css`：颜色阶、4px 间距、字号、行高、字重、圆角、阴影、动效和 z-index。
-- [ ] 创建 `tokens/semantic.css`：页面背景、分层表面、文字、边框、焦点、操作色和状态色。
-- [ ] 创建 `tokens/components.css`：PageHeader、按钮、输入框、下拉框、卡片、Badge 和 Dialog 契约。
-- [ ] 创建 `themes/light.css` 和 `themes/dark.css`，只重映射 Semantic Token，不复制组件规则。
+- [x] 创建 `tokens/primitives.css`：颜色阶、4px 间距、字号、行高、字重、圆角、阴影、动效和 z-index。
+- [x] 创建 `tokens/semantic.css`：页面背景、分层表面、文字、边框、焦点、操作色和状态色。
+- [x] 创建 `tokens/components.css`：PageHeader、按钮、输入框、下拉框、卡片、Badge 和 Dialog 契约。
+- [x] 创建 `themes/light.css` 和 `themes/dark.css`，只重映射 Semantic Token，不复制组件规则。
 - [ ] 将现有 `base.css` 变量逐项映射到新 Token，迁移期提供别名兼容，禁止一次性改名造成全页面回归。
 - [ ] 建立 Token 用途说明和弃用流程；不得创建含义重复但名称不同的变量。
-- [ ] 创建 `scripts/validate-design-tokens.mjs` 和 `npm run lint:tokens`，检查第一方组件中的硬编码颜色与未登记 Token。
+- [x] 创建 `scripts/validate-design-tokens.mjs` 和 `npm run lint:tokens`，检查第一方组件中的硬编码颜色与未登记 Token。
 
 #### 首批公共组件
 
@@ -1663,6 +1663,17 @@ refactor: 删除旧首页脚本与无消费者样式
 - 手动 E2E 等级：按子阶段判定；涉及运行时基础设施、主题或公共组件的子阶段必须手动 E2E
 - 手动 E2E 状态：待各子阶段完成后分别验证
 - 下一阶段前置条件：平台层自动化测试通过，公共组件预览页经用户确认后进入 Phase 3 页面级门禁
+
+#### Phase 2-A / 平台服务、Store、Composable 与 Token
+
+- 完成日期：2026-07-21
+- 变更文件：`frontend/src/services/*`、`frontend/src/stores/*`、`frontend/src/composables/*`、`frontend/src/styles/*`、`scripts/validate-design-tokens.mjs`
+- 新增测试：API Client HTTP/JSON/错误映射测试；WebSocket 订阅取消和消息分发测试
+- 自动化验证：`lint:tokens`、TypeScript、ESLint、迁移 CSS Stylelint、Vitest、前端构建全部通过
+- 运行时接入：本子阶段只建立平台模块和 Token 源码，未替换旧页面 API/WS 调用，未改变现有业务页面行为
+- 手动 E2E 等级：不需要（未接管可见业务页面；接入 API、主题或公共组件时重新判定）
+- 手动 E2E 状态：不适用
+- 下一步：实现首批公共组件和开发环境组件预览页，完成亮暗主题与 1665 × 1184 / 900 × 600 验收
 
 后续阶段继续使用以下模板：
 

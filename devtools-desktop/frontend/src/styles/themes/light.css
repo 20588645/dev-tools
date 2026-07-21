@@ -1,0 +1,19 @@
+[data-theme="light"] {
+  --color-page: var(--color-neutral-50);
+  --color-surface: var(--color-neutral-0);
+  --color-surface-raised: var(--color-neutral-100);
+  --color-surface-subtle: rgb(15 23 42 / 4%);
+  --color-text: var(--color-neutral-900);
+  --color-text-muted: var(--color-neutral-600);
+  --color-text-subtle: var(--color-neutral-500);
+  --color-border: rgb(15 23 42 / 14%);
+  --color-border-strong: rgb(15 23 42 / 24%);
+  --color-focus-ring: var(--color-indigo-600);
+  --color-action: var(--color-indigo-600);
+  --color-action-hover: var(--color-indigo-500);
+  --color-action-contrast: var(--color-neutral-0);
+  --color-success: #15803d;
+  --color-warning: #b45309;
+  --color-danger: #b91c1c;
+  --color-info: #0e7490;
+}
