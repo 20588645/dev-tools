@@ -199,12 +199,12 @@ input[type="number"] {
   border-color: color-mix(in srgb, var(--primary) 26%, var(--border-color)) !important;
 }
 
-input[type="text"],
-input[type="password"],
-input[type="number"],
-input[type="date"],
+input[type="text"]:not([class^="n-"]):not([class*=" n-"]),
+input[type="password"]:not([class^="n-"]):not([class*=" n-"]),
+input[type="number"]:not([class^="n-"]):not([class*=" n-"]),
+input[type="date"]:not([class^="n-"]):not([class*=" n-"]),
 select,
-textarea,
+textarea:not([class^="n-"]):not([class*=" n-"]),
 .setting-input,
 .form-input,
 .rfield input,
@@ -470,9 +470,9 @@ select {
   border-color: transparent !important;
 }
 
-input,
+input:not([class^="n-"]):not([class*=" n-"]),
 select,
-textarea,
+textarea:not([class^="n-"]):not([class*=" n-"]),
 .setting-input,
 .form-input,
 .rfield input,

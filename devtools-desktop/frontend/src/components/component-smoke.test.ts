@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest'
 
 import '@/styles/tokens/index.css'
 import BaseButton from './base/BaseButton.vue'
+import BaseDialog from './feedback/BaseDialog.vue'
 import BaseInput from './form/BaseInput.vue'
 import BaseTabs from './navigation/BaseTabs.vue'
 import PageFrame from './layout/PageFrame.vue'
@@ -71,6 +72,19 @@ describe('shared UI foundation', () => {
     })
     await tabs.findAll('[role="tab"]')[1].trigger('click')
     expect(tabs.emitted('update:modelValue')).toEqual([['two']])
+  })
+
+  it('closes the Naive UI-backed dialog through its project contract', async () => {
+    const dialog = mount(BaseDialog, {
+      props: { modelValue: true, title: '测试弹窗' },
+      attachTo: document.body,
+    })
+    const close = document.body.querySelector('button[aria-label="关闭"]')
+    if (!close) throw new Error('关闭按钮未渲染')
+    close.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    await dialog.vm.$nextTick()
+    expect(dialog.emitted('update:modelValue')).toContainEqual([false])
+    dialog.unmount()
   })
 
   it('mounts and exposes third-party complex controls through the adapter layer', async () => {

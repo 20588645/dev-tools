@@ -17,15 +17,18 @@ import { useAppStore } from '@/stores/app'
 const app = useAppStore()
 const theme = computed(() => (app.theme === 'dark' ? darkTheme : lightTheme))
 const themeOverrides = computed(() => createNaiveThemeOverrides(app.theme))
+const overlayTarget = typeof document !== 'undefined' && document.querySelector('#ui-foundation-preview')
+  ? '#ui-foundation-preview'
+  : undefined
 
 if (typeof document !== 'undefined') app.applyTheme(app.theme)
 </script>
 
 <template>
   <NConfigProvider :locale="zhCN" :date-locale="dateZhCN" :theme="theme" :theme-overrides="themeOverrides">
-    <NMessageProvider>
-      <NDialogProvider>
-        <NNotificationProvider>
+    <NMessageProvider :to="overlayTarget">
+      <NDialogProvider :to="overlayTarget">
+        <NNotificationProvider :to="overlayTarget">
           <slot />
         </NNotificationProvider>
       </NDialogProvider>

@@ -18,6 +18,9 @@ interface ProjectRow {
 }
 
 const message = useMessage()
+const overlayTarget = typeof document !== 'undefined' && document.querySelector('#ui-foundation-preview')
+  ? '#ui-foundation-preview'
+  : undefined
 const inputValue = ref('Naive UI 适配层')
 const selectValue = ref('balanced')
 const dateValue = ref<number | null>(Date.now())
@@ -56,8 +59,8 @@ function showMessage() {
 
     <div class="vendor-showcase__controls">
       <NInput v-model:value="inputValue" aria-label="项目名称" placeholder="输入项目名称" />
-      <NSelect v-model:value="selectValue" aria-label="主题模式" :options="selectOptions" />
-      <NDatePicker v-model:value="dateValue" aria-label="选择日期" placeholder="选择日期" type="date" clearable />
+      <NSelect v-model:value="selectValue" aria-label="主题模式" :options="selectOptions" :virtual-scroll="false" :to="overlayTarget" />
+      <NDatePicker v-model:value="dateValue" aria-label="选择日期" placeholder="选择日期" type="date" clearable :to="overlayTarget" />
     </div>
 
     <NDataTable :columns="columns" :data="rows" :pagination="false" :bordered="false" />
@@ -70,6 +73,24 @@ function showMessage() {
 .vendor-showcase__intro strong { color: var(--color-text); font-size: var(--font-size-lg); }
 .vendor-showcase__intro p { margin: var(--space-2) 0 0; color: var(--color-text-muted); font-size: var(--font-size-sm); line-height: var(--line-height-relaxed); }
 .vendor-showcase__controls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); }
+
+/*
+ * Legacy pages still expose broad input selectors. Naive UI's native input
+ * elements are implementation details, so they must remain transparent and
+ * borderless; the outer Naive control owns the single visible frame.
+ */
+:deep(.n-input input.n-input__input-el),
+:deep(.n-base-selection input.n-base-selection-input__input) {
+  box-sizing: border-box;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  outline: 0;
+}
+
 @media (max-width: 720px) {
   .vendor-showcase__intro { align-items: flex-start; flex-direction: column; }
   .vendor-showcase__controls { grid-template-columns: 1fr; }

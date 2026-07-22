@@ -11,7 +11,7 @@ const showUiFoundationPreview = import.meta.env.DEV
 </script>
 
 <template>
-  <div v-if="showUiFoundationPreview" class="ui-foundation-preview">
+  <div v-if="showUiFoundationPreview" id="ui-foundation-preview" class="ui-foundation-preview">
     <UiLibraryProvider>
       <UiFoundationPreview />
     </UiLibraryProvider>

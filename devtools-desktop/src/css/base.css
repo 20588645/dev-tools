@@ -69,7 +69,11 @@
 @keyframes pageIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 
 /* ---------- Inputs ---------- */
-input[type="text"], input[type="password"], input[type="number"], input[type="date"], select {
+input[type="text"]:not([class^="n-"]):not([class*=" n-"]),
+input[type="password"]:not([class^="n-"]):not([class*=" n-"]),
+input[type="number"]:not([class^="n-"]):not([class*=" n-"]),
+input[type="date"]:not([class^="n-"]):not([class*=" n-"]),
+select {
   padding: 7px 10px;
   background: var(--bg-input);
   border: 1px solid var(--border);
@@ -81,7 +85,7 @@ input[type="text"], input[type="password"], input[type="number"], input[type="da
   transition: border-color 0.15s;
 }
 
-input:focus, select:focus { border-color: var(--accent); }
+input:not([class^="n-"]):not([class*=" n-"]):focus, select:focus { border-color: var(--accent); }
 
 /* ---------- Modal (Public) — Cockpit Style ---------- */
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }

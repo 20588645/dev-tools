@@ -209,11 +209,11 @@
   background: var(--primary-light) !important;
 }
 
-input[type="text"],
-input[type="password"],
-input[type="number"],
-input[type="date"],
-input[type="file"],
+input[type="text"]:not([class^="n-"]):not([class*=" n-"]),
+input[type="password"]:not([class^="n-"]):not([class*=" n-"]),
+input[type="number"]:not([class^="n-"]):not([class*=" n-"]),
+input[type="date"]:not([class^="n-"]):not([class*=" n-"]),
+input[type="file"]:not([class^="n-"]):not([class*=" n-"]),
 select,
 .setting-input,
 .form-input,
@@ -230,7 +230,7 @@ select,
   box-shadow: none !important;
 }
 
-input:focus,
+input:not([class^="n-"]):not([class*=" n-"]):focus,
 select:focus,
 .setting-input:focus,
 .form-input:focus {
@@ -363,10 +363,10 @@ body[data-theme="light"] .history-table {
   margin-bottom: 16px !important;
 }
 
-input[type="text"],
-input[type="password"],
-input[type="number"],
-input[type="date"],
+input[type="text"]:not([class^="n-"]):not([class*=" n-"]),
+input[type="password"]:not([class^="n-"]):not([class*=" n-"]),
+input[type="number"]:not([class^="n-"]):not([class*=" n-"]),
+input[type="date"]:not([class^="n-"]):not([class*=" n-"]),
 select,
 .setting-input,
 .form-input,

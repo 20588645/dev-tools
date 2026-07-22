@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { NCard } from 'naive-ui'
+
 withDefaults(defineProps<{
   variant?: 'default' | 'raised' | 'subtle'
   interactive?: boolean
@@ -6,25 +8,34 @@ withDefaults(defineProps<{
   variant: 'default',
   interactive: false,
 })
+
+// Naive UI's `embedded` card variant defaults to the primary action color.
+// Keep the embedded surface on the project's semantic surface token instead,
+// so subtle cards remain calm in both light and dark themes.
+const cardThemeOverrides = {
+  color: 'var(--color-surface)',
+  colorEmbedded: 'var(--color-surface-subtle)',
+  colorEmbeddedModal: 'var(--color-surface-subtle)',
+  colorEmbeddedPopover: 'var(--color-surface-subtle)',
+  textColor: 'var(--color-text)',
+  titleTextColor: 'var(--color-text)',
+  borderColor: 'var(--color-border)',
+}
 </script>
 
 <template>
-  <article class="base-card" :class="[`base-card--${variant}`, { 'base-card--interactive': interactive }]">
+  <NCard
+    class="base-card"
+    :class="[`base-card--${variant}`]"
+    :bordered="variant !== 'subtle'"
+    :embedded="variant === 'subtle'"
+    :hoverable="interactive"
+    :theme-overrides="cardThemeOverrides"
+  >
     <slot />
-  </article>
+  </NCard>
 </template>
 
 <style scoped>
-.base-card {
-  padding: var(--component-card-padding);
-  color: var(--color-text);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--component-card-radius);
-}
-
-.base-card--raised { background: var(--color-surface-raised); box-shadow: var(--shadow-sm); }
-.base-card--subtle { background: var(--color-surface-subtle); border-color: transparent; }
-.base-card--interactive { transition: border-color var(--duration-normal) var(--ease-standard), transform var(--duration-normal) var(--ease-standard); }
-.base-card--interactive:hover { border-color: var(--color-border-strong); transform: translateY(-1px); }
+.base-card { color: var(--color-text); }
 </style>

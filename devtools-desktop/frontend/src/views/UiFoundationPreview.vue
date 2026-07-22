@@ -113,10 +113,10 @@ const filterSelected = ref(true)
         </BaseCard>
       </PageSection>
 
-      <PageSection title="导航与筛选">
+      <PageSection title="导航与筛选（对应业务页筛选 Tab）">
         <BaseCard>
           <div class="navigation-row">
-            <BaseSegmented v-model="segmentedValue" :options="[{ label: '全部', value: '全部' }, { label: '运行中', value: '运行中' }, { label: '已停止', value: '已停止' }]" />
+            <BaseSegmented v-model="segmentedValue" :options="[{ label: '全部', value: '全部' }, { label: '运行中', value: '运行中' }, { label: '多模块', value: '多模块' }, { label: '单体项目', value: '单体项目' }]" />
             <FilterChip v-model:selected="filterSelected" label="收藏项目" :count="3" removable />
           </div>
         </BaseCard>

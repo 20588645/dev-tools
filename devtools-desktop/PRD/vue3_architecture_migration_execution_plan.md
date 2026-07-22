@@ -1,7 +1,7 @@
 # DevTools Desktop Vue 3 架构渐进重构执行计划
 
 > 文档版本：1.7
-> 状态：执行中（G1 已完成，Phase 0/1/2-C/2-D 已通过用户手动 E2E，G2 基础层门禁已完成，准备进入 Phase 3 首页页面门禁）
+> 状态：执行中（G1 已完成，Phase 0/1/2-C/2-D 已通过用户手动 E2E，G2 基础层门禁已完成，Phase 3 首页 PG0～PG2 已完成，等待 PG3 用户确认）
 > 编制日期：2026-07-21  
 > 适用仓库：`devtools-desktop`  
 > 核心原则：保持软件持续可运行，按页面逐步替换，不进行一次性推倒重写。
@@ -827,8 +827,8 @@ services/modules/home-service.ts
 
 #### 任务
 
-- [ ] 重新对照实际软件中的首页效果和当前全部首页代码，给出最后一轮样式、功能和数据真实性建议。
-- [ ] 将用户确认的首页优化等级和实施范围归档；如选择 L2/L3，先确认最终 HTML 原型。
+- [x] 重新对照实际软件中的首页效果和当前全部首页代码，给出最后一轮样式、功能和数据真实性建议，见 `PRD/vue-migration/pages/home/assessment.md`。
+- [ ] 将用户确认的首页优化等级和实施范围归档，见 `PRD/vue-migration/pages/home/decision.md`；如选择 L2/L3，先确认最终 HTML 原型。
 - [ ] 将 `src/js/vue/home-page.js` 模板迁入 `.vue` 文件。
 - [ ] 保留已确认的亮色、暗色样式和默认窗口布局。
 - [ ] 把时间、昼夜、每日一言、活动节奏拆分为 composable。
@@ -852,6 +852,17 @@ services/modules/home-service.ts
 - 亮色、暗色主题均通过截图检查。
 - 用量卡和纯净检查卡可以进入对应旧页面。
 - 首页代码具备基础组件测试。
+
+#### Phase 3 页面门禁执行记录（2026-07-21）
+
+- [x] PG0 现状取证：已完成默认窗口 1665 × 1184、最小验证窗口 900 × 600 的亮色/暗色浏览器检查；临时截图保存在仓库外。
+- [x] PG1 代码研究：已梳理首页模板、兼容桥、旧应用壳导航、HTTP API、WebSocket、localStorage、定时器和 CSS 耦合。
+- [x] PG2 优化建议：已完成保留/优化/删除/新增建议、公共组件复用方案、数据真实性边界、风险和工作量评估。
+- [ ] PG3 用户确认：等待用户选择 L0、L1、L2 或 L3；选择 L2/L3 时还需确认 HTML 原型范围。
+- 当前页面优化建议：默认推荐 L1；在 PG3 通过前不得创建 `HomeView.vue` 或修改正式首页实现。
+- 评估文档：`PRD/vue-migration/pages/home/assessment.md`。
+- 决策文档：`PRD/vue-migration/pages/home/decision.md`（待确认）。
+- 手动 E2E：本次仅新增文档和迁移门禁状态，不改变运行时代码，**不需要**用户手动 E2E；PG3 确认后开始实现时，按计划将手动 E2E 标记为**必须**。
 
 ---
 
@@ -1139,7 +1150,7 @@ services/modules/home-service.ts
 
 | 顺序 | 页面 | 当前主要文件 | 风险 | 关键依赖 | 目标阶段 | 页面研究与优化决策 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 | 应用首页 | `home.js`、`vue/home-page.js`、`home-vue.css` | 中 | API、活动历史、主题 | Phase 3 | 待按现有设计成果完成 PG0～PG3 |
+| 1 | 应用首页 | `home.js`、`vue/home-page.js`、`home-vue.css` | 中 | API、活动历史、主题 | Phase 3 | PG0～PG2 已完成；PG3 等待用户确认 L0～L3 |
 | 2 | 纯净检测 | `ipcheck.js`、`ipcheck.css` | 中低 | IP API、首页摘要 | Phase 4 | 待评估 |
 | 3 | 工时内容 | `notes.js`、`notes.css` | 中低 | 日期、数据库 | Phase 4 | 待评估 |
 | 4 | 代码周报 | `report.js`、`report.css` | 中 | Sortable、导入导出 | Phase 4 | 待评估 |
@@ -1718,7 +1729,7 @@ refactor: 删除旧首页脚本与无消费者样式
 - 手动 E2E 等级：必须
 - 手动 E2E 状态：通过（用户已确认继续推进）
 - 手动 E2E 范围：刷新 `http://127.0.0.1:1420/?uiFoundation=1`，检查表单输入/下拉/文本域、Checkbox/Radio/Switch、Tab、分段选择和筛选 Chip，切换亮暗主题并确认 900 × 600 下无横向滚动
-- 下一步：Phase 2-C 与 Phase 2-D 均已通过；进入 Phase 3 首页 PG0～PG3 页面级门禁
+- 下一步：完成 Phase 2-E 公共组件 Naive UI 统一封装并通过用户手动 E2E 后，再进入 Phase 3 首页 PG0～PG3 页面级门禁
 
 #### Phase 2-D / Vue 3 UI 组件库接入与项目适配层
 
@@ -1733,7 +1744,7 @@ refactor: 删除旧首页脚本与无消费者样式
 - [x] 创建 `frontend/src/adapters/naive-ui.ts`，建立 Naive UI 主题变量到项目 Semantic/Component Token 的映射。
 - [x] 创建 `frontend/src/components/vendor/`，只放第三方组件的受控适配器，不放业务逻辑。
 - [x] 保持 `BaseButton`、`BaseInput`、`BaseSelect`、`BaseDialog`、`BaseTabs` 等对外 API 稳定；如切换为 Naive UI 内部实现，业务 View 无需改写。
-- [x] 明确每个控件的实现归属：简单输入、复选框和单选框可保留原生实现；复杂下拉、弹窗、表格、日期范围、分页、树和通知优先使用第三方实现。
+- [x] 明确每个控件的实现归属：已登记的基础控件统一由 Naive UI 提供底层实现，项目 Base 组件负责稳定 API；布局和页面语义包装仍由项目组件负责。
 - [x] 第三方库采用组件级导入，记录当前构建产物体积、首屏 chunk 和构建耗时；基线与适配后数据写入执行记录。
 
 ##### POC 与视觉验收
@@ -1762,7 +1773,7 @@ refactor: 删除旧首页脚本与无消费者样式
 - 组件库：Naive UI `^2.44.1`；配套 `katex` `^0.16.47`。
 - 适配文件：`frontend/src/adapters/naive-ui.ts`、`frontend/src/components/vendor/UiLibraryProvider.vue`、`frontend/src/components/vendor/NaiveUiShowcase.vue`、`frontend/src/plugins/ui-library.ts`。
 - 覆盖控件：输入、选择、日期选择、标签、表格、通知；Provider 提供亮暗主题、中文 locale、Message/Dialog/Notification。
-- 归属决策：简单输入和选择类控件继续由第一方 Base 组件承载；复杂下拉、日期、表格、弹层和通知通过 vendor 适配层承载；业务 View 不直接依赖第三方包。
+- 归属决策：所有已登记基础控件均由第一方 Base 组件承载，并在内部使用 Naive UI；业务 View 不直接依赖第三方包。
 - 性能策略：预览页、Provider 和 Naive UI 运行时代码按需拆分，避免旧静态页面启动时加载组件库；普通入口首个 JS chunk 为 85.96 kB（gzip 34.45 kB），组件库与预览拆为独立 chunks。
 - 构建记录：接入前基线（HEAD，未含 Naive UI）为 JS 100.15 kB / gzip 36.78 kB、CSS 28.05 kB / gzip 4.56 kB、构建约 0.57 s；接入后按需拆分为入口 JS 85.96 kB / gzip 34.45 kB、Naive UI Provider 143.26 kB / gzip 35.87 kB、预览 JS 474.29 kB / gzip 125.06 kB、入口 CSS 4.79 kB / gzip 1.36 kB、预览 CSS 26.35 kB / gzip 3.79 kB，构建约 2.19 s。接入后的总产物变大，但普通启动入口不再同步加载组件库。
 - 自动化验证：`typecheck`、`lint:js`、`lint:css:migration`、`lint:tokens`、`test:unit`（4 个测试文件、10 项通过）、`build:frontend` 全部通过。
@@ -1771,6 +1782,40 @@ refactor: 删除旧首页脚本与无消费者样式
 - 手动 E2E 状态：通过（用户已确认继续推进）。
 - 手动 E2E 范围：重新打包更新后打开 UI Foundation 预览；切换亮/暗主题；进入“第三方组件”Tab；输入项目名称、切换主题模式、打开日期选择器并选择/清除日期；观察表格和状态标签；点击“触发通知”；在默认窗口和 900 × 600 下确认无横向溢出、弹层不被裁剪；再返回一个现有业务页面确认导航不受影响。
 - 下一阶段前置条件：已满足；进入 Phase 3 首页 PG0～PG3，暂不编写首页 Vue 实现，等待用户确认优化等级与实施范围。
+
+#### Phase 2-E / 公共组件 Naive UI 统一封装
+
+**目标**：将已经登记的 Base/Form/Navigation/Feedback 组件全部改为 Naive UI-backed wrappers，消除“原生控件与第三方控件并行维护”的分叉，确保后续页面只依赖项目组件 API。
+
+- [x] `BaseButton`、`BaseIconButton`、`BaseBadge`、`BaseCard`、`StatusIndicator` 改为 Naive UI 内部实现。
+- [x] `BaseInput`、`BaseTextarea`、`BaseSelect`、`BaseCheckbox`、`BaseRadio`、`BaseSwitch` 改为 Naive UI 内部实现，保持当前项目 props/events 契约。
+- [x] `BaseTabs`、`BaseSegmented`、`FilterChip` 改为 Naive UI 内部实现，保留数量徽标、禁用和移除语义。
+- [x] `BaseDialog`、`EmptyState`、`LoadingState`、`ErrorState` 改为 Naive UI 内部实现；`ConfirmDialog` 只组合项目 Base 组件。
+- [x] 所有 wrapper 的第三方导入集中在组件文件内部；业务 View、stores、services 和页面私有组件禁止直接导入 `naive-ui`。
+- [x] 为 wrappers 补充 Naive UI 主题映射、亮暗主题预览和关键交互测试，删除不再使用的原生控件视觉规则。
+- [x] 自动化通过：TypeScript、ESLint、迁移 CSS Stylelint、Vitest、前端构建。
+
+**手动 E2E：必须**。用户需在 `/?uiFoundation=1` 中验证亮/暗主题、输入/选择/复选/单选/开关、Tabs/分段/筛选 Chip、卡片/徽标、弹窗、加载/空/错误状态，以及默认窗口和 900 × 600 窗口下无溢出和浮层裁剪。
+
+**完成后**：才进入 Phase 3 首页页面级门禁；后续业务页面只能引用项目 Base/页面结构组件，不得直接引用 Naive UI。
+
+**Phase 2-E 执行记录（2026-07-21）**：
+
+- 改造范围：`frontend/src/components/base/`、`form/`、`navigation/`、`feedback/` 中已登记的公共控件；页面结构组件 `PageFrame`、`PageTop`、`PageHeader` 等保持项目自定义实现。
+- 适配策略：Naive UI 仅作为 wrapper 内部实现，继续由项目 Token 和 `UiLibraryProvider` 提供亮暗主题；业务页面不直接依赖 `naive-ui`。
+- 兼容性修复：保留 `aria-busy`、label/id 关联、tab role、错误/禁用/选中状态和弹窗 Esc/关闭契约；弹窗设置项目对话框层级，避免被旧页面内容遮挡。
+- 自动化验证：`typecheck`、`lint:js`、`lint:css:migration`、`test:unit`（4 个测试文件、11 项通过）、`build:frontend` 通过。
+- 浏览器验证：已在 `http://127.0.0.1:1420/?uiFoundation=1` 验证 Tabs 切换、选择框展开、亮色主题选项、单层边框、复选框/单选框/开关状态和弹窗层级；弹窗 Esc 与关闭按钮可关闭。
+- 手动 E2E 状态：待用户验证；本阶段改变所有共享控件运行时行为，未以自动化浏览器验证替代用户门禁。
+
+**Phase 2-D 预览修复记录（2026-07-21）**：
+
+- 修复旧版 `base.css`、`components.css`、`overrides.css` 的全局原生 `input` 选择器命中 Naive UI 内部输入节点的问题；所有 `n-*` 内部输入不再继承旧项目的背景、边框、内边距和焦点阴影，控件只保留 Naive UI 外层边框。
+- 修复 UI Foundation 预览的浮层层级：Provider、NSelect 和 NDatePicker 在预览存在时挂载到 `#ui-foundation-preview`，避免浮层挂到 `body` 后被高层预览容器遮挡；非预览运行时仍使用 Naive UI 默认挂载目标。
+- 预览示例的两项选择使用 `virtual-scroll=false`。这是开发预览的两项小数据集；不改变业务适配层对大数据下拉的默认能力，避免当前旧壳布局下虚拟列表测量为 0 导致选项不可见。
+- 浏览器复核：亮色、暗色下拉均可展开，选项可选择；内部输入计算样式为透明背景、无边框、无额外内边距。
+- 自动化验证：`typecheck`、`lint:css:migration`、`lint:js`、`test:unit`（10 项通过）、`build:frontend` 通过。
+- 本修复改变了共享 legacy CSS、Provider 和第三方预览运行时行为，**手动 E2E：必须，当前待用户复核**；用户确认后才能提交并继续依赖该预览的后续工作。
 
 后续阶段继续使用以下模板：
 

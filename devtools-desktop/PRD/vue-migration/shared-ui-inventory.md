@@ -1,6 +1,6 @@
 # 共享 UI 现状盘点
 
-> 状态：Phase 2-D 已完成自动化、浏览器与用户手动 E2E；已具备进入 Phase 3 页面级门禁的条件。
+> 状态：Phase 2-D 预览验收已完成；2026-07-21 预览层级与 legacy CSS 隔离修复已通过自动化和浏览器复核。当前进入组件库所有权调整：Naive UI 作为底层实现，项目 Base 组件作为业务唯一入口。
 
 ## 首批基础组件
 
@@ -11,7 +11,7 @@
 | `PageToolbar` / `PageSection` | 筛选、状态和分区 | 已实现 | 工具栏最多两行，统一间距 |
 | `BaseButton` / `BaseIconButton` | 页面操作 | 已实现 | primary、secondary、outline、ghost、danger；统一 loading/disabled |
 | `BaseInput` / `BaseTextarea` / `BaseSelect` | 表单输入 | 已实现 | label、错误、焦点和禁用状态由公共组件负责 |
-| `BaseCheckbox` / `BaseRadio` / `BaseSwitch` | 选择输入 | 已实现 | 保留原生表单语义，统一选中、禁用和说明文本 |
+| `BaseCheckbox` / `BaseRadio` / `BaseSwitch` | 选择输入 | 已实现 | 由 Naive UI 提供交互和可访问性，统一选中、禁用和说明文本 |
 | `BaseTabs` / `BaseSegmented` / `FilterChip` | 导航与筛选 | 已实现 | 键盘导航、选中态、数量 Badge 和移除操作 |
 | `BaseCard` / `BaseBadge` / `StatusIndicator` | 信息展示和状态 | 已实现 | variant 数量有限，状态必须有语义 |
 | `BaseDialog` / `ConfirmDialog` | 弹窗与危险操作确认 | 已实现 | Esc、焦点、遮罩和堆叠策略统一 |
@@ -30,9 +30,9 @@
 
 - 组件库：Naive UI `^2.44.1`。
 - 运行时配套依赖：KaTeX `^0.16.47`（Naive UI 类型声明所需）。
-- 引入策略：当前 POC 采用组件级导入；业务页面只能依赖项目 Base/适配组件。
-- 保留原生控件：简单输入、Checkbox、Radio、Switch 继续使用项目 Base 组件，避免为低复杂度控件增加不必要体积。
-- 优先使用组件库：复杂下拉、日期选择、表格、分页、树、通知和弹层。
+- 引入策略：采用组件级导入；业务页面只能依赖项目 Base/适配组件，不能直接导入 `naive-ui`。
+- 统一底层：已登记的 Base/Form/Navigation/Feedback 控件全部由 Naive UI 实现。原生 HTML 只允许出现在布局、语义包装或组件库明确不覆盖的宿主结构中，不再维护一套平行的原生控件视觉实现。
+- 项目封装层：`Base*` 组件对外暴露项目自己的 props、events 和 slots；Naive UI 只作为内部实现细节。后续替换组件库时只改 `components/vendor`、`adapters` 和 Base 封装层。
 - 弃用规则：禁止业务 View 直接导入 `naive-ui` 或 `element-plus`；如未来替换库，只改 `components/vendor`、`adapters` 和 `plugins/ui-library.ts`。
 
 ## 页面级候选
@@ -50,3 +50,4 @@
 1. 第二个页面出现同一语义后，才评审是否提升为公共组件。
 2. 页面不得覆盖公共组件内部样式；需要新变体时先补组件契约和预览。
 3. 新组件必须同步类型、亮暗主题预览、键盘/ARIA 测试和使用页面清单。
+4. 业务 View 和页面私有组件禁止直接 `import ... from 'naive-ui'`；复杂控件也必须先进入项目 Base/适配层。
