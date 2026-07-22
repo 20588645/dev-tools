@@ -33,11 +33,10 @@
 <link rel="stylesheet" href="css/pages/settings.css">
 <link rel="stylesheet" href="css/pages/filetransfer.css">
 <link rel="stylesheet" href="css/overrides.css">
-<link rel="stylesheet" href="css/pages/home-vue.css">
 <link rel="stylesheet" href="css/xterm.css">
 <link rel="stylesheet" href="js/vendor/codemirror/cm.bundle.css">
 </head>
-<body data-theme="light" class="sidebar-collapsed">
+<body data-theme="light" data-theme-mode="system" class="sidebar-collapsed">
 <div class="app-shell">
   <aside class="app-sidebar" data-tauri-drag-region="deep">
     <div class="sidebar-brand">
@@ -50,7 +49,7 @@
 
     <div class="sidebar-footer">
       <button class="theme-toggle sidebar-tool-button" onclick="openProjectIntro()" title="项目介绍"><span class="sidebar-tool-icon">i</span><span class="sidebar-tool-label">介绍</span></button>
-      <button class="theme-toggle sidebar-tool-button" onclick="toggleTheme()" title="切换主题"><span class="sidebar-tool-icon" id="themeIcon">☀</span><span class="sidebar-tool-label">外观</span></button>
+      <button id="themeModeToggle" class="theme-toggle sidebar-tool-button" onclick="toggleThemeMenu(event)" title="外观：跟随系统" aria-label="外观：跟随系统" aria-haspopup="menu" aria-expanded="false"><span class="sidebar-tool-icon" id="themeIcon">◐</span><span class="sidebar-tool-label">外观</span></button>
       <button class="theme-toggle sidebar-tool-button sidebar-collapse-toggle" title="折叠侧栏"><span class="sidebar-tool-icon sidebar-collapse-icon">‹</span><span class="sidebar-tool-label sidebar-collapse-label">收起</span></button>
     </div>
   </aside>
@@ -58,9 +57,9 @@
     <div class="window-drag-region" data-tauri-drag-region aria-hidden="true"></div>
     <main class="main-content home-active">
 
-<!-- 首页：Vue 渐进式迁移入口，其余页面继续沿用现有页面骨架。 -->
+<!-- 首页：正式 Vue SFC 入口，其余页面继续沿用现有页面骨架。 -->
 <section class="page active home-dashboard" id="page-home">
-  <div id="vue-home-root" aria-live="polite"></div>
+  <div id="vue-migration-host" aria-live="polite"></div>
 </section>
 
 <!-- 部署面板 -->
@@ -1967,18 +1966,9 @@
   </div>
 </div>
 
-<!--
-  Phase 1 迁移宿主：当前首页 Vue 岛仍是唯一活动根实例，因此新宿主先完成编译与契约接入，
-  到 Phase 3 首页正式迁移为 SFC 时再解除 hidden 并接管应用。
--->
-<div id="vue-migration-host" hidden aria-hidden="true"></div>
-
 <script src="js/sortable.min.js"></script>
 <script src="js/api.js"></script>
 <script src="js/websocket.js"></script>
-<script src="js/vendor/vue.global.prod.js"></script>
-<script src="js/vue/home-page.js"></script>
-<script src="js/home.js"></script>
 <script src="js/app.js"></script>
 <script src="js/deploy.js"></script>
 <script src="js/filetransfer.js"></script>

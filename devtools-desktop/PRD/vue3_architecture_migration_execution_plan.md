@@ -1,7 +1,7 @@
 # DevTools Desktop Vue 3 架构渐进重构执行计划
 
-> 文档版本：1.7
-> 状态：执行中（G1 已完成，Phase 0/1/2-C/2-D 已通过用户手动 E2E，G2 基础层门禁已完成，Phase 3 首页 PG0～PG2 已完成，等待 PG3 用户确认）
+> 文档版本：1.8
+> 状态：执行中（G1/G2 已完成，Phase 3 首页 PG0～PG5 与 Tauri 手动 E2E 已通过；下一步进入 Phase 4 页面研究）
 > 编制日期：2026-07-21  
 > 适用仓库：`devtools-desktop`  
 > 核心原则：保持软件持续可运行，按页面逐步替换，不进行一次性推倒重写。
@@ -679,7 +679,7 @@ export default defineConfig({
 
 #### 基础 Stores
 
-- [x] `useAppStore`：主题、Sidecar 状态、应用初始化状态。
+- [x] `useAppStore`：跟随系统/亮色/暗色主题模式、实际生效主题、Sidecar 状态、应用初始化状态。
 - [x] `useNotificationStore`：Toast、操作通知、错误提示。
 - [x] `useSettingsStore`：全局设置及连接超时。
 - [ ] 暂不把每个页面的本地状态放入 Pinia。
@@ -828,19 +828,19 @@ services/modules/home-service.ts
 #### 任务
 
 - [x] 重新对照实际软件中的首页效果和当前全部首页代码，给出最后一轮样式、功能和数据真实性建议，见 `PRD/vue-migration/pages/home/assessment.md`。
-- [ ] 将用户确认的首页优化等级和实施范围归档，见 `PRD/vue-migration/pages/home/decision.md`；如选择 L2/L3，先确认最终 HTML 原型。
-- [ ] 将 `src/js/vue/home-page.js` 模板迁入 `.vue` 文件。
-- [ ] 保留已确认的亮色、暗色样式和默认窗口布局。
-- [ ] 把时间、昼夜、每日一言、活动节奏拆分为 composable。
-- [ ] 把用量和纯净检查请求迁入 service。
-- [ ] 将天气静态值明确标记为 mock，或接入真实天气数据后再移除 mock。
-- [ ] 移除首页对 `window.DevToolsHomeApp` 的依赖。
-- [ ] 使用临时 legacy bridge 接收旧壳的激活和运行状态刷新事件。
-- [ ] 删除 `src/js/home.js`。
-- [ ] 删除 `src/js/vue/home-page.js`。
-- [ ] 删除 `src/js/vendor/vue.global.prod.js` 和对应 script 标签。
+- [x] 将用户确认的首页 L2 优化等级和实施范围归档，见 `PRD/vue-migration/pages/home/decision.md`；最终 HTML 原型已确认。
+- [x] 将 `src/js/vue/home-page.js` 模板迁入正式 Vue SFC 和页面子组件。
+- [x] 保留已确认的亮色、暗色样式和默认窗口布局。
+- [x] 把时间、昼夜、每日一言、活动节奏拆分为 composable。
+- [x] 把用量和纯净检查请求迁入 service。
+- [x] 将天气静态值明确标记为 `HOME_WEATHER_MOCK`，不冒充实时天气数据。
+- [x] 移除首页对 `window.DevToolsHomeApp` 的依赖。
+- [x] 使用临时 legacy bridge 接收旧壳的激活、页面请求和运行状态刷新事件。
+- [x] 删除 `src/js/home.js`。
+- [x] 删除 `src/js/vue/home-page.js`。
+- [x] 删除 `src/js/vendor/vue.global.prod.js` 和对应 script 标签。
 - [x] 删除旧 `src/css/pages/home.css`（已在 2026-07-21 清理审计中确认无当前页面消费者）。
-- [ ] 将 `home-vue.css` 迁入首页组件或 `frontend/src/styles/pages/home.css`。
+- [x] 删除 `home-vue.css`，将正式首页样式迁入 `frontend/src/views/home/home.css`。
 
 #### 验收标准
 
@@ -849,7 +849,7 @@ services/modules/home-service.ts
 - 页面进入和离开不会重复创建时钟或请求。
 - 默认窗口 1665 × 1184 无滚动条和内容裁切。
 - 最小窗口 900 × 600 可滚动但不重叠。
-- 亮色、暗色主题均通过截图检查。
+- 跟随系统、固定亮色和固定暗色主题均通过截图/行为检查。
 - 用量卡和纯净检查卡可以进入对应旧页面。
 - 首页代码具备基础组件测试。
 
@@ -858,11 +858,17 @@ services/modules/home-service.ts
 - [x] PG0 现状取证：已完成默认窗口 1665 × 1184、最小验证窗口 900 × 600 的亮色/暗色浏览器检查；临时截图保存在仓库外。
 - [x] PG1 代码研究：已梳理首页模板、兼容桥、旧应用壳导航、HTTP API、WebSocket、localStorage、定时器和 CSS 耦合。
 - [x] PG2 优化建议：已完成保留/优化/删除/新增建议、公共组件复用方案、数据真实性边界、风险和工作量评估。
-- [ ] PG3 用户确认：等待用户选择 L0、L1、L2 或 L3；选择 L2/L3 时还需确认 HTML 原型范围。
-- 当前页面优化建议：默认推荐 L1；在 PG3 通过前不得创建 `HomeView.vue` 或修改正式首页实现。
+- [x] PG3 用户确认：用户已确认 L2 和最终 HTML 原型，允许进入 PG4 Vue 实现。
+- [x] PG4 Vue 实现：四排十卡片已迁入正式 SFC；用量、IP、活动与足迹接入真实数据；本地时间、昼夜、年度和月相按冻结边界计算；基础交互和测试已完成。
+- [x] PG5 验收清理：旧首页脚本、全局 Vue Runtime 和旧 CSS 已删除，浏览器视觉/响应式/交互验收及用户 Tauri 手动 E2E 均已通过。
+- 当前页面优化等级：L2；不得在实现中无记录扩张为新增 API、数据库或核心流程的 L3。
 - 评估文档：`PRD/vue-migration/pages/home/assessment.md`。
-- 决策文档：`PRD/vue-migration/pages/home/decision.md`（待确认）。
-- 手动 E2E：本次仅新增文档和迁移门禁状态，不改变运行时代码，**不需要**用户手动 E2E；PG3 确认后开始实现时，按计划将手动 E2E 标记为**必须**。
+- 决策文档：`PRD/vue-migration/pages/home/decision.md`（L2 已确认）。
+- 自动验证：`npm run typecheck`、`npm run lint`、`npm run lint:tokens`、`npm run test:unit`（8 文件 / 21 项）、`npm run build:frontend` 和主题 Playwright E2E 全部通过。
+- 浏览器验收：默认 1665×1184 与最小 900×600 的亮/暗主题、跟随系统模式、主题菜单边界、选择持久化、Loading/Error/Empty、重试、详情跳转、每日一言、侧栏响应式和 14 页切换均通过；截图与对照图保存在仓库外。
+- 已知既有日志：CodeMirror `defineSimpleMode` 错误与 xterm WebGL 偶发任务耗时警告，不是本轮首页迁移新增。
+- Tauri 验收：用户已在正式软件内完成手动 E2E，主题三态、系统外观同步、首页、页面切换和窗口缩放通过。
+- 手动 E2E：**必须，已通过**；本轮严格保留了正式 Tauri 软件验收门禁。
 
 ---
 
@@ -1071,7 +1077,7 @@ services/modules/home-service.ts
 - [ ] 使用 `createWebHashHistory()` 验证 Tauri 正式包直接打开和刷新。
 - [ ] 使用 route meta 管理标题、图标、排序和是否显示更新标记。
 - [ ] 建立路由离开守卫，处理未保存编辑内容和进行中的表单。
-- [ ] 将主题切换迁入 app store 和 `useTheme`。
+- [ ] 将已经建立的跟随系统/亮色/暗色三态主题完全迁入 app store 和 `useTheme`，删除旧壳层主题桥。
 - [ ] 迁移全局 Toast、系统弹窗、升级弹窗和通知动作。
 - [ ] 将 Tauri 拖拽区域和窗口特性放入 AppLayout。
 - [ ] 删除旧 `switchPage()`、`setupNavigation()` 和 `.active` 页面切换逻辑。
@@ -1150,7 +1156,7 @@ services/modules/home-service.ts
 
 | 顺序 | 页面 | 当前主要文件 | 风险 | 关键依赖 | 目标阶段 | 页面研究与优化决策 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 | 应用首页 | `home.js`、`vue/home-page.js`、`home-vue.css` | 中 | API、活动历史、主题 | Phase 3 | PG0～PG2 已完成；PG3 等待用户确认 L0～L3 |
+| 1 | 应用首页 | `HomeView.vue`、`home.css`、`home-service.ts` | 中 | API、活动历史、主题、legacy bridge | Phase 3 | PG0～PG5 与 Tauri 手动 E2E 已完成 |
 | 2 | 纯净检测 | `ipcheck.js`、`ipcheck.css` | 中低 | IP API、首页摘要 | Phase 4 | 待评估 |
 | 3 | 工时内容 | `notes.js`、`notes.css` | 中低 | 日期、数据库 | Phase 4 | 待评估 |
 | 4 | 代码周报 | `report.js`、`report.css` | 中 | Sortable、导入导出 | Phase 4 | 待评估 |
@@ -1806,7 +1812,7 @@ refactor: 删除旧首页脚本与无消费者样式
 - 兼容性修复：保留 `aria-busy`、label/id 关联、tab role、错误/禁用/选中状态和弹窗 Esc/关闭契约；弹窗设置项目对话框层级，避免被旧页面内容遮挡。
 - 自动化验证：`typecheck`、`lint:js`、`lint:css:migration`、`test:unit`（4 个测试文件、11 项通过）、`build:frontend` 通过。
 - 浏览器验证：已在 `http://127.0.0.1:1420/?uiFoundation=1` 验证 Tabs 切换、选择框展开、亮色主题选项、单层边框、复选框/单选框/开关状态和弹窗层级；弹窗 Esc 与关闭按钮可关闭。
-- 手动 E2E 状态：待用户验证；本阶段改变所有共享控件运行时行为，未以自动化浏览器验证替代用户门禁。
+- 手动 E2E 状态：通过（用户已在 UI Foundation 预览与现有业务页面中完成验证）。
 
 **Phase 2-D 预览修复记录（2026-07-21）**：
 
@@ -1815,7 +1821,7 @@ refactor: 删除旧首页脚本与无消费者样式
 - 预览示例的两项选择使用 `virtual-scroll=false`。这是开发预览的两项小数据集；不改变业务适配层对大数据下拉的默认能力，避免当前旧壳布局下虚拟列表测量为 0 导致选项不可见。
 - 浏览器复核：亮色、暗色下拉均可展开，选项可选择；内部输入计算样式为透明背景、无边框、无额外内边距。
 - 自动化验证：`typecheck`、`lint:css:migration`、`lint:js`、`test:unit`（10 项通过）、`build:frontend` 通过。
-- 本修复改变了共享 legacy CSS、Provider 和第三方预览运行时行为，**手动 E2E：必须，当前待用户复核**；用户确认后才能提交并继续依赖该预览的后续工作。
+- 本修复改变了共享 legacy CSS、Provider 和第三方预览运行时行为，**手动 E2E：必须，已通过**；用户确认后已提交并作为后续页面迁移基础。
 
 后续阶段继续使用以下模板：
 

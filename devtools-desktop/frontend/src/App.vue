@@ -16,7 +16,9 @@ const showUiFoundationPreview = import.meta.env.DEV
       <UiFoundationPreview />
     </UiLibraryProvider>
   </div>
-  <MigrationHost v-else />
+  <UiLibraryProvider v-else>
+    <MigrationHost />
+  </UiLibraryProvider>
 </template>
 
 <style>

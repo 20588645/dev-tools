@@ -21,7 +21,7 @@ async function loadProjects() {
     await loadRunStatuses();
     renderProjects();
     renderRunPage();
-    refreshHomeIfVisible();
+    requestHomeRefreshIfVisible();
     syncTrayMenu();
   } catch (e) {
     console.error('加载项目失败:', e);

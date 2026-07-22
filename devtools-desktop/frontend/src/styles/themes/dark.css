@@ -1,4 +1,6 @@
 :root,
 [data-theme="dark"] {
-  /* Dark semantic values are declared in semantic.css; this file keeps the theme hook explicit. */
+  /* Keep Vue page canvases continuous with the legacy shell while the shell is
+     still being migrated. The fallback also keeps standalone Vue previews usable. */
+  --color-page: var(--bg-page, var(--color-neutral-900));
 }

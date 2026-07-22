@@ -53,6 +53,7 @@ devtools-desktop/sidecar/data/restore-pending.db
 
 # Development and verification visuals (do not commit generated captures)
 devtools-desktop/design-preview/screenshots/
+devtools-desktop/design-qa.md
 devtools-desktop/PRD/vue-migration/**/evidence/
 devtools-desktop/PRD/vue-migration/**/contact-sheets/
 devtools-desktop/PRD/vue-migration/**/measurements-*.json

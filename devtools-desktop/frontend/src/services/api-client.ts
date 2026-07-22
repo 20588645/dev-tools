@@ -69,7 +69,8 @@ export class ApiClient {
   constructor(options: ApiClientOptions = {}) {
     this.defaultPort = options.defaultPort ?? DEFAULT_PORT
     this.defaultTimeout = options.defaultTimeout ?? DEFAULT_TIMEOUT
-    this.fetcher = options.fetcher ?? fetch
+    const fetcher = options.fetcher ?? globalThis.fetch
+    this.fetcher = fetcher.bind(globalThis)
   }
 
   get baseURL() {

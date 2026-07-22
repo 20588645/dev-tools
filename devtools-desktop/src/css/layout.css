@@ -307,6 +307,90 @@ body.sidebar-collapsed .sidebar-footer {
   background: transparent !important;
 }
 
+.theme-mode-menu {
+  position: fixed;
+  z-index: 1200;
+  width: 204px;
+  padding: 6px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: 11px;
+  box-shadow: var(--shadow-md);
+  backdrop-filter: blur(20px) saturate(130%);
+  -webkit-backdrop-filter: blur(20px) saturate(130%);
+}
+
+.theme-mode-menu[hidden] {
+  display: none !important;
+}
+
+.theme-mode-option {
+  display: grid;
+  width: 100%;
+  min-height: 44px;
+  padding: 6px 8px;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 0;
+  border-radius: 7px;
+  cursor: pointer;
+  grid-template-columns: 22px minmax(0, 1fr) 16px;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+  transition: color 0.12s ease, background-color 0.12s ease;
+}
+
+.theme-mode-option:hover,
+.theme-mode-option:focus-visible {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+  outline: none;
+}
+
+.theme-mode-option[aria-checked="true"] {
+  color: var(--primary);
+  background: var(--primary-light);
+}
+
+.theme-mode-option-icon {
+  font-size: 14px;
+  line-height: 1;
+  text-align: center;
+}
+
+.theme-mode-option-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.theme-mode-option-copy strong {
+  font-size: 12px;
+  font-weight: 620;
+}
+
+.theme-mode-option-copy small {
+  margin-top: 2px;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.theme-mode-option-check {
+  opacity: 0;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.theme-mode-option[aria-checked="true"] .theme-mode-option-check {
+  opacity: 1;
+}
+
 .app-main {
   flex: 1;
   display: flex;
@@ -419,6 +503,23 @@ body.sidebar-collapsed {
   width: 1px;
   background: var(--border);
   pointer-events: none;
+}
+
+@media (max-height: 700px) {
+  .app-sidebar .sidebar-nav {
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  .app-sidebar .sidebar-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .app-sidebar .sidebar-footer {
+    flex-shrink: 0;
+  }
 }
 
 .sidebar-brand {
@@ -583,7 +684,21 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
   flex-direction: column !important;
   overflow: hidden !important;
   height: 100vh !important;
+  padding: 30px 0 0 !important;
   box-sizing: border-box !important;
+}
+
+.main-content.home-active > #page-home.active {
+  flex: 1 1 auto;
+  height: 100% !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+.main-content.home-active #vue-migration-host {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
 }
 
 /* --- 侧边栏当前项指示条 --- */

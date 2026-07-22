@@ -93,6 +93,7 @@ describe('shared UI foundation', () => {
       slots: { default: NaiveUiShowcase },
     })
 
+    expect(wrapper.find('.ui-library-provider').exists()).toBe(true)
     expect(wrapper.find('.vendor-showcase').exists()).toBe(true)
     expect(wrapper.find('input').exists()).toBe(true)
     expect(wrapper.find('table').text()).toContain('personalTools')

@@ -21,23 +21,17 @@ function mountMigrationHost(root: Element | null = document.querySelector('#vue-
   return migrationApp
 }
 
-const legacyHomeRootPresent = Boolean(document.querySelector('#vue-home-root'))
-const uiFoundationPreviewRequested = import.meta.env.DEV
-  && new URLSearchParams(window.location.search).get('uiFoundation') === '1'
-
 window.__DEVTOOLS_MIGRATION__ = {
   pinia,
   get app() {
     return migrationApp
   },
-  deferred: legacyHomeRootPresent,
+  deferred: false,
   mount: mountMigrationHost,
 }
 
-if (!legacyHomeRootPresent || uiFoundationPreviewRequested) {
-  mountMigrationHost()
-}
+mountMigrationHost()
 
 window.dispatchEvent(new CustomEvent('devtools:migration-host-ready', {
-  detail: { deferred: legacyHomeRootPresent },
+  detail: { deferred: false },
 }))

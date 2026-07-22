@@ -1,8 +1,24 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { ApiClient } from './api-client'
 
 describe('ApiClient', () => {
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('preserves the browser receiver required by native fetch', async () => {
+    const browserFetch = vi.fn(function (this: unknown) {
+      if (this !== globalThis) throw new TypeError('Illegal invocation')
+      return Promise.resolve(new Response('{"ok":true}', {
+        headers: { 'content-type': 'application/json' },
+      }))
+    })
+    vi.stubGlobal('fetch', browserFetch)
+    const client = new ApiClient()
+
+    await expect(client.get<{ ok: boolean }>('/api/health')).resolves.toEqual({ ok: true })
+    expect(browserFetch).toHaveBeenCalledOnce()
+  })
+
   it('uses the browser apiPort override and parses JSON', async () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response('{"ok":true}', {
       headers: { 'content-type': 'application/json' },

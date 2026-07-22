@@ -10,16 +10,9 @@ interface MigrationRuntime {
   mount: (root?: Element | null) => VueApp<Element> | null
 }
 
-interface LegacyHomeRuntime {
-  mount: (root: Element | null) => unknown
-  refresh?: () => Promise<unknown>
-  notifyRuntimeChange?: () => void
-}
-
 declare global {
   interface Window {
     __DEVTOOLS_MIGRATION__?: MigrationRuntime
-    DevToolsHomeApp?: LegacyHomeRuntime
   }
 }
 

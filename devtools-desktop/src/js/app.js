@@ -25,6 +25,37 @@ let pendingRunCompileErrorTimers = {};
 const RUN_COMPILE_ERROR_NOTIFY_DELAY = 15000;
 let APP_VERSION = '0.1.93';
 
+// ========== Vue Migration Bridge ==========
+const LEGACY_PAGE_ACTIVATED_EVENT = 'devtools:legacy-page-activated';
+const LEGACY_PAGE_REQUESTED_EVENT = 'devtools:legacy-page-requested';
+const HOME_REFRESH_REQUESTED_EVENT = 'devtools:home-refresh-requested';
+let vueNavigationBridgeBound = false;
+
+function emitLegacyPageActivation(pageId, source = 'legacy') {
+  window.dispatchEvent(new CustomEvent(LEGACY_PAGE_ACTIVATED_EVENT, {
+    detail: { pageId, source },
+  }));
+}
+
+function setupVueNavigationBridge() {
+  if (vueNavigationBridgeBound) return;
+  vueNavigationBridgeBound = true;
+  window.addEventListener(LEGACY_PAGE_REQUESTED_EVENT, (event) => {
+    const pageId = event.detail?.pageId;
+    if (!pageId || !document.getElementById('page-' + pageId)) return;
+    const nav = document.querySelector(`.sidebar-item[data-page="${pageId}"], .dock-item[data-page="${pageId}"]`);
+    switchPage(pageId, nav, 'vue');
+  });
+}
+
+function requestHomeRefreshIfVisible(reason = 'runtime-change') {
+  const page = document.getElementById('page-home');
+  if (!page?.classList.contains('active')) return;
+  window.dispatchEvent(new CustomEvent(HOME_REFRESH_REQUESTED_EVENT, {
+    detail: { reason },
+  }));
+}
+
 // ========== 托盘菜单同步 ==========
 function syncTrayMenu() {
   const invoke = (typeof getTauriInvoke === 'function') ? getTauriInvoke() : null;
@@ -248,30 +279,216 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupNotificationActionHandlers();
   requestNotificationPermission();
   await Promise.all([loadProjects(), loadServers(), loadNodeVersions()]);
-  await loadHomeData();
   checkActiveJob();
   updateToolbarDate();
 });
 
 // ========== 主题切换 ==========
+const THEME_STORAGE_KEY = 'devtools-theme';
+const THEME_MODE_VALUES = ['system', 'light', 'dark'];
+let systemThemeMediaQuery = null;
+let systemThemeListenerBound = false;
+let themeBodyObserver = null;
+
+function normalizeThemeMode(value) {
+  return THEME_MODE_VALUES.includes(value) ? value : 'system';
+}
+
+function getSystemThemeMediaQuery() {
+  if (!systemThemeMediaQuery && typeof window.matchMedia === 'function') {
+    systemThemeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+  }
+  return systemThemeMediaQuery;
+}
+
+function getSystemTheme() {
+  return getSystemThemeMediaQuery()?.matches ? 'dark' : 'light';
+}
+
+function resolveThemeMode(mode) {
+  return mode === 'system' ? getSystemTheme() : mode;
+}
+
+function getThemeMode() {
+  const bodyMode = document.body.getAttribute('data-theme-mode');
+  return normalizeThemeMode(bodyMode || localStorage.getItem(THEME_STORAGE_KEY));
+}
+
+function applyThemeMode(mode, options = {}) {
+  const normalizedMode = normalizeThemeMode(mode);
+  const effectiveTheme = resolveThemeMode(normalizedMode);
+  document.body.setAttribute('data-theme-mode', normalizedMode);
+  document.body.setAttribute('data-theme', effectiveTheme);
+  if (options.persist !== false) localStorage.setItem(THEME_STORAGE_KEY, normalizedMode);
+  updateThemeIcon(normalizedMode, effectiveTheme);
+  window.dispatchEvent(new CustomEvent('devtools:theme-changed', {
+    detail: { mode: normalizedMode, theme: effectiveTheme },
+  }));
+  return effectiveTheme;
+}
+
+function bindSystemThemeListener() {
+  const mediaQuery = getSystemThemeMediaQuery();
+  if (!mediaQuery || systemThemeListenerBound) return;
+  const handleSystemThemeChange = () => {
+    if (getThemeMode() === 'system') applyThemeMode('system', { persist: false });
+  };
+  if (typeof mediaQuery.addEventListener === 'function') {
+    mediaQuery.addEventListener('change', handleSystemThemeChange);
+  } else if (typeof mediaQuery.addListener === 'function') {
+    mediaQuery.addListener(handleSystemThemeChange);
+  }
+  systemThemeListenerBound = true;
+}
+
 function initTheme() {
-  const saved = localStorage.getItem('devtools-theme');
-  const theme = saved || 'dark';
-  document.body.setAttribute('data-theme', theme);
-  updateThemeIcon(theme);
+  const savedMode = normalizeThemeMode(localStorage.getItem(THEME_STORAGE_KEY));
+  applyThemeMode(savedMode, { persist: false });
+  bindSystemThemeListener();
+  ensureThemeModeMenu();
+  if (!themeBodyObserver) {
+    themeBodyObserver = new MutationObserver(() => updateThemeIcon(getThemeMode()));
+    themeBodyObserver.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['data-theme', 'data-theme-mode'],
+    });
+  }
 }
 
 function toggleTheme() {
-  const current = document.body.getAttribute('data-theme') || 'dark';
-  const next = current === 'dark' ? 'light' : 'dark';
-  document.body.setAttribute('data-theme', next);
-  localStorage.setItem('devtools-theme', next);
-  updateThemeIcon(next);
+  const currentIndex = THEME_MODE_VALUES.indexOf(getThemeMode());
+  const nextMode = THEME_MODE_VALUES[(currentIndex + 1) % THEME_MODE_VALUES.length];
+  applyThemeMode(nextMode);
 }
 
-function updateThemeIcon(theme) {
+function setThemeMode(mode) {
+  applyThemeMode(mode);
+  closeThemeModeMenu(true);
+}
+
+function getThemeModeLabel(mode, effectiveTheme) {
+  if (mode === 'system') return `跟随系统（当前${effectiveTheme === 'dark' ? '暗色' : '亮色'}）`;
+  return mode === 'dark' ? '暗色模式' : '亮色模式';
+}
+
+function updateThemeMenuSelection(mode) {
+  const menu = document.getElementById('themeModeMenu');
+  if (!menu) return;
+  menu.querySelectorAll('[data-theme-mode]').forEach(option => {
+    option.setAttribute('aria-checked', String(option.dataset.themeMode === mode));
+  });
+}
+
+function updateThemeIcon(mode, effectiveTheme = document.body.getAttribute('data-theme') || resolveThemeMode(mode)) {
   const el = document.getElementById('themeIcon');
-  if (el) el.textContent = theme === 'dark' ? '☾' : '☀';
+  if (el) el.textContent = mode === 'system' ? '◐' : effectiveTheme === 'dark' ? '☾' : '☀';
+  const toggle = document.getElementById('themeModeToggle');
+  if (toggle) {
+    const label = `外观：${getThemeModeLabel(mode, effectiveTheme)}`;
+    toggle.setAttribute('title', label);
+    toggle.setAttribute('aria-label', label);
+    toggle.dataset.themeMode = mode;
+  }
+  updateThemeMenuSelection(mode);
+}
+
+function ensureThemeModeMenu() {
+  let menu = document.getElementById('themeModeMenu');
+  if (menu) return menu;
+  menu = document.createElement('div');
+  menu.id = 'themeModeMenu';
+  menu.className = 'theme-mode-menu';
+  menu.setAttribute('role', 'menu');
+  menu.setAttribute('aria-label', '主题模式');
+  menu.hidden = true;
+  menu.innerHTML = `
+    <button class="theme-mode-option" type="button" role="menuitemradio" aria-checked="false" data-theme-mode="system">
+      <span class="theme-mode-option-icon" aria-hidden="true">◐</span>
+      <span class="theme-mode-option-copy"><strong>跟随系统</strong><small>随 macOS 外观自动切换</small></span>
+      <span class="theme-mode-option-check" aria-hidden="true">✓</span>
+    </button>
+    <button class="theme-mode-option" type="button" role="menuitemradio" aria-checked="false" data-theme-mode="light">
+      <span class="theme-mode-option-icon" aria-hidden="true">☀</span>
+      <span class="theme-mode-option-copy"><strong>亮色</strong><small>始终使用亮色外观</small></span>
+      <span class="theme-mode-option-check" aria-hidden="true">✓</span>
+    </button>
+    <button class="theme-mode-option" type="button" role="menuitemradio" aria-checked="false" data-theme-mode="dark">
+      <span class="theme-mode-option-icon" aria-hidden="true">☾</span>
+      <span class="theme-mode-option-copy"><strong>暗色</strong><small>始终使用暗色外观</small></span>
+      <span class="theme-mode-option-check" aria-hidden="true">✓</span>
+    </button>`;
+  document.body.appendChild(menu);
+  menu.addEventListener('click', event => {
+    const option = event.target.closest('[data-theme-mode]');
+    if (option) setThemeMode(option.dataset.themeMode);
+  });
+  menu.addEventListener('keydown', event => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      closeThemeModeMenu(true);
+      return;
+    }
+    if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+    event.preventDefault();
+    const options = [...menu.querySelectorAll('[data-theme-mode]')];
+    const currentIndex = options.indexOf(document.activeElement);
+    const direction = event.key === 'ArrowDown' ? 1 : -1;
+    const nextIndex = (currentIndex + direction + options.length) % options.length;
+    options[nextIndex]?.focus();
+  });
+  document.addEventListener('pointerdown', event => {
+    const toggle = document.getElementById('themeModeToggle');
+    if (!menu.hidden && !menu.contains(event.target) && !toggle?.contains(event.target)) {
+      closeThemeModeMenu();
+    }
+  });
+  window.addEventListener('resize', () => closeThemeModeMenu());
+  updateThemeMenuSelection(getThemeMode());
+  return menu;
+}
+
+function positionThemeModeMenu(menu) {
+  const toggle = document.getElementById('themeModeToggle');
+  if (!toggle) return;
+  const toggleRect = toggle.getBoundingClientRect();
+  const margin = 8;
+  let left = toggleRect.right + margin;
+  if (left + menu.offsetWidth > window.innerWidth - margin) {
+    left = toggleRect.left - menu.offsetWidth - margin;
+  }
+  const preferredTop = toggleRect.top + (toggleRect.height - menu.offsetHeight) / 2;
+  const top = Math.min(
+    Math.max(margin, preferredTop),
+    Math.max(margin, window.innerHeight - menu.offsetHeight - margin),
+  );
+  menu.style.left = `${Math.round(left)}px`;
+  menu.style.top = `${Math.round(top)}px`;
+}
+
+function openThemeModeMenu() {
+  const menu = ensureThemeModeMenu();
+  const toggle = document.getElementById('themeModeToggle');
+  updateThemeMenuSelection(getThemeMode());
+  menu.hidden = false;
+  positionThemeModeMenu(menu);
+  toggle?.setAttribute('aria-expanded', 'true');
+  menu.querySelector('[aria-checked="true"]')?.focus();
+}
+
+function closeThemeModeMenu(restoreFocus = false) {
+  const menu = document.getElementById('themeModeMenu');
+  const toggle = document.getElementById('themeModeToggle');
+  if (menu) menu.hidden = true;
+  toggle?.setAttribute('aria-expanded', 'false');
+  if (restoreFocus) toggle?.focus();
+}
+
+function toggleThemeMenu(event) {
+  event?.preventDefault();
+  event?.stopPropagation();
+  const menu = ensureThemeModeMenu();
+  if (menu.hidden) openThemeModeMenu();
+  else closeThemeModeMenu(true);
 }
 
 function initSidebarState() {
@@ -540,7 +757,7 @@ function setupWSHandlers() {
     loadRunStatuses().then(() => {
       renderProjects();
       renderRunPage();
-      refreshHomeIfVisible();
+      requestHomeRefreshIfVisible();
       syncTrayMenu();
     });
   });
@@ -573,7 +790,7 @@ function setupWSHandlers() {
     if (data.id === currentRunId) updateRunLogStatus(data);
     renderProjects();
     renderRunPage();
-    refreshHomeIfVisible();
+    requestHomeRefreshIfVisible();
     syncTrayMenu();
   });
 }
@@ -758,6 +975,7 @@ function renderPageHeader(page, opts = {}) {
 // ========== Navigation ==========
 function setupNavigation() {
   renderSidebar();
+  setupVueNavigationBridge();
   initSidebarState();
   initPageStickyHeaders();
   const collapseBtn = document.querySelector('.sidebar-collapse-toggle');
@@ -798,11 +1016,11 @@ function setupNavigation() {
     });
   });
 
-  initHomePage();
+  emitLegacyPageActivation('home', 'legacy');
 }
 
 // ========== 页面切换 ==========
-function switchPage(page, el) {
+function switchPage(page, el, source = 'legacy') {
   // 离开本地运行页时停掉其轮询（运行时长刷新 + 起停对账），避免后台空转
   if (typeof stopRunPagePolling === 'function') stopRunPagePolling();
   if (typeof stopTwoFAPolling === 'function' && page !== 'twofa') stopTwoFAPolling();
@@ -839,10 +1057,6 @@ function switchPage(page, el) {
     loadRunStatuses().then(() => renderRunPage());
     startRunPagePolling();
   }
-  if (page === 'home') {
-    if (typeof updateHomeDateTime === 'function') updateHomeDateTime();
-    loadRunStatuses().then(() => loadHomeData());
-  }
   if (page === 'report') initReport();
   if (page === 'settings') loadSettings();
   if (page === 'todo') loadTodos();
@@ -853,6 +1067,7 @@ function switchPage(page, el) {
   if (page === 'ipcheck') initIpCheck();
   if (page === 'twofa') initTwoFA();
   if (page === 'usage') initUsage();
+  emitLegacyPageActivation(page, source);
 }
 
 // ========== 子 Tab 切换 ==========

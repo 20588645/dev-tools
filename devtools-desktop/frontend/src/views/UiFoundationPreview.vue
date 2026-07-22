@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
 import BaseBadge from '@/components/base/BaseBadge.vue'
 import BaseButton from '@/components/base/BaseButton.vue'
@@ -28,6 +28,10 @@ import NaiveUiShowcase from '@/components/vendor/NaiveUiShowcase.vue'
 import { useAppStore } from '@/stores/app'
 
 const app = useAppStore()
+const themeModeLabel = computed(() => {
+  if (app.themeMode === 'system') return `跟随系统 · ${app.theme === 'dark' ? '暗色' : '亮色'}`
+  return app.themeMode === 'dark' ? '暗色' : '亮色'
+})
 const dialogOpen = ref(false)
 type PreviewTab = '基础控件' | '反馈状态' | '页面骨架' | '第三方组件'
 const selectedTab = ref<PreviewTab>('基础控件')
@@ -54,12 +58,12 @@ const filterSelected = ref(true)
         <PageHeader title="UI Foundation" description="公共组件与 Design Token 预览（仅开发环境）">
           <template #icon>✦</template>
           <template #actions>
-            <BaseButton variant="outline" @click="app.toggleTheme()">切换为{{ app.theme === 'dark' ? '亮色' : '暗色' }}</BaseButton>
+            <BaseButton variant="outline" @click="app.toggleTheme()">切换主题（当前{{ themeModeLabel }}）</BaseButton>
           </template>
         </PageHeader>
         <PageToolbar>
           <BaseTabs v-model="selectedTab" :items="tabs" aria-label="预览分类" />
-          <StatusIndicator :status="app.theme === 'dark' ? 'idle' : 'online'" :label="`${app.theme === 'dark' ? '暗色' : '亮色'}主题`" />
+          <StatusIndicator :status="app.theme === 'dark' ? 'idle' : 'online'" :label="`${themeModeLabel}主题`" />
         </PageToolbar>
       </PageTop>
     </template>
