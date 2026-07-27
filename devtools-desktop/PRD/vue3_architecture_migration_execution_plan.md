@@ -1,12 +1,12 @@
 # DevTools Desktop Vue 3 架构渐进重构执行计划
 
-> 文档版本：1.9
-> 状态：执行中（G1/G2 已完成，Phase 3 首页 PG0～PG5 与 Tauri 手动 E2E 已通过；下一步进入 Phase 4 页面研究）
+> 文档版本：1.13
+> 状态：执行中（G1/G2、Phase 3 与 Phase 4-1 纯净检测 PG0～PG5 已完成；下一步进入 Phase 4-2 工时内容 PG0）
 > 编制日期：2026-07-21  
 > 最近更新：2026-07-27
 > 适用仓库：`devtools-desktop`  
 > 核心原则：保持软件持续可运行，按页面逐步替换，不进行一次性推倒重写。
-> 当前执行指针：Phase 4-1 纯净检测 `ipcheck`，从 PG0 现状取证开始；PG3 通过前不编写该页面 Vue 实现。
+> 当前执行指针：Phase 4-1 纯净检测 `ipcheck` 已完成并纳入独立本地提交；下一步进入 Phase 4-2 工时内容 `notes` 的 PG0 现状取证与代码研究。
 
 ---
 
@@ -505,8 +505,8 @@ L3 中纯前端且低风险的改动可以与页面 Vue 实现处于同一页面
 | 执行序号 | 阶段 | 对象 | 当前状态 | 开始动作 | 完成条件 |
 | ---: | --- | --- | --- | --- | --- |
 | 0 | Phase 3 | 应用首页 `home` | PG0～PG5 已完成 | 已完成 | 正式 SFC、旧实现清理、自动验证和 Tauri E2E 通过 |
-| 1 | Phase 4-1 | 纯净检测 `ipcheck` | **当前执行项，PG0 待开始** | 采集真实页面并阅读 HTML/JS/CSS/API | PG5 通过并建立独立本地提交 |
-| 2 | Phase 4-2 | 工时内容 `notes` | 等待 | 完成 `ipcheck` 后开始 PG0 | PG5 通过并建立独立本地提交 |
+| 1 | Phase 4-1 | 纯净检测 `ipcheck` | **PG0～PG5 已完成** | 已完成 | PG5 通过并建立独立本地提交 |
+| 2 | Phase 4-2 | 工时内容 `notes` | **下一执行项，PG0 待开始** | 采集真实页面并阅读 HTML/JS/CSS/API | PG5 通过并建立独立本地提交 |
 | 3 | Phase 4-3 | 代码周报 `report` | 等待 | 完成 `notes` 后开始 PG0 | PG5 通过并建立独立本地提交 |
 | 4 | Phase 5-1 | 个人笔记 `notebook` | 等待 | Phase 4 完成后开始 PG0 | 编辑、图片、持久化和未保存状态通过 |
 | 5 | Phase 5-2 | 系统设置 `settings` | 等待 | 完成 `notebook` 后开始 PG0 | Store、Sidecar 配置和表单状态通过 |
@@ -965,17 +965,17 @@ services/modules/home-service.ts
 
 #### Phase 4-1：纯净检测 `ipcheck`
 
-**当前执行状态**：下一项，PG0 待开始。
-**现有规模**：`ipcheck.js` 约 306 行，`ipcheck.css` 约 701 行，页面 DOM 位于 `frontend/index.html`。
+**当前执行状态**：PG0～PG5 已通过；L2 Vue 页面、用户 Tauri 手动 E2E、旧实现清理、清理后回归和独立本地提交均已完成。
+**迁移前规模**：`ipcheck.js` 约 306 行，`ipcheck.css` 约 701 行，页面 DOM 位于 `frontend/index.html`；上述旧实现已在 PG5 删除。
 
 启动时必须完成：
 
-- [ ] 在本地测试 Sidecar 下采集首次进入自动检测当前公网 IP、手动输入 IPv4/IPv6/域名、非法输入、加载、成功、接口错误和重试状态。
-- [ ] 梳理 `/api/ipcheck/lookup` 的完整响应字段、超时、错误格式和首页摘要当前使用的字段。
-- [ ] 评估 IP 基本信息、共享人数、原生 IP、AI 可用性、风险值和场景建议的层级，避免所有字段使用同等视觉权重。
-- [ ] 检查 701 行旧 CSS 中的全局骨架屏、硬编码颜色、ID 选择器、跨页状态类和 `!important`，不得整文件复制到 Vue。
-- [ ] 对照首页 `home-service.ts`，决定 IP 响应类型和格式化逻辑的唯一归属，防止首页与完整页出现两套风险映射。
-- [ ] 输出 `PRD/vue-migration/pages/ipcheck/assessment.md` 和 `decision.md`；PG3 前不得创建正式 View。
+- [x] 在本地测试 Sidecar 下采集首次进入自动检测当前公网 IP、手动输入 IPv4/IPv6/域名、非法输入、加载、成功、接口错误和重试状态。
+- [x] 梳理 `/api/ipcheck/lookup` 的完整响应字段、超时、错误格式和首页摘要当前使用的字段。
+- [x] 评估 IP 基本信息、共享人数、原生 IP、AI 可用性、风险值和场景建议的层级，避免所有字段使用同等视觉权重。
+- [x] 检查 701 行旧 CSS 中的全局骨架屏、硬编码颜色、ID 选择器、跨页状态类和 `!important`，不得整文件复制到 Vue。
+- [x] 对照首页 `home-service.ts`，决定 IP 响应类型和格式化逻辑的唯一归属，防止首页与完整页出现两套风险映射。
+- [x] 输出 `PRD/vue-migration/pages/ipcheck/assessment.md` 和 `decision.md`；PG3 前不得创建正式 View。
 
 确认后目标结构：
 
@@ -984,8 +984,9 @@ frontend/src/views/ipcheck/
 ├── IpCheckView.vue
 ├── components/
 │   ├── IpQueryBar.vue
-│   ├── IpOverviewPanel.vue
-│   ├── IpRiskPanel.vue
+│   ├── IpResultSummary.vue
+│   ├── IpNetworkDetails.vue
+│   ├── IpRiskDetails.vue
 │   └── IpScenarioGrid.vue
 └── composables/useIpCheck.ts
 
@@ -1311,8 +1312,8 @@ frontend/src/services/modules/ipcheck-service.ts
 | 顺序 | 页面 | 当前主要文件 | 风险 | 关键依赖 | 目标阶段 | 当前 Gate | 下一动作 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | 应用首页 | `HomeView.vue`、`home.css`、`home-service.ts` | 中 | API、活动历史、主题、legacy bridge | Phase 3 | **PG5 已通过** | 保持回归，不重复迁移 |
-| 2 | 纯净检测 | `ipcheck.js`、`ipcheck.css` | 中低 | IP API、首页摘要 | Phase 4-1 | **PG0 待开始** | 启动测试服务、采集页面、建立 `assessment.md` |
-| 3 | 工时内容 | `notes.js`、`notes.css` | 中低 | 日期、数据库、周报引用 | Phase 4-2 | 等待 | `ipcheck` 提交后开始 PG0 |
+| 2 | 纯净检测 | `views/ipcheck/`、`ipcheck-service.ts` | 中低 | IP API、首页摘要 | Phase 4-1 | **PG5 已通过** | 保持回归，不重复迁移 |
+| 3 | 工时内容 | `notes.js`、`notes.css` | 中低 | 日期、数据库、周报引用 | Phase 4-2 | **PG0 待开始** | 启动测试服务、采集页面、建立评估文档 |
 | 4 | 代码周报 | `report.js`、`report.css` | 中 | Sortable、Token、导入导出 | Phase 4-3 | 等待 | `notes` 提交后开始 PG0 |
 | 5 | 个人笔记 | `notebook.js`、`notebook.css` | 中 | 编辑、图片、持久化 | Phase 5-1 | 等待 | Phase 4 完成后开始 PG0 |
 | 6 | 系统设置 | `settings.js`、`settings.css` | 中高 | 全局配置、Sidecar、菜单设置 | Phase 5-2 | 等待 | `notebook` 提交后开始 PG0 |
@@ -1755,46 +1756,58 @@ Phase 0～3 已完成，上表总量仅保留为原始规划参考；当前剩�
 
 ## 21. 当前下一批可立即执行的任务
 
-Phase 0～3 已完成，当前只启动 **Phase 4-1：纯净检测 `ipcheck` 的 PG0～PG3**。在用户确认页面优化等级与范围前，不创建 `IpCheckView.vue`，不删除旧页面，也不顺带迁移侧边栏。
+Phase 0～3 与 Phase 4-1 纯净检测 PG0～PG5 已完成并建立独立本地提交。下一批只启动 **Phase 4-2 工时内容 `notes` 的 PG0～PG1**，先完成现状取证和代码研究，不直接进入 Vue 实现，也不顺带迁移侧边栏。
 
-### Batch 4-1A：PG0 现状取证
+### Batch 4-1A：PG0 现状取证（已完成）
 
-- [ ] 确认工作区状态和当前基线 commit `0a52146`。
-- [ ] 使用 `DEVTOOLS_TEST=1` 启动独立测试 Sidecar，确认端口和 `data-test`，不得连接生产数据库。
-- [ ] 启动 Vite 测试服务，在内置浏览器打开纯净检测页面。
-- [ ] 采集 1665 × 1184、1440 × 900、1280 × 720、900 × 600 的亮色和暗色状态。
-- [ ] 覆盖首次自动查询、手动 IP、IPv6、域名、非法输入、加载、成功、API 错误、重试和快速切页。
-- [ ] 把观察结论写入 `PRD/vue-migration/pages/ipcheck/assessment.md`；临时截图保存在仓库外。
+- [x] 确认工作区状态和当前基线 commit `7a59904`；首页迁移基线为 `0a52146`。
+- [x] 使用 `DEVTOOLS_TEST=1` 启动独立测试 Sidecar，确认端口和 `data-test`，不得连接生产数据库。
+- [x] 启动 Vite 测试服务，在内置浏览器打开纯净检测页面。
+- [x] 采集 1665 × 1184、1440 × 900、1280 × 720、900 × 600 的亮色和暗色状态。
+- [x] 覆盖首次自动查询、手动 IP、IPv6、域名、非法输入、加载、成功、API 错误、重试和快速切页。
+- [x] 把观察结论写入 `PRD/vue-migration/pages/ipcheck/assessment.md`；临时截图保存在仓库外。
 
 本批只产生研究文档，不改变运行时代码。**手动 E2E：不需要**；用户只需在 PG3 评审优化方向。
 
-### Batch 4-1B：PG1 代码与数据研究
+### Batch 4-1B：PG1 代码与数据研究（已完成）
 
-- [ ] 阅读 `frontend/index.html` 中 `#page-ipcheck` 的全部 DOM。
-- [ ] 阅读 `src/js/ipcheck.js`、`src/css/pages/ipcheck.css` 及跨页覆盖规则。
-- [ ] 阅读 `/api/ipcheck/lookup` 后端实现、超时、错误和第三方数据来源。
-- [ ] 对照首页 `home-service.ts` 与纯净检测摘要，建立共享类型和格式化归属建议。
-- [ ] 盘点全局函数、Enter 监听、初始化标记、请求并发、硬编码颜色、`!important` 和旧状态类。
-- [ ] 输出当前功能清单、数据流、依赖图、保留兼容项和风险。
+- [x] 阅读 `frontend/index.html` 中 `#page-ipcheck` 的全部 DOM。
+- [x] 阅读 `src/js/ipcheck.js`、`src/css/pages/ipcheck.css` 及跨页覆盖规则。
+- [x] 阅读 `/api/ipcheck/lookup` 后端实现、超时、错误和第三方数据来源。
+- [x] 对照首页 `home-service.ts` 与纯净检测摘要，建立共享类型和格式化归属建议。
+- [x] 盘点全局函数、Enter 监听、初始化标记、请求并发、硬编码颜色、`!important` 和旧状态类。
+- [x] 输出当前功能清单、数据流、依赖图、保留兼容项和风险。
 
-### Batch 4-1C：PG2 优化建议与 PG3 用户确认
+### Batch 4-1C：PG2 优化建议与 PG3 用户确认（已完成）
 
-- [ ] 分别提出布局、视觉、信息层级、搜索交互、风险表达、场景建议、响应式、可访问性和错误恢复建议。
-- [ ] 所有建议标记“保留 / 优化 / 删除 / 新增”、优先级、收益、成本和风险。
-- [ ] 明确推荐 L0～L3 及理由，但最终等级由用户选择。
-- [ ] 用户选择 L2/L3 时，先制作亮暗主题最终 HTML 原型；用户确认前不进入 Vue 实现。
-- [ ] 将用户确认内容写入 `PRD/vue-migration/pages/ipcheck/decision.md`，更新第 11 节 Gate。
+- [x] 分别提出布局、视觉、信息层级、搜索交互、风险表达、场景建议、响应式、可访问性和错误恢复建议。
+- [x] 所有建议标记“保留 / 优化 / 删除 / 新增”、优先级、收益、成本和风险。
+- [x] 明确推荐 L0～L3 及理由，但最终等级由用户选择。
+- [x] 用户已选择 L2 页面重设计 + 独立 L3-A 数据可信度修正。
+- [x] 已制作并确认亮暗主题 HTML 原型 `design-preview/ipcheck-l2.html`。
+- [x] 已将用户确认内容写入 `PRD/vue-migration/pages/ipcheck/decision.md`，并更新第 11 节 Gate。
 
 ### Batch 4-1D：PG4 实现与 PG5 验收
 
 仅在 PG3 通过后执行：
 
-- [ ] 创建 `IpCheckView.vue`、页面私有组件、`useIpCheck.ts` 和 `ipcheck-service.ts`。
-- [ ] 复用项目 PageTop、表单、按钮、卡片、反馈状态和 Naive UI 适配组件。
-- [ ] 在 Migration Host 注册 `ipcheck`，保留旧侧边栏作为迁移期导航权威。
-- [ ] 补齐单元、组件和 Playwright 测试，完成四档窗口和三态主题验证。
-- [ ] 通知用户执行必须级 Tauri E2E；通过前不删除旧实现、不提交、不开始 `notes`。
-- [ ] 用户确认后删除旧 DOM、JS、CSS、全局函数和临时视觉产物，更新文档并创建独立本地提交。
+- [x] 创建 `IpCheckView.vue`、五个页面私有组件、`useIpCheck.ts` 和 `ipcheck-service.ts`。
+- [x] 复用项目 PageTop、表单、按钮、卡片、反馈状态和 Naive UI 适配组件。
+- [x] 在 Migration Host 注册 `ipcheck`，保留旧侧边栏作为迁移期导航权威。
+- [x] 补齐单元和 Playwright 测试，完成默认、1440 × 900、900 × 600、亮暗主题、输入校验、查询、复制和切页保留验证。
+- [x] 通知用户执行必须级 Tauri E2E；通过前不删除旧实现、不提交、不开始 `notes`。
+- [x] 用户确认后删除旧 DOM、JS、CSS、全局函数和临时浏览器验证产物，并更新文档。
+- [x] 建立 Phase 4-1 独立本地提交；仅在用户明确要求提交后执行。
+
+PG4 自动验收结果（2026-07-27）：
+
+- `npm run typecheck`、`npm run lint`、`npm run lint:tokens`、`npm run test:unit`（10 文件 / 37 项）、`npm run test:e2e`（4 项）和 `npm run build:frontend` 均通过。
+- 内置浏览器已使用隔离测试 Sidecar `13900` 验证真实当前 IP、`8.8.8.8`、非法输入、loading/disabled、复制反馈、亮暗主题、快速切页状态保留和横向溢出。
+- Playwright 已覆盖 1665 × 1184、1440 × 900、900 × 600；页面只有一个活动 `.page` 和一个 Vue 根。
+- PG5 已删除旧 DOM、`ipcheck.js`、`ipcheck.css`、脚本/样式引用和旧回退初始化；E2E 已断言旧 fallback 与旧输入节点不存在。
+- 已知控制台仍只有既有 CodeMirror `defineSimpleMode` 错误，没有新增纯净检测或 Vue 运行错误。
+- 手动 E2E：**已通过**。用户于 2026-07-27 确认实际软件中的页面功能和最终样式没有问题。
+- 清理后内置浏览器复验：当前 IP 结果、首页往返状态保留、跟随系统/暗色切换、唯一活动页面、唯一 Vue 根和无横向溢出均通过。
 
 ### 当前停止条件
 
@@ -2077,4 +2090,4 @@ Phase 0～3 已完成，当前只启动 **Phase 4-1：纯净检测 `ipcheck` 的
 - 如果发现现有 API 无法支持 Vue 页面，应先记录接口差距，再单独评审 Sidecar 变更。
 - 迁移期间所有临时兼容代码必须标记删除 Gate，不能无期限保留。
 
-当前执行从 **Phase 4-1 纯净检测 PG0** 继续；下一次状态更新必须先记录 `ipcheck` 的现状取证和代码研究结果，不提前进入侧边栏或应用壳迁移。
+当前执行从 **Phase 4-2 工时内容 `notes` 的 PG0** 继续；下一次状态更新先记录真实运行态、功能清单、代码结构和数据链路，不提前编写 Vue 页面，也不进入侧边栏或应用壳迁移。

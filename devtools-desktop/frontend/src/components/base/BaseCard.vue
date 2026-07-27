@@ -31,6 +31,7 @@ const cardThemeOverrides = {
     :embedded="variant === 'subtle'"
     :hoverable="interactive"
     :theme-overrides="cardThemeOverrides"
+    :content-style="{ padding: 'var(--component-card-padding)' }"
   >
     <slot />
   </NCard>

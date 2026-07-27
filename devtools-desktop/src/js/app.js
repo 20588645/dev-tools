@@ -1064,7 +1064,6 @@ function switchPage(page, el, source = 'legacy') {
   if (page === 'notebook') initNotebook();
   if (page === 'editor') initEditor();
   if (page === 'terminal') loadCommands();
-  if (page === 'ipcheck') initIpCheck();
   if (page === 'twofa') initTwoFA();
   if (page === 'usage') initUsage();
   emitLegacyPageActivation(page, source);

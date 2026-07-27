@@ -6,6 +6,7 @@ import '@/styles/tokens/index.css'
 import BaseButton from './base/BaseButton.vue'
 import BaseDialog from './feedback/BaseDialog.vue'
 import BaseInput from './form/BaseInput.vue'
+import BaseProgress from './base/BaseProgress.vue'
 import BaseTabs from './navigation/BaseTabs.vue'
 import PageFrame from './layout/PageFrame.vue'
 import NaiveUiShowcase from './vendor/NaiveUiShowcase.vue'
@@ -72,6 +73,15 @@ describe('shared UI foundation', () => {
     })
     await tabs.findAll('[role="tab"]')[1].trigger('click')
     expect(tabs.emitted('update:modelValue')).toEqual([['two']])
+  })
+
+  it('clamps shared progress values through the project adapter', () => {
+    const progress = mount(BaseProgress, {
+      props: { value: 120, label: '共享程度', tone: 'warning' },
+    })
+
+    expect(progress.get('[role="progressbar"]').attributes('aria-valuenow')).toBe('100')
+    expect(progress.get('[role="progressbar"]').attributes('aria-label')).toBe('共享程度')
   })
 
   it('closes the Naive UI-backed dialog through its project contract', async () => {

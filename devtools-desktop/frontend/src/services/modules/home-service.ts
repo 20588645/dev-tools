@@ -1,4 +1,10 @@
 import { apiClient } from '@/services/api-client'
+import {
+  getCurrentIpPuritySummary,
+  type IpPuritySummary,
+} from '@/services/modules/ipcheck-service'
+
+export type { IpPuritySummary } from '@/services/modules/ipcheck-service'
 
 export interface DeploymentHistoryItem {
   id?: string
@@ -38,27 +44,9 @@ export interface UsageTrendPoint {
   costMicroUsd: number
 }
 
-export interface IpPuritySummary {
-  ip: string
-  location: string
-  riskScore: number
-  riskLabel: string
-  ipType: string
-  nativeIp: string
-}
-
 export interface TimeRange {
   start: number
   end: number
-}
-
-interface IpPurityResponse {
-  ip?: unknown
-  location?: unknown
-  risk_score?: unknown
-  risk_label?: unknown
-  ip_type?: unknown
-  native_ip?: unknown
 }
 
 const numberValue = (value: unknown) => {
@@ -135,14 +123,5 @@ export async function getUsageTrends(range: TimeRange) {
 }
 
 export async function getCurrentIpPurity() {
-  const value = await apiClient.get<IpPurityResponse>('/api/ipcheck/lookup', 20_000)
-  const riskScore = numberValue(String(value?.risk_score || '').replace('%', ''))
-  return {
-    ip: String(value?.ip || ''),
-    location: String(value?.location || ''),
-    riskScore: Math.max(0, Math.min(100, riskScore)),
-    riskLabel: String(value?.risk_label || ''),
-    ipType: String(value?.ip_type || ''),
-    nativeIp: String(value?.native_ip || ''),
-  } satisfies IpPuritySummary
+  return getCurrentIpPuritySummary() satisfies Promise<IpPuritySummary>
 }

@@ -27,7 +27,6 @@
 <link rel="stylesheet" href="css/pages/notes.css">
 <link rel="stylesheet" href="css/pages/notebook.css">
 <link rel="stylesheet" href="css/pages/editor.css">
-<link rel="stylesheet" href="css/pages/ipcheck.css">
 <link rel="stylesheet" href="css/pages/twofa.css">
 <link rel="stylesheet" href="css/pages/usage.css">
 <link rel="stylesheet" href="css/pages/settings.css">
@@ -782,178 +781,7 @@
 </section>
 
 <section class="page" id="page-ipcheck">
-  <div class="page-header-bar page-header-simple">
-    <div>
-      <div class="page-title">🌐 纯净检测</div>
-      <div class="page-subtitle">一键查询公网 IP 风险、原生程度及各大主流业务场景的适用评分</div>
-    </div>
-  </div>
-
-  <div class="page-toolbar ipcheck-toolbar">
-    <div class="ipcheck-search-wrap">
-      <div class="search-bar">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        <input type="text" placeholder="输入 IP 地址或域名 (例如: 8.8.8.8)..." id="ipcheckInput" autocomplete="off">
-      </div>
-      <button class="btn-primary" onclick="queryIpCheck()">🔍 检测</button>
-      <button class="btn-secondary" onclick="queryMyIpCheck()">🏠 我的 IP</button>
-    </div>
-  </div>
-
-  <!-- 主体内容 -->
-  <div class="ipcheck-content" id="ipcheckContent">
-    <!-- 默认提示状态 -->
-    <div class="ipcheck-empty-state" id="ipcheckEmpty">
-      <div style="font-size:3rem;margin-bottom:16px">🌐</div>
-      <div style="font-size:1.2rem;font-weight:500;margin-bottom:8px">输入 IP 开始纯净度检测</div>
-      <div style="font-size:.9rem;color:var(--text-muted)">可点击“我的 IP”或输入指定公网 IP / 域名进行一键风控检测</div>
-    </div>
-
-    <!-- 骨架屏加载状态 -->
-    <div class="ipcheck-skeleton" id="ipcheckSkeleton" style="display:none">
-      <div class="skeleton-card skeleton-left">
-        <div class="skeleton-line title"></div>
-        <div class="skeleton-line row"></div>
-        <div class="skeleton-line row"></div>
-        <div class="skeleton-line row"></div>
-        <div class="skeleton-line row"></div>
-      </div>
-      <div class="skeleton-card skeleton-right">
-        <div class="skeleton-line title"></div>
-        <div class="skeleton-line chart"></div>
-        <div class="skeleton-line row"></div>
-      </div>
-    </div>
-
-    <!-- 真实数据展示区 -->
-    <div class="ipcheck-dashboard" id="ipcheckDashboard" style="display:none">
-      <!-- 左栏：核心地理与网络信息 -->
-      <div class="ipcheck-panel ipcheck-detail-panel">
-        <h3 class="panel-section-title">📦 网络与地理资产</h3>
-        <div class="ipcheck-info-grid">
-          <div class="ipcheck-item">
-            <div class="item-icon-box ip-addr">🌐</div>
-            <div class="item-body">
-              <span class="item-label">IP 地址</span>
-              <span class="item-value" id="ipcValIp">-</span>
-            </div>
-          </div>
-          <div class="ipcheck-item">
-            <div class="item-icon-box ip-num">🔢</div>
-            <div class="item-body">
-              <span class="item-label">IP 数值</span>
-              <span class="item-value" id="ipcValIpNum">-</span>
-            </div>
-          </div>
-          <div class="ipcheck-item">
-            <div class="item-icon-box location">📍</div>
-            <div class="item-body">
-              <span class="item-label">地理位置</span>
-              <span class="item-value" id="ipcValLocation">-</span>
-            </div>
-          </div>
-          <div class="ipcheck-item">
-            <div class="item-icon-box asn">📡</div>
-            <div class="item-body">
-              <span class="item-label">ASN 广播</span>
-              <span class="item-value" id="ipcValAsn">-</span>
-            </div>
-          </div>
-          <div class="ipcheck-item">
-            <div class="item-icon-box asn-owner">🏢</div>
-            <div class="item-body">
-              <span class="item-label">ASN 所有者</span>
-              <span class="item-value" id="ipcValAsnOwner">-</span>
-            </div>
-          </div>
-          <div class="ipcheck-item">
-            <div class="item-icon-box org">🔌</div>
-            <div class="item-body">
-              <span class="item-label">企业 / ISP</span>
-              <span class="item-value" id="ipcValOrg">-</span>
-            </div>
-          </div>
-          <div class="ipcheck-item">
-            <div class="item-icon-box coords">🗺️</div>
-            <div class="item-body">
-              <span class="item-label">经纬度坐标</span>
-              <span class="item-value" id="ipcValCoords">-</span>
-            </div>
-          </div>
-          <div class="ipcheck-item">
-            <div class="item-icon-box native">🛡️</div>
-            <div class="item-body">
-              <span class="item-label">原生 IP 属性</span>
-              <span class="item-value" id="ipcValNative">-</span>
-            </div>
-          </div>
-          <div class="ipcheck-item">
-            <div class="item-icon-box ai-model">🧠</div>
-            <div class="item-body">
-              <span class="item-label">大模型可用性</span>
-              <span class="item-value" id="ipcValOpenAiSupport">-</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 右栏：风控评分与场景匹配 -->
-      <div class="ipcheck-panel ipcheck-risk-panel">
-        <h3 class="panel-section-title">🛡️ 风控与业务场景推荐</h3>
-        
-        <!-- 风控仪表盘 -->
-        <div class="ipcheck-risk-gauge">
-          <div class="gauge-header">
-            <span class="gauge-title">综合风控值</span>
-            <span class="gauge-score" id="ipcValRiskScore">0%</span>
-          </div>
-          <div class="gauge-bar-wrapper">
-            <div class="gauge-bar-fill" id="ipcRiskFill" style="width:0%"></div>
-          </div>
-          <div class="gauge-labels">
-            <span class="gauge-label-item safe">极度纯净 (0-15)</span>
-            <span class="gauge-label-item clean">纯净 (15-25)</span>
-            <span class="gauge-label-item warning">风险 (25-50)</span>
-            <span class="gauge-label-item danger">极高风险 (>70)</span>
-          </div>
-          <div class="gauge-result-desc">
-            当前 IP 评级为：<strong id="ipcValRiskLabel" class="status-badge">-</strong>
-            &nbsp;属性：<strong id="ipcValNative" class="status-badge">-</strong>
-            &nbsp;类别：<strong id="ipcValIpType" class="status-badge">-</strong>
-          </div>
-        </div>
-
-        <!-- 共享人数评估大卡片 -->
-        <div class="ipcheck-shared-card">
-          <div class="shared-card-header">
-            <span class="shared-card-title">👥 共享人数评估</span>
-            <span class="shared-card-status status-badge" id="ipcValSharedLabel">-</span>
-          </div>
-          <div class="shared-card-body">
-            <div class="shared-score-row">
-              <span class="shared-score-val" id="ipcValSharedScore">-</span>
-              <span class="shared-score-unit">用户</span>
-            </div>
-            <!-- 独享度进度条 -->
-            <div class="shared-bar-wrapper">
-              <div class="shared-bar-fill" id="ipcSharedFill" style="width:0%"></div>
-            </div>
-            <div class="shared-labels">
-              <span class="shared-label-item safe">独享级 (1-5)</span>
-              <span class="shared-label-item clean">优质共享 (10-20)</span>
-              <span class="shared-label-item warning">多户共用 (50-100)</span>
-              <span class="shared-label-item danger">公用/基站 (>100)</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 场景卡片列表 -->
-        <div class="ipcheck-scenarios" id="ipcScenariosGrid">
-          <!-- 动态渲染场景 -->
-        </div>
-      </div>
-    </div>
-  </div>
+  <div id="vue-ipcheck-host" aria-live="polite"></div>
 </section>
 
 <section class="page" id="page-twofa">
@@ -1985,7 +1813,6 @@
 <script src="js/xterm-addon-webgl.js"></script>
 <script src="js/terminal.js"></script>
 <script src="js/settings.js"></script>
-<script src="js/ipcheck.js"></script>
 <script src="js/twofa.js"></script>
 <script src="js/vendor/echarts/echarts.min.js"></script>
 <script src="js/usage.js"></script>

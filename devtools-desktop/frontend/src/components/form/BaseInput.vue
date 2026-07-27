@@ -13,9 +13,11 @@ const props = withDefaults(defineProps<{
   disabled?: boolean
   readonly?: boolean
   required?: boolean
+  autocomplete?: string
 }>(), {
   modelValue: '', id: undefined, label: undefined, type: 'text', placeholder: undefined,
   helpText: undefined, error: undefined, disabled: false, readonly: false, required: false,
+  autocomplete: undefined,
 })
 
 const emit = defineEmits<{
@@ -46,7 +48,7 @@ const inputType = computed<'text' | 'password'>(() => props.type === 'password' 
       :aria-required="required || undefined"
       :aria-invalid="Boolean(error)"
       :aria-describedby="helpText || error ? messageId : undefined"
-      :input-props="{ id: inputId, type: props.type }"
+      :input-props="{ id: inputId, type: props.type, autocomplete }"
       @update:value="emit('update:modelValue', $event)"
       @blur="emit('blur', $event)"
       @focus="emit('focus', $event)"
