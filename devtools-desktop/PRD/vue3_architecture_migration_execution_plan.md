@@ -1,10 +1,12 @@
 # DevTools Desktop Vue 3 架构渐进重构执行计划
 
-> 文档版本：1.8
+> 文档版本：1.9
 > 状态：执行中（G1/G2 已完成，Phase 3 首页 PG0～PG5 与 Tauri 手动 E2E 已通过；下一步进入 Phase 4 页面研究）
 > 编制日期：2026-07-21  
+> 最近更新：2026-07-27
 > 适用仓库：`devtools-desktop`  
 > 核心原则：保持软件持续可运行，按页面逐步替换，不进行一次性推倒重写。
+> 当前执行指针：Phase 4-1 纯净检测 `ipcheck`，从 PG0 现状取证开始；PG3 通过前不编写该页面 Vue 实现。
 
 ---
 
@@ -22,6 +24,7 @@
 6. 定义什么时候可以删除旧 `index.html` 页面结构、全局函数和旧 CSS。
 7. 规定每个页面迁移前必须先完成现状取证、代码研究、设计与功能优化讨论，再由用户确认本页实施范围。
 8. 在首个业务页面迁移前建立项目级 Design Token、主题和公共组件，保证所有页面共享同一视觉与交互语言。
+9. 明确首页完成后的唯一执行顺序、页面优化插入方式、应用壳切换条件，以及每一步是否需要用户手动 E2E。
 
 本文档是架构迁移的执行基线。迁移期间新增需求应先判断是否会与正在迁移的页面冲突，避免在旧实现和新实现中重复开发。
 
@@ -50,32 +53,35 @@
 
 ### 3.1 当前代码规模
 
-截至 2026-07-21，前端主要特征如下：
+截至 2026-07-27，前端主要特征如下：
 
 | 项目 | 当前情况 |
 | --- | --- |
 | 功能页面 | 14 个 |
-| `src/index.html` | 约 2010 行，包含全部页面和大量弹窗 |
+| `frontend/index.html` | 约 2006 行的迁移期静态应用壳，仍包含未迁移页面和大量弹窗 |
 | 内联 DOM 事件 | 约 197 处 `onclick/onchange/oninput/onkeydown` |
-| 全局应用脚本 | `src/js/app.js` 约 1360 行 |
+| 全局应用脚本 | `src/js/app.js` 约 1575 行，仍管理侧边栏、主题桥和旧页面导航 |
 | 部署页面脚本 | `src/js/deploy.js` 约 1621 行 |
 | 待办页面脚本 | `src/js/todo.js` 约 1101 行 |
 | 文件传输脚本 | `src/js/filetransfer.js` 约 1092 行 |
 | 本地运行脚本 | `src/js/run.js` 约 969 行 |
 | 用量统计脚本 | `src/js/usage.js` 约 861 行 |
 | 2FA 脚本 | `src/js/twofa.js` 约 840 行 |
-| 当前 Vue 页面 | 首页，采用全局 Vue Runtime + 模板字符串挂载 |
-| Tauri 前端目录 | `src-tauri/tauri.conf.json` 的 `frontendDist` 直接指向 `../src` |
+| 当前 Vue 页面 | 首页，已完成正式 SFC、子组件、composable、service 和测试迁移 |
+| 当前 Vue 根 | `App.vue → MigrationHost.vue`，在旧应用壳内承载已迁移页面 |
+| Tauri 前端目录 | `src-tauri/tauri.conf.json` 的 `frontendDist` 指向 Vite 产物 `../dist` |
 | 默认窗口 | 1665 × 1184；最小窗口 900 × 600 |
 
 ### 3.2 当前运行关系
 
 ```mermaid
 flowchart LR
-    T["Tauri 2"] --> H["src/index.html"]
-    H --> A["app.js 全局应用壳"]
-    A --> P["各页面原生 JS"]
-    A --> VH["Vue 首页孤岛"]
+    T["Tauri 2"] --> D["Vite dist"]
+    D --> H["frontend/index.html 迁移期静态应用壳"]
+    H --> A["app.js 旧侧边栏与页面导航"]
+    A --> P["未迁移页面原生 JS"]
+    H --> MH["App.vue + MigrationHost"]
+    MH --> VH["HomeView.vue"]
     P --> API["REST API"]
     P --> WS["WebSocket"]
     VH --> API
@@ -93,7 +99,7 @@ flowchart LR
 5. 旧样式和新样式同时加载，依赖样式顺序和 `!important` 解决冲突。
 6. 页面导航通过手动增删 `.active` 类完成，不具备路由、守卫和按页面懒加载能力。
 7. CodeMirror、Xterm、ECharts、Sortable 等组件需要手动创建和销毁，隐藏页面时容易残留实例。
-8. 当前首页虽然已经使用 Vue，但仍由旧 `app.js`、`home.js` 兼容桥和全局 Vue Runtime 托管。
+8. 首页已经完成 Vue SFC 化，但侧边栏、应用壳、页面激活和未迁移页面仍依赖 `app.js`、静态 DOM 与 legacy bridge。
 
 ---
 
@@ -109,7 +115,7 @@ flowchart LR
 - 在首个业务页面迁移前完成一个 Vue 3 桌面端 UI 组件库的选型、接入和项目适配层，后续页面统一复用适配后的公共组件。
 - REST API、WebSocket 和 Tauri IPC 都通过独立 service 层访问。
 - 页面进入和离开时，定时器、监听器、Observer 和第三方实例能正确创建、暂停和销毁。
-- 保留现有亮色、暗色主题和已确认的首页视觉效果。
+- 保留跟随系统、固定亮色、固定暗色三态主题和已确认的首页视觉效果。
 - 保持 Sidecar API、SQLite 数据和现有配置兼容。
 - 所有迁移页面同时支持浏览器开发模式和 Tauri 正式窗口。
 - 最终删除内联事件、全局页面函数、旧页面 HTML 和无消费者 CSS。
@@ -399,10 +405,13 @@ Phase 0～Phase 2 的基础架构工作可以直接执行；从 Phase 3 开始�
 ```text
 PRD/vue-migration/pages/<page>/
 ├── assessment.md          # 现状、问题、代码与功能盘点
-├── decision.md            # 用户确认的范围与验收标准
-├── baseline/              # 明暗主题、尺寸和关键状态截图
-└── prototype.html         # 需要明显重设计时创建；无需重设计时可省略
+└── decision.md            # 用户确认的等级、范围、原型和验收标准
+
+design-preview/
+└── <page>-final.html      # 仅 L2/L3 且用户确认后的最终原型；L0/L1 可省略
 ```
+
+截图、浏览器捕获、对照图、Playwright 报告和临时 QA 文件默认只用于当前验收，保存在仓库外或已忽略目录，不作为页面 PRD 的常规提交内容。`assessment.md` 记录尺寸、状态、观察结论和必要的外部证据索引；只有用户明确要求作为发布证据时才保留视觉产物。L2/L3 的备选原型在方向确定后必须清理，只保留最终确认稿。
 
 `assessment.md` 至少包含：
 
@@ -428,6 +437,8 @@ PRD/vue-migration/pages/<page>/
 | L3 | 功能与流程优化 | 除 HTML 原型外，补充功能范围、数据流和风险评审 |
 
 L3 中纯前端且低风险的改动可以与页面 Vue 实现处于同一页面批次，但必须使用独立提交和独立测试；涉及 API、数据库、安全、后台任务或核心运行流程的改动必须拆成独立子阶段，不能混在架构迁移提交中。
+
+如果 PG4 编码过程中出现新的布局、功能或数据流程想法，必须暂停对应实现并回到 PG2/PG3：更新 `assessment.md`、`decision.md` 和原型，再由用户确认。不得以“顺手优化”为理由让实现范围在代码中静默扩大。
 
 #### 页面级门禁
 
@@ -457,7 +468,9 @@ L3 中纯前端且低风险的改动可以与页面 Vue 实现处于同一页面
 9. 完成浏览器、默认窗口、最小窗口和 Tauri 验收。
 10. 删除该页面的旧 HTML、旧 JS 引用和无消费者 CSS。
 11. 执行全量导航回归。
-12. 生成可独立回滚的本地 Git commit；功能变更与架构迁移分开提交。
+12. 明确告知用户本步手动 E2E 为“必须 / 建议 / 不需要”，并给出入口、步骤和预期结果。
+13. 用户完成必须级手动 E2E 后，清理截图、浏览器捕获、Playwright 报告和临时 QA 文件。
+14. 生成可独立回滚的本地 Git commit；功能变更与架构迁移分开提交，不自动 push。
 
 不允许同一个页面长期同时保留两套可执行实现。
 
@@ -479,9 +492,75 @@ L3 中纯前端且低风险的改动可以与页面 Vue 实现处于同一页面
 
 没有通过当前 Gate，不进入下一 Gate。
 
+当前 Gate 状态：G0～G3 已通过，正在推进 G4；G6 应用壳与 Router 切换不得提前于 G4/G5。
+
 ---
 
 ## 10. 分阶段执行计划
+
+### 当前执行指针与剩余唯一顺序（2026-07-27）
+
+当前已经完成 G1、G2 和 Phase 3 首页；首页提交基线为 `0a52146`。后续默认严格按下表顺序推进。页面顺序、优化等级或阶段边界需要变化时，必须先更新本文档并由用户确认，不能只在会话中临时改变。
+
+| 执行序号 | 阶段 | 对象 | 当前状态 | 开始动作 | 完成条件 |
+| ---: | --- | --- | --- | --- | --- |
+| 0 | Phase 3 | 应用首页 `home` | PG0～PG5 已完成 | 已完成 | 正式 SFC、旧实现清理、自动验证和 Tauri E2E 通过 |
+| 1 | Phase 4-1 | 纯净检测 `ipcheck` | **当前执行项，PG0 待开始** | 采集真实页面并阅读 HTML/JS/CSS/API | PG5 通过并建立独立本地提交 |
+| 2 | Phase 4-2 | 工时内容 `notes` | 等待 | 完成 `ipcheck` 后开始 PG0 | PG5 通过并建立独立本地提交 |
+| 3 | Phase 4-3 | 代码周报 `report` | 等待 | 完成 `notes` 后开始 PG0 | PG5 通过并建立独立本地提交 |
+| 4 | Phase 5-1 | 个人笔记 `notebook` | 等待 | Phase 4 完成后开始 PG0 | 编辑、图片、持久化和未保存状态通过 |
+| 5 | Phase 5-2 | 系统设置 `settings` | 等待 | 完成 `notebook` 后开始 PG0 | Store、Sidecar 配置和表单状态通过 |
+| 6 | Phase 5-3 | 待办事项 `todo` | 等待 | 完成 `settings` 后开始 PG0 | timer、通知、分组和重复提醒检查通过 |
+| 7 | Phase 5-4 | 用量统计 `usage` | 等待 | 完成 `todo` 后开始 PG0 | ECharts、价格、异常数据和资源销毁通过 |
+| 8 | Phase 5-5 | 2FA 验证码 `twofa` | 等待 | 完成 `usage` 后开始 PG0 | Secret、倒计时、导入导出安全专项通过 |
+| 9 | Phase 6-1 | 本地运行 `run` | 等待 | Phase 5 完成后开始 PG0 | 进程、轮询、WebSocket 和后台状态通过 |
+| 10 | Phase 6-2 | 部署面板 `deploy` | 等待 | 完成 `run` 后开始 PG0 | SSH、构建、部署任务和日志链路通过 |
+| 11 | Phase 6-3 | 文件传输 `filetransfer` | 等待 | 完成 `deploy` 后开始 PG0 | SFTP 会话、队列、重连和 keepalive 通过 |
+| 12 | Phase 7-1 | 文件编辑 `editor` | 等待 | Phase 6 完成后开始 PG0 | CodeMirror 生命周期和未保存保护通过 |
+| 13 | Phase 7-2 | 快捷命令 `terminal` | 等待 | 完成 `editor` 后开始 PG0 | Xterm、PTY、WebGL 降级和多标签恢复通过 |
+| 14 | Phase 8 | Vue 应用壳与 Router | 等待全部业务页 | 升级现有 `App.vue`，创建 `AppLayout.vue` | 侧边栏、主题、Router 和全局反馈由 Vue 接管 |
+| 15 | Phase 9 | 旧架构清理与发布 | 等待 Phase 8 | 删除 legacy bridge、旧 `src` 和污染 CSS | G7/G8、正式构建、升级与全量回归通过 |
+
+#### 每个功能页面的固定执行循环
+
+每个页面必须完整执行一次以下循环，不能因为前一个页面已经做过类似工作而跳过：
+
+1. **PG0 现状取证**：启动测试服务，在 1665 × 1184 和 900 × 600 下检查跟随系统、固定亮色、固定暗色、空数据、错误、弹窗、子 Tab 和关键交互；截图仅作为临时验证资料。
+2. **PG1 代码研究**：阅读页面 HTML、JS、CSS、API、WebSocket、Tauri、存储、timer、observer 和第三方依赖，输出真实功能与数据流。
+3. **PG2 优化建议**：分别给出布局、视觉、信息层级、交互、响应式、可访问性、功能和代码结构建议，并标注保留、优化、删除、新增。
+4. **PG3 用户确认**：用户选择 L0～L3；L2/L3 先确认最终 HTML 原型，涉及后端、安全或任务语义的 L3 拆独立子阶段。
+5. **PG4 Vue 实现**：建立 View、私有组件、service、composable/store、类型和测试；通过 Migration Host 注册，不直接迁移侧边栏。
+6. **自动与浏览器验收**：执行 TypeScript、JS/CSS lint、Token、单元/组件测试、构建和针对性 Playwright；检查三态主题、四档窗口和快速切页。
+7. **PG5 Tauri 验收**：明确告诉用户手动 E2E 级别。页面迁移默认“必须”，用户确认通过前不提交、不进入下一页面。
+8. **清理旧实现**：删除该页面旧 HTML、script、全局函数、无消费者 CSS 和 `overrides.css` 补丁；运行全量导航回归。
+9. **归档与提交**：更新矩阵、`assessment.md`、`decision.md` 和执行记录；清理所有临时视觉产物；创建一个可回滚的本地提交，不自动 push。
+
+#### 页面优化穿插规则
+
+- **L0 架构迁移**：不改变信息结构和功能，只完成 Vue、响应式、状态补齐与 CSS 清理。
+- **L1 轻量优化**：与 Vue 页面实现处于同一页面批次，但必须先在 `decision.md` 冻结具体调整项。
+- **L2 重新设计**：先制作亮暗主题 HTML 原型并由用户确认；正式实现必须以最终原型为视觉基线。
+- **L3 功能优化**：纯前端低风险功能可以紧随架构提交，但必须独立提交；API、数据库、安全、后台任务、通知或运行语义变化必须拆成独立子阶段。
+- PG4 中发现新想法时回退 PG2/PG3，不边写代码边扩大范围。
+- 页面优化不得直接修改公共组件内部样式；确需公共能力时先扩展项目组件 variant、预览和测试。
+
+#### 为什么应用壳、侧边栏和 Router 最后迁移
+
+未迁移页面仍依赖静态 DOM、`NAV_ITEMS`、内联事件、`.active` 类和 `switchPage()`。现在提前迁移应用壳会形成 Vue Router 与旧 DOM 导航两套权威状态，并增加页面残留、前进后退失效、未保存内容丢失和后台任务中断风险。
+
+Phase 4～7 期间只允许对迁移宿主做以下兼容性调整：
+
+- 在唯一 Migration Host 注册新 Vue 页面。
+- 增加有明确删除 Gate 的页面激活、刷新和导航桥事件。
+- 修复阻塞当前迁移页面的壳层兼容问题并补测试。
+
+Phase 4～7 期间不迁移侧边栏视觉、不引入正式路由切换、不复制第二份导航配置。Phase 8 只有在以下条件全部满足后才能启动：
+
+- 14 个业务页面全部完成 PG0～PG5。
+- 旧 `index.html` 中不再保留业务页面 DOM。
+- 未保存表单、编辑器、PTY、SFTP 和后台任务的离开语义已经在各自页面确定。
+- 页面元信息、标题、图标、排序和更新标记可以由统一 route records 表达。
+- 全量浏览器与 Tauri 回归处于通过状态。
 
 ### Phase 0：基线冻结与迁移准备
 
@@ -779,12 +858,12 @@ export default defineConfig({
 
 #### 组件预览与验收页
 
-- [ ] 创建仅开发环境可访问的 `UiFoundationPreview.vue`，不加入正式侧边栏。
-- [ ] 在同一页面展示所有组件的 variant、size、hover、focus、disabled、loading、error 和空状态。
-- [ ] 支持一键切换亮色、暗色以及 1665 × 1184、900 × 600 预览尺寸。
-- [ ] 使用 Playwright 保存公共组件亮暗主题基线截图。
-- [ ] 为交互组件添加 Vue Test Utils 测试和键盘、ARIA、焦点测试。
-- [ ] 用户确认公共组件预览和 Token 方向后，才允许 Phase 3 业务页面开始实现。
+- [x] 创建仅开发环境可访问的 `UiFoundationPreview.vue`，不加入正式侧边栏。
+- [x] 在同一页面展示所有组件的 variant、size、hover、focus、disabled、loading、error 和空状态。
+- [x] 支持主题切换并完成 1665 × 1184、900 × 600 两档关键尺寸验收。
+- [x] 使用 Playwright 完成公共组件亮暗主题检查；临时截图在提交前清理。
+- [x] 为交互组件添加 Vue Test Utils 测试和键盘、ARIA、焦点测试。
+- [x] 用户确认公共组件预览和 Token 方向后，才允许 Phase 3 业务页面开始实现。
 
 #### 验收标准
 
@@ -883,6 +962,68 @@ services/modules/home-service.ts
 1. 纯净检测 `ipcheck`
 2. 工时内容 `notes`
 3. 代码周报 `report`
+
+#### Phase 4-1：纯净检测 `ipcheck`
+
+**当前执行状态**：下一项，PG0 待开始。
+**现有规模**：`ipcheck.js` 约 306 行，`ipcheck.css` 约 701 行，页面 DOM 位于 `frontend/index.html`。
+
+启动时必须完成：
+
+- [ ] 在本地测试 Sidecar 下采集首次进入自动检测当前公网 IP、手动输入 IPv4/IPv6/域名、非法输入、加载、成功、接口错误和重试状态。
+- [ ] 梳理 `/api/ipcheck/lookup` 的完整响应字段、超时、错误格式和首页摘要当前使用的字段。
+- [ ] 评估 IP 基本信息、共享人数、原生 IP、AI 可用性、风险值和场景建议的层级，避免所有字段使用同等视觉权重。
+- [ ] 检查 701 行旧 CSS 中的全局骨架屏、硬编码颜色、ID 选择器、跨页状态类和 `!important`，不得整文件复制到 Vue。
+- [ ] 对照首页 `home-service.ts`，决定 IP 响应类型和格式化逻辑的唯一归属，防止首页与完整页出现两套风险映射。
+- [ ] 输出 `PRD/vue-migration/pages/ipcheck/assessment.md` 和 `decision.md`；PG3 前不得创建正式 View。
+
+确认后目标结构：
+
+```text
+frontend/src/views/ipcheck/
+├── IpCheckView.vue
+├── components/
+│   ├── IpQueryBar.vue
+│   ├── IpOverviewPanel.vue
+│   ├── IpRiskPanel.vue
+│   └── IpScenarioGrid.vue
+└── composables/useIpCheck.ts
+
+frontend/src/services/modules/ipcheck-service.ts
+```
+
+专项验收：
+
+- 首页纯净度摘要与完整页面对同一次 API 响应给出一致结论。
+- 当前 IP 自动检测只在需要时触发，反复切页不重复绑定 Enter 事件或并发请求。
+- IPv4、IPv6、域名、非法输入、超时、空字段和部分字段缺失均有明确状态。
+- 完成后删除旧 DOM、`ipcheck.js`、`ipcheck.css` 及对应全局函数。
+
+#### Phase 4-2：工时内容 `notes`
+
+启动条件：Phase 4-1 PG5 与本地提交完成。
+研究重点：
+
+- [ ] 验证本周、上周、下周切换，工作日/周末展示，标题和正文编辑，800ms 防抖保存，以及保存失败后的可恢复状态。
+- [ ] 梳理 `/api/notes/:date`、`POST /api/notes`、日期计算、本地时区和 `devtools-notes-show-weekend` 兼容要求。
+- [ ] 研究与代码周报结果之间的引用关系，确认“加载周报数据”是跨页面 store/service 还是仅按需请求。
+- [ ] 评估七日卡片在 1665 × 1184、1280 × 720 和 900 × 600 下的编辑体验；L2 时先确认原型。
+- [ ] 明确页面离开时未触发的防抖保存如何 flush/cancel，禁止因为卸载静默丢失最后一次输入。
+
+目标结构至少包含 `NotesView.vue`、`WeekNavigator.vue`、`DailyWorkNote.vue`、`ReportReferencePanel.vue`、`useWeeklyNotes.ts` 和 `notes-service.ts`。专项验收必须覆盖跨周、本地时区、快速输入、切页前最后一次保存、接口失败重试和旧数据读取。
+
+#### Phase 4-3：代码周报 `report`
+
+启动条件：Phase 4-2 PG5 与本地提交完成。
+研究重点：
+
+- [ ] 验证日报/周报模式、日期预设、Token 显隐、作者、仓库增删、分组、搜索、折叠、拖拽排序、配置保存、并发生成、进度、错误仓库和结果展示。
+- [ ] 梳理 `/api/report/config`、`/api/report/generate-single`、导入导出和工时内容引用的数据契约。
+- [ ] Token 只进入受控表单和现有安全存储链路，不写日志、不进入通用持久化 Pinia。
+- [ ] 将 SortableJS 封装为 `useSortable`，每次重新绑定前销毁旧实例，组件卸载时执行 `destroy()`。
+- [ ] 评估配置区、生成进度、结果区的信息结构；若改变主要布局或结果阅读方式，按 L2 先确认亮暗主题原型。
+
+目标结构至少包含 `ReportView.vue`、`ReportConfigPanel.vue`、`RepositoryList.vue`、`ReportProgress.vue`、`ReportResult.vue`、`useReportGenerator.ts`、`useSortable.ts` 和 `report-service.ts`。专项验收必须覆盖部分仓库失败、空提交、大量仓库、重复生成、拖拽后持久化、Token 不泄漏和卸载销毁。
 
 #### 每页要求
 
@@ -1069,9 +1210,12 @@ services/modules/home-service.ts
 
 **建议工作量**：3～6 人日。
 
+**硬启动条件**：Phase 4～7 的 13 个剩余业务页面全部完成 PG5，旧 `frontend/index.html` 中已无业务页 DOM，路由离开语义和后台任务所有权已经在各页面中确定。任一条件未满足时，不提前迁移侧边栏或建立双导航权威。
+
 #### 任务
 
-- [ ] 创建 `App.vue` 和 `AppLayout.vue`。
+- [ ] 将现有迁移宿主 `App.vue` 升级为正式应用根，并创建 `AppLayout.vue`。
+- [ ] 先建立 route records、页面 meta 和 hash history 测试，再切换可见侧边栏；不得先改视觉后补路由。
 - [ ] 迁移侧边栏、品牌区、底部工具和收起状态。
 - [ ] 用 Vue Router route records 替代 `NAV_ITEMS` 和 `switchPage()`。
 - [ ] 使用 `createWebHashHistory()` 验证 Tauri 正式包直接打开和刷新。
@@ -1082,6 +1226,16 @@ services/modules/home-service.ts
 - [ ] 将 Tauri 拖拽区域和窗口特性放入 AppLayout。
 - [ ] 删除旧 `switchPage()`、`setupNavigation()` 和 `.active` 页面切换逻辑。
 - [ ] 删除 legacy bridge。
+
+#### Phase 8 内部执行顺序
+
+1. 建立完整 route records、meta 类型、404/默认跳转和路由级动态 import。
+2. 为未保存表单、编辑器、PTY、SFTP 和后台任务补齐统一离开守卫契约。
+3. 创建 `AppLayout.vue`，在测试入口中组合侧边栏、内容区、全局反馈与拖拽区。
+4. 迁移菜单顺序、折叠状态、更新标记、主题三态和底部工具，保证旧设置可读取。
+5. 切换正式入口到 Vue Router，并验证 hash 直达、刷新、前进、后退和 Tauri 正式包。
+6. 删除 `NAV_ITEMS`、`switchPage()`、`setupNavigation()`、旧 `.active` 切换和 legacy bridge。
+7. 完成 14 页全量导航、窗口、托盘恢复和主题回归，再创建独立本地提交。
 
 #### 验收标准
 
@@ -1154,24 +1308,29 @@ services/modules/home-service.ts
 
 ## 11. 页面迁移矩阵
 
-| 顺序 | 页面 | 当前主要文件 | 风险 | 关键依赖 | 目标阶段 | 页面研究与优化决策 |
-| --- | --- | --- | --- | --- | --- | --- |
-| 1 | 应用首页 | `HomeView.vue`、`home.css`、`home-service.ts` | 中 | API、活动历史、主题、legacy bridge | Phase 3 | PG0～PG5 与 Tauri 手动 E2E 已完成 |
-| 2 | 纯净检测 | `ipcheck.js`、`ipcheck.css` | 中低 | IP API、首页摘要 | Phase 4 | 待评估 |
-| 3 | 工时内容 | `notes.js`、`notes.css` | 中低 | 日期、数据库 | Phase 4 | 待评估 |
-| 4 | 代码周报 | `report.js`、`report.css` | 中 | Sortable、导入导出 | Phase 4 | 待评估 |
-| 5 | 个人笔记 | `notebook.js`、`notebook.css` | 中 | 编辑、图片、持久化 | Phase 5 | 待评估 |
-| 6 | 系统设置 | `settings.js`、`settings.css` | 中高 | 全局配置、Sidecar | Phase 5 | 待评估 |
-| 7 | 待办事项 | `todo.js`、`todo.css` | 高 | timer、通知、分组 | Phase 5 | 待评估 |
-| 8 | 用量统计 | `usage.js`、`usage.css` | 高 | ECharts、扫描、价格 | Phase 5 | 待评估 |
-| 9 | 2FA 验证码 | `twofa.js`、`twofa.css` | 高 | Secret、timer、导入导出 | Phase 5 | 待评估 |
-| 10 | 本地运行 | `run.js`、`run.css` | 高 | 进程、轮询、WebSocket | Phase 6 | 待评估 |
-| 11 | 部署面板 | `deploy.js`、`deploy.css` | 很高 | 项目、SSH、构建、弹窗 | Phase 6 | 待评估 |
-| 12 | 文件传输 | `filetransfer.js`、`filetransfer.css` | 很高 | SFTP、会话、队列、keepalive | Phase 6 | 待评估 |
-| 13 | 文件编辑 | `editor.js`、`editor.css` | 高 | CodeMirror、未保存状态 | Phase 7 | 待评估 |
-| 14 | 快捷命令 | `terminal.js`、`terminal.css` | 很高 | Xterm、PTY、WebSocket、WebGL | Phase 7 | 待评估 |
+| 顺序 | 页面 | 当前主要文件 | 风险 | 关键依赖 | 目标阶段 | 当前 Gate | 下一动作 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | 应用首页 | `HomeView.vue`、`home.css`、`home-service.ts` | 中 | API、活动历史、主题、legacy bridge | Phase 3 | **PG5 已通过** | 保持回归，不重复迁移 |
+| 2 | 纯净检测 | `ipcheck.js`、`ipcheck.css` | 中低 | IP API、首页摘要 | Phase 4-1 | **PG0 待开始** | 启动测试服务、采集页面、建立 `assessment.md` |
+| 3 | 工时内容 | `notes.js`、`notes.css` | 中低 | 日期、数据库、周报引用 | Phase 4-2 | 等待 | `ipcheck` 提交后开始 PG0 |
+| 4 | 代码周报 | `report.js`、`report.css` | 中 | Sortable、Token、导入导出 | Phase 4-3 | 等待 | `notes` 提交后开始 PG0 |
+| 5 | 个人笔记 | `notebook.js`、`notebook.css` | 中 | 编辑、图片、持久化 | Phase 5-1 | 等待 | Phase 4 完成后开始 PG0 |
+| 6 | 系统设置 | `settings.js`、`settings.css` | 中高 | 全局配置、Sidecar、菜单设置 | Phase 5-2 | 等待 | `notebook` 提交后开始 PG0 |
+| 7 | 待办事项 | `todo.js`、`todo.css` | 高 | timer、通知、分组 | Phase 5-3 | 等待 | `settings` 提交后开始 PG0 |
+| 8 | 用量统计 | `usage.js`、`usage.css` | 高 | ECharts、扫描、价格 | Phase 5-4 | 等待 | `todo` 提交后开始 PG0 |
+| 9 | 2FA 验证码 | `twofa.js`、`twofa.css` | 高 | Secret、timer、导入导出 | Phase 5-5 | 等待 | `usage` 提交后开始 PG0 |
+| 10 | 本地运行 | `run.js`、`run.css` | 高 | 进程、轮询、WebSocket | Phase 6-1 | 等待 | Phase 5 完成后开始 PG0 |
+| 11 | 部署面板 | `deploy.js`、`deploy.css` | 很高 | 项目、SSH、构建、弹窗 | Phase 6-2 | 等待 | `run` 提交后开始 PG0 |
+| 12 | 文件传输 | `filetransfer.js`、`filetransfer.css` | 很高 | SFTP、会话、队列、keepalive | Phase 6-3 | 等待 | `deploy` 提交后开始 PG0 |
+| 13 | 文件编辑 | `editor.js`、`editor.css` | 高 | CodeMirror、未保存状态 | Phase 7-1 | 等待 | Phase 6 完成后开始 PG0 |
+| 14 | 快捷命令 | `terminal.js`、`terminal.css` | 很高 | Xterm、PTY、WebSocket、WebGL | Phase 7-2 | 等待 | `editor` 提交后开始 PG0 |
 
-页面顺序可以在同一风险层级内微调，但 Phase 6 和 Phase 7 不应提前到平台层和普通页面迁移之前。
+页面顺序默认锁定。需要调整时，必须说明依赖、收益、风险和受影响 Gate，经用户确认后同步修改本矩阵。不得把 Phase 8 侧边栏、应用壳和 Router 插入任一业务页面迁移之前。
+
+业务页面矩阵完成后的固定收口顺序：
+
+1. Phase 8：应用壳、侧边栏、主题和 Vue Router。
+2. Phase 9：删除 legacy、旧静态目录和污染 CSS，执行性能及发布验收。
 
 ---
 
@@ -1182,7 +1341,7 @@ services/modules/home-service.ts
 ### 12.1 页面研究与用户决策
 
 - [ ] 已收到用户截图，或已在内置浏览器抓取真实页面。
-- [ ] 已保存默认窗口和最小窗口的亮色、暗色基线截图。
+- [ ] 已采集默认窗口和最小窗口的亮色、暗色基线，并把观察结论写入 `assessment.md`；临时截图不提交。
 - [ ] 已覆盖页面关键子 Tab、弹窗和数据状态；Tauri 专属能力已在真实软件中补充验证。
 - [ ] 已完整阅读页面 HTML、JavaScript、CSS、API、WebSocket、存储和第三方依赖代码。
 - [ ] 已建立完整功能清单和数据流说明。
@@ -1224,11 +1383,19 @@ services/modules/home-service.ts
 
 ### 12.4 验证
 
+- [ ] `npm run typecheck` 通过。
+- [ ] `npm run lint` 通过。
+- [ ] `npm run lint:tokens` 通过。
+- [ ] `npm run test:unit` 通过。
+- [ ] `npm run build:frontend` 通过。
 - [ ] 单元测试通过。
 - [ ] 组件测试通过。
+- [ ] 针对该页面的 Playwright 行为测试通过。
 - [ ] 浏览器亮色通过。
 - [ ] 浏览器暗色通过。
 - [ ] 1665 × 1184 通过。
+- [ ] 1440 × 900 通过。
+- [ ] 1280 × 720 通过。
 - [ ] 900 × 600 通过。
 - [ ] Tauri 开发模式通过。
 - [ ] Tauri 正式构建通过。
@@ -1240,6 +1407,8 @@ services/modules/home-service.ts
 - [ ] 页面没有复制公共组件的结构样式或硬编码主题颜色。
 - [ ] 实现结果与用户确认的原型或 L0/L1 决策一致。
 - [ ] 原有功能清单与本轮优化功能清单分别验收通过。
+- [ ] 已向用户明确“手动 E2E：必须 / 建议 / 不需要”及判断依据。
+- [ ] 手动 E2E 为“必须”时，已提供入口、步骤、关键状态和预期结果，并收到用户通过确认。
 
 ### 12.5 清理
 
@@ -1251,7 +1420,19 @@ services/modules/home-service.ts
 - [ ] 删除旧全局函数。
 - [ ] 更新公共组件使用页面和 variant 清单。
 - [ ] 更新迁移矩阵状态。
+- [ ] 清理截图、联系表、浏览器捕获、visual diff、Playwright 报告和临时 QA 文件。
+- [ ] 检查 `.gitignore` 已覆盖可再生验证产物目录。
+- [ ] 使用 `git diff --check` 并核对完整暂存清单。
 - [ ] 创建独立本地 commit。
+- [ ] 提交消息符合 `English type: Chinese description`，且未自动 push。
+
+### 12.6 编码中的范围变化处理
+
+- 只影响文案、间距或已确认组件参数，且不改变信息结构时，可更新 `decision.md` 后继续。
+- 改变布局、主要交互或页面信息结构时，回退 PG2；需要 L2 原型时重新确认 PG3。
+- 新增、删除或改变业务功能时，回退 PG2/PG3，并分别列出旧功能回归清单和新功能验收清单。
+- 涉及 API、SQLite、安全、通知、进程、部署、SFTP、PTY 或未保存数据语义时，暂停页面实现，建立独立子阶段。
+- 用户暂未确定优化方向时，只完成研究文档，不以开发者偏好代替用户选择。
 
 ---
 
@@ -1568,47 +1749,63 @@ refactor: 删除旧首页脚本与无消费者样式
 
 建议以 Gate 为交付单位，不按日历一次性排完。每通过一个 Gate，软件都应保持可发布状态。
 
+Phase 0～3 已完成，上表总量仅保留为原始规划参考；当前剩余工程从 Phase 4 开始，页面 L2/L3 优化继续按实际确认范围单独估算。
+
 ---
 
-## 21. 第一批可立即执行的任务
+## 21. 当前下一批可立即执行的任务
 
-第一批只执行 Phase 0 和 Phase 1，不迁移业务页面。
+Phase 0～3 已完成，当前只启动 **Phase 4-1：纯净检测 `ipcheck` 的 PG0～PG3**。在用户确认页面优化等级与范围前，不创建 `IpCheckView.vue`，不删除旧页面，也不顺带迁移侧边栏。
 
-第一批只建立全局基线，不要求一次性决定 14 个页面的优化方向。每个页面的详细 PG0～PG3 在轮到该页迁移前按需执行。
+### Batch 4-1A：PG0 现状取证
 
-### Batch 1A：基线
+- [ ] 确认工作区状态和当前基线 commit `0a52146`。
+- [ ] 使用 `DEVTOOLS_TEST=1` 启动独立测试 Sidecar，确认端口和 `data-test`，不得连接生产数据库。
+- [ ] 启动 Vite 测试服务，在内置浏览器打开纯净检测页面。
+- [ ] 采集 1665 × 1184、1440 × 900、1280 × 720、900 × 600 的亮色和暗色状态。
+- [ ] 覆盖首次自动查询、手动 IP、IPv6、域名、非法输入、加载、成功、API 错误、重试和快速切页。
+- [ ] 把观察结论写入 `PRD/vue-migration/pages/ipcheck/assessment.md`；临时截图保存在仓库外。
 
-- [x] 盘点当前工作区并保留既有混合修改。
-- [x] 运行现有 lint 和手测。
-- [x] 记录 14 个页面状态。
-- [x] 备份数据库和设置。
-- [ ] 建立迁移基线 commit。
+本批只产生研究文档，不改变运行时代码。**手动 E2E：不需要**；用户只需在 PG3 评审优化方向。
 
-### Batch 1B：构建骨架
+### Batch 4-1B：PG1 代码与数据研究
 
-- [x] 安装 Vite、Vue Plugin 和 TypeScript。
-- [x] 创建 `frontend` 目录。
-- [x] 移动 HTML 入口。
-- [x] 创建 Vite 和 TS 配置。
-- [x] 调整 package scripts。
-- [x] 调整 Tauri build 配置。
-- [x] 验证浏览器开发模式。
-- [x] 验证 Tauri 开发模式。
-- [x] 验证 Tauri 正式构建。
+- [ ] 阅读 `frontend/index.html` 中 `#page-ipcheck` 的全部 DOM。
+- [ ] 阅读 `src/js/ipcheck.js`、`src/css/pages/ipcheck.css` 及跨页覆盖规则。
+- [ ] 阅读 `/api/ipcheck/lookup` 后端实现、超时、错误和第三方数据来源。
+- [ ] 对照首页 `home-service.ts` 与纯净检测摘要，建立共享类型和格式化归属建议。
+- [ ] 盘点全局函数、Enter 监听、初始化标记、请求并发、硬编码颜色、`!important` 和旧状态类。
+- [ ] 输出当前功能清单、数据流、依赖图、保留兼容项和风险。
 
-### Batch 1C：零回归确认
+### Batch 4-1C：PG2 优化建议与 PG3 用户确认
 
-- [x] 逐个进入 14 个页面。
-- [x] 检查明暗主题。
-- [x] 检查首页默认窗口。
-- [x] 检查 API 和 WebSocket。
-- [x] 以无副作用 Smoke Test 检查本地运行与部署页面的进入、布局和 API 初始化。
-- [x] 以无副作用 Smoke Test 检查文件传输、终端和编辑器页面的进入、布局和 API 初始化。
-- [ ] 创建独立 commit：`chore: 建立 Vue 迁移构建基础`。
+- [ ] 分别提出布局、视觉、信息层级、搜索交互、风险表达、场景建议、响应式、可访问性和错误恢复建议。
+- [ ] 所有建议标记“保留 / 优化 / 删除 / 新增”、优先级、收益、成本和风险。
+- [ ] 明确推荐 L0～L3 及理由，但最终等级由用户选择。
+- [ ] 用户选择 L2/L3 时，先制作亮暗主题最终 HTML 原型；用户确认前不进入 Vue 实现。
+- [ ] 将用户确认内容写入 `PRD/vue-migration/pages/ipcheck/decision.md`，更新第 11 节 Gate。
 
-只有 Batch 1 全部通过后，才开始平台层和首页 SFC 迁移。
+### Batch 4-1D：PG4 实现与 PG5 验收
 
-截至 2026-07-21，Batch 1 的代码、测试、浏览器与 Tauri 技术项已经全部通过；仅两个本地 commit 项等待用户明确授权。当前没有创建 commit，也没有推送远程仓库。高风险业务页本阶段只做无副作用 Smoke Test，不启动真实构建、部署、SFTP 写入或编辑会话。
+仅在 PG3 通过后执行：
+
+- [ ] 创建 `IpCheckView.vue`、页面私有组件、`useIpCheck.ts` 和 `ipcheck-service.ts`。
+- [ ] 复用项目 PageTop、表单、按钮、卡片、反馈状态和 Naive UI 适配组件。
+- [ ] 在 Migration Host 注册 `ipcheck`，保留旧侧边栏作为迁移期导航权威。
+- [ ] 补齐单元、组件和 Playwright 测试，完成四档窗口和三态主题验证。
+- [ ] 通知用户执行必须级 Tauri E2E；通过前不删除旧实现、不提交、不开始 `notes`。
+- [ ] 用户确认后删除旧 DOM、JS、CSS、全局函数和临时视觉产物，更新文档并创建独立本地提交。
+
+### 当前停止条件
+
+出现以下任一情况时暂停当前批次并向用户说明，不自行扩大范围：
+
+- API 真实字段与首页摘要不一致。
+- 需要修改 Sidecar、数据库或第三方 IP 服务。
+- 用户选择 L2/L3 但最终原型尚未确认。
+- 共享组件修改会影响多个现有页面。
+- 浏览器与 Tauri 结果不一致。
+- 旧 CSS 删除会改变其他未迁移页面。
 
 ---
 
@@ -1629,7 +1826,7 @@ refactor: 删除旧首页脚本与无消费者样式
 - [ ] 旧静态前端 `src` 目录已删除。
 - [ ] Primitive、Semantic、Component 三层 Token 是颜色、主题、间距和组件外观的唯一来源。
 - [ ] PageHeader、按钮、输入、下拉、卡片、弹窗和通用状态均使用公共组件，不存在页面级重复实现。
-- [ ] 亮暗主题只通过语义 Token 切换，页面不单独定义主题颜色。
+- [ ] 跟随系统、固定亮色和固定暗色只通过语义 Token 切换，页面不单独定义主题颜色。
 - [ ] 公共组件清单、预览页、类型、测试和视觉基线与最终代码一致。
 - [x] 已完成 UI 组件库选型和适配层接入；业务 View 不直接依赖第三方 UI 库，第三方主题变量已映射到项目 Token。
 - [ ] `overrides.css` 及其他无所有权的补丁样式已删除。
@@ -1639,7 +1836,7 @@ refactor: 删除旧首页脚本与无消费者样式
 - [ ] API、WebSocket 和 Tauri IPC 只能通过 service 层访问。
 - [ ] 跨页面状态均有明确 store 所有权。
 - [ ] timer、observer、第三方实例均有明确销毁点。
-- [ ] 明暗主题和四档窗口尺寸通过。
+- [ ] 跟随系统、固定亮色、固定暗色和四档窗口尺寸通过。
 - [ ] 自动化测试、正式构建和 Tauri Smoke Test 通过。
 - [ ] 旧版本数据和配置可以直接读取。
 - [ ] 没有已知的重复监听、内存泄漏或页面覆盖问题。
@@ -1880,4 +2077,4 @@ refactor: 删除旧首页脚本与无消费者样式
 - 如果发现现有 API 无法支持 Vue 页面，应先记录接口差距，再单独评审 Sidecar 变更。
 - 迁移期间所有临时兼容代码必须标记删除 Gate，不能无期限保留。
 
-本计划从 Phase 0 开始执行，首个技术交付目标是 **G1：Vite 构建接管且现有功能零回归**。
+当前执行从 **Phase 4-1 纯净检测 PG0** 继续；下一次状态更新必须先记录 `ipcheck` 的现状取证和代码研究结果，不提前进入侧边栏或应用壳迁移。
