@@ -1058,7 +1058,6 @@ function switchPage(page, el, source = 'legacy') {
   }
   if (page === 'settings') loadSettings();
   if (page === 'todo') loadTodos();
-  if (page === 'notebook') initNotebook();
   if (page === 'editor') initEditor();
   if (page === 'terminal') loadCommands();
   if (page === 'twofa') initTwoFA();

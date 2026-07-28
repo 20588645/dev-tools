@@ -11,6 +11,16 @@ const edState = {
 
 const ED_TABS_KEY = 'devtools-editor-tabs';
 
+function edEscapeHTML(str) {
+  if (!str) return '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 // 扩展名 -> CodeMirror mode
 const ED_MODE_MAP = {
   js: 'text/javascript', mjs: 'text/javascript', cjs: 'text/javascript', jsx: 'text/jsx',
@@ -220,7 +230,7 @@ function edRenderBreadcrumb(currentDir) {
   let html = `<button onclick="edBrowseTo('/')">/</button>`;
   parts.forEach(p => {
     accum += '/' + p;
-    html += `<span>/</span><button onclick="edBrowseTo('${accum.replace(/'/g, "\\'")}')">${escapeHTML(p)}</button>`;
+    html += `<span>/</span><button onclick="edBrowseTo('${accum.replace(/'/g, "\\'")}')">${edEscapeHTML(p)}</button>`;
   });
   el.innerHTML = html;
 }
@@ -242,15 +252,15 @@ function edRenderBrowseList(entries) {
     const safe = e.path.replace(/'/g, "\\'");
     if (e.isDir) {
       return `<div class="browser-item" onclick="edBrowseTo('${safe}')" style="cursor:pointer">
-        <span style="display:flex;align-items:center;gap:8px">📁 ${escapeHTML(e.name)}</span>
+        <span style="display:flex;align-items:center;gap:8px">📁 ${edEscapeHTML(e.name)}</span>
         <span style="font-size:11px;color:var(--text-muted)">→</span>
       </div>`;
     }
     const action = edBrowserMode === 'save'
-      ? `edPickSaveTarget('${safe}', '${escapeHTML(e.name).replace(/'/g, "\\'")}')`
+      ? `edPickSaveTarget('${safe}', '${edEscapeHTML(e.name).replace(/'/g, "\\'")}')`
       : `edPickFile('${safe}')`;
     return `<div class="browser-item" onclick="${action}" style="cursor:pointer">
-      <span style="display:flex;align-items:center;gap:8px"><span style="color:var(--accent)">📄</span> ${escapeHTML(e.name)}</span>
+      <span style="display:flex;align-items:center;gap:8px"><span style="color:var(--accent)">📄</span> ${edEscapeHTML(e.name)}</span>
       <span style="font-size:11px;color:var(--text-muted)">${edFormatSize(e.size || 0)}</span>
     </div>`;
   }).join('');
@@ -376,8 +386,8 @@ function edRenderTabs() {
     const dirty = !tab.doc.isClean(tab.cleanGen);
     const safe = path.replace(/'/g, "\\'");
     return `
-      <div class="ed-tab ${isActive ? 'active' : ''}" data-path="${escapeHTML(path)}" onclick="edActivate('${safe}')" oncontextmenu="edShowTabMenu(event,'${safe}')" title="${escapeHTML(path)}">
-        <span class="ed-tab-name">${escapeHTML(tab.name)}</span>
+      <div class="ed-tab ${isActive ? 'active' : ''}" data-path="${edEscapeHTML(path)}" onclick="edActivate('${safe}')" oncontextmenu="edShowTabMenu(event,'${safe}')" title="${edEscapeHTML(path)}">
+        <span class="ed-tab-name">${edEscapeHTML(tab.name)}</span>
         <span class="ed-tab-close ${dirty ? 'dirty' : ''}" onclick="event.stopPropagation();edCloseTab('${safe}')" title="${dirty ? '未保存' : '关闭'}">
           <svg class="ed-tab-x" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </span>

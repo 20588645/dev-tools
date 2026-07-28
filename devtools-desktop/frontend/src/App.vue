@@ -2,6 +2,7 @@
 import { defineAsyncComponent } from 'vue'
 
 import { UiLibraryProvider } from './plugins/ui-library'
+import AppToastHost from './components/feedback/AppToastHost.vue'
 import MigrationHost from './legacy/MigrationHost.vue'
 
 const UiFoundationPreview = defineAsyncComponent(() => import('./views/UiFoundationPreview.vue'))
@@ -18,6 +19,9 @@ const showUiFoundationPreview = import.meta.env.DEV
   </div>
   <UiLibraryProvider v-else>
     <MigrationHost />
+    <Teleport to="body">
+      <AppToastHost />
+    </Teleport>
   </UiLibraryProvider>
 </template>
 

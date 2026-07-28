@@ -703,7 +703,6 @@ body[data-theme="dark"] #logModal.run-compile-warning .progress-text {
 #page-terminal .page-title,
 #page-run .page-title,
 #page-deploy .page-title,
-#page-notebook .page-title,
 #page-settings .page-title {
   font-size: 17px !important;
   font-weight: 700 !important;
@@ -717,7 +716,6 @@ body[data-theme="dark"] #logModal.run-compile-warning .progress-text {
 #page-terminal .page-subtitle,
 #page-run .page-subtitle,
 #page-deploy .page-subtitle,
-#page-notebook .page-subtitle,
 #page-settings .page-subtitle {
   font-size: 11px !important;
   color: var(--text-muted) !important;
@@ -749,8 +747,7 @@ body[data-theme="dark"] #logModal.run-compile-warning .progress-text {
 /* --- 12. 统一空状态样式 --- */
 .home-empty-hint,
 .home-empty-state,
-.run-status-empty,
-.nb-empty {
+.run-status-empty {
   font-size: 12px !important;
   color: var(--text-muted) !important;
 }
@@ -760,8 +757,7 @@ body[data-theme="dark"] #logModal.run-compile-warning .progress-text {
 #page-run > .page-header-simple,
 #page-settings > .page-header-simple,
 #page-todo > .page-header-simple,
-#page-terminal > .page-header-simple,
-#page-notebook > .page-header-simple {
+#page-terminal > .page-header-simple {
   justify-content: space-between !important;
   min-height: 48px !important;
   margin-bottom: 12px !important;

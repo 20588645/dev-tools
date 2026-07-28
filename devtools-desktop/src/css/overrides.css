@@ -563,26 +563,6 @@ textarea:not([class^="n-"]):not([class*=" n-"]),
   flex-shrink: 0 !important;
 }
 
-.nb-new-btn {
-  width: 34px !important;
-  height: 34px !important;
-  padding: 0 !important;
-  border-radius: 50% !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25) !important;
-  background: linear-gradient(135deg, var(--primary) 0%, rgba(59, 130, 246, 0.8) 100%) !important;
-  border: none !important;
-  color: #fff !important;
-  transition: all 0.2s ease-in-out !important;
-}
-
-.nb-new-btn:hover {
-  transform: translateY(-1px) scale(1.05) !important;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.45) !important;
-}
-
 .geek-hash code {
   background: var(--bg-input);
   padding: 1px 4px;
@@ -611,9 +591,7 @@ textarea:not([class^="n-"]):not([class*=" n-"]),
 .cmd-output-section,
 .run-project-card,
 .run-stat-card,
-.stat-card,
-.nb-list-panel,
-.nb-editor-panel {
+.stat-card {
   border-radius: 8px !important;
 }
 

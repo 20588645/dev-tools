@@ -1,0 +1,861 @@
+<script setup lang="ts">
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+
+import BaseButton from '@/components/base/BaseButton.vue'
+import {
+  resolveNotebookAssetUrl,
+  uploadNotebookImage,
+} from '@/services/modules/notebook-service'
+import { tauriClient } from '@/services/tauri-client'
+import { useNotificationStore } from '@/stores/notification'
+
+import {
+  credentialTemplateHtml,
+  notebookImagePath,
+  plainTextToNotebookHtml,
+  safeNotebookHttpUrl,
+  sanitizeNotebookHtml,
+} from '../notebook-html'
+
+const props = defineProps<{
+  noteId: string
+  modelValue: string
+}>()
+
+const emit = defineEmits<{
+  'update:modelValue': [value: string]
+}>()
+
+const notifications = useNotificationStore()
+const editor = ref<HTMLElement | null>(null)
+const toolbar = ref<HTMLElement | null>(null)
+const activeTable = ref<HTMLTableElement | null>(null)
+const activeRow = ref<HTMLTableRowElement | null>(null)
+const activeColumn = ref(0)
+const credentialEditing = ref(false)
+const toolbarPosition = ref({ left: 8, top: 8 })
+let applyingModel = false
+let copyTimer: ReturnType<typeof setTimeout> | null = null
+let resizeObserver: ResizeObserver | null = null
+let savedSelection: Range | null = null
+let selectionNoteId = props.noteId
+let suppressSelectionCapture = false
+let selectionGuardTimer: ReturnType<typeof setTimeout> | null = null
+
+function serializeContent() {
+  if (!editor.value) return ''
+  const clone = editor.value.cloneNode(true) as HTMLElement
+  clone.querySelectorAll(
+    '[contenteditable], [role], [tabindex], [aria-label], [data-editing], [data-copy-state], [data-active-column]',
+  ).forEach((element) => {
+    [
+      'contenteditable',
+      'role',
+      'tabindex',
+      'aria-label',
+      'data-editing',
+      'data-copy-state',
+      'data-active-column',
+    ].forEach((attribute) => element.removeAttribute(attribute))
+  })
+  clone.querySelectorAll('table[data-notebook-block="credential"][style]').forEach((table) => {
+    table.removeAttribute('style')
+  })
+  return sanitizeNotebookHtml(clone.innerHTML)
+}
+
+function emitContent() {
+  if (applyingModel) return
+  emit('update:modelValue', serializeContent())
+}
+
+function createLink(url: string, label = url) {
+  const anchor = document.createElement('a')
+  anchor.href = url
+  anchor.target = '_blank'
+  anchor.rel = 'noreferrer noopener'
+  anchor.textContent = label
+  return anchor
+}
+
+function selectionBelongsToEditor(range: Range | null) {
+  const root = editor.value
+  return Boolean(
+    root
+    && range
+    && root.contains(range.startContainer)
+    && root.contains(range.endContainer),
+  )
+}
+
+function captureSelection() {
+  const root = editor.value
+  const focused = document.activeElement
+  if (!root || (focused !== root && !root.contains(focused))) return
+  const selection = window.getSelection()
+  if (!selection?.rangeCount) return
+  const range = selection.getRangeAt(0)
+  if (selectionBelongsToEditor(range)) savedSelection = range.cloneRange()
+}
+
+function captureSelectionBeforeFocusLeaves(event: PointerEvent) {
+  const root = editor.value
+  const target = event.target instanceof Node ? event.target : null
+
+  if (!root || (target && root.contains(target))) {
+    suppressSelectionCapture = false
+    return
+  }
+
+  captureSelection()
+  suppressSelectionCapture = true
+  if (selectionGuardTimer) globalThis.clearTimeout(selectionGuardTimer)
+  selectionGuardTimer = globalThis.setTimeout(() => {
+    suppressSelectionCapture = false
+    selectionGuardTimer = null
+  }, 0)
+}
+
+function handleDocumentSelectionChange() {
+  if (!suppressSelectionCapture) captureSelection()
+}
+
+function restoreSelection() {
+  const root = editor.value
+  const selection = window.getSelection()
+  if (!root || !selection) return null
+
+  const activeRange = selection.rangeCount ? selection.getRangeAt(0) : null
+  const range = selectionBelongsToEditor(savedSelection)
+    ? savedSelection!.cloneRange()
+    : selectionBelongsToEditor(activeRange)
+      ? activeRange!.cloneRange()
+      : document.createRange()
+  if (!selectionBelongsToEditor(savedSelection) && !selectionBelongsToEditor(activeRange)) {
+    range.selectNodeContents(root)
+    range.collapse(false)
+  }
+
+  root.focus()
+  selection.removeAllRanges()
+  selection.addRange(range)
+  return range
+}
+
+function selectedLinkContext() {
+  const selection = window.getSelection()
+  const activeRange = selection?.rangeCount ? selection.getRangeAt(0) : null
+  const range = selectionBelongsToEditor(savedSelection)
+    ? savedSelection!.cloneRange()
+    : selectionBelongsToEditor(activeRange)
+      ? activeRange!.cloneRange()
+      : null
+  const text = range?.toString().trim() ?? ''
+  if (!range || range.collapsed || !text) {
+    notifications.push('请先选择需要设置为链接的文字', 'warning')
+    return null
+  }
+  return {
+    text,
+    suggestedUrl: safeNotebookHttpUrl(text),
+  }
+}
+
+function applyLinkToSelection(url: string) {
+  const root = editor.value
+  const safeUrl = safeNotebookHttpUrl(url)
+  if (!root || !safeUrl) {
+    notifications.push('请输入以 http:// 或 https:// 开头的有效网址', 'warning')
+    return false
+  }
+
+  const selection = window.getSelection()
+  const activeRange = selection?.rangeCount ? selection.getRangeAt(0) : null
+  const range = selectionBelongsToEditor(savedSelection)
+    ? savedSelection!.cloneRange()
+    : selectionBelongsToEditor(activeRange)
+      ? activeRange!.cloneRange()
+      : null
+  const label = range?.toString().trim() ?? ''
+  if (!selection || !range || range.collapsed || !label) {
+    notifications.push('原有文字选择已失效，请重新选择后再试', 'warning')
+    return false
+  }
+
+  const startElement = range.startContainer.nodeType === Node.ELEMENT_NODE
+    ? range.startContainer as Element
+    : range.startContainer.parentElement
+  const existingLink = startElement?.closest<HTMLAnchorElement>('a[href]')
+  if (existingLink && root.contains(existingLink) && existingLink.contains(range.endContainer)) {
+    existingLink.href = safeUrl
+    existingLink.target = '_blank'
+    existingLink.rel = 'noreferrer noopener'
+    range.selectNodeContents(existingLink)
+  } else {
+    const link = createLink(safeUrl, label)
+    range.deleteContents()
+    range.insertNode(link)
+    range.selectNodeContents(link)
+  }
+
+  root.focus()
+  selection.removeAllRanges()
+  selection.addRange(range)
+  savedSelection = range.cloneRange()
+  emitContent()
+  notifications.push('已设置为网页链接，按住 Command 单击可打开', 'success')
+  return true
+}
+
+function insertHtmlAtCaret(html: string) {
+  const root = editor.value
+  if (!root) return []
+  const range = restoreSelection()
+  const activeSelection = window.getSelection()
+  if (!activeSelection || !range) return []
+  const fragment = range.createContextualFragment(html)
+  const insertedNodes = Array.from(fragment.childNodes)
+  const lastNode = fragment.lastChild
+  range.deleteContents()
+  range.insertNode(fragment)
+  if (lastNode) {
+    range.setStartAfter(lastNode)
+    range.collapse(true)
+    activeSelection.removeAllRanges()
+    activeSelection.addRange(range)
+    savedSelection = range.cloneRange()
+  }
+  return insertedNodes
+}
+
+function hasBlockContent(block: Element) {
+  return Boolean(
+    block.textContent?.trim()
+    || block.querySelector('img, table, pre, blockquote, ul, ol'),
+  )
+}
+
+function insertBlockHtmlAtCaret(html: string) {
+  const root = editor.value
+  if (!root) return []
+  const range = restoreSelection()
+  const activeSelection = window.getSelection()
+  if (!activeSelection || !range) return []
+
+  if (!range.collapsed) {
+    range.deleteContents()
+    range.collapse(true)
+  }
+
+  const startElement = range.startContainer.nodeType === Node.ELEMENT_NODE
+    ? range.startContainer as Element
+    : range.startContainer.parentElement
+  let block = startElement
+  while (block && block.parentElement !== root) block = block.parentElement
+
+  if (
+    !(block instanceof HTMLElement)
+    || !['P', 'DIV', 'H2', 'H3', 'BLOCKQUOTE', 'PRE'].includes(block.tagName)
+  ) return insertHtmlAtCaret(html)
+  const currentBlock = block
+
+  const tailRange = document.createRange()
+  tailRange.selectNodeContents(currentBlock)
+  tailRange.setStart(range.startContainer, range.startOffset)
+  const tailBlock = currentBlock.cloneNode(false) as HTMLElement
+  tailBlock.append(tailRange.extractContents())
+
+  const parserRange = document.createRange()
+  parserRange.selectNodeContents(root)
+  const fragment = parserRange.createContextualFragment(html)
+  const insertedNodes = Array.from(fragment.childNodes)
+  const lastNode = fragment.lastChild
+  const marker = document.createComment('notebook-block-insertion')
+
+  currentBlock.after(marker)
+  marker.before(fragment)
+  if (hasBlockContent(tailBlock)) marker.before(tailBlock)
+  marker.remove()
+  if (!hasBlockContent(currentBlock)) currentBlock.remove()
+
+  if (lastNode?.parentNode) {
+    range.setStartAfter(lastNode)
+    range.collapse(true)
+    activeSelection.removeAllRanges()
+    activeSelection.addRange(range)
+    savedSelection = range.cloneRange()
+  }
+  return insertedNodes
+}
+
+async function resolveEditorImages() {
+  const root = editor.value
+  if (!root) return
+  await Promise.all(Array.from(root.querySelectorAll<HTMLImageElement>('img')).map(async (image) => {
+    const path = notebookImagePath(image.getAttribute('src') ?? '')
+    if (!path) return
+    try {
+      image.src = await resolveNotebookAssetUrl(path)
+    } catch {
+      image.src = path
+    }
+  }))
+}
+
+function markActiveColumn(table: HTMLTableElement, column: number) {
+  const fields = Array.from(table.querySelectorAll<HTMLTableCellElement>('th[data-credential-field]'))
+  if (!fields.length) return
+  activeColumn.value = Math.max(0, Math.min(column, fields.length - 1))
+  table.querySelectorAll('[data-active-column]').forEach((element) => element.removeAttribute('data-active-column'))
+  fields[activeColumn.value]?.setAttribute('data-active-column', '')
+  Array.from(table.tBodies[0]?.rows ?? []).forEach((row) => {
+    row.cells[activeColumn.value]?.setAttribute('data-active-column', '')
+  })
+}
+
+function configureCredentialTable(table: HTMLTableElement, editing = table.dataset.editing === 'true') {
+  table.dataset.editing = String(editing)
+  table.contentEditable = 'false'
+  const project = table.querySelector<HTMLTableCellElement>('th[data-credential-project]')
+  const fieldRow = table.tHead?.rows[1]
+  if (!table.querySelector('th[data-credential-field]')) {
+    Array.from(fieldRow?.cells ?? []).forEach((field) => field.setAttribute('data-credential-field', ''))
+  }
+  const fields = Array.from(table.querySelectorAll<HTMLTableCellElement>('th[data-credential-field]'))
+  const fieldCount = Math.max(1, fields.length)
+  if (project?.textContent?.trim() === '点击填写项目名称') project.textContent = ''
+  project?.setAttribute('colspan', String(fieldCount))
+  if (project) {
+    project.contentEditable = String(editing)
+    if (editing) project.dataset.placeholder = '点击填写项目名称'
+    else project.removeAttribute('data-placeholder')
+  }
+  table.style.setProperty('--credential-columns', String(fieldCount))
+  const rows = Array.from(table.tBodies[0]?.rows ?? [])
+  const projectName = project?.textContent?.trim() || '当前项目'
+
+  fields.forEach((field, index) => {
+    field.contentEditable = String(editing)
+    field.removeAttribute('data-active-column')
+    if (editing) field.setAttribute('aria-label', `编辑第 ${index + 1} 个字段名称`)
+    else field.removeAttribute('aria-label')
+  })
+
+  table.querySelectorAll<HTMLTableCellElement>('td[data-credential-value]').forEach((cell) => {
+    const columnNumber = Math.max(0, Array.from(cell.parentElement?.children ?? []).indexOf(cell))
+    const fieldName = fields[columnNumber]?.textContent?.trim() || `字段 ${columnNumber + 1}`
+    const legacyPlaceholders = new Set([`点击填写${fieldName}`, '点击填写内容'])
+    if (legacyPlaceholders.has(cell.textContent?.trim() ?? '')) cell.textContent = ''
+    cell.contentEditable = String(editing)
+    cell.removeAttribute('data-copy-state')
+    cell.removeAttribute('data-active-column')
+    if (editing) {
+      cell.dataset.placeholder = `点击填写${fieldName}`
+      cell.removeAttribute('role')
+      cell.removeAttribute('tabindex')
+      cell.removeAttribute('aria-label')
+      return
+    }
+    cell.removeAttribute('data-placeholder')
+    const rowNumber = Math.max(1, rows.indexOf(cell.closest('tr') as HTMLTableRowElement) + 1)
+    cell.setAttribute('role', 'button')
+    cell.setAttribute('tabindex', '0')
+    cell.setAttribute('aria-label', `复制${projectName}第 ${rowNumber} 条记录的${fieldName}`)
+  })
+  if (editing) markActiveColumn(table, activeColumn.value)
+}
+
+function hydrateCredentialBlocks() {
+  editor.value?.querySelectorAll<HTMLTableElement>('table[data-notebook-block="credential"]').forEach((table) => {
+    configureCredentialTable(table)
+  })
+}
+
+function positionToolbar(table = activeTable.value) {
+  const root = editor.value
+  const controls = toolbar.value
+  if (!root || !table || !controls || !root.contains(table)) return
+  const tableRect = table.getBoundingClientRect()
+  const rootRect = root.getBoundingClientRect()
+  const width = controls.offsetWidth || 60
+  toolbarPosition.value = {
+    left: Math.max(8, Math.min(root.clientWidth - width - 8, tableRect.right - rootRect.left - width)),
+    top: Math.max(8, Math.min(root.clientHeight - 34, tableRect.top - rootRect.top + root.scrollTop - 14)),
+  }
+}
+
+function showCredentialToolbar(table: HTMLTableElement) {
+  activeTable.value = table
+  credentialEditing.value = table.dataset.editing === 'true'
+  void nextTick(() => positionToolbar(table))
+}
+
+function hideCredentialToolbar() {
+  activeTable.value = null
+  activeRow.value = null
+  credentialEditing.value = false
+}
+
+function setCredentialEditing(editing: boolean, restoreEditorFocus = true) {
+  const table = activeTable.value
+  if (!table) return
+  configureCredentialTable(table, editing)
+  credentialEditing.value = editing
+  void nextTick(() => positionToolbar(table))
+  if (!editing) {
+    emitContent()
+    if (restoreEditorFocus) editor.value?.focus()
+    return
+  }
+  const firstValue = table.querySelector<HTMLTableCellElement>('td[data-credential-value]')
+  if (!firstValue) return
+  activeRow.value = firstValue.closest('tr')
+  activeColumn.value = 0
+  markActiveColumn(table, 0)
+  const selection = window.getSelection()
+  const range = document.createRange()
+  range.selectNodeContents(firstValue)
+  range.collapse(false)
+  selection?.removeAllRanges()
+  selection?.addRange(range)
+  firstValue.focus()
+}
+
+function finishCredentialEditing() {
+  const root = editor.value
+  if (!root) return false
+  const editingTable = activeTable.value?.dataset.editing === 'true'
+    ? activeTable.value
+    : root.querySelector<HTMLTableElement>('table[data-notebook-block="credential"][data-editing="true"]')
+  if (!editingTable) return false
+  activeTable.value = editingTable
+  setCredentialEditing(false, false)
+  hideCredentialToolbar()
+  return true
+}
+
+function insertCredential() {
+  const root = editor.value
+  if (!root) return
+  const insertedNodes = insertBlockHtmlAtCaret(credentialTemplateHtml())
+  const table = insertedNodes.reduce<HTMLTableElement | null>((result, node) => {
+    if (result) return result
+    if (node instanceof HTMLTableElement) return node
+    return node instanceof Element
+      ? node.querySelector<HTMLTableElement>('table[data-notebook-block="credential"]')
+      : null
+  }, null)
+  if (table) {
+    activeColumn.value = 0
+    showCredentialToolbar(table)
+    setCredentialEditing(true)
+  }
+  emitContent()
+  notifications.push('已插入凭据信息表，可自由调整字段与记录', 'success')
+}
+
+function addCredentialRow() {
+  const table = activeTable.value
+  const body = table?.tBodies[0]
+  if (!table || !body || table.dataset.editing !== 'true') return
+  const row = body.insertRow()
+  const fields = Array.from(table.querySelectorAll<HTMLTableCellElement>('th[data-credential-field]'))
+  fields.forEach((field, index) => {
+    const cell = row.insertCell()
+    cell.setAttribute('data-credential-value', '')
+    cell.dataset.placeholder = `点击填写${field.textContent?.trim() || `字段 ${index + 1}`}`
+  })
+  activeRow.value = row
+  configureCredentialTable(table, true)
+  positionToolbar(table)
+  row.cells[0]?.focus()
+  emitContent()
+}
+
+function removeCredentialRow() {
+  const table = activeTable.value
+  const body = table?.tBodies[0]
+  if (!table || !body || table.dataset.editing !== 'true') return
+  const rows = Array.from(body.rows)
+  if (rows.length <= 1) {
+    notifications.push('凭据信息表至少保留一条记录', 'warning')
+    return
+  }
+  const target = activeRow.value && table.contains(activeRow.value) ? activeRow.value : rows[rows.length - 1]
+  const index = rows.indexOf(target)
+  activeRow.value = rows[index + 1] ?? rows[index - 1] ?? null
+  target.remove()
+  configureCredentialTable(table, true)
+  emitContent()
+}
+
+function addCredentialField() {
+  const table = activeTable.value
+  const fieldRow = table?.tHead?.rows[1]
+  const body = table?.tBodies[0]
+  if (!table || !fieldRow || !body || table.dataset.editing !== 'true') return
+  const field = document.createElement('th')
+  field.setAttribute('data-credential-field', '')
+  field.textContent = `字段 ${fieldRow.cells.length + 1}`
+  fieldRow.append(field)
+  Array.from(body.rows).forEach((row) => {
+    const cell = row.insertCell()
+    cell.setAttribute('data-credential-value', '')
+    cell.dataset.placeholder = `点击填写${field.textContent}`
+  })
+  activeColumn.value = fieldRow.cells.length - 1
+  configureCredentialTable(table, true)
+  field.focus()
+  emitContent()
+}
+
+function removeCredentialField() {
+  const table = activeTable.value
+  if (!table || table.dataset.editing !== 'true') return
+  const fields = Array.from(table.querySelectorAll<HTMLTableCellElement>('th[data-credential-field]'))
+  if (fields.length <= 1) {
+    notifications.push('凭据信息表至少保留一个字段', 'warning')
+    return
+  }
+  const column = Math.max(0, Math.min(activeColumn.value, fields.length - 1))
+  fields[column].remove()
+  Array.from(table.tBodies[0]?.rows ?? []).forEach((row) => row.cells[column]?.remove())
+  activeColumn.value = Math.max(0, column - 1)
+  configureCredentialTable(table, true)
+  emitContent()
+}
+
+async function copyCredentialValue(cell: HTMLTableCellElement) {
+  const value = cell.innerText.trim()
+  if (!value) {
+    notifications.push('当前字段没有可复制内容', 'warning')
+    return
+  }
+  try {
+    await navigator.clipboard.writeText(value)
+    cell.dataset.copyState = 'done'
+    if (copyTimer) globalThis.clearTimeout(copyTimer)
+    copyTimer = globalThis.setTimeout(() => cell.removeAttribute('data-copy-state'), 1200)
+    notifications.push('已复制此项', 'success')
+  } catch {
+    notifications.push('未能访问剪贴板，请检查系统权限', 'error')
+  }
+}
+
+function insertTab() {
+  const selection = window.getSelection()
+  if (!selection?.rangeCount) return
+  const range = selection.getRangeAt(0)
+  const tab = document.createTextNode('\t')
+  range.deleteContents()
+  range.insertNode(tab)
+  range.setStartAfter(tab)
+  range.collapse(true)
+  selection.removeAllRanges()
+  selection.addRange(range)
+  emitContent()
+}
+
+function alignSelection() {
+  const selection = window.getSelection()
+  if (!selection?.rangeCount || !editor.value?.contains(selection.anchorNode)) return
+  const text = selection.toString()
+  if (!text.trim()) {
+    notifications.push('请先选择需要对齐的文本', 'warning')
+    return
+  }
+  const rows = text.split('\n').map((line) => line.split(/\t| {2,}/).map((part) => part.trim()).filter(Boolean))
+  const normalized = rows.some((row) => row.length > 1)
+    ? rows
+    : text.split('\n').map((line) => line.split(/\s+/).filter(Boolean))
+  const replacement = document.createTextNode(normalized.map((row) => row.join('\t')).join('\n'))
+  const range = selection.getRangeAt(0)
+  range.deleteContents()
+  range.insertNode(replacement)
+  range.selectNodeContents(replacement)
+  selection.removeAllRanges()
+  selection.addRange(range)
+  emitContent()
+}
+
+function normalizeDocument() {
+  const root = editor.value
+  if (!root) return
+  const normalized = sanitizeNotebookHtml(root.innerHTML)
+  root.focus()
+  const selection = window.getSelection()
+  const range = document.createRange()
+  range.selectNodeContents(root)
+  selection?.removeAllRanges()
+  selection?.addRange(range)
+  const inserted = document.execCommand('insertHTML', false, normalized)
+  if (!inserted) root.innerHTML = normalized
+  hydrateCredentialBlocks()
+  void resolveEditorImages()
+  emitContent()
+  notifications.push('已统一整篇笔记格式', 'success')
+}
+
+async function copyDocument() {
+  const text = editor.value?.innerText.trim() ?? ''
+  if (!text) {
+    notifications.push('当前笔记没有可复制内容', 'warning')
+    return
+  }
+  try {
+    await navigator.clipboard.writeText(text)
+    notifications.push('已复制笔记正文', 'success')
+  } catch {
+    notifications.push('未能访问剪贴板，请检查系统权限', 'error')
+  }
+}
+
+async function handlePaste(event: ClipboardEvent) {
+  const clipboard = event.clipboardData
+  if (!clipboard) return
+  const imageItem = Array.from(clipboard.items).find((item) => item.kind === 'file' && item.type.startsWith('image/'))
+  if (imageItem) {
+    event.preventDefault()
+    const file = imageItem.getAsFile()
+    if (!file) return
+    try {
+      const result = await uploadNotebookImage(file)
+      const image = document.createElement('img')
+      image.src = await resolveNotebookAssetUrl(result.url)
+      image.alt = file.name.slice(0, 160)
+      insertHtmlAtCaret(`<p>${image.outerHTML}</p><p><br></p>`)
+      emitContent()
+      notifications.push('图片已保存到本机', 'success')
+    } catch (reason) {
+      notifications.push(reason instanceof Error ? reason.message : '图片上传失败', 'error')
+    }
+    return
+  }
+
+  const html = clipboard.getData('text/html')
+  const text = clipboard.getData('text/plain')
+  if (!html && !text) return
+  event.preventDefault()
+  insertHtmlAtCaret(html ? sanitizeNotebookHtml(html) : plainTextToNotebookHtml(text))
+  hydrateCredentialBlocks()
+  emitContent()
+  notifications.push('已按笔记样式粘贴', 'success')
+}
+
+function handleInput(event: Event) {
+  const target = event.target instanceof HTMLElement ? event.target : null
+  if (
+    target?.matches('[data-credential-project], [data-credential-value]')
+    && !target.textContent?.trim()
+    && target.innerHTML
+  ) target.innerHTML = ''
+  emitContent()
+}
+
+async function handleClick(event: MouseEvent) {
+  const target = event.target instanceof Element ? event.target : null
+  const link = target?.closest<HTMLAnchorElement>('a[href]')
+  if (link && editor.value?.contains(link)) {
+    event.preventDefault()
+    if (event.metaKey || event.ctrlKey) {
+      const url = safeNotebookHttpUrl(link.href)
+      if (url) await tauriClient.openExternalUrl(url)
+    }
+    return
+  }
+  const cell = target?.closest<HTMLTableCellElement>('td[data-credential-value]')
+  const table = cell?.closest<HTMLTableElement>('table[data-notebook-block="credential"]')
+  if (cell && table?.dataset.editing !== 'true') {
+    event.preventDefault()
+    await copyCredentialValue(cell)
+  } else if (cell && table) {
+    activeRow.value = cell.closest('tr')
+    activeColumn.value = Array.from(cell.parentElement?.children ?? []).indexOf(cell)
+    markActiveColumn(table, activeColumn.value)
+    showCredentialToolbar(table)
+  }
+}
+
+function handleFocusIn(event: FocusEvent) {
+  captureSelection()
+  const target = event.target instanceof Element ? event.target : null
+  const table = target?.closest<HTMLTableElement>('table[data-notebook-block="credential"][data-editing="true"]')
+  if (!table) return
+  const row = target?.closest<HTMLTableRowElement>('tbody tr')
+  const field = target?.closest<HTMLTableCellElement>('th[data-credential-field]')
+  const cell = target?.closest<HTMLTableCellElement>('td[data-credential-value]')
+  if (row) activeRow.value = row
+  const selected = field ?? cell
+  if (selected) {
+    activeColumn.value = Array.from(selected.parentElement?.children ?? []).indexOf(selected)
+    markActiveColumn(table, activeColumn.value)
+  }
+  showCredentialToolbar(table)
+}
+
+function handlePointerMove(event: PointerEvent) {
+  const target = event.target instanceof Element ? event.target : null
+  const table = target?.closest<HTMLTableElement>('table[data-notebook-block="credential"]')
+  if (table && editor.value?.contains(table)) {
+    showCredentialToolbar(table)
+    return
+  }
+  hideCredentialToolbar()
+}
+
+function handleEditorPointerLeave(event: PointerEvent) {
+  const nextTarget = event.relatedTarget
+  if (nextTarget instanceof Node && toolbar.value?.contains(nextTarget)) return
+  hideCredentialToolbar()
+}
+
+function handleToolbarPointerLeave(event: PointerEvent) {
+  const nextTarget = event.relatedTarget
+  if (nextTarget instanceof Node && toolbar.value?.contains(nextTarget)) return
+  if (nextTarget instanceof Node && editor.value?.contains(nextTarget)) return
+  hideCredentialToolbar()
+}
+
+function handleKeydown(event: KeyboardEvent) {
+  const root = editor.value
+  if (!root || !root.contains(document.activeElement)) return
+  if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key.toLowerCase() === 'l') {
+    event.preventDefault()
+    alignSelection()
+    return
+  }
+  if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key.toLowerCase() === 'c') {
+    const target = event.target instanceof Element ? event.target : null
+    const value = target?.closest<HTMLTableCellElement>('td[data-credential-value]')
+    if (value) {
+      event.preventDefault()
+      void copyCredentialValue(value)
+      return
+    }
+  }
+  if (event.key === 'Tab') {
+    event.preventDefault()
+    insertTab()
+    return
+  }
+  const target = event.target instanceof Element ? event.target : null
+  const cell = target?.closest<HTMLTableCellElement>('td[data-credential-value]')
+  const table = cell?.closest<HTMLTableElement>('table[data-notebook-block="credential"]')
+  if (cell && table?.dataset.editing !== 'true' && (event.key === 'Enter' || event.key === ' ')) {
+    event.preventDefault()
+    void copyCredentialValue(cell)
+    return
+  }
+}
+
+async function applyModelValue(value: string) {
+  const root = editor.value
+  if (!root) return
+  const safe = sanitizeNotebookHtml(value)
+  if (serializeContent() === safe) return
+  applyingModel = true
+  root.innerHTML = safe
+  hydrateCredentialBlocks()
+  await resolveEditorImages()
+  applyingModel = false
+}
+
+watch(() => [props.noteId, props.modelValue] as const, ([, value]) => {
+  if (selectionNoteId !== props.noteId) {
+    selectionNoteId = props.noteId
+    savedSelection = null
+  }
+  void nextTick(() => applyModelValue(value))
+}, { immediate: true })
+
+onMounted(() => {
+  resizeObserver = new ResizeObserver(() => positionToolbar())
+  if (editor.value) resizeObserver.observe(editor.value)
+  document.addEventListener('pointerdown', captureSelectionBeforeFocusLeaves, true)
+  document.addEventListener('selectionchange', handleDocumentSelectionChange)
+})
+
+onBeforeUnmount(() => {
+  resizeObserver?.disconnect()
+  document.removeEventListener('pointerdown', captureSelectionBeforeFocusLeaves, true)
+  document.removeEventListener('selectionchange', handleDocumentSelectionChange)
+  savedSelection = null
+  if (selectionGuardTimer) globalThis.clearTimeout(selectionGuardTimer)
+  if (copyTimer) globalThis.clearTimeout(copyTimer)
+})
+
+defineExpose({
+  captureSelection,
+  alignSelection,
+  selectedLinkContext,
+  applyLinkToSelection,
+  finishCredentialEditing,
+  normalizeDocument,
+  insertCredential,
+  copyDocument,
+})
+</script>
+
+<template>
+  <div class="notebook-rich-editor">
+    <article
+      ref="editor"
+      class="notebook-rich-editor__content"
+      contenteditable="true"
+      data-placeholder="从这里开始记录…"
+      spellcheck="false"
+      @input="handleInput"
+      @keyup="captureSelection"
+      @pointerup="captureSelection"
+      @paste="handlePaste"
+      @click="handleClick"
+      @focusin="handleFocusIn"
+      @pointermove="handlePointerMove"
+      @pointerleave="handleEditorPointerLeave"
+      @keydown="handleKeydown"
+      @scroll="hideCredentialToolbar"
+    />
+    <div
+      v-if="activeTable"
+      ref="toolbar"
+      class="notebook-credential-toolbar"
+      :class="{ 'is-editing': credentialEditing }"
+      :style="{ left: `${toolbarPosition.left}px`, top: `${toolbarPosition.top}px` }"
+      role="toolbar"
+      aria-label="凭据信息表操作"
+      @pointerleave="handleToolbarPointerLeave"
+    >
+      <BaseButton
+        v-if="credentialEditing"
+        variant="ghost"
+        size="sm"
+        @click="removeCredentialRow"
+      >− 记录</BaseButton>
+      <BaseButton
+        v-if="credentialEditing"
+        variant="ghost"
+        size="sm"
+        @click="addCredentialRow"
+      >＋ 记录</BaseButton>
+      <BaseButton
+        v-if="credentialEditing"
+        variant="ghost"
+        size="sm"
+        @click="removeCredentialField"
+      >− 字段</BaseButton>
+      <BaseButton
+        v-if="credentialEditing"
+        variant="ghost"
+        size="sm"
+        @click="addCredentialField"
+      >＋ 字段</BaseButton>
+      <BaseButton
+        variant="secondary"
+        size="sm"
+        @click="setCredentialEditing(!credentialEditing)"
+      >
+        {{ credentialEditing ? '完成' : '编辑' }}
+      </BaseButton>
+    </div>
+  </div>
+</template>

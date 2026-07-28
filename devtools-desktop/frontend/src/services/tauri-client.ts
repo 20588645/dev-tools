@@ -59,6 +59,19 @@ export class TauriClient {
   async exitApp(): Promise<void> {
     await this.invoke('exit_app')
   }
+
+  async openExternalUrl(url: string): Promise<void> {
+    if (!/^https?:\/\/\S+$/i.test(url)) {
+      throw new Error('只允许打开 HTTP 或 HTTPS 链接')
+    }
+    if (this.available) {
+      await this.invoke('open_external_url', { url })
+      return
+    }
+    const opened = globalThis.open(url, '_blank', 'noopener,noreferrer')
+    if (!opened) throw new Error('浏览器阻止了外部链接')
+    opened.opener = null
+  }
 }
 
 export const tauriClient = new TauriClient()

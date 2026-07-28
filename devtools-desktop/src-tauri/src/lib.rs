@@ -171,6 +171,34 @@ fn exit_app(app: tauri::AppHandle) {
 }
 
 #[tauri::command]
+fn open_external_url(url: String) -> Result<(), String> {
+    let normalized = url.trim();
+    if normalized.chars().any(char::is_control)
+        || !(normalized.starts_with("http://") || normalized.starts_with("https://"))
+    {
+        return Err("只允许打开 HTTP 或 HTTPS 链接".into());
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        let status = Command::new("open")
+            .arg(normalized)
+            .status()
+            .map_err(|error| format!("无法调用系统浏览器: {error}"))?;
+        if !status.success() {
+            return Err("系统浏览器未能打开链接".into());
+        }
+        Ok(())
+    }
+
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = normalized;
+        Err("当前系统暂不支持外部链接打开".into())
+    }
+}
+
+#[tauri::command]
 fn update_tray_menu(app: tauri::AppHandle, projects: Vec<RunningProject>) {
     let tray = match app.tray_by_id(&TrayIconId::new("main-tray")) {
         Some(t) => t,
@@ -331,7 +359,14 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![get_sidecar_port, pick_folder, restart_sidecar, update_tray_menu, exit_app])
+        .invoke_handler(tauri::generate_handler![
+            get_sidecar_port,
+            pick_folder,
+            restart_sidecar,
+            update_tray_menu,
+            exit_app,
+            open_external_url
+        ])
         .build(tauri::generate_context!())
         .unwrap_or_else(|e| panic!("Tauri 构建错误: {:?}", e))
         .run(|app_handle, event| {
