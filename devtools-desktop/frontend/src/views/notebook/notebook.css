@@ -455,16 +455,22 @@
   color: var(--color-text-muted);
   background: color-mix(in srgb, var(--color-surface-raised) 42%, transparent);
   font-weight: 650;
+  vertical-align: top;
 }
 
 .notebook-rich-editor__content table[data-notebook-block="credential"] th[data-credential-project] {
-  padding: 11px 12px;
+  position: relative;
+  padding: 11px 52px 11px 12px;
   color: var(--color-text);
   background:
     linear-gradient(90deg, color-mix(in srgb, var(--color-action) 10%, transparent), transparent 62%),
     color-mix(in srgb, var(--color-surface-raised) 52%, transparent);
   font-size: 13px;
   letter-spacing: -.01em;
+}
+
+.notebook-rich-editor__content table[data-notebook-block="credential"][data-editing="true"] th[data-credential-project] {
+  padding-right: 306px;
 }
 
 .notebook-rich-editor__content thead tr:last-child th {
@@ -480,6 +486,7 @@
   padding-right: 68px;
   font-family: var(--font-family-mono);
   font-size: 12px;
+  vertical-align: top;
   transition:
     color var(--duration-fast) var(--ease-standard),
     background-color var(--duration-fast) var(--ease-standard),
@@ -576,6 +583,22 @@
   pointer-events: none;
 }
 
+.notebook-rich-editor__content table[data-editing="true"] th[data-credential-project][data-credential-project-empty="true"]::before {
+  color: var(--color-text-subtle);
+  content: attr(data-placeholder);
+  font-family: var(--font-family-sans);
+  font-weight: var(--font-weight-normal);
+  pointer-events: none;
+}
+
+.notebook-rich-editor__content table[data-notebook-block="credential"] th[data-credential-field][data-placeholder]:empty::before {
+  color: var(--color-text-subtle);
+  content: attr(data-placeholder);
+  font-family: var(--font-family-sans);
+  font-weight: var(--font-weight-normal);
+  pointer-events: none;
+}
+
 .notebook-rich-editor__content a {
   color: var(--color-action-hover);
   text-decoration: underline;
@@ -586,6 +609,8 @@
 
 .notebook-credential-toolbar {
   position: absolute;
+  top: 50%;
+  right: 8px;
   z-index: 4;
   display: flex;
   align-items: center;
@@ -595,7 +620,31 @@
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-lg);
+  transform: translateY(-50%);
   backdrop-filter: blur(12px);
+}
+
+.notebook-credential-toolbar:not(.is-editing) {
+  width: 32px;
+  height: 30px;
+  justify-content: center;
+  padding: 2px;
+  background: color-mix(in srgb, var(--color-surface-raised) 90%, transparent);
+  box-shadow: var(--shadow-sm);
+}
+
+.notebook-credential-toolbar:not(.is-editing) .notebook-credential-toolbar__mode {
+  width: 26px;
+  min-width: 26px;
+  height: 24px;
+  padding: 0;
+  color: var(--color-text-muted);
+  border-color: transparent;
+}
+
+.notebook-credential-toolbar:not(.is-editing) .notebook-credential-toolbar__mode:hover {
+  color: var(--color-action-hover);
+  background: color-mix(in srgb, var(--color-action) 10%, transparent);
 }
 
 .notebook-credential-toolbar .base-button--ghost:nth-child(1),

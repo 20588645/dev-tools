@@ -247,7 +247,7 @@ test('cleans pasted HTML and supports editable credential tables with copy feedb
       value: { writeText: async () => undefined },
     })
   })
-  await openNotebook(page)
+  const mock = await openNotebook(page)
   const content = page.locator('.notebook-rich-editor__content')
 
   await content.click()
@@ -269,26 +269,72 @@ test('cleans pasted HTML and supports editable credential tables with copy feedb
   await page.getByText('插入凭据信息表', { exact: true }).click()
   const table = content.locator('table[data-notebook-block="credential"]').last()
   await expect(table).toHaveAttribute('data-editing', 'true')
+  const toolbar = page.getByRole('toolbar', { name: '凭据信息表 1 操作' })
+  await expect(toolbar).toBeVisible()
   await expect(page.getByRole('button', { name: '完成', exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: '编辑', exact: true })).toHaveCount(0)
-  await page.getByRole('button', { name: '＋ 字段', exact: true }).click()
-  await page.getByRole('button', { name: '＋ 记录', exact: true }).click()
+  expect(await toolbar.evaluate((element) => ({
+    insideProjectHeader: element.parentElement?.matches('th[data-credential-project]') ?? false,
+    insideSameTable: element.closest('table')?.matches('table[data-notebook-block="credential"]') ?? false,
+    inlineLeft: (element as HTMLElement).style.left,
+    inlineTop: (element as HTMLElement).style.top,
+  }))).toEqual({
+    insideProjectHeader: true,
+    insideSameTable: true,
+    inlineLeft: '',
+    inlineTop: '',
+  })
+  await page.getByRole('button', { name: '新增字段', exact: true }).click()
+  await page.getByRole('button', { name: '新增记录', exact: true }).click()
   await expect(table.locator('th[data-credential-field]')).toHaveCount(3)
   await expect(table.locator('tbody tr')).toHaveCount(2)
+
+  const newField = table.locator('th[data-credential-field]').last()
+  await expect(newField).toBeEmpty()
+  await expect(newField).toHaveAttribute('data-placeholder', '字段 3')
+  await newField.evaluate((element) => {
+    element.dispatchEvent(new CompositionEvent('compositionstart', {
+      bubbles: true,
+      data: '',
+    }))
+    element.textContent = '中文字段'
+    element.dispatchEvent(new InputEvent('input', {
+      bubbles: true,
+      data: '中文字段',
+      inputType: 'insertCompositionText',
+      isComposing: true,
+    }))
+    element.dispatchEvent(new CompositionEvent('compositionend', {
+      bubbles: true,
+      data: '中文字段',
+    }))
+  })
+  await expect(newField).toHaveText('中文字段')
 
   const value = table.locator('td[data-credential-value]').first()
   await expect(value).toBeEmpty()
   await expect(value).toHaveAttribute('data-placeholder', '点击填写账号')
   await value.fill('demo-account')
+  await value.evaluate((element) => {
+    element.innerHTML = 'demo-account<div><br></div>'
+    element.dispatchEvent(new InputEvent('input', {
+      bubbles: true,
+      inputType: 'deleteContentBackward',
+    }))
+  })
+  await expect(value).toHaveJSProperty('innerHTML', 'demo-account')
   const blankLine = content.locator('p').last()
   await blankLine.click()
   await expect(table).toHaveAttribute('data-editing', 'true')
-  await expect(page.getByRole('toolbar', { name: '凭据信息表操作' })).toHaveCount(0)
+  await expect(page.getByRole('toolbar', { name: '凭据信息表 1 操作' })).toBeVisible()
+  await expect(page.getByRole('button', { name: '完成', exact: true })).toBeVisible()
   await page.keyboard.press('Meta+s')
   await expect(table).toHaveAttribute('data-editing', 'false')
   await expect(page.getByText('笔记已保存', { exact: true })).toBeVisible()
+  await expect.poll(() => mock.writes.length).toBeGreaterThan(0)
+  expect(mock.writes.at(-1)?.content).not.toContain('data-credential-runtime-controls')
+  expect(mock.writes.at(-1)?.content).not.toContain('＋ 记录')
 
-  await table.hover()
   await expect(page.getByRole('button', { name: '编辑', exact: true })).toBeVisible()
   await page.getByRole('button', { name: '编辑', exact: true }).click()
   await expect(page.getByRole('button', { name: '完成', exact: true })).toBeVisible()
@@ -298,7 +344,6 @@ test('cleans pasted HTML and supports editable credential tables with copy feedb
   await page.keyboard.press('Meta+s')
   await expect(table).toHaveAttribute('data-editing', 'false')
 
-  await table.hover()
   await page.getByRole('button', { name: '编辑', exact: true }).click()
   await expect(table).toHaveAttribute('data-editing', 'true')
   await page.getByRole('button', { name: '完成', exact: true }).click()
