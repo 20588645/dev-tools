@@ -1,6 +1,6 @@
 /* ============================== 分段控件 .seg ==============================
- * 全应用统一的「一组互斥切换」控件，逐页替换旧平行类（seg-btn/sub-tab/rpt-mode-btn/
- * rpt-view-btn/pill-btn 等，散落 overrides 与各页、active 前景色 accent/primary 不一）。
+ * 全应用统一的「一组互斥切换」控件，逐页替换旧平行类（seg-btn/sub-tab/
+ * pill-btn 等，散落 overrides 与各页、active 前景色 accent/primary 不一）。
  * 与 .chip 区别：.chip 是独立多选/筛选标签；.seg 是一组里单选高亮的分段切换。
  * 配套可选助手 segActivate(el) 收口互斥高亮。BEM、token 驱动、明暗自适配、克制无装饰。
  * 用法：

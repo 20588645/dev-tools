@@ -28,6 +28,7 @@
   --component-vendor-border: var(--color-border);
   --component-vendor-action: var(--color-action);
   --component-vendor-action-hover: var(--color-action-hover);
+  --component-vendor-action-contrast: var(--color-action-contrast);
   --component-vendor-info: var(--color-info);
   --component-vendor-success: var(--color-success);
   --component-vendor-warning: var(--color-warning);

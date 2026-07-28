@@ -5,7 +5,6 @@ export const LEGACY_PAGE_IDS = [
   'filetransfer',
   'terminal',
   'todo',
-  'report',
   'notes',
   'notebook',
   'editor',

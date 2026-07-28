@@ -96,50 +96,6 @@
 
 .status-fail { color: var(--danger); font-weight: 600; }
 
-/* --- Git 周报：Empty State --- */
-.rpt-empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  color: var(--text-muted);
-  text-align: center;
-  padding: 40px;
-}
-
-/* --- Git 周报：Result Sections --- */
-.rpt-result-section {
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--border);
-}
-
-.rpt-result-section:last-child { border-bottom: none; }
-
-.rpt-result-section h3 { font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--text-primary); }
-
-.rpt-result-section table { width: 100%; border-collapse: collapse; font-size: 12px; }
-
-.rpt-result-section th {
-  background: var(--bg-input);
-  color: var(--text-muted);
-  padding: 6px 10px;
-  text-align: left;
-  font-weight: 600;
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-.rpt-result-section td {
-  padding: 6px 10px;
-  border-bottom: 1px solid var(--border);
-  color: var(--text-secondary);
-  vertical-align: top;
-}
-
-.rpt-result-section tr:hover td { background: var(--accent-subtle); }
-
 .page-subtitle,
 .home-date {
   margin: 0 !important;
@@ -148,8 +104,7 @@
 }
 
 .ha-table th,
-.history-row.header,
-.rpt-result-section th {
+.history-row.header {
   background: color-mix(in srgb, var(--bg-input) 88%, var(--bg-card) 12%) !important;
   color: var(--text-muted) !important;
   font-size: 10px !important;
@@ -192,11 +147,9 @@
   line-height: 1.35;
 }
 
-.btn-primary:hover,
-.rbtn-primary:hover { background: var(--primary-hover) !important; }
+.btn-primary:hover { background: var(--primary-hover) !important; }
 
-.btn-secondary:hover,
-.rbtn-outline:hover { background: var(--bg-hover) !important; color: var(--text-primary) !important; border-color: var(--border-strong) !important; }
+.btn-secondary:hover { background: var(--bg-hover) !important; color: var(--text-primary) !important; border-color: var(--border-strong) !important; }
 
 .btn-text {
   border: none;
@@ -216,11 +169,7 @@ input[type="date"]:not([class^="n-"]):not([class*=" n-"]),
 input[type="file"]:not([class^="n-"]):not([class*=" n-"]),
 select,
 .setting-input,
-.form-input,
-.rpt-repo-search,
-.rpt-toolbar-search,
-.rfield input,
-.rfield select {
+.form-input {
   min-height: 28px;
   border-radius: 6px !important;
   border: 1px solid var(--border) !important;
@@ -238,8 +187,6 @@ select:focus,
   box-shadow: 0 0 0 3px var(--primary-light) !important;
 }
 
-.rpt-mode-switcher,
-.rpt-view-switcher,
 .seg-control {
   background: var(--bg-input) !important;
   border: 1px solid var(--border) !important;
@@ -247,23 +194,12 @@ select:focus,
   padding: 2px !important;
 }
 
-.rpt-mode-btn,
-.rpt-view-btn { color: var(--text-secondary) !important; }
-
-.rpt-mode-btn.active,
-.rpt-view-btn.active {
-  background: var(--bg-elevated) !important;
-  color: var(--primary) !important;
-  box-shadow: var(--shadow-sm) !important;
-}
-
 .modal { /* 保留：与穿插规则存在层叠依赖 */
   box-shadow: var(--shadow-lg) !important;
 }
 
 .form-group label,
-.config-row label,
-.rfield label {
+.config-row label {
   font-size: 11px !important;
   color: var(--text-secondary) !important;
   font-weight: 620 !important;
@@ -348,7 +284,6 @@ body[data-theme="light"] .project-card,
 body[data-theme="light"] .stat-card,
 body[data-theme="light"] .home-activity-card,
 body[data-theme="light"] .home-quick-card,
-body[data-theme="light"] .report-panel,
 body[data-theme="light"] .settings-section,
 body[data-theme="light"] .server-list,
 body[data-theme="light"] .history-table {
@@ -369,11 +304,7 @@ input[type="number"]:not([class^="n-"]):not([class*=" n-"]),
 input[type="date"]:not([class^="n-"]):not([class*=" n-"]),
 select,
 .setting-input,
-.form-input,
-.rpt-repo-search,
-.rpt-toolbar-search,
-.rfield input,
-.rfield select {
+.form-input {
   min-height: 28px !important;
   border-radius: 5px !important;
 }
@@ -381,7 +312,6 @@ select,
 body[data-theme="light"] .project-card,
 body[data-theme="light"] .stat-card,
 body[data-theme="light"] .home-activity-card,
-body[data-theme="light"] .report-panel,
 body[data-theme="light"] .settings-section,
 body[data-theme="light"] .server-list,
 body[data-theme="light"] .history-table,
@@ -392,7 +322,6 @@ body[data-theme="light"] .modal {
 body[data-theme="dark"] .project-card,
 body[data-theme="dark"] .stat-card,
 body[data-theme="dark"] .home-activity-card,
-body[data-theme="dark"] .report-panel,
 body[data-theme="dark"] .settings-section,
 body[data-theme="dark"] .server-list,
 body[data-theme="dark"] .history-table,
@@ -401,14 +330,12 @@ body[data-theme="dark"] .modal {
 }
 
 .page-header-bar,
-.home-header,
-.report-header {
+.home-header {
   min-height: 42px !important;
 }
 
 .page-title,
 .home-greeting,
-.report-title,
 .settings-section h3 {
   letter-spacing: 0 !important;
 }
@@ -423,15 +350,13 @@ body[data-theme="dark"] .modal {
 }
 
 .page-subtitle,
-.home-date,
-.report-subtitle {
+.home-date {
   font-size: 10px !important;
 }
 
 .toolbar,
 .filter-tabs,
-.history-actions,
-.report-actions {
+.history-actions {
   gap: 6px !important;
 }
 
@@ -442,7 +367,6 @@ body[data-theme="dark"] .modal {
   font-size: 10px !important;
 }
 
-.report-panel-header,
 .settings-section-header,
 .home-card-header {
   min-height: 34px !important;
@@ -451,7 +375,6 @@ body[data-theme="dark"] .modal {
 }
 
 .setting-label strong,
-.rfield label,
 .form-group label {
   font-size: 10px !important;
 }
@@ -594,8 +517,7 @@ body[data-theme="dark"] #logModal.run-compile-warning .progress-text {
 }
 
 .home-header,
-.page-header-bar,
-.report-header {
+.page-header-bar {
   min-height: 40px !important;
   margin-bottom: 14px !important;
 }
@@ -638,10 +560,9 @@ body[data-theme="dark"] #logModal.run-compile-warning .progress-text {
   flex: 0 0 var(--modal-field-compact-width) !important;
 }
 
-/* ========== Shared Page Headers: Deploy / Run / Report / Settings ========== */
+/* ========== Shared Page Headers: Deploy / Run / Settings ========== */
 #page-deploy > .page-header-simple,
 #page-run > .page-header-simple,
-#page-report .page-header-simple,
 #page-settings > .page-header-simple {
   width: 100% !important;
   min-height: 64px !important;
@@ -660,14 +581,12 @@ body[data-theme="dark"] #logModal.run-compile-warning .progress-text {
 
 #page-deploy > .page-header-simple > div,
 #page-run > .page-header-simple > div,
-#page-report .page-header-simple > div,
 #page-settings > .page-header-simple > div {
   min-width: 0 !important;
 }
 
 #page-deploy > .page-header-simple .page-title,
 #page-run > .page-header-simple .page-title,
-#page-report .page-header-simple .page-title,
 #page-settings > .page-header-simple .page-title {
   margin: 0 0 8px !important;
   font-size: 20px !important;
@@ -679,7 +598,6 @@ body[data-theme="dark"] #logModal.run-compile-warning .progress-text {
 
 #page-deploy > .page-header-simple .page-subtitle,
 #page-run > .page-header-simple .page-subtitle,
-#page-report .page-header-simple .page-subtitle,
 #page-settings > .page-header-simple .page-subtitle {
   margin: 0 !important;
   font-size: 13px !important;
@@ -691,7 +609,6 @@ body[data-theme="dark"] #logModal.run-compile-warning .progress-text {
 @media (max-width: 900px) {
 #page-deploy > .page-header-simple,
   #page-run > .page-header-simple,
-  #page-report .page-header-simple,
   #page-settings > .page-header-simple {
     min-height: 56px !important;
     margin-bottom: 14px !important;
@@ -699,50 +616,16 @@ body[data-theme="dark"] #logModal.run-compile-warning .progress-text {
 
 #page-deploy > .page-header-simple .page-title,
   #page-run > .page-header-simple .page-title,
-  #page-report .page-header-simple .page-title,
   #page-settings > .page-header-simple .page-title {
     font-size: 18px !important;
   }
 
 #page-deploy > .page-header-simple .page-subtitle,
   #page-run > .page-header-simple .page-subtitle,
-  #page-report .page-header-simple .page-subtitle,
   #page-settings > .page-header-simple .page-subtitle {
     font-size: 12px !important;
   }
 
-}
-
-/* ========== Report Repo Group Collapse ========== */
-.rpt-group-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  margin: 8px 0 4px;
-  cursor: pointer;
-  border-radius: var(--radius-sm);
-  background: var(--bg-hover);
-  user-select: none;
-  transition: background 0.15s;
-}
-
-.rpt-group-header:hover {
-  background: var(--primary-light);
-}
-
-.rpt-group-name {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.rpt-group-count {
-  font-size: 11px;
-  padding: 1px 6px;
-  border-radius: 10px;
-  background: var(--primary-light);
-  color: var(--primary);
 }
 
 .run-history-list .ha-table {
@@ -761,21 +644,18 @@ body[data-theme="dark"] #logModal.run-compile-warning .progress-text {
 
 /* 加入共享头部样式 */
 #page-todo > .page-header-simple,
-#page-terminal > .page-header-simple,
-#page-notes > .page-header-simple {
+#page-terminal > .page-header-simple {
   padding: 0 0 12px;
   margin-bottom: 0 !important;
 }
 
 #page-todo > .page-header-simple .page-title,
-#page-terminal > .page-header-simple .page-title,
-#page-notes > .page-header-simple .page-title {
+#page-terminal > .page-header-simple .page-title {
   font-size: 17px;
 }
 
 #page-todo > .page-header-simple .page-subtitle,
-#page-terminal > .page-header-simple .page-subtitle,
-#page-notes > .page-header-simple .page-subtitle {
+#page-terminal > .page-header-simple .page-subtitle {
   font-size: 12px;
   color: var(--text-muted);
   margin-top: 2px;
@@ -821,10 +701,8 @@ body[data-theme="dark"] #logModal.run-compile-warning .progress-text {
 .home-greeting,
 #page-todo .page-title,
 #page-terminal .page-title,
-#page-notes .page-title,
 #page-run .page-title,
 #page-deploy .page-title,
-#page-report .page-title,
 #page-notebook .page-title,
 #page-settings .page-title {
   font-size: 17px !important;
@@ -837,10 +715,8 @@ body[data-theme="dark"] #logModal.run-compile-warning .progress-text {
 .home-date,
 #page-todo .page-subtitle,
 #page-terminal .page-subtitle,
-#page-notes .page-subtitle,
 #page-run .page-subtitle,
 #page-deploy .page-subtitle,
-#page-report .page-subtitle,
 #page-notebook .page-subtitle,
 #page-settings .page-subtitle {
   font-size: 11px !important;
@@ -851,7 +727,6 @@ body[data-theme="dark"] #logModal.run-compile-warning .progress-text {
 /* --- 4. 统一工具栏间距 --- */
 .todo-toolbar,
 .cmd-toolbar,
-.notes-toolbar,
 .run-page-toolbar {
   margin-bottom: 16px !important;
 }
@@ -874,7 +749,6 @@ body[data-theme="dark"] #logModal.run-compile-warning .progress-text {
 /* --- 12. 统一空状态样式 --- */
 .home-empty-hint,
 .home-empty-state,
-.rpt-empty-state,
 .run-status-empty,
 .nb-empty {
   font-size: 12px !important;
@@ -884,11 +758,9 @@ body[data-theme="dark"] #logModal.run-compile-warning .progress-text {
 /* 覆盖旧的 page-specific justify-content: flex-start */
 #page-deploy > .page-header-simple,
 #page-run > .page-header-simple,
-#page-report .page-header-simple,
 #page-settings > .page-header-simple,
 #page-todo > .page-header-simple,
 #page-terminal > .page-header-simple,
-#page-notes .page-header-simple,
 #page-notebook > .page-header-simple {
   justify-content: space-between !important;
   min-height: 48px !important;

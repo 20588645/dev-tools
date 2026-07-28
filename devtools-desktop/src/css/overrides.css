@@ -8,8 +8,6 @@
 .project-card,
 .server-list,
 .history-table,
-.report-panel,
-.report-header,
 .settings-section {
   background: var(--bg-card) !important;
   border: 1px solid var(--border) !important;
@@ -22,7 +20,6 @@
 .btn-primary,
 .btn-secondary,
 .btn-text,
-.rbtn,
 .pill-btn {
   border-radius: 6px !important;
   font-family: inherit;
@@ -30,8 +27,7 @@
   transform: none !important;
 }
 
-.btn-primary,
-.rbtn-primary {
+.btn-primary {
   min-height: 28px;
   padding: 6px 12px !important;
   background: var(--primary) !important;
@@ -43,7 +39,6 @@
 }
 
 .btn-secondary,
-.rbtn-outline,
 .pill-btn {
   min-height: 28px;
   padding: 6px 11px !important;
@@ -67,7 +62,6 @@ button:disabled,
 
 .btn-primary,
 .btn-secondary,
-.rbtn,
 .chip {
   display: inline-flex !important;
   align-items: center;
@@ -116,13 +110,6 @@ input[type="number"] {
   border-radius: 7px !important;
 }
 
-.report-panel {
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  border-radius: 7px !important;
-}
-
 .settings-section {
   padding: 0 !important;
   overflow: hidden;
@@ -136,9 +123,7 @@ input[type="number"] {
 .server-list,
 .history-table,
 .history-stats,
-.settings-section,
-.report-panel,
-.report-header {
+.settings-section {
   border: 1px solid var(--border-color) !important;
   background: var(--bg-card) !important;
   border-radius: var(--mac-radius) !important;
@@ -146,14 +131,11 @@ input[type="number"] {
 
 .home-card-title,
 .section-title,
-.report-panel-title,
 .settings-section h3 {
   font-size: 12px !important;
 }
 
-.pill-btn,
-.rpt-mode-btn,
-.rpt-view-btn {
+.pill-btn {
   min-height: 24px !important;
   padding: 0 10px !important;
   font-size: 10px !important;
@@ -162,7 +144,6 @@ input[type="number"] {
 
 .btn-primary,
 .btn-secondary,
-.rbtn,
 .pill-btn {
   min-height: 27px !important;
   padding: 0 10px !important;
@@ -177,7 +158,6 @@ input[type="number"] {
 }
 
 .btn-secondary,
-.rbtn,
 .pill-btn {
   background: var(--bg-input) !important;
   border-color: var(--border-color) !important;
@@ -185,15 +165,12 @@ input[type="number"] {
 }
 
 .btn-secondary:hover,
-.rbtn:hover,
 .pill-btn:hover {
   color: var(--text-primary) !important;
   border-color: var(--border-strong) !important;
 }
 
-.pill-btn.active,
-.rpt-mode-btn.active,
-.rpt-view-btn.active {
+.pill-btn.active {
   color: var(--primary) !important;
   background: color-mix(in srgb, var(--primary) 12%, var(--bg-card)) !important;
   border-color: color-mix(in srgb, var(--primary) 26%, var(--border-color)) !important;
@@ -206,11 +183,7 @@ input[type="date"]:not([class^="n-"]):not([class*=" n-"]),
 select,
 textarea:not([class^="n-"]):not([class*=" n-"]),
 .setting-input,
-.form-input,
-.rfield input,
-.rfield select,
-.rpt-repo-search,
-.rpt-toolbar-search {
+.form-input {
   min-height: 27px !important;
   padding: 0 9px !important;
   font-size: 10px !important;
@@ -252,7 +225,6 @@ select {
   font-weight: 650 !important;
 }
 
-.rpt-repo-item,
 .setting-repo-row {
   border-radius: 6px !important;
   border-color: var(--border-color) !important;
@@ -377,8 +349,6 @@ select {
 .project-card,
 .server-list,
 .history-table,
-.report-panel,
-.report-header,
 .settings-section,
 .modal {
   background: var(--bg-card) !important;
@@ -398,8 +368,7 @@ select {
 .ha-table th,
 .history-row.header,
 .history-row.history-header,
-.server-head,
-.rpt-result-section th {
+.server-head {
   background: color-mix(in srgb, var(--bg-input) 88%, var(--bg-card) 12%) !important;
   color: var(--text-muted) !important;
   font-size: 10px !important;
@@ -407,17 +376,6 @@ select {
   text-transform: none !important;
 }
 
-.rpt-mode-switcher,
-.rpt-view-switcher {
-  background: var(--bg-input) !important;
-  border: 1px solid var(--border) !important;
-  border-radius: 8px !important;
-  padding: 3px !important;
-  gap: 2px !important;
-}
-
-.rpt-mode-btn,
-.rpt-view-btn,
 .chip {
   min-height: 24px !important;
   border-radius: 6px !important;
@@ -427,17 +385,13 @@ select {
   border: 0 !important;
 }
 
-.rpt-mode-btn.active,
-.rpt-view-btn.active,
 .chip.active {
   background: var(--bg-elevated) !important;
   color: var(--primary) !important;
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary) 18%, transparent) !important;
 }
 
-.btn-primary,
-.rbtn-primary,
-.rbtn-success {
+.btn-primary {
   min-height: 26px !important;
   padding: 5px 11px !important;
   border-radius: 6px !important;
@@ -449,7 +403,6 @@ select {
 }
 
 .btn-secondary,
-.rbtn-outline,
 .btn-text,
 .pill-btn {
   min-height: 26px !important;
@@ -475,10 +428,6 @@ select,
 textarea:not([class^="n-"]):not([class*=" n-"]),
 .setting-input,
 .form-input,
-.rfield input,
-.rfield select,
-.rpt-repo-search,
-.rpt-toolbar-search,
 .search-bar {
   min-height: 26px !important;
   border-radius: 6px !important;
@@ -556,7 +505,6 @@ textarea:not([class^="n-"]):not([class*=" n-"]),
   background: var(--bg-card) !important;
 }
 
-.report-panel-title,
 .settings-section h3 {
   min-height: 36px !important;
   padding: 10px 12px !important;
@@ -653,7 +601,6 @@ textarea:not([class^="n-"]):not([class*=" n-"]),
 /* --- 3. 统一卡片圆角为 8px --- */
 .home-section-card,
 .settings-section,
-.report-panel,
 .project-card,
 .server-card,
 .server-list,
@@ -666,8 +613,7 @@ textarea:not([class^="n-"]):not([class*=" n-"]),
 .run-stat-card,
 .stat-card,
 .nb-list-panel,
-.nb-editor-panel,
-.notes-day-card {
+.nb-editor-panel {
   border-radius: 8px !important;
 }
 
@@ -678,7 +624,6 @@ textarea:not([class^="n-"]):not([class*=" n-"]),
 
 /* --- 8. 统一 section title 字号 --- */
 .home-card-title,
-.report-panel-title,
 .settings-section h3,
 .todo-column-header span,
 .cmd-output-header,
@@ -688,8 +633,7 @@ textarea:not([class^="n-"]):not([class*=" n-"]),
 }
 
 /* --- 10. 统一 chip/filter 样式 --- */
-.chip,
-.rpt-preset {
+.chip {
   border-radius: 6px !important;
   font-size: 11px !important;
   padding: 4px 10px !important;

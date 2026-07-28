@@ -1,8 +1,8 @@
 import { expect, test, type Page } from '@playwright/test'
 
 const pageIds = [
-  'home', 'run', 'deploy', 'filetransfer', 'terminal', 'todo', 'report',
-  'notes', 'notebook', 'editor', 'ipcheck', 'twofa', 'usage', 'settings',
+  'home', 'run', 'deploy', 'filetransfer', 'terminal', 'todo', 'notes',
+  'notebook', 'editor', 'ipcheck', 'twofa', 'usage', 'settings',
 ] as const
 
 async function expectPageNavigationToWork(page: Page) {
@@ -31,6 +31,8 @@ test('Vite serves the complete legacy shell', async ({ page }) => {
   for (const pageId of pageIds) {
     await expect(page.locator(`#page-${pageId}`)).toHaveCount(1)
   }
+  await expect(page.locator('#page-report')).toHaveCount(0)
+  await expect(page.locator('.sidebar-item[data-page="report"]')).toHaveCount(0)
 
   await expect(page.locator('#vue-home-root')).toHaveCount(0)
   await expect(page.locator('#vue-migration-host')).toHaveCount(1)

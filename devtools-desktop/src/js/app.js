@@ -843,7 +843,6 @@ const SIDEBAR_MENU_ITEMS = [
   { page: 'filetransfer', label: '文件传输', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 11 21 7 17 3"/><line x1="21" y1="7" x2="9" y2="7"/><polyline points="7 13 3 17 7 21"/><line x1="3" y1="17" x2="15" y2="17"/></svg>' },
   { page: 'terminal', label: '快捷命令', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>' },
   { page: 'todo', label: '待办事项', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>' },
-  { page: 'report', label: '代码周报', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>' },
   { page: 'notes', label: '工时内容', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>' },
   { page: 'notebook', label: '个人笔记', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>' },
   { page: 'editor', label: '文件编辑', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="10 12 8 14 10 16"/><polyline points="14 12 16 14 14 16"/></svg>' },
@@ -854,7 +853,7 @@ const SIDEBAR_MENU_ITEMS = [
 ];
 
 const MENU_ORDER_KEY = 'devtools-menu-order';
-const DEFAULT_MENU_ORDER = ['run', 'deploy', 'filetransfer', 'terminal', 'todo', 'report', 'notes', 'notebook', 'editor', 'ipcheck', 'twofa', 'usage'];
+const DEFAULT_MENU_ORDER = ['run', 'deploy', 'filetransfer', 'terminal', 'todo', 'notes', 'notebook', 'editor', 'ipcheck', 'twofa', 'usage'];
 
 function getMenuOrder() {
   try {
@@ -1057,10 +1056,8 @@ function switchPage(page, el, source = 'legacy') {
     loadRunStatuses().then(() => renderRunPage());
     startRunPagePolling();
   }
-  if (page === 'report') initReport();
   if (page === 'settings') loadSettings();
   if (page === 'todo') loadTodos();
-  if (page === 'notes') loadNotes();
   if (page === 'notebook') initNotebook();
   if (page === 'editor') initEditor();
   if (page === 'terminal') loadCommands();

@@ -1,0 +1,2174 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DevTools · 工时内容与 Git 活动参考原型</title>
+  <link rel="stylesheet" href="./home-reimagine-common.css">
+  <style>
+    :root {
+      --notes-accent: #818cf8;
+      --notes-accent-soft: color-mix(in srgb, var(--notes-accent) 12%, transparent);
+      --notes-success: #4ade80;
+      --notes-danger: #fb7185;
+      --notes-gutter: clamp(12px, 1.45vw, 22px);
+      --notes-shadow: 0 18px 50px rgba(0, 0, 0, .16);
+    }
+
+    body[data-theme="light"] {
+      --notes-accent: #4f46e5;
+      --notes-success: #15803d;
+      --notes-danger: #be123c;
+      --notes-shadow: 0 16px 42px rgba(15, 23, 42, .07);
+    }
+
+    button,
+    input,
+    textarea,
+    select {
+      font: inherit;
+    }
+
+    .notes-preview-main {
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 91% 3%, color-mix(in srgb, var(--action) 7%, transparent), transparent 28%),
+        radial-gradient(circle at 8% 96%, color-mix(in srgb, var(--info) 4%, transparent), transparent 32%),
+        var(--page);
+    }
+
+    .notes-page {
+      display: grid;
+      width: 100%;
+      height: 100%;
+      min-width: 0;
+      grid-template-rows: auto auto minmax(0, 1fr);
+      overflow: hidden;
+    }
+
+    .notes-page-header {
+      display: flex;
+      min-height: 74px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 13px var(--notes-gutter) 12px;
+      background: color-mix(in srgb, var(--surface) 92%, transparent);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(18px);
+    }
+
+    .notes-title-line,
+    .toolbar,
+    .week-navigation,
+    .toolbar-actions,
+    .selected-day,
+    .save-state,
+    .drawer-header-actions,
+    .query-line,
+    .summary-row,
+    .view-controls,
+    .activity-meta,
+    .drawer-footer-actions {
+      display: flex;
+      align-items: center;
+    }
+
+    .notes-title-line {
+      gap: 10px;
+    }
+
+    .notes-title-mark,
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      flex: none;
+      border-radius: 50%;
+      background: var(--notes-accent);
+      box-shadow: 0 0 14px color-mix(in srgb, var(--notes-accent) 52%, transparent);
+    }
+
+    .notes-page-header h1 {
+      color: var(--text);
+      font-size: 21px;
+      font-weight: 690;
+      letter-spacing: -.025em;
+    }
+
+    .notes-page-header p {
+      margin: 4px 0 0 18px;
+      color: var(--text-muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .save-state {
+      min-height: 34px;
+      flex: none;
+      gap: 9px;
+      padding: 0 12px;
+      color: var(--text-muted);
+      background: color-mix(in srgb, var(--surface-raised) 54%, transparent);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    .save-state .status-dot {
+      width: 7px;
+      height: 7px;
+      background: var(--notes-success);
+      box-shadow: 0 0 10px color-mix(in srgb, var(--notes-success) 45%, transparent);
+    }
+
+    .toolbar {
+      min-height: 64px;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 10px var(--notes-gutter);
+      background: color-mix(in srgb, var(--surface) 56%, transparent);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .week-navigation {
+      min-width: 0;
+      flex: 1 1 auto;
+      gap: 8px;
+    }
+
+    .toolbar-actions {
+      gap: 8px;
+    }
+
+    .button,
+    .weekend-control,
+    .segment-button,
+    .state-select {
+      min-height: 36px;
+      color: var(--text-muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .button {
+      display: inline-flex;
+      flex: none;
+      align-items: center;
+      justify-content: center;
+      padding: 0 12px;
+      cursor: pointer;
+      font-size: 12px;
+      white-space: nowrap;
+      transition: color .16s ease, border-color .16s ease, background-color .16s ease, transform .16s ease;
+    }
+
+    .button:hover {
+      color: var(--notes-accent);
+      background: var(--notes-accent-soft);
+      border-color: color-mix(in srgb, var(--notes-accent) 34%, var(--border));
+      transform: translateY(-1px);
+    }
+
+    .button.primary {
+      color: #fff;
+      background: linear-gradient(135deg, var(--action), color-mix(in srgb, var(--action) 72%, var(--info)));
+      border-color: color-mix(in srgb, var(--action) 72%, var(--border));
+      box-shadow: 0 8px 22px color-mix(in srgb, var(--action) 17%, transparent);
+    }
+
+    .button.primary:hover {
+      color: #fff;
+      background: linear-gradient(135deg, var(--action-hover), color-mix(in srgb, var(--action) 68%, var(--info)));
+    }
+
+    .button:disabled {
+      opacity: .44;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .button:disabled:hover {
+      color: var(--text-muted);
+      background: var(--surface);
+      border-color: var(--border);
+      transform: none;
+    }
+
+    .button.primary:disabled,
+    .button.primary:disabled:hover {
+      color: #fff;
+      background: linear-gradient(135deg, var(--action), color-mix(in srgb, var(--action) 72%, var(--info)));
+      border-color: color-mix(in srgb, var(--action) 72%, var(--border));
+    }
+
+    .button.quiet {
+      min-height: 32px;
+      padding-inline: 10px;
+      background: color-mix(in srgb, var(--surface-raised) 56%, transparent);
+      font-size: 11px;
+    }
+
+    .button.ghost {
+      background: transparent;
+    }
+
+    .week-range {
+      display: grid;
+      min-width: 212px;
+      min-height: 38px;
+      place-items: center;
+      padding: 4px 14px;
+      line-height: 1.2;
+    }
+
+    .week-range strong {
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 680;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .week-range span {
+      color: var(--text-subtle);
+      font-size: 10px;
+    }
+
+    .weekend-control {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      padding: 0 11px;
+      cursor: pointer;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .weekend-control input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      opacity: 0;
+    }
+
+    .switch-track {
+      position: relative;
+      width: 31px;
+      height: 18px;
+      flex: none;
+      background: var(--surface-raised);
+      border: 1px solid var(--border-strong);
+      border-radius: 999px;
+    }
+
+    .switch-track::after {
+      content: "";
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 12px;
+      height: 12px;
+      background: var(--text-subtle);
+      border-radius: 50%;
+      transition: transform .16s ease, background-color .16s ease;
+    }
+
+    .weekend-control input:checked + .switch-track {
+      background: var(--notes-accent-soft);
+      border-color: color-mix(in srgb, var(--notes-accent) 54%, var(--border));
+    }
+
+    .weekend-control input:checked + .switch-track::after {
+      background: var(--notes-accent);
+      transform: translateX(13px);
+    }
+
+    .notes-workspace {
+      display: grid;
+      min-width: 0;
+      min-height: 0;
+      grid-template-columns: minmax(250px, 310px) minmax(0, 1fr);
+      gap: 14px;
+      padding: 14px var(--notes-gutter) var(--notes-gutter);
+      overflow: hidden;
+      transition: grid-template-columns .22s ease;
+    }
+
+    .notes-workspace.is-reference-open {
+      grid-template-columns: minmax(210px, 230px) minmax(300px, 1fr) minmax(430px, 480px);
+      gap: 12px;
+    }
+
+    .surface {
+      min-width: 0;
+      min-height: 0;
+      background: color-mix(in srgb, var(--surface) 96%, transparent);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: var(--notes-shadow);
+    }
+
+    .week-panel {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      overflow: hidden;
+    }
+
+    .week-panel-header {
+      display: flex;
+      min-height: 58px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 15px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .week-panel-header strong,
+    .week-panel-header span {
+      display: block;
+    }
+
+    .week-panel-header strong {
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 680;
+    }
+
+    .week-panel-header span {
+      margin-top: 2px;
+      color: var(--text-subtle);
+      font-size: 10px;
+    }
+
+    .week-count {
+      color: var(--notes-accent);
+      font-family: "SF Mono", Menlo, monospace;
+      font-size: 11px;
+    }
+
+    .day-list {
+      display: grid;
+      min-height: 0;
+      gap: 7px;
+      padding: 9px;
+      overflow: auto;
+      scrollbar-width: thin;
+    }
+
+    .day-item {
+      display: grid;
+      width: 100%;
+      min-height: 86px;
+      grid-template-columns: 45px minmax(0, 1fr);
+      align-items: start;
+      gap: 10px;
+      padding: 11px;
+      color: var(--text-muted);
+      text-align: left;
+      background: color-mix(in srgb, var(--surface-raised) 28%, transparent);
+      border: 1px solid transparent;
+      border-radius: 11px;
+      cursor: pointer;
+    }
+
+    .day-item:hover {
+      color: var(--text);
+      background: color-mix(in srgb, var(--surface-raised) 48%, transparent);
+      border-color: var(--border);
+    }
+
+    .day-item.is-active {
+      color: var(--text);
+      background:
+        linear-gradient(135deg, color-mix(in srgb, var(--notes-accent) 11%, transparent), transparent 72%),
+        color-mix(in srgb, var(--surface-raised) 48%, transparent);
+      border-color: color-mix(in srgb, var(--notes-accent) 42%, var(--border));
+      box-shadow: inset 3px 0 0 var(--notes-accent);
+    }
+
+    .day-date {
+      display: grid;
+      justify-items: center;
+      gap: 2px;
+      color: var(--text-subtle);
+      font-size: 9px;
+    }
+
+    .day-date strong {
+      color: currentColor;
+      font-family: "SF Mono", Menlo, monospace;
+      font-size: 19px;
+      font-weight: 650;
+      line-height: 1;
+    }
+
+    .day-copy {
+      display: grid;
+      min-width: 0;
+      gap: 5px;
+    }
+
+    .day-copy strong,
+    .day-copy span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .day-copy strong {
+      color: currentColor;
+      font-size: 12px;
+      font-weight: 660;
+    }
+
+    .day-copy .day-title {
+      color: var(--text);
+      font-size: 11px;
+      font-weight: 610;
+    }
+
+    .day-copy .day-preview {
+      display: -webkit-box;
+      color: var(--text-subtle);
+      font-size: 10px;
+      line-height: 1.45;
+      white-space: normal;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+    }
+
+    .week-panel-footer {
+      display: flex;
+      min-height: 48px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 15px;
+      color: var(--text-subtle);
+      background: color-mix(in srgb, var(--surface-raised) 22%, transparent);
+      border-top: 1px solid var(--border);
+      font-size: 10px;
+    }
+
+    .week-progress {
+      width: 82px;
+      height: 4px;
+      overflow: hidden;
+      background: var(--surface-raised);
+      border-radius: 999px;
+    }
+
+    .week-progress i {
+      display: block;
+      width: 68%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--notes-accent), color-mix(in srgb, var(--notes-accent) 62%, var(--info)));
+      border-radius: inherit;
+    }
+
+    .editor-panel {
+      position: relative;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      overflow: hidden;
+    }
+
+    .editor-panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(circle at 92% 4%, color-mix(in srgb, var(--notes-accent) 7%, transparent), transparent 26%);
+    }
+
+    .editor-header,
+    .editor-body,
+    .editor-footer {
+      position: relative;
+      z-index: 1;
+    }
+
+    .editor-header {
+      display: flex;
+      min-height: 86px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 15px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .selected-day {
+      min-width: 0;
+      gap: 14px;
+    }
+
+    .selected-day-number {
+      display: grid;
+      width: 54px;
+      height: 54px;
+      flex: none;
+      place-items: center;
+      color: var(--notes-accent);
+      background: var(--notes-accent-soft);
+      border: 1px solid color-mix(in srgb, var(--notes-accent) 28%, var(--border));
+      border-radius: 14px;
+      font-family: "SF Mono", Menlo, monospace;
+      font-size: 23px;
+      font-weight: 680;
+    }
+
+    .selected-day h2 {
+      color: var(--text);
+      font-size: 18px;
+      font-weight: 680;
+      letter-spacing: -.02em;
+    }
+
+    .selected-day p {
+      margin-top: 4px;
+      color: var(--text-subtle);
+      font-size: 11px;
+    }
+
+    .editor-body {
+      display: grid;
+      min-height: 0;
+      grid-template-rows: auto minmax(0, 1fr);
+      gap: 16px;
+      padding: 20px clamp(20px, 3vw, 42px) 18px;
+    }
+
+    .field {
+      display: grid;
+      min-width: 0;
+      min-height: 0;
+      gap: 7px;
+    }
+
+    .field-content {
+      grid-template-rows: auto minmax(0, 1fr);
+    }
+
+    .field label {
+      color: var(--text-subtle);
+      font-size: 10px;
+      font-weight: 680;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .title-input,
+    .content-input {
+      width: 100%;
+      min-width: 0;
+      color: var(--text);
+      background: transparent;
+      border: 0;
+      outline: 0;
+    }
+
+    .title-input {
+      padding: 0 0 11px;
+      border-bottom: 1px solid var(--border);
+      font-size: clamp(20px, 2.1vw, 29px);
+      font-weight: 650;
+      letter-spacing: -.025em;
+    }
+
+    .title-input:focus {
+      border-color: color-mix(in srgb, var(--notes-accent) 62%, var(--border));
+    }
+
+    .content-input {
+      min-height: 0;
+      padding: 2px 0;
+      resize: none;
+      color: var(--text-muted);
+      font-size: 14px;
+      line-height: 1.9;
+    }
+
+    .editor-footer {
+      display: flex;
+      min-height: 48px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 10px 20px;
+      color: var(--text-subtle);
+      background: color-mix(in srgb, var(--surface-raised) 20%, transparent);
+      border-top: 1px solid var(--border);
+      font-size: 10px;
+    }
+
+    .report-drawer {
+      position: relative;
+      display: none;
+      min-width: 0;
+      min-height: 0;
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      overflow: hidden;
+      background: color-mix(in srgb, var(--surface) 98%, transparent);
+      border: 1px solid var(--border-strong);
+      border-radius: 17px;
+      box-shadow: var(--notes-shadow);
+    }
+
+    .report-drawer.is-open {
+      display: grid;
+    }
+
+    .drawer-header {
+      display: flex;
+      min-height: 72px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 13px 15px 13px 18px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .drawer-heading {
+      display: grid;
+      min-width: 0;
+      gap: 4px;
+    }
+
+    .drawer-heading strong {
+      color: var(--text);
+      font-size: 16px;
+      font-weight: 690;
+      letter-spacing: -.015em;
+    }
+
+    .drawer-heading span {
+      color: var(--text-subtle);
+      font-size: 10px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .drawer-header-actions {
+      flex: none;
+      gap: 7px;
+    }
+
+    .drawer-body {
+      display: grid;
+      min-height: 0;
+      align-content: start;
+      gap: 12px;
+      padding: 14px;
+      overflow: auto;
+      scrollbar-width: thin;
+    }
+
+    .prototype-state-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 10px;
+      color: var(--text-subtle);
+      background: color-mix(in srgb, var(--notes-accent) 6%, var(--surface-raised));
+      border: 1px dashed color-mix(in srgb, var(--notes-accent) 28%, var(--border));
+      border-radius: 10px;
+      font-size: 10px;
+    }
+
+    .state-select {
+      min-height: 30px;
+      padding: 0 30px 0 10px;
+      color: var(--text-muted);
+      outline: 0;
+      cursor: pointer;
+      font-size: 11px;
+    }
+
+    .query-card,
+    .summary-card,
+    .activity-card,
+    .state-card,
+    .notice {
+      background: color-mix(in srgb, var(--surface-raised) 30%, transparent);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+
+    .query-card {
+      display: grid;
+      gap: 11px;
+      padding: 13px;
+    }
+
+    .query-line {
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .query-range {
+      display: grid;
+      min-width: 0;
+      gap: 2px;
+    }
+
+    .query-range strong {
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 680;
+    }
+
+    .query-range span {
+      color: var(--text-subtle);
+      font-size: 10px;
+    }
+
+    .query-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .meta-pill {
+      display: inline-flex;
+      min-height: 24px;
+      align-items: center;
+      padding: 0 8px;
+      color: var(--text-muted);
+      background: color-mix(in srgb, var(--surface) 68%, transparent);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-size: 9px;
+    }
+
+    .progress-track {
+      height: 3px;
+      overflow: hidden;
+      background: var(--surface-raised);
+      border-radius: 999px;
+    }
+
+    .progress-track i {
+      display: block;
+      width: 0;
+      height: 100%;
+      background: linear-gradient(90deg, var(--notes-accent), var(--info));
+      border-radius: inherit;
+      transition: width .25s ease;
+    }
+
+    .is-loading .progress-track i {
+      width: 72%;
+      animation: loading-slide 1s ease-in-out infinite alternate;
+    }
+
+    .summary-card {
+      display: grid;
+      min-height: 58px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      overflow: hidden;
+    }
+
+    .summary-stat {
+      display: grid;
+      min-width: 0;
+      gap: 3px;
+      padding: 12px;
+      border-right: 1px solid var(--border);
+    }
+
+    .summary-stat:last-child {
+      border-right: 0;
+    }
+
+    .summary-stat strong {
+      color: var(--text);
+      font-family: "SF Mono", Menlo, monospace;
+      font-size: 17px;
+      font-weight: 680;
+    }
+
+    .summary-stat span {
+      overflow: hidden;
+      color: var(--text-subtle);
+      font-size: 9px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .summary-stat.is-danger strong {
+      color: var(--notes-danger);
+    }
+
+    .view-controls {
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .target-date-row {
+      display: flex;
+      min-height: 42px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 7px 10px;
+      color: var(--text-muted);
+      background: color-mix(in srgb, var(--surface-raised) 26%, transparent);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 10px;
+    }
+
+    .target-date-row strong {
+      display: block;
+      margin-bottom: 2px;
+      color: var(--text);
+      font-size: 10px;
+    }
+
+    .target-date-select,
+    .batch-mode-select {
+      min-height: 30px;
+      padding: 0 30px 0 9px;
+      color: var(--text-muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      outline: 0;
+      cursor: pointer;
+      font-size: 10px;
+    }
+
+    .target-date-select:focus-visible,
+    .batch-mode-select:focus-visible {
+      border-color: color-mix(in srgb, var(--notes-accent) 52%, var(--border));
+      box-shadow: 0 0 0 3px var(--notes-accent-soft);
+    }
+
+    .segmented {
+      display: inline-flex;
+      gap: 3px;
+      padding: 3px;
+      background: color-mix(in srgb, var(--surface-raised) 58%, transparent);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .segment-button {
+      min-height: 28px;
+      padding: 0 10px;
+      background: transparent;
+      border-color: transparent;
+      cursor: pointer;
+      font-size: 10px;
+    }
+
+    .segment-button.is-active {
+      color: var(--notes-accent);
+      background: var(--surface);
+      border-color: color-mix(in srgb, var(--notes-accent) 28%, var(--border));
+      box-shadow: 0 4px 12px rgba(0, 0, 0, .08);
+    }
+
+    .notice {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      color: var(--text-muted);
+      border-color: color-mix(in srgb, var(--warning) 36%, var(--border));
+      font-size: 10px;
+      line-height: 1.5;
+    }
+
+    .notice strong {
+      display: block;
+      margin-bottom: 2px;
+      color: var(--warning);
+      font-size: 10px;
+    }
+
+    .activity-list {
+      display: grid;
+      gap: 9px;
+    }
+
+    .activity-card {
+      overflow: hidden;
+    }
+
+    .activity-heading {
+      display: flex;
+      min-height: 38px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 11px;
+      background: color-mix(in srgb, var(--surface-raised) 46%, transparent);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .activity-heading strong {
+      color: var(--text);
+      font-size: 11px;
+      font-weight: 680;
+    }
+
+    .activity-heading span {
+      color: var(--text-subtle);
+      font-size: 9px;
+    }
+
+    .commit-list {
+      display: grid;
+      padding: 3px 11px;
+    }
+
+    .commit-item {
+      display: grid;
+      grid-template-columns: 18px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 8px 9px;
+      margin-inline: -5px;
+      padding: 9px 5px;
+      border-bottom: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+      border-radius: 8px;
+      transition: background-color .16s ease;
+    }
+
+    .commit-item:last-child {
+      border-bottom: 0;
+    }
+
+    .commit-item.is-selected {
+      background: var(--notes-accent-soft);
+    }
+
+    .commit-item.is-added {
+      background: color-mix(in srgb, var(--notes-success) 7%, transparent);
+    }
+
+    .commit-checkbox {
+      width: 15px;
+      height: 15px;
+      margin: 0;
+      accent-color: var(--notes-accent);
+      cursor: pointer;
+    }
+
+    .commit-copy {
+      display: grid;
+      min-width: 0;
+      gap: 5px;
+    }
+
+    .commit-title {
+      overflow: hidden;
+      color: var(--text);
+      font-size: 11px;
+      font-weight: 610;
+      line-height: 1.45;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .activity-meta {
+      min-width: 0;
+      gap: 6px;
+      color: var(--text-subtle);
+      font-size: 9px;
+    }
+
+    .repo-chip {
+      display: inline-flex;
+      min-height: 20px;
+      max-width: 170px;
+      align-items: center;
+      padding: 0 7px;
+      overflow: hidden;
+      color: var(--notes-accent);
+      background: var(--notes-accent-soft);
+      border: 1px solid color-mix(in srgb, var(--notes-accent) 22%, var(--border));
+      border-radius: 999px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .commit-side {
+      display: grid;
+      min-width: 92px;
+      justify-items: end;
+      gap: 5px;
+    }
+
+    .commit-time-line {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 6px;
+    }
+
+    .commit-hash,
+    .commit-time {
+      color: var(--text-subtle);
+      font-family: "SF Mono", Menlo, monospace;
+      font-size: 9px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .commit-insert {
+      min-height: 27px;
+      padding: 0 8px;
+      color: var(--notes-accent);
+      background: var(--notes-accent-soft);
+      border: 1px solid color-mix(in srgb, var(--notes-accent) 28%, var(--border));
+      border-radius: 7px;
+      cursor: pointer;
+      font-size: 9px;
+      white-space: nowrap;
+    }
+
+    .commit-insert:hover {
+      border-color: color-mix(in srgb, var(--notes-accent) 52%, var(--border));
+    }
+
+    .commit-insert:disabled {
+      color: var(--notes-success);
+      background: color-mix(in srgb, var(--notes-success) 8%, transparent);
+      border-color: color-mix(in srgb, var(--notes-success) 26%, var(--border));
+      cursor: default;
+    }
+
+    .state-card {
+      display: none;
+      min-height: 268px;
+      place-items: center;
+      padding: 28px;
+      text-align: center;
+    }
+
+    .state-card-inner {
+      display: grid;
+      max-width: 320px;
+      justify-items: center;
+      gap: 9px;
+    }
+
+    .state-mark {
+      display: grid;
+      width: 42px;
+      height: 42px;
+      place-items: center;
+      color: var(--notes-accent);
+      background: var(--notes-accent-soft);
+      border: 1px solid color-mix(in srgb, var(--notes-accent) 28%, var(--border));
+      border-radius: 13px;
+      font-family: "SF Mono", Menlo, monospace;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .state-card strong {
+      color: var(--text);
+      font-size: 13px;
+    }
+
+    .state-card p {
+      color: var(--text-muted);
+      font-size: 10px;
+      line-height: 1.65;
+    }
+
+    .skeleton-list {
+      display: none;
+      gap: 9px;
+    }
+
+    .skeleton-card {
+      display: grid;
+      gap: 9px;
+      padding: 13px;
+      background: color-mix(in srgb, var(--surface-raised) 32%, transparent);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+
+    .skeleton-line {
+      height: 9px;
+      background: color-mix(in srgb, var(--text-subtle) 15%, transparent);
+      border-radius: 999px;
+      animation: skeleton-pulse 1s ease-in-out infinite alternate;
+    }
+
+    .skeleton-line.short {
+      width: 38%;
+    }
+
+    .skeleton-line.medium {
+      width: 68%;
+    }
+
+    .drawer-body[data-state="loading"] .activity-content,
+    .drawer-body[data-state="empty"] .activity-content,
+    .drawer-body[data-state="unconfigured"] .activity-content,
+    .drawer-body[data-state="error"] .activity-content {
+      display: none;
+    }
+
+    .drawer-body[data-state="loading"] .skeleton-list {
+      display: grid;
+    }
+
+    .drawer-body[data-state="empty"] .state-card[data-kind="empty"],
+    .drawer-body[data-state="unconfigured"] .state-card[data-kind="unconfigured"],
+    .drawer-body[data-state="error"] .state-card[data-kind="error"] {
+      display: grid;
+    }
+
+    .drawer-body[data-state="partial"] .partial-notice {
+      display: flex;
+    }
+
+    .partial-notice {
+      display: none;
+    }
+
+    .drawer-footer {
+      display: flex;
+      min-height: 60px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 11px 14px;
+      background: color-mix(in srgb, var(--surface) 94%, transparent);
+      border-top: 1px solid var(--border);
+    }
+
+    .drawer-footer-note {
+      color: var(--text-subtle);
+      font-size: 9px;
+      white-space: nowrap;
+    }
+
+    .drawer-footer-actions {
+      min-width: 0;
+      justify-content: flex-end;
+      gap: 7px;
+    }
+
+    .selection-count {
+      color: var(--text-muted);
+      font-size: 10px;
+      white-space: nowrap;
+    }
+
+    .selection-count strong {
+      color: var(--notes-accent);
+      font-family: "SF Mono", Menlo, monospace;
+    }
+
+    .more-menu {
+      position: relative;
+      flex: none;
+    }
+
+    .more-menu summary {
+      list-style: none;
+    }
+
+    .more-menu summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .more-menu-panel {
+      position: absolute;
+      z-index: 8;
+      right: 0;
+      bottom: calc(100% + 8px);
+      display: grid;
+      width: 132px;
+      gap: 4px;
+      padding: 6px;
+      background: var(--surface);
+      border: 1px solid var(--border-strong);
+      border-radius: 10px;
+      box-shadow: var(--notes-shadow);
+    }
+
+    .more-menu-panel .button {
+      width: 100%;
+      justify-content: flex-start;
+      background: transparent;
+      border-color: transparent;
+    }
+
+    .prototype-toast {
+      position: fixed;
+      z-index: 100;
+      right: 22px;
+      bottom: 22px;
+      padding: 10px 13px;
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--border-strong);
+      border-radius: 10px;
+      box-shadow: var(--notes-shadow);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(8px);
+      transition: opacity .18s ease, transform .18s ease;
+      font-size: 11px;
+    }
+
+    .prototype-toast.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @keyframes loading-slide {
+      from { width: 18%; transform: translateX(-15%); }
+      to { width: 76%; transform: translateX(38%); }
+    }
+
+    @keyframes skeleton-pulse {
+      from { opacity: .45; }
+      to { opacity: 1; }
+    }
+
+    @media (max-width: 1240px) {
+      .notes-workspace.is-reference-open {
+        grid-template-columns: minmax(300px, 1fr) minmax(420px, 48%);
+        grid-template-rows: 118px minmax(0, 1fr);
+        gap: 10px;
+      }
+
+      .notes-workspace.is-reference-open .week-panel {
+        grid-column: 1 / -1;
+        grid-row: 1;
+        grid-template-rows: auto minmax(0, 1fr);
+      }
+
+      .notes-workspace.is-reference-open .editor-panel {
+        grid-column: 1;
+        grid-row: 2;
+      }
+
+      .notes-workspace.is-reference-open .report-drawer {
+        grid-column: 2;
+        grid-row: 2;
+      }
+
+      .notes-workspace.is-reference-open .week-panel-header {
+        min-height: 38px;
+        padding: 7px 10px;
+      }
+
+      .notes-workspace.is-reference-open .week-panel-footer {
+        display: none;
+      }
+
+      .notes-workspace.is-reference-open .day-list {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 5px;
+        padding: 6px;
+        overflow: hidden;
+      }
+
+      .notes-workspace.is-reference-open .day-item {
+        min-height: 65px;
+        grid-template-columns: 1fr;
+        justify-items: center;
+        gap: 3px;
+        padding: 6px 5px;
+        text-align: center;
+      }
+
+      .notes-workspace.is-reference-open .day-date {
+        display: flex;
+        align-items: baseline;
+        gap: 4px;
+      }
+
+      .notes-workspace.is-reference-open .day-date strong {
+        font-size: 15px;
+      }
+
+      .notes-workspace.is-reference-open .day-copy strong {
+        font-size: 10px;
+      }
+
+      .notes-workspace.is-reference-open .day-copy .day-title {
+        width: 100%;
+        font-size: 9px;
+      }
+
+      .notes-workspace.is-reference-open .day-preview {
+        display: none !important;
+      }
+    }
+
+    @media (max-width: 1180px) {
+      .notes-workspace {
+        grid-template-columns: 238px minmax(0, 1fr);
+      }
+
+      .week-range {
+        min-width: 174px;
+      }
+
+      .button.return-current {
+        display: none;
+      }
+    }
+
+    @media (max-width: 980px) {
+      .notes-page-header {
+        min-height: 64px;
+        padding-block: 9px;
+      }
+
+      .notes-page-header p {
+        display: none;
+      }
+
+      .toolbar {
+        min-height: 80px;
+        flex-wrap: wrap;
+        align-content: center;
+        gap: 7px;
+      }
+
+      .week-navigation {
+        flex: 1 1 100%;
+        justify-content: space-between;
+      }
+
+      .week-range {
+        min-width: 0;
+        flex: 1 1 auto;
+      }
+
+      .toolbar-actions {
+        width: 100%;
+        justify-content: flex-end;
+      }
+
+      .notes-workspace {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: 132px minmax(0, 1fr);
+        gap: 9px;
+        padding-top: 9px;
+      }
+
+      .notes-workspace.is-reference-open {
+        grid-template-columns: minmax(300px, 1fr) minmax(390px, 49%);
+        grid-template-rows: 112px minmax(0, 1fr);
+      }
+
+      .drawer-header {
+        gap: 8px;
+        padding-inline: 13px 10px;
+      }
+
+      .drawer-heading span {
+        display: none;
+      }
+
+      .drawer-footer {
+        padding-inline: 10px;
+      }
+
+      .selection-count {
+        display: none;
+      }
+
+      .drawer-footer-actions {
+        width: 100%;
+        gap: 4px;
+      }
+
+      .drawer-footer-actions .button {
+        padding-inline: 7px;
+      }
+
+      .batch-mode-select {
+        min-width: 0;
+        flex: 1 1 auto;
+      }
+
+      .week-panel {
+        grid-template-rows: auto minmax(0, 1fr);
+      }
+
+      .week-panel-header {
+        min-height: 38px;
+        padding: 7px 10px;
+      }
+
+      .week-panel-footer {
+        display: none;
+      }
+
+      .day-list {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 5px;
+        padding: 6px;
+        overflow: hidden;
+      }
+
+      .day-item {
+        min-height: 73px;
+        grid-template-columns: 1fr;
+        justify-items: center;
+        gap: 4px;
+        padding: 7px 5px;
+        text-align: center;
+      }
+
+      .day-date {
+        display: flex;
+        align-items: baseline;
+        gap: 4px;
+      }
+
+      .day-date strong {
+        font-size: 15px;
+      }
+
+      .day-copy strong {
+        font-size: 10px;
+      }
+
+      .day-copy .day-title {
+        width: 100%;
+        font-size: 9px;
+      }
+
+      .day-preview {
+        display: none !important;
+      }
+
+      .editor-header {
+        min-height: 64px;
+        padding: 9px 14px;
+      }
+
+      .selected-day-number {
+        width: 43px;
+        height: 43px;
+        border-radius: 11px;
+        font-size: 19px;
+      }
+
+      .selected-day h2 {
+        font-size: 15px;
+      }
+
+      .editor-body {
+        gap: 10px;
+        padding: 13px 18px 10px;
+      }
+
+      .title-input {
+        padding-bottom: 7px;
+        font-size: 19px;
+      }
+
+      .content-input {
+        font-size: 12px;
+        line-height: 1.7;
+      }
+
+      .editor-footer {
+        min-height: 40px;
+        padding: 7px 14px;
+      }
+
+      .editor-hint {
+        display: none;
+      }
+
+    }
+
+    @media (max-width: 760px) {
+      .drawer-footer {
+        align-items: flex-end;
+      }
+
+      .drawer-footer-note {
+        display: none;
+      }
+
+      .drawer-footer-actions {
+        width: 100%;
+      }
+
+      .drawer-footer-actions .button {
+        min-width: 0;
+        flex: 1 1 auto;
+        padding-inline: 7px;
+      }
+
+      .query-line,
+      .view-controls {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .query-line .button {
+        width: 100%;
+      }
+
+      .segmented {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-height: 690px) {
+      .notes-page-header {
+        min-height: 60px;
+      }
+
+      .toolbar {
+        min-height: 54px;
+      }
+
+      .notes-workspace {
+        padding-block: 9px;
+      }
+
+      .editor-header {
+        min-height: 62px;
+      }
+
+      .selected-day-number {
+        width: 42px;
+        height: 42px;
+        font-size: 18px;
+      }
+
+      .drawer-header {
+        min-height: 62px;
+      }
+
+      .drawer-footer {
+        min-height: 54px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .progress-track i,
+      .skeleton-line {
+        animation: none;
+      }
+    }
+  </style>
+</head>
+<body data-theme="dark">
+  <div class="app-shell">
+    <aside data-shared-sidebar></aside>
+    <main class="app-main notes-preview-main">
+      <div class="notes-page">
+        <header class="notes-page-header">
+          <div>
+            <div class="notes-title-line">
+              <span class="notes-title-mark" aria-hidden="true"></span>
+              <h1>工时内容</h1>
+            </div>
+            <p>把一周放在眼前，只专注记录此刻的一天</p>
+          </div>
+          <div class="save-state" role="status">
+            <i class="status-dot" aria-hidden="true"></i>
+            <span>本周内容均已保存</span>
+          </div>
+        </header>
+
+        <section class="toolbar" aria-label="周次与显示设置">
+          <div class="week-navigation">
+            <button class="button" type="button">上一周</button>
+            <div class="week-range">
+              <strong>本周 · 07-27 — 08-02</strong>
+              <span>2026 年第 31 周</span>
+            </div>
+            <button class="button" type="button">下一周</button>
+            <button class="button return-current" type="button">回到本周</button>
+          </div>
+          <div class="toolbar-actions">
+            <label class="weekend-control">
+              <input type="checkbox">
+              <span class="switch-track" aria-hidden="true"></span>
+              <span>显示周末</span>
+            </label>
+            <button class="button" type="button" data-theme-toggle>
+              <span data-theme-label>切换亮色</span>
+            </button>
+            <button class="button primary" id="openReference" type="button" aria-controls="reportDrawer" aria-expanded="true" aria-pressed="true">收起参考</button>
+          </div>
+        </section>
+
+        <div class="notes-workspace is-reference-open" id="notesWorkspace">
+          <aside class="surface week-panel" aria-label="本周日期">
+            <div class="week-panel-header">
+              <div>
+                <strong>本周记录</strong>
+                <span>3 天已有内容</span>
+              </div>
+              <div class="week-count">5 DAYS</div>
+            </div>
+            <div class="day-list">
+              <button class="day-item is-active" type="button" data-work-date="07-27">
+                <span class="day-date"><strong>27</strong><span>07-27</span></span>
+                <span class="day-copy"><strong>周一 · 今天</strong><span class="day-title">纯净检测页面迁移收尾</span><span class="day-preview">完成页面功能与样式验收，清理旧 DOM、脚本和样式引用。</span></span>
+              </button>
+              <button class="day-item" type="button" data-work-date="07-28">
+                <span class="day-date"><strong>28</strong><span>07-28</span></span>
+                <span class="day-copy"><strong>周二</strong><span class="day-title">工时内容页面研究</span><span class="day-preview">梳理日期计算、自动保存和代码活动引用链路。</span></span>
+              </button>
+              <button class="day-item" type="button" data-work-date="07-29">
+                <span class="day-date"><strong>29</strong><span>07-29</span></span>
+                <span class="day-copy"><strong>周三</strong><span class="day-title">L2 原型与交互确认</span><span class="day-preview">确定周工作空间的信息层级和最小窗口响应式策略。</span></span>
+              </button>
+              <button class="day-item" type="button" data-work-date="07-30">
+                <span class="day-date"><strong>30</strong><span>07-30</span></span>
+                <span class="day-copy"><strong>周四</strong><span class="day-title">尚未记录</span><span class="day-preview">选择这一天开始记录</span></span>
+              </button>
+              <button class="day-item" type="button" data-work-date="07-31">
+                <span class="day-date"><strong>31</strong><span>07-31</span></span>
+                <span class="day-copy"><strong>周五</strong><span class="day-title">尚未记录</span><span class="day-preview">选择这一天开始记录</span></span>
+              </button>
+            </div>
+            <div class="week-panel-footer">
+              <span>本周记录覆盖</span>
+              <div class="week-progress"><i></i></div>
+              <span>3 / 5</span>
+            </div>
+          </aside>
+
+          <section class="surface editor-panel">
+            <div class="editor-header">
+              <div class="selected-day">
+                <div class="selected-day-number" id="selectedDayNumber">27</div>
+                <div>
+                  <h2 id="selectedDayHeading">周一 · 今天</h2>
+                  <p id="selectedDayDate">2026 年 7 月 27 日</p>
+                </div>
+              </div>
+              <div class="save-state">
+                <i class="status-dot" aria-hidden="true"></i>
+                <span>已保存 · 17:36</span>
+              </div>
+            </div>
+            <div class="editor-body">
+              <div class="field">
+                <label for="noteTitle">项目 / 标题</label>
+                <input class="title-input" id="noteTitle" value="纯净检测页面迁移收尾">
+              </div>
+              <div class="field field-content">
+                <label for="noteContent">工作内容</label>
+                <textarea class="content-input" id="noteContent">完成页面功能与样式验收，清理旧 DOM、脚本和样式引用。
+补充回归测试并整理迁移决策文档。</textarea>
+              </div>
+            </div>
+            <footer class="editor-footer">
+              <span>53 字　停止输入 800ms 后自动保存</span>
+              <span class="editor-hint">切换日期或周次前会先保存当前内容</span>
+            </footer>
+          </section>
+
+          <aside class="report-drawer is-open" id="reportDrawer" aria-hidden="false" aria-labelledby="reportDrawerTitle">
+        <div class="drawer-header">
+          <div class="drawer-heading">
+            <strong id="reportDrawerTitle">Git 活动参考</strong>
+            <span>保持日期列表可操作 · 选择后才会写入工时内容</span>
+          </div>
+          <div class="drawer-header-actions">
+            <button class="button quiet ghost" id="openSettings" type="button">仓库设置</button>
+            <button class="button quiet" id="closeReference" type="button">关闭</button>
+          </div>
+        </div>
+
+        <div class="drawer-body" id="drawerBody" data-state="success">
+          <div class="prototype-state-bar">
+            <span>原型状态预览</span>
+            <select class="state-select" id="stateSelect" aria-label="切换抽屉状态">
+              <option value="success">查询成功</option>
+              <option value="loading">加载中</option>
+              <option value="partial">部分仓库失败</option>
+              <option value="empty">本周无提交</option>
+              <option value="unconfigured">尚未配置</option>
+              <option value="error">整体查询失败</option>
+            </select>
+          </div>
+
+          <section class="query-card" id="queryCard">
+            <div class="query-line">
+              <div class="query-range">
+                <strong>当前周代码活动</strong>
+                <span>作者 Ledy · 3 个仓库 · 最近更新 17:42</span>
+              </div>
+              <button class="button quiet" id="refreshActivity" type="button">刷新数据</button>
+            </div>
+            <div class="query-meta">
+              <span class="meta-pill">07-27 — 08-02</span>
+              <span class="meta-pill">分支：全部</span>
+              <span class="meta-pill">时区：Asia/Shanghai</span>
+            </div>
+            <div class="progress-track" aria-hidden="true"><i></i></div>
+          </section>
+
+          <section class="summary-card" aria-label="本周 Git 活动汇总">
+            <div class="summary-stat"><strong>3</strong><span>已配置仓库</span></div>
+            <div class="summary-stat"><strong>12</strong><span>本周提交</span></div>
+            <div class="summary-stat"><strong>4</strong><span>活跃日期</span></div>
+            <div class="summary-stat" id="failedStat"><strong>0</strong><span>查询失败</span></div>
+          </section>
+
+          <div class="skeleton-list" aria-label="正在加载 Git 活动">
+            <div class="skeleton-card"><div class="skeleton-line short"></div><div class="skeleton-line"></div><div class="skeleton-line medium"></div></div>
+            <div class="skeleton-card"><div class="skeleton-line short"></div><div class="skeleton-line medium"></div><div class="skeleton-line"></div></div>
+            <div class="skeleton-card"><div class="skeleton-line short"></div><div class="skeleton-line"></div><div class="skeleton-line medium"></div></div>
+          </div>
+
+          <section class="state-card" data-kind="empty">
+            <div class="state-card-inner">
+              <div class="state-mark">0</div>
+              <strong>本周暂时没有提交</strong>
+              <p>已完成全部仓库查询，没有找到符合日期范围和作者条件的提交。可以刷新重试，或在仓库设置中检查作者名称。</p>
+              <button class="button quiet" type="button" data-action="refresh">重新查询</button>
+            </div>
+          </section>
+
+          <section class="state-card" data-kind="unconfigured">
+            <div class="state-card-inner">
+              <div class="state-mark">SET</div>
+              <strong>先完成 GitLab 配置</strong>
+              <p>Token、默认作者和仓库列表统一在系统设置中维护。配置完成后，这里会直接查询当前周活动。</p>
+              <button class="button primary" type="button" data-action="settings">前往系统设置</button>
+            </div>
+          </section>
+
+          <section class="state-card" data-kind="error">
+            <div class="state-card-inner">
+              <div class="state-mark">ERR</div>
+              <strong>暂时无法查询代码活动</strong>
+              <p>所有仓库均查询失败。当前工时内容不会受影响，可以检查网络与配置后重试。</p>
+              <button class="button quiet" type="button" data-action="refresh">重新查询</button>
+            </div>
+          </section>
+
+          <div class="activity-content">
+            <div class="notice partial-notice">
+              <div><strong>部分仓库查询失败</strong><span>devtools-api 暂时无法访问，其余 2 个仓库结果已正常展示。</span></div>
+              <button class="button quiet ghost" type="button" data-action="refresh">重试失败项</button>
+            </div>
+
+            <div class="view-controls">
+              <div class="segmented" aria-label="分组方式">
+                <button class="segment-button is-active" type="button" data-view="date">按日期</button>
+                <button class="segment-button" type="button" data-view="repo">按仓库</button>
+              </div>
+              <div class="segmented" aria-label="日期过滤">
+                <button class="segment-button is-active" type="button" data-filter="all">全部</button>
+                <button class="segment-button" id="currentDateFilter" type="button" data-filter="current">仅 07-27</button>
+              </div>
+            </div>
+
+            <label class="target-date-row" for="targetDateSelect">
+              <span><strong>目标工时日期</strong>逐条加入时写入这里，也可直接点击左侧日期切换</span>
+              <select class="target-date-select" id="targetDateSelect">
+                <option value="07-27">07-27 · 周一</option>
+                <option value="07-28">07-28 · 周二</option>
+                <option value="07-29">07-29 · 周三</option>
+                <option value="07-30">07-30 · 周四</option>
+                <option value="07-31">07-31 · 周五</option>
+              </select>
+            </label>
+
+            <div class="activity-list" id="activityList"></div>
+          </div>
+        </div>
+
+        <div class="drawer-footer">
+          <span class="selection-count">已选 <strong id="selectionCount">0</strong> 条</span>
+          <div class="drawer-footer-actions">
+            <select class="batch-mode-select" id="batchMode" aria-label="批量写入方式">
+              <option value="commit">按提交日期</option>
+              <option value="current">写入当前 07-27</option>
+            </select>
+            <button class="button quiet ghost" id="undoInsert" type="button" disabled>撤销上次</button>
+            <details class="more-menu" id="moreMenu">
+              <summary class="button quiet ghost">更多</summary>
+              <div class="more-menu-panel">
+                <button class="button quiet ghost" id="copySummary" type="button">复制摘要</button>
+                <button class="button quiet ghost" id="copyDetails" type="button">复制明细</button>
+                <button class="button quiet ghost" id="exportMarkdown" type="button">导出 Markdown</button>
+              </div>
+            </details>
+            <button class="button primary" id="batchInsert" type="button" disabled>加入所选</button>
+          </div>
+        </div>
+          </aside>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="prototype-toast" id="prototypeToast" role="status" aria-live="polite"></div>
+
+  <script src="./home-reimagine-common.js"></script>
+  <script>
+    (() => {
+      const activities = [
+        { date: '07-27', day: '周一', repo: 'devtools-desktop', branch: 'main', title: 'feat: 完成工时内容页面 Vue 迁移', hash: '8f21d4a', time: '16:48' },
+        { date: '07-27', day: '周一', repo: 'devtools-desktop', branch: 'main', title: 'fix: 修复亮暗主题下公共按钮边框', hash: '53ca209', time: '14:26' },
+        { date: '07-27', day: '周一', repo: 'personal-api', branch: 'develop', title: 'refactor: 统一周报查询配置读取方式', hash: 'b7e910f', time: '11:03' },
+        { date: '07-29', day: '周三', repo: 'devtools-desktop', branch: 'main', title: 'docs: 补充页面迁移验收决策', hash: '19d0ea3', time: '18:12' },
+        { date: '07-29', day: '周三', repo: 'toolBoxItem', branch: 'main', title: 'feat: 优化 Git 周报摘要生成流程', hash: 'e8162c4', time: '10:35' },
+        { date: '07-30', day: '周四', repo: 'devtools-desktop', branch: 'main', title: 'test: 增加工时页面自动保存回归测试', hash: 'a94f2c1', time: '17:20' }
+      ];
+
+      const workNotes = {
+        '07-27': {
+          number: '27',
+          day: '周一 · 今天',
+          fullDate: '2026 年 7 月 27 日',
+          title: '纯净检测页面迁移收尾',
+          content: '完成页面功能与样式验收，清理旧 DOM、脚本和样式引用。\n补充回归测试并整理迁移决策文档。'
+        },
+        '07-28': {
+          number: '28',
+          day: '周二',
+          fullDate: '2026 年 7 月 28 日',
+          title: '工时内容页面研究',
+          content: '梳理日期计算、自动保存和代码活动引用链路。'
+        },
+        '07-29': {
+          number: '29',
+          day: '周三',
+          fullDate: '2026 年 7 月 29 日',
+          title: 'L2 原型与交互确认',
+          content: '确定周工作空间的信息层级和最小窗口响应式策略。'
+        },
+        '07-30': {
+          number: '30',
+          day: '周四',
+          fullDate: '2026 年 7 月 30 日',
+          title: '',
+          content: ''
+        },
+        '07-31': {
+          number: '31',
+          day: '周五',
+          fullDate: '2026 年 7 月 31 日',
+          title: '',
+          content: ''
+        }
+      };
+
+      const state = {
+        view: 'date',
+        filter: 'all',
+        status: 'success',
+        currentDate: '07-27',
+        selected: new Set(),
+        added: new Set(),
+        lastInsert: null,
+        toastTimer: 0,
+        loadingTimer: 0
+      };
+
+      const $ = id => document.getElementById(id);
+      const drawer = $('reportDrawer');
+      const workspace = $('notesWorkspace');
+      const referenceButton = $('openReference');
+      const drawerBody = $('drawerBody');
+      const toast = $('prototypeToast');
+      const activityList = $('activityList');
+      const titleInput = $('noteTitle');
+      const contentInput = $('noteContent');
+      const dataActionButtons = [$('copySummary'), $('copyDetails'), $('exportMarkdown')];
+
+      const showToast = message => {
+        toast.textContent = message;
+        toast.classList.add('is-visible');
+        window.clearTimeout(state.toastTimer);
+        state.toastTimer = window.setTimeout(() => toast.classList.remove('is-visible'), 1800);
+      };
+
+      const setDrawer = open => {
+        workspace.classList.toggle('is-reference-open', open);
+        drawer.classList.toggle('is-open', open);
+        drawer.setAttribute('aria-hidden', String(!open));
+        referenceButton.setAttribute('aria-pressed', String(open));
+        referenceButton.setAttribute('aria-expanded', String(open));
+        referenceButton.textContent = open ? '收起参考' : 'Git 活动参考';
+      };
+
+      const grouped = (items, key) => items.reduce((result, item) => {
+        const value = item[key];
+        if (!result[value]) result[value] = [];
+        result[value].push(item);
+        return result;
+      }, {});
+
+      const unavailable = () => ['loading', 'empty', 'unconfigured', 'error'].includes(state.status);
+
+      const updateFooter = () => {
+        $('selectionCount').textContent = state.selected.size;
+        $('batchInsert').disabled = state.selected.size === 0 || unavailable();
+        $('undoInsert').disabled = !state.lastInsert || unavailable();
+        $('batchMode').disabled = unavailable();
+        $('batchMode').querySelector('[value="current"]').textContent = `写入当前 ${state.currentDate}`;
+        dataActionButtons.forEach(button => {
+          button.disabled = unavailable();
+        });
+      };
+
+      const syncEditor = () => {
+        const note = workNotes[state.currentDate];
+        $('selectedDayNumber').textContent = note.number;
+        $('selectedDayHeading').textContent = note.day;
+        $('selectedDayDate').textContent = note.fullDate;
+        titleInput.value = note.title;
+        contentInput.value = note.content;
+        $('targetDateSelect').value = state.currentDate;
+        $('currentDateFilter').textContent = `仅 ${state.currentDate}`;
+        document.querySelectorAll('[data-work-date]').forEach(button => {
+          const active = button.dataset.workDate === state.currentDate;
+          button.classList.toggle('is-active', active);
+          button.setAttribute('aria-pressed', String(active));
+        });
+        updateFooter();
+      };
+
+      const selectWorkDate = date => {
+        workNotes[state.currentDate].title = titleInput.value;
+        workNotes[state.currentDate].content = contentInput.value;
+        state.currentDate = date;
+        syncEditor();
+        renderActivities();
+      };
+
+      const renderActivities = () => {
+        const filtered = state.filter === 'current' ? activities.filter(item => item.date === state.currentDate) : activities;
+        const key = state.view === 'date' ? 'date' : 'repo';
+        const groups = grouped(filtered, key);
+
+        activityList.innerHTML = Object.entries(groups).map(([group, items]) => {
+          const heading = state.view === 'date'
+            ? `${items[0].day} · ${group}`
+            : group;
+          const caption = state.view === 'date'
+            ? `${items.length} 次提交`
+            : `${items.length} 次提交 · ${new Set(items.map(item => item.date)).size} 个活跃日`;
+
+          return `
+            <section class="activity-card">
+              <div class="activity-heading"><strong>${heading}</strong><span>${caption}</span></div>
+              <div class="commit-list">
+                ${items.map(item => {
+                  const selected = state.selected.has(item.hash);
+                  const added = state.added.has(`${item.hash}:${state.currentDate}`);
+                  return `
+                  <article class="commit-item${selected ? ' is-selected' : ''}${added ? ' is-added' : ''}" data-commit-hash="${item.hash}">
+                    <input class="commit-checkbox" type="checkbox" data-select-hash="${item.hash}" aria-label="选择提交：${item.title}"${selected ? ' checked' : ''}>
+                    <div class="commit-copy">
+                      <div class="commit-title">${item.title}</div>
+                      <div class="activity-meta">
+                        ${state.view === 'date' ? `<span class="repo-chip">${item.repo}</span>` : `<span>${item.day} · ${item.date}</span>`}
+                        <span>${item.branch}</span>
+                      </div>
+                    </div>
+                    <div class="commit-side">
+                      <div class="commit-time-line"><span class="commit-time">${item.time}</span><span class="commit-hash">${item.hash}</span></div>
+                      <button class="commit-insert" type="button" data-insert-hash="${item.hash}"${added ? ' disabled' : ''}>${added ? `已加入 ${state.currentDate}` : `加入 ${state.currentDate}`}</button>
+                    </div>
+                  </article>`;
+                }).join('')}
+              </div>
+            </section>`;
+        }).join('');
+
+        activityList.querySelectorAll('[data-select-hash]').forEach(checkbox => {
+          checkbox.addEventListener('change', () => {
+            if (checkbox.checked) state.selected.add(checkbox.dataset.selectHash);
+            else state.selected.delete(checkbox.dataset.selectHash);
+            renderActivities();
+          });
+        });
+
+        activityList.querySelectorAll('[data-insert-hash]').forEach(button => {
+          button.addEventListener('click', () => {
+            const item = activities.find(activity => activity.hash === button.dataset.insertHash);
+            insertActivities([item], 'current');
+          });
+        });
+
+        updateFooter();
+      };
+
+      const setStatus = nextStatus => {
+        state.status = nextStatus;
+        drawerBody.dataset.state = nextStatus;
+        $('stateSelect').value = nextStatus;
+        $('queryCard').classList.toggle('is-loading', nextStatus === 'loading');
+        $('failedStat').classList.toggle('is-danger', nextStatus === 'partial' || nextStatus === 'error');
+        $('failedStat').querySelector('strong').textContent = nextStatus === 'partial' ? '1' : nextStatus === 'error' ? '3' : '0';
+        updateFooter();
+      };
+
+      const refresh = () => {
+        window.clearTimeout(state.loadingTimer);
+        setStatus('loading');
+        state.loadingTimer = window.setTimeout(() => {
+          setStatus('success');
+          showToast('已刷新当前周 Git 活动');
+        }, 950);
+      };
+
+      const summaryText = () => [
+        '本周 Git 活动（07-27 — 08-02）',
+        '3 个仓库，12 次提交，4 个活跃日期。',
+        '重点：完成工时内容页面 Vue 迁移；修复亮暗主题下公共按钮边框；统一周报查询配置读取方式。'
+      ].join('\n');
+
+      const detailsText = () => activities.map(item => (
+        `- ${item.date} ${item.time} [${item.repo}/${item.branch}] ${item.title} (${item.hash})`
+      )).join('\n');
+
+      const copyText = async (text, successMessage) => {
+        try {
+          await navigator.clipboard.writeText(text);
+        } catch {
+          const helper = document.createElement('textarea');
+          helper.value = text;
+          helper.style.position = 'fixed';
+          helper.style.opacity = '0';
+          document.body.appendChild(helper);
+          helper.select();
+          document.execCommand('copy');
+          helper.remove();
+        }
+        showToast(successMessage);
+      };
+
+      const insertActivities = (items, mode) => {
+        const previousContents = {};
+        const insertedKeys = [];
+        let insertedCount = 0;
+
+        items.forEach(item => {
+          const targetDate = mode === 'commit' ? item.date : state.currentDate;
+          const note = workNotes[targetDate];
+          if (!note) return;
+
+          const key = `${item.hash}:${targetDate}`;
+          if (state.added.has(key) || note.content.includes(item.hash)) return;
+          if (!(targetDate in previousContents)) previousContents[targetDate] = note.content;
+
+          const prefix = note.content.trim() ? '\n\n' : '';
+          const heading = note.content.includes('代码活动参考：') ? '' : `${prefix}代码活动参考：\n`;
+          note.content += `${heading}- [${item.repo}] ${item.title}（${item.hash}）\n`;
+          state.added.add(key);
+          insertedKeys.push(key);
+          insertedCount += 1;
+        });
+
+        if (insertedCount === 0) {
+          showToast('所选提交已经加入目标日期');
+          return;
+        }
+
+        state.lastInsert = { previousContents, insertedKeys };
+        state.selected.clear();
+        syncEditor();
+        renderActivities();
+        showToast(mode === 'commit'
+          ? `已按提交日期加入 ${insertedCount} 条记录`
+          : `已加入 ${state.currentDate} · 可撤销`);
+      };
+
+      const undoLastInsert = () => {
+        if (!state.lastInsert) return;
+        Object.entries(state.lastInsert.previousContents).forEach(([date, content]) => {
+          workNotes[date].content = content;
+        });
+        state.lastInsert.insertedKeys.forEach(key => state.added.delete(key));
+        state.lastInsert = null;
+        syncEditor();
+        renderActivities();
+        showToast('已撤销上次写入');
+      };
+
+      document.querySelectorAll('.app-nav-item').forEach(item => {
+        const label = item.querySelector('span:last-child');
+        const isCurrent = label?.textContent === '工时内容';
+        item.classList.toggle('active', isCurrent);
+        if (isCurrent) item.setAttribute('aria-current', 'page');
+        else item.removeAttribute('aria-current');
+      });
+
+      document.querySelectorAll('[data-view]').forEach(button => {
+        button.addEventListener('click', () => {
+          state.view = button.dataset.view;
+          document.querySelectorAll('[data-view]').forEach(item => item.classList.toggle('is-active', item === button));
+          renderActivities();
+        });
+      });
+
+      document.querySelectorAll('[data-filter]').forEach(button => {
+        button.addEventListener('click', () => {
+          state.filter = button.dataset.filter;
+          document.querySelectorAll('[data-filter]').forEach(item => item.classList.toggle('is-active', item === button));
+          renderActivities();
+        });
+      });
+
+      document.querySelectorAll('[data-work-date]').forEach(button => {
+        button.addEventListener('click', () => selectWorkDate(button.dataset.workDate));
+      });
+
+      document.querySelectorAll('[data-action="refresh"]').forEach(button => button.addEventListener('click', refresh));
+      document.querySelectorAll('[data-action="settings"]').forEach(button => button.addEventListener('click', () => showToast('正式版本将打开系统设置 · GitLab 配置')));
+      $('openReference').addEventListener('click', () => setDrawer(!drawer.classList.contains('is-open')));
+      $('closeReference').addEventListener('click', () => setDrawer(false));
+      $('openSettings').addEventListener('click', () => showToast('正式版本将打开系统设置 · GitLab 配置'));
+      $('refreshActivity').addEventListener('click', refresh);
+      $('stateSelect').addEventListener('change', event => setStatus(event.target.value));
+      $('targetDateSelect').addEventListener('change', event => selectWorkDate(event.target.value));
+      $('batchInsert').addEventListener('click', () => {
+        const selectedItems = activities.filter(item => state.selected.has(item.hash));
+        insertActivities(selectedItems, $('batchMode').value);
+      });
+      $('undoInsert').addEventListener('click', undoLastInsert);
+      $('copySummary').addEventListener('click', () => copyText(summaryText(), '本周 Git 活动摘要已复制'));
+      $('copyDetails').addEventListener('click', () => copyText(detailsText(), '本周 Git 活动明细已复制'));
+      $('exportMarkdown').addEventListener('click', () => {
+        const markdown = `${summaryText()}\n\n## 提交明细\n\n${detailsText()}\n`;
+        const url = URL.createObjectURL(new Blob([markdown], { type: 'text/markdown;charset=utf-8' }));
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'git-activity-2026-W31.md';
+        link.click();
+        window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+        showToast('已导出本周 Git 活动 Markdown');
+      });
+      titleInput.addEventListener('input', () => {
+        workNotes[state.currentDate].title = titleInput.value;
+      });
+      contentInput.addEventListener('input', () => {
+        workNotes[state.currentDate].content = contentInput.value;
+      });
+      syncEditor();
+      renderActivities();
+      setStatus('success');
+    })();
+  </script>
+</body>
+</html>

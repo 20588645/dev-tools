@@ -28,17 +28,17 @@ const emit = defineEmits<{
 
 const generatedId = useId()
 const inputId = computed(() => props.id ?? `base-input-${generatedId}`)
+const labelId = computed(() => `${inputId.value}-label`)
 const messageId = computed(() => `${inputId.value}-message`)
 const inputType = computed<'text' | 'password'>(() => props.type === 'password' ? 'password' : 'text')
 </script>
 
 <template>
   <div class="field-control">
-    <label v-if="label" class="field-control__label" :for="inputId">
+    <label v-if="label" :id="labelId" class="field-control__label" :for="inputId">
       {{ label }}<span v-if="required" aria-hidden="true"> *</span>
     </label>
     <NInput
-      :id="inputId"
       :value="String(modelValue ?? '')"
       :type="inputType"
       :placeholder="placeholder"
@@ -48,7 +48,12 @@ const inputType = computed<'text' | 'password'>(() => props.type === 'password' 
       :aria-required="required || undefined"
       :aria-invalid="Boolean(error)"
       :aria-describedby="helpText || error ? messageId : undefined"
-      :input-props="{ id: inputId, type: props.type, autocomplete }"
+      :input-props="{
+        id: inputId,
+        type: props.type,
+        autocomplete,
+        'aria-labelledby': label ? labelId : undefined,
+      }"
       @update:value="emit('update:modelValue', $event)"
       @blur="emit('blur', $event)"
       @focus="emit('focus', $event)"

@@ -4,9 +4,11 @@ import { NCard } from 'naive-ui'
 withDefaults(defineProps<{
   variant?: 'default' | 'raised' | 'subtle'
   interactive?: boolean
+  contentPadding?: string
 }>(), {
   variant: 'default',
   interactive: false,
+  contentPadding: 'var(--component-card-padding)',
 })
 
 // Naive UI's `embedded` card variant defaults to the primary action color.
@@ -31,7 +33,7 @@ const cardThemeOverrides = {
     :embedded="variant === 'subtle'"
     :hoverable="interactive"
     :theme-overrides="cardThemeOverrides"
-    :content-style="{ padding: 'var(--component-card-padding)' }"
+    :content-style="{ padding: contentPadding }"
   >
     <slot />
   </NCard>

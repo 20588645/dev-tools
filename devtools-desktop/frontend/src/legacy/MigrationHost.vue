@@ -8,11 +8,15 @@ import HomeView from '@/views/home/HomeView.vue'
 defineOptions({ name: 'MigrationHost' })
 
 const IpCheckView = defineAsyncComponent(() => import('@/views/ipcheck/IpCheckView.vue'))
+const NotesView = defineAsyncComponent(() => import('@/views/notes/NotesView.vue'))
 const app = useAppStore()
 const activePage = ref<LegacyPageId>(
   (document.querySelector('.page.active')?.id.replace(/^page-/, '') as LegacyPageId | undefined) ?? 'home',
 )
 const hasIpCheckTarget = Boolean(document.querySelector('#vue-ipcheck-host'))
+const notesTarget = document.querySelector('#vue-notes-host')
+const hasNotesTarget = Boolean(notesTarget)
+notesTarget?.setAttribute('data-vue-owner', 'notes')
 let themeObserver: MutationObserver | null = null
 let stopPageActivation: (() => void) | null = null
 
@@ -46,6 +50,11 @@ onBeforeUnmount(() => {
     <Teleport v-if="hasIpCheckTarget" to="#vue-ipcheck-host">
       <KeepAlive>
         <IpCheckView v-if="activePage === 'ipcheck'" />
+      </KeepAlive>
+    </Teleport>
+    <Teleport v-if="hasNotesTarget" to="#vue-notes-host">
+      <KeepAlive>
+        <NotesView v-if="activePage === 'notes'" />
       </KeepAlive>
     </Teleport>
   </div>

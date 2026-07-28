@@ -13,13 +13,14 @@ const props = withDefaults(defineProps<{
   options: SelectOption[]
   id?: string
   label?: string
+  ariaLabel?: string
   placeholder?: string
   helpText?: string
   error?: string
   disabled?: boolean
   required?: boolean
 }>(), {
-  modelValue: '', id: undefined, label: undefined, placeholder: undefined, helpText: undefined,
+  modelValue: '', id: undefined, label: undefined, ariaLabel: undefined, placeholder: undefined, helpText: undefined,
   error: undefined, disabled: false, required: false,
 })
 
@@ -81,6 +82,7 @@ onMounted(() => {
       :disabled="disabled"
       :status="error ? 'error' : undefined"
       :virtual-scroll="false"
+      :aria-label="ariaLabel || label"
       :aria-required="required || undefined"
       :aria-invalid="Boolean(error)"
       :aria-describedby="helpText || error ? messageId : undefined"

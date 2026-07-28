@@ -21,6 +21,7 @@ const tokenNames = {
   border: '--component-vendor-border',
   action: '--component-vendor-action',
   actionHover: '--component-vendor-action-hover',
+  actionContrast: '--component-vendor-action-contrast',
   info: '--component-vendor-info',
   success: '--component-vendor-success',
   warning: '--component-vendor-warning',
@@ -69,6 +70,7 @@ export function createNaiveThemeOverrides(_theme: Theme): GlobalThemeOverrides {
     border: token(tokenNames.border),
     action: token(tokenNames.action),
     actionHover: token(tokenNames.actionHover),
+    actionContrast: token(tokenNames.actionContrast),
     info: token(tokenNames.info),
     success: token(tokenNames.success),
     warning: token(tokenNames.warning),
@@ -146,6 +148,13 @@ export function createNaiveThemeOverrides(_theme: Theme): GlobalThemeOverrides {
       heightSmall: 'var(--component-control-height-sm)',
       heightMedium: 'var(--component-control-height-md)',
       heightLarge: 'var(--component-control-height-lg)',
+    },
+    Button: {
+      textColorPrimary: colors.actionContrast,
+      textColorHoverPrimary: colors.actionContrast,
+      textColorPressedPrimary: colors.actionContrast,
+      textColorFocusPrimary: colors.actionContrast,
+      textColorDisabledPrimary: colors.actionContrast,
     },
   }
 }

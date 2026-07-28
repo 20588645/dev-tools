@@ -131,13 +131,13 @@ async function loadSettings() {
   document.getElementById('settingScanDir').textContent = '/Users/ldy/project/';
   await updateNotificationSettingsUI();
 
-  // GitLab 配置
+  // GitLab 活动配置
   try {
     const cfg = await API.get('/api/report/config');
     document.getElementById('settingToken').value = cfg.token || '';
     document.getElementById('settingAuthor').value = cfg.author || '';
     renderSettingRepos(cfg.repos || []);
-  } catch (e) { console.warn("[Settings] GitLab配置加载失败"); }
+  } catch (e) { console.warn("[Settings] GitLab 活动配置加载失败"); }
 
   // 服务器连接超时
   try {
@@ -287,8 +287,6 @@ async function saveAllSettings() {
 
   try {
     await API.post('/api/report/config', { token, author, outputDir: '', repos });
-    // 同步更新周报模块的 repos
-    rptRepos = repos.length ? repos.map(r => ({...r})) : [{ repo: '', branch: '', group: '' }];
     showToast('✅ 设置已保存');
   } catch (e) {
     showAlert('保存失败: ' + e.message, { icon: '❌' });

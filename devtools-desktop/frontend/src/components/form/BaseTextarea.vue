@@ -20,16 +20,16 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
 const generatedId = useId()
 const textareaId = computed(() => props.id ?? `base-textarea-${generatedId}`)
+const labelId = computed(() => `${textareaId.value}-label`)
 const messageId = computed(() => `${textareaId.value}-message`)
 </script>
 
 <template>
   <div class="field-control">
-    <label v-if="label" class="field-control__label" :for="textareaId">
+    <label v-if="label" :id="labelId" class="field-control__label" :for="textareaId">
       {{ label }}<span v-if="required" aria-hidden="true"> *</span>
     </label>
     <NInput
-      :id="textareaId"
       type="textarea"
       :value="modelValue"
       :placeholder="placeholder"
@@ -39,7 +39,7 @@ const messageId = computed(() => `${textareaId.value}-message`)
       :aria-required="required || undefined"
       :aria-invalid="Boolean(error)"
       :aria-describedby="helpText || error ? messageId : undefined"
-      :input-props="{ id: textareaId }"
+      :input-props="{ id: textareaId, 'aria-labelledby': label ? labelId : undefined }"
       @update:value="emit('update:modelValue', $event)"
     />
     <p v-if="error || helpText" :id="messageId" class="field-control__message" :class="{ 'field-control__message--error': error }">

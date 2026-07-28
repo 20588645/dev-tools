@@ -75,7 +75,7 @@ test('validates input, updates data, and preserves the last result across naviga
   await page.setViewportSize({ width: 1440, height: 900 })
   await openIpCheck(page)
 
-  const input = page.getByRole('textbox', { name: '输入 IPv4、IPv6 或域名' })
+  const input = page.getByRole('textbox', { name: 'IP 地址或域名' })
   await input.fill('999.1.1.1')
   await page.getByRole('button', { name: '检测', exact: true }).click()
   await expect(page.getByText('请输入有效的 IPv4、IPv6 或域名', { exact: true })).toBeVisible()

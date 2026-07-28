@@ -1,12 +1,12 @@
 # DevTools Desktop Vue 3 架构渐进重构执行计划
 
-> 文档版本：1.13
-> 状态：执行中（G1/G2、Phase 3 与 Phase 4-1 纯净检测 PG0～PG5 已完成；下一步进入 Phase 4-2 工时内容 PG0）
+> 文档版本：1.19
+> 状态：执行中（Phase 4-2 PG5 与编辑区铺满修复均已通过自动和 Tauri 手动验收，等待本地提交）
 > 编制日期：2026-07-21  
-> 最近更新：2026-07-27
+> 最近更新：2026-07-28
 > 适用仓库：`devtools-desktop`  
 > 核心原则：保持软件持续可运行，按页面逐步替换，不进行一次性推倒重写。
-> 当前执行指针：Phase 4-1 纯净检测 `ipcheck` 已完成并纳入独立本地提交；下一步进入 Phase 4-2 工时内容 `notes` 的 PG0 现状取证与代码研究。
+> 当前执行指针：Phase 4-2 工时内容 `notes` 已完成 PG5 清理；PG5 后编辑区铺满修复已通过构建、Lint、专项/全量 E2E、内置浏览器和真实软件默认窗口验收。独立代码周报 Phase 4-3 已取消；当前等待用户授权本地提交，提交后进入 Phase 5-1 个人笔记 PG0。
 
 ---
 
@@ -506,9 +506,9 @@ L3 中纯前端且低风险的改动可以与页面 Vue 实现处于同一页面
 | ---: | --- | --- | --- | --- | --- |
 | 0 | Phase 3 | 应用首页 `home` | PG0～PG5 已完成 | 已完成 | 正式 SFC、旧实现清理、自动验证和 Tauri E2E 通过 |
 | 1 | Phase 4-1 | 纯净检测 `ipcheck` | **PG0～PG5 已完成** | 已完成 | PG5 通过并建立独立本地提交 |
-| 2 | Phase 4-2 | 工时内容 `notes` | **下一执行项，PG0 待开始** | 采集真实页面并阅读 HTML/JS/CSS/API | PG5 通过并建立独立本地提交 |
-| 3 | Phase 4-3 | 代码周报 `report` | 等待 | 完成 `notes` 后开始 PG0 | PG5 通过并建立独立本地提交 |
-| 4 | Phase 5-1 | 个人笔记 `notebook` | 等待 | Phase 4 完成后开始 PG0 | 编辑、图片、持久化和未保存状态通过 |
+| 2 | Phase 4-2 | 工时内容 `notes` | **PG0～PG5 与布局修复已通过，等待提交** | 用户明确授权后建立独立本地提交 | 建立可回滚的本地提交 |
+| 3 | Phase 4-3 | 独立代码周报 `report` | **取消，能力已吸收到 Notes** | 不再建立独立 View；保留 Sidecar service 和系统设置配置 | Notes 已覆盖查询、分组、复制、导出、写入和撤销 |
+| 4 | Phase 5-1 | 个人笔记 `notebook` | 等待 | Phase 4-2 本地提交后开始 PG0 | 编辑、图片、持久化和未保存状态通过 |
 | 5 | Phase 5-2 | 系统设置 `settings` | 等待 | 完成 `notebook` 后开始 PG0 | Store、Sidecar 配置和表单状态通过 |
 | 6 | Phase 5-3 | 待办事项 `todo` | 等待 | 完成 `settings` 后开始 PG0 | timer、通知、分组和重复提醒检查通过 |
 | 7 | Phase 5-4 | 用量统计 `usage` | 等待 | 完成 `todo` 后开始 PG0 | ECharts、价格、异常数据和资源销毁通过 |
@@ -961,7 +961,8 @@ services/modules/home-service.ts
 
 1. 纯净检测 `ipcheck`
 2. 工时内容 `notes`
-3. 代码周报 `report`
+
+原计划的独立代码周报 `report` 已在 Notes PG3～PG5 中重新评估：其有效能力已经通过右侧 Git 活动工作区和 `report-service.ts` 吸收，独立页面、菜单和旧前端实现删除，因此 Phase 4 完成后直接进入 Phase 5-1。
 
 #### Phase 4-1：纯净检测 `ipcheck`
 
@@ -1005,30 +1006,33 @@ frontend/src/services/modules/ipcheck-service.ts
 启动条件：Phase 4-1 PG5 与本地提交完成。
 研究重点：
 
-- [ ] 验证本周、上周、下周切换，工作日/周末展示，标题和正文编辑，800ms 防抖保存，以及保存失败后的可恢复状态。
-- [ ] 梳理 `/api/notes/:date`、`POST /api/notes`、日期计算、本地时区和 `devtools-notes-show-weekend` 兼容要求。
-- [ ] 研究与代码周报结果之间的引用关系，确认“加载周报数据”是跨页面 store/service 还是仅按需请求。
-- [ ] 评估七日卡片在 1665 × 1184、1280 × 720 和 900 × 600 下的编辑体验；L2 时先确认原型。
-- [ ] 明确页面离开时未触发的防抖保存如何 flush/cancel，禁止因为卸载静默丢失最后一次输入。
+- [x] 验证本周、上周、下周切换，工作日/周末展示，标题和正文编辑，800ms 防抖保存，以及保存失败后的可恢复状态。
+- [x] 梳理 `/api/notes/:date`、`POST /api/notes`、日期计算、本地时区和 `devtools-notes-show-weekend` 兼容要求。
+- [x] 研究与代码周报结果之间的引用关系，确认当前实现是跨页面 DOM 抓取，不是稳定 store/service。
+- [x] 评估七日卡片在 1665 × 1184 和 900 × 600 下的编辑体验；L2 时仍需先确认原型。
+- [x] 确认快速切周会导致 800ms 内尚未保存的输入静默丢失，Vue 实现必须提供 flush/cancel 与草稿快照。
+- [x] 输出“保留 / 优化 / 删除 / 新增”清单、公共组件边界、L0～L3 和推荐方案。
+- [x] PG3 由用户确认 L2、亮暗主题 HTML 原型和暂不纳入 L3-A。
+- [x] PG4 建立正式 Vue 页面、类型化 service、按日期保存队列、请求所有权、参考周报空状态和响应式布局。
+- [x] PG4 自动化与内置浏览器验收通过；用户于 2026-07-28 完成必须级 Tauri 手动 E2E。
+- [x] PG5 删除旧 Notes 回退、独立 report 页面、菜单、脚本、样式和无消费者补丁，并完成清理后全量回归。
 
 目标结构至少包含 `NotesView.vue`、`WeekNavigator.vue`、`DailyWorkNote.vue`、`ReportReferencePanel.vue`、`useWeeklyNotes.ts` 和 `notes-service.ts`。专项验收必须覆盖跨周、本地时区、快速输入、切页前最后一次保存、接口失败重试和旧数据读取。
 
-#### Phase 4-3：代码周报 `report`
+#### Phase 4-3：独立代码周报 `report`（已取消）
 
-启动条件：Phase 4-2 PG5 与本地提交完成。
-研究重点：
+取消原因与保留边界：
 
-- [ ] 验证日报/周报模式、日期预设、Token 显隐、作者、仓库增删、分组、搜索、折叠、拖拽排序、配置保存、并发生成、进度、错误仓库和结果展示。
-- [ ] 梳理 `/api/report/config`、`/api/report/generate-single`、导入导出和工时内容引用的数据契约。
-- [ ] Token 只进入受控表单和现有安全存储链路，不写日志、不进入通用持久化 Pinia。
-- [ ] 将 SortableJS 封装为 `useSortable`，每次重新绑定前销毁旧实例，组件卸载时执行 `destroy()`。
-- [ ] 评估配置区、生成进度、结果区的信息结构；若改变主要布局或结果阅读方式，按 L2 先确认亮暗主题原型。
-
-目标结构至少包含 `ReportView.vue`、`ReportConfigPanel.vue`、`RepositoryList.vue`、`ReportProgress.vue`、`ReportResult.vue`、`useReportGenerator.ts`、`useSortable.ts` 和 `report-service.ts`。专项验收必须覆盖部分仓库失败、空提交、大量仓库、重复生成、拖拽后持久化、Token 不泄漏和卸载销毁。
+- 用户确认独立页面会增加重复查询和在页面之间搬运内容的操作成本；Git 活动应直接服务于工时编辑。
+- Notes 的右侧占位式工作区已经覆盖当前周查询、日期/仓库分组、目标日期、单条/批量写入、撤销、复制和导出。
+- GitLab Token、默认作者和仓库列表继续在系统设置中维护，不在 Notes 内复制第二套配置页面。
+- 保留 `sidecar/routes/report.js`、`/api/report/config`、`/api/report/generate-single` 等服务端契约及 Vue `report-service.ts`；不删除或迁移这些共享能力。
+- 删除独立 `#page-report`、侧边栏入口、`report.js`、`report.css`、Sortable 页面逻辑和批量导入弹窗。
+- 后续若出现超出 Notes 场景的报告需求，必须作为新功能重新执行 PG0～PG3，不恢复旧页面。
 
 #### 每页要求
 
-- [ ] 开始编码前分别完成 PG0～PG3，不默认三个页面采用相同优化等级。
+- [x] 两个保留页面均在编码前分别完成 PG0～PG3，没有默认采用相同优化等级。
 - [ ] 建立独立 View。
 - [ ] 所有请求迁入模块 service。
 - [ ] 所有弹窗迁入 Vue Dialog。
@@ -1041,14 +1045,14 @@ frontend/src/services/modules/ipcheck-service.ts
 
 #### 特殊注意
 
-- `report` 当前依赖 SortableJS，应封装 `useSortable` 并在卸载时 destroy。
+- 独立 report 页面与其 SortableJS 生命周期已经删除；共享 `/api/report` 能力由类型化 service 消费。
 - 纯净检测结果需要维持首页摘要所使用的数据结构。
 - 工时内容的日期范围和本地数据格式必须保持兼容。
 
 #### 验收标准
 
-- 三个页面不再出现在旧 `index.html` 页面结构中。
-- 三个页面不再向 `window` 暴露业务函数。
+- 纯净检测和工时内容不再以旧业务 DOM 出现在 `index.html`；独立 report 页面已经删除。
+- 两个迁移页面及已取消的 report 页面不再向 `window` 暴露业务函数。
 - 页面切换 20 次后无重复请求、重复监听或明显内存增长。
 
 ---
@@ -1313,9 +1317,9 @@ frontend/src/services/modules/ipcheck-service.ts
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | 应用首页 | `HomeView.vue`、`home.css`、`home-service.ts` | 中 | API、活动历史、主题、legacy bridge | Phase 3 | **PG5 已通过** | 保持回归，不重复迁移 |
 | 2 | 纯净检测 | `views/ipcheck/`、`ipcheck-service.ts` | 中低 | IP API、首页摘要 | Phase 4-1 | **PG5 已通过** | 保持回归，不重复迁移 |
-| 3 | 工时内容 | `notes.js`、`notes.css` | 中低 | 日期、数据库、周报引用 | Phase 4-2 | **PG0 待开始** | 启动测试服务、采集页面、建立评估文档 |
-| 4 | 代码周报 | `report.js`、`report.css` | 中 | Sortable、Token、导入导出 | Phase 4-3 | 等待 | `notes` 提交后开始 PG0 |
-| 5 | 个人笔记 | `notebook.js`、`notebook.css` | 中 | 编辑、图片、持久化 | Phase 5-1 | 等待 | Phase 4 完成后开始 PG0 |
+| 3 | 工时内容 | `views/notes/`、`notes-service.ts`、`report-service.ts` | 中低 | 日期、数据库、Git 活动 service | Phase 4-2 | **PG5 与布局修复已通过，等待提交** | 用户授权后建立本地提交 |
+| — | 独立代码周报（已取消） | 能力已吸收到 Notes；保留 Sidecar report 路由 | — | GitLab 配置、查询接口 | Phase 4-3 | **取消** | 不再迁移独立页面 |
+| 4 | 个人笔记 | `notebook.js`、`notebook.css` | 中 | 编辑、图片、持久化 | Phase 5-1 | 等待 | `notes` 提交后开始 PG0 |
 | 6 | 系统设置 | `settings.js`、`settings.css` | 中高 | 全局配置、Sidecar、菜单设置 | Phase 5-2 | 等待 | `notebook` 提交后开始 PG0 |
 | 7 | 待办事项 | `todo.js`、`todo.css` | 高 | timer、通知、分组 | Phase 5-3 | 等待 | `settings` 提交后开始 PG0 |
 | 8 | 用量统计 | `usage.js`、`usage.css` | 高 | ECharts、扫描、价格 | Phase 5-4 | 等待 | `todo` 提交后开始 PG0 |
@@ -1756,7 +1760,7 @@ Phase 0～3 已完成，上表总量仅保留为原始规划参考；当前剩�
 
 ## 21. 当前下一批可立即执行的任务
 
-Phase 0～3 与 Phase 4-1 纯净检测 PG0～PG5 已完成并建立独立本地提交。下一批只启动 **Phase 4-2 工时内容 `notes` 的 PG0～PG1**，先完成现状取证和代码研究，不直接进入 Vue 实现，也不顺带迁移侧边栏。
+Phase 0～3 与 Phase 4-1 纯净检测 PG0～PG5 已完成并建立独立本地提交。Phase 4-2 工时内容 `notes` 已完成 PG5 清理和正文文本域铺满修复，自动化、内置浏览器及真实软件默认窗口验收均通过。当前等待用户授权本地提交；提交后直接进入 Phase 5-1 个人笔记 PG0。
 
 ### Batch 4-1A：PG0 现状取证（已完成）
 
@@ -1809,13 +1813,88 @@ PG4 自动验收结果（2026-07-27）：
 - 手动 E2E：**已通过**。用户于 2026-07-27 确认实际软件中的页面功能和最终样式没有问题。
 - 清理后内置浏览器复验：当前 IP 结果、首页往返状态保留、跟随系统/暗色切换、唯一活动页面、唯一 Vue 根和无横向溢出均通过。
 
+### Batch 4-2A：PG0 现状取证（已完成）
+
+- [x] 使用隔离测试 Sidecar `13900` 和 `data-test`，未访问生产数据库。
+- [x] 采集默认工作日、显示周末、参考周报空状态、亮暗主题和 900 × 600 最小窗口。
+- [x] 验证本周、上一周、下一周、正常 800ms 自动保存和测试记录清理。
+- [x] 验证 800ms 内快速切周会丢失最后一次输入。
+- [x] 验证 Sidecar 断开后加载错误被静默显示为空数据，且顶部保留旧“已保存”状态。
+- [x] 截图保存在仓库外，没有产生待提交的视觉验证文件。
+
+本批只进行浏览器取证，不修改运行时代码。**手动 E2E：不需要**。
+
+### Batch 4-2B：PG1 代码与数据研究（已完成）
+
+- [x] 阅读 `#page-notes` DOM、`notes.js`、`notes.css` 和跨页覆盖规则。
+- [x] 阅读 `/api/notes` 路由、SQLite `notes` 表、旧 `API` 超时与错误处理。
+- [x] 梳理本地周日期、周末偏好、7 次并行读取、POST upsert 和防抖计时器。
+- [x] 梳理代码周报的 API、`rptLastResults`、`#rptResultArea` 与工时页 DOM 抓取链路。
+- [x] 记录快速切周丢失输入、错误吞掉、保存状态竞态、请求竞态和周报日期不匹配风险。
+- [x] 输出 `PRD/vue-migration/pages/notes/assessment.md`。
+
+本批只产生研究文档。**手动 E2E：不需要**。
+
+### Batch 4-2C：PG2 优化建议与 PG3 用户确认（已完成）
+
+- [x] 输出工时内容页面的“保留 / 优化 / 删除 / 新增”清单。
+- [x] 明确快速切周草稿丢失、错误状态、每日保存状态、请求竞态和 900 × 600 响应式属于所有等级的必须修复项。
+- [x] 明确 `PageFrame`、`PageTop`、`PageToolbar`、`BaseButton`、`BaseInput`、`BaseTextarea`、`BaseSwitch`、`BaseCard` 和 Feedback 公共组件复用边界。
+- [x] 给出 L0 可靠迁移、L1 轻量优化、L2 周工作空间重设计和 L3 数据/恢复体系方案。
+- [x] 推荐“L2 + 必须级可靠性修复”；后续用户确认将 Git 活动能力直接吸收到 Notes，独立 Phase 4-3 取消。
+- [x] 输出 `PRD/vue-migration/pages/notes/decision.md`。
+- [x] 用户在 PG3 选择 L2 + 必须级可靠性修复。
+- [x] 用户确认制作亮暗主题 HTML 原型。
+- [x] 用户确认本轮暂不纳入 L3-A 持久草稿恢复。
+- [x] 生成 `design-preview/notes-l2.html`，完成五日/七日、切周、每日编辑、800ms 保存反馈、亮暗主题和参考周报抽屉交互。
+- [x] 内置浏览器完成 1665 × 1184、1280 × 720 和 900 × 600 原型验收，无页面级溢出或运行错误。
+- [x] 用户确认最终亮暗主题 HTML 原型并允许进入正式开发。
+
+本批只更新研究、决策和独立 HTML 原型，不修改运行代码。**手动 E2E：不需要**。
+
+### Batch 4-2D：PG4 Vue 实现与自动验收（已完成）
+
+- [x] 新增 `NotesView.vue`、`WeekNavigator.vue`、`WeekDayList.vue`、`DailyWorkNote.vue` 和 `ReportReferencePanel.vue`。
+- [x] 新增 `notes-service.ts`，只把 404 归一化为空记录，网络、超时和 500 保持错误。
+- [x] 新增 `useWeeklyNotes.ts`，实现本地周日期、跨周会话草稿、按日期 800ms 保存、切换前 flush、保存串行化、AbortController 与请求版本。
+- [x] 参考周报不再抓取 `#rptResultArea`；根据用户追加确认，改为右侧占位式 Git 活动工作区，并通过类型化 `report-service.ts` 复用既有配置与查询接口。
+- [x] Migration Host 异步注册 `NotesView` 并使用 `KeepAlive`；旧 notes DOM、JS 和 CSS 仍作为 PG5 前回退保留。
+- [x] 复用 Page、按钮、表单、开关、卡片、状态和反馈公共组件；`BaseCard` 仅新增向后兼容的 `contentPadding` 参数。
+- [x] 修正 `BaseInput`、`BaseTextarea` 的 label 与真实输入节点关联，保持公共表单的可访问名称。
+- [x] 重新完成 1665 × 1184、1280 × 720、900 × 600 的亮暗主题、五日/七日、占位式 Git 活动工作区、写入/撤销、错误、重试、自动保存和页面往返验收。
+
+PG4 基础迁移自动验收结果（2026-07-27）：
+
+- `npm run lint`、`npm run lint:tokens`、`npm run test:unit`（12 文件 / 48 项）、`npm run build:frontend` 和 `npm run test:e2e`（9 项）通过。
+- Notes 专项 E2E 5 项通过；900 × 600 同时断言无页面溢出和正文编辑区实际可操作高度。
+- 内置浏览器使用隔离测试 Sidecar `13900` 复验；默认窗口五天完整显示，最小窗口无重叠和裁切。
+- Sidecar、SQLite 和 report 数据契约未修改；L3-A 持久草稿恢复未加入。
+- 用户随后确认将当前周 Git 查询与写入工时集成到右侧占位式工作区；追加实现完成自动验收后仍需重新执行 Tauri 手动 E2E。
+- 追加实现已通过 typecheck、lint、Token lint、14 文件 / 51 项单测、前端构建、5 项 Notes 专项 E2E 和 9 项全量 E2E。
+- 内置浏览器已完成默认窗口与 900 × 600 的亮暗主题复验；900 × 600 下编辑器与 Git 工作区无重叠、页面无溢出，正文滚动后提交卡片可完整停在底部操作栏上方，点击编辑区不会关闭工作区。
+- 手动 E2E：**必须，已通过**。用户于 2026-07-28 确认真实软件中的占位式 Git 活动工作区与 Notes 主流程没有问题。
+
+### Batch 4-2E：PG5 旧实现清理与回归（已完成）
+
+- [x] 删除旧 Notes DOM、`notes.js`、`notes.css`、脚本/样式引用和旧初始化。
+- [x] 删除独立 `#page-report`、侧边栏菜单、`report.js`、`report.css`、批量导入弹窗和无消费者 CSS。
+- [x] 保留 Sidecar `/api/report` 契约、系统设置 GitLab 配置、Vue `report-service.ts` 和对应测试。
+- [x] 修正设置保存逻辑对旧全局 `rptRepos` 的引用。
+- [x] legacy bridge 和全量导航 E2E 更新为 13 个实际页面，并断言旧 report/Notes 节点不存在。
+- [x] 清理后 `npm run build:frontend`、`npm run lint`、`npm run lint:tokens`、14 文件 / 51 项单测和 9 项全量 E2E 全部通过。
+- [x] Playwright 临时产物保持在忽略目录，不纳入提交。
+- [x] 修复正文文本域 Grid 自动行拉伸：标签贴顶、输入框占满剩余高度、禁止原生拖拽破坏布局。
+- [x] 增加输入框顶部间距、底部贴合、最小高度和 resize 状态 E2E；构建、Lint、5 项专项及 9 项全量 E2E 通过。
+
+本批尚未提交。PG5 清理前手动 E2E 已通过；PG5 后编辑区铺满修复的 **手动 E2E：必须，已通过**。用户于 2026-07-28 确认真实软件默认窗口没有问题。
+
 ### 当前停止条件
 
 出现以下任一情况时暂停当前批次并向用户说明，不自行扩大范围：
 
 - API 真实字段与首页摘要不一致。
 - 需要修改 Sidecar、数据库或第三方 IP 服务。
-- 用户选择 L2/L3 但最终原型尚未确认。
+- 用户要求改变已冻结的 L2 页面结构或增加 L3-A。
 - 共享组件修改会影响多个现有页面。
 - 浏览器与 Tauri 结果不一致。
 - 旧 CSS 删除会改变其他未迁移页面。
@@ -1827,8 +1906,8 @@ PG4 自动验收结果（2026-07-27）：
 满足以下全部条件，才可以宣布 Vue 架构重构完成：
 
 - [ ] `frontend/index.html` 只包含 `#app` 挂载点和必要 meta。
-- [ ] 14 个页面全部是 Vue SFC。
-- [ ] 14 个页面均已完成 PG0～PG5，研究、截图、决策和必要原型已归档。
+- [ ] 13 个保留页面全部是 Vue SFC。
+- [ ] 13 个保留页面均已完成 PG0～PG5，研究、截图、决策和必要原型已归档；已取消页面的能力去向和删除证据已记录。
 - [ ] 每个页面最终实现均与用户确认的 L0～L3 范围一致。
 - [ ] 原有功能清单和确认新增的优化功能均有对应验收结果。
 - [ ] Vue Router 管理全部导航。
@@ -2090,4 +2169,4 @@ PG4 自动验收结果（2026-07-27）：
 - 如果发现现有 API 无法支持 Vue 页面，应先记录接口差距，再单独评审 Sidecar 变更。
 - 迁移期间所有临时兼容代码必须标记删除 Gate，不能无期限保留。
 
-当前执行从 **Phase 4-2 工时内容 `notes` 的 PG0** 继续；下一次状态更新先记录真实运行态、功能清单、代码结构和数据链路，不提前编写 Vue 页面，也不进入侧边栏或应用壳迁移。
+当前执行停在 **Phase 4-2 工时内容 `notes` 的本地提交前**；PG5、编辑区铺满修复、自动化、内置浏览器和真实软件默认窗口验收均已通过。独立 Phase 4-3 report 已取消；本地提交后进入 Phase 5-1 个人笔记 PG0。

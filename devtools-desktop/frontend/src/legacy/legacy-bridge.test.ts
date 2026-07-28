@@ -12,9 +12,10 @@ import {
 } from './legacy-bridge'
 
 describe('legacy bridge', () => {
-  it('keeps the complete 14-page contract', () => {
-    expect(LEGACY_PAGE_IDS).toHaveLength(14)
-    expect(new Set(LEGACY_PAGE_IDS).size).toBe(14)
+  it('keeps the complete 13-page contract after report is absorbed into notes', () => {
+    expect(LEGACY_PAGE_IDS).toHaveLength(13)
+    expect(new Set(LEGACY_PAGE_IDS).size).toBe(13)
+    expect(isLegacyPageId('report')).toBe(false)
     expect(isLegacyPageId('twofa')).toBe(true)
     expect(isLegacyPageId('unknown')).toBe(false)
   })
