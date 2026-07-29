@@ -1,10 +1,11 @@
 /**
  * 公开模型价格目录同步。
  *
- * 所有远程价格只写入 pricing_candidates，必须由用户确认后才会应用到
- * model_pricing。这样网络数据变动不会静默改写历史成本。
+ * 可靠匹配到的远程价格会按来源优先级批量覆盖 model_pricing。
+ * 未匹配模型保留原本地价格；pricing_candidates 仅保留最近同步诊断。
  */
 const db = require('./database');
+const { buildAutomaticPricingPlan } = require('./pricing-logic');
 
 const SOURCE_DEFS = [
   {
@@ -316,38 +317,8 @@ async function syncPricing() {
     return candidateFromMatches(modelId, matches, fetchedAt);
   });
 
-  const insert = db.prepare(`
-    INSERT INTO pricing_candidates
-      (modelId, displayName, inputPerM, outputPerM, cacheReadPerM, cacheCreationPerM,
-       source, sourceUrl, provider, remoteModelId, confidence, status, fetchedAt, tiersJson, sourcesJson)
-    VALUES (@modelId, @displayName, @inputPerM, @outputPerM, @cacheReadPerM, @cacheCreationPerM,
-       @source, @sourceUrl, @provider, @remoteModelId, @confidence, @status, @fetchedAt, @tiersJson, @sourcesJson)
-  `);
-  const tx = db.transaction(() => {
-    db.prepare('DELETE FROM pricing_candidates').run();
-    for (const candidate of candidates) insert.run(candidate);
-  });
-  tx();
-
-  return {
-    fetchedAt,
-    sources: results.map(({ source, url, ok, count, error }) => ({ source, url, ok, count, error: error || '' })),
-    total: candidates.length,
-    pending: candidates.filter((candidate) => candidate.status === 'pending').length,
-    candidates,
-  };
-}
-
-function getCandidates(pendingOnly = false) {
-  const where = pendingOnly ? "WHERE status = 'pending'" : '';
-  return db.prepare(`SELECT * FROM pricing_candidates ${where} ORDER BY CASE status WHEN 'pending' THEN 0 ELSE 1 END, modelId`).all();
-}
-
-function applyCandidate(modelId) {
-  const candidate = db.prepare('SELECT * FROM pricing_candidates WHERE modelId = ?').get(modelId);
-  if (!candidate || candidate.confidence === 'unmatched') throw new Error(`没有可应用的远程价格：${modelId}`);
-  const pricingVersion = `${candidate.source || 'remote'}:${candidate.fetchedAt}`;
-  db.prepare(`
+  const plan = buildAutomaticPricingPlan(candidates);
+  const applyModel = db.prepare(`
     INSERT INTO model_pricing
       (modelId, displayName, inputPerM, outputPerM, cacheReadPerM, cacheCreationPerM,
        source, sourceUrl, provider, confidence, fetchedAt, pricingVersion, tiersJson)
@@ -365,17 +336,48 @@ function applyCandidate(modelId) {
       fetchedAt = excluded.fetchedAt,
       pricingVersion = excluded.pricingVersion,
       tiersJson = excluded.tiersJson
-  `).run(
-    candidate.modelId, candidate.displayName, candidate.inputPerM, candidate.outputPerM,
-    candidate.cacheReadPerM, candidate.cacheCreationPerM, candidate.source, candidate.sourceUrl,
-    candidate.provider, candidate.confidence, candidate.fetchedAt, pricingVersion, candidate.tiersJson
-  );
-  db.prepare("UPDATE pricing_candidates SET status = 'applied' WHERE modelId = ?").run(modelId);
-  return db.prepare('SELECT * FROM model_pricing WHERE modelId = ?').get(modelId);
+  `);
+  const insertCandidate = db.prepare(`
+    INSERT INTO pricing_candidates
+      (modelId, displayName, inputPerM, outputPerM, cacheReadPerM, cacheCreationPerM,
+       source, sourceUrl, provider, remoteModelId, confidence, status, fetchedAt, tiersJson, sourcesJson)
+    VALUES (@modelId, @displayName, @inputPerM, @outputPerM, @cacheReadPerM, @cacheCreationPerM,
+       @source, @sourceUrl, @provider, @remoteModelId, @confidence, @status, @fetchedAt, @tiersJson, @sourcesJson)
+  `);
+  const tx = db.transaction(() => {
+    db.prepare('DELETE FROM pricing_candidates').run();
+    const appliedIds = new Set(plan.apply.map((candidate) => candidate.modelId));
+    for (const candidate of candidates) {
+      insertCandidate.run({
+        ...candidate,
+        status: appliedIds.has(candidate.modelId) ? 'applied' : candidate.status,
+      });
+    }
+    for (const candidate of plan.apply) {
+      applyModel.run(
+        candidate.modelId, candidate.displayName, candidate.inputPerM, candidate.outputPerM,
+        candidate.cacheReadPerM, candidate.cacheCreationPerM, candidate.source, candidate.sourceUrl,
+        candidate.provider, candidate.confidence, candidate.fetchedAt,
+        `${candidate.source || 'remote'}:${candidate.fetchedAt}`, candidate.tiersJson
+      );
+    }
+  });
+  tx();
+
+  return {
+    fetchedAt,
+    sources: results.map(({ source, url, ok, count, error }) => ({ source, url, ok, count, error: error || '' })),
+    total: plan.total,
+    applied: plan.applied,
+    unchanged: plan.unchanged,
+    unmatched: plan.unmatched,
+    conflicts: plan.conflicts,
+  };
 }
+
+// 已移除 getCandidates / applyCandidate：候选列表与逐条应用只服务旧 Usage 页面，
+// 现在 syncPricing 会直接覆盖可靠匹配项。pricing_candidates 表仍写入，用作同步诊断。
 
 module.exports = {
   syncPricing,
-  getCandidates,
-  applyCandidate,
 };

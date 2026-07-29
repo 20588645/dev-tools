@@ -17,4 +17,14 @@
   --color-warning: var(--color-amber-400);
   --color-danger: var(--color-red-400);
   --color-info: var(--color-cyan-400);
+
+  /*
+    数据系列色：用于图表/构成条这类「区分维度」的场景，与语义状态色分离。
+    语义色（success/warning/danger）只表达状态好坏，把它们当品牌色大面积铺开会
+    让「绿色=正常」的含义失效，且高饱和绿在暗色下过曝。
+  */
+  --color-series-1: var(--color-indigo-400);
+  --color-series-2: var(--color-teal-400);
+  --color-series-3: var(--color-cyan-400);
+  --color-series-muted: var(--color-neutral-500);
 }

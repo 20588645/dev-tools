@@ -12,7 +12,7 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
-    include: ['frontend/src/**/*.test.ts'],
+    include: ['frontend/src/**/*.test.ts', 'sidecar/**/*.test.mjs'],
     clearMocks: true,
   },
 })

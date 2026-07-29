@@ -22,10 +22,8 @@
 <link rel="stylesheet" href="css/pages/run.css">
 <link rel="stylesheet" href="css/pages/deploy.css">
 <link rel="stylesheet" href="css/pages/terminal.css">
-<link rel="stylesheet" href="css/pages/todo.css">
 <link rel="stylesheet" href="css/pages/editor.css">
 <link rel="stylesheet" href="css/pages/twofa.css">
-<link rel="stylesheet" href="css/pages/usage.css">
 <link rel="stylesheet" href="css/legacy-runtime.css">
 <link rel="stylesheet" href="css/pages/filetransfer.css">
 <link rel="stylesheet" href="css/overrides.css">
@@ -290,62 +288,7 @@
 
 <!-- 待办看板 -->
 <section class="page" id="page-todo">
-  <div class="page-header-bar page-header-simple">
-    <div>
-      <div class="page-title">📌 待办事项</div>
-      <div class="page-subtitle">轻量任务管理，按项目分组记录待办事项</div>
-    </div>
-    <div class="page-header-actions">
-      <button class="btn-primary" onclick="showAddTodo()">+ 新建任务</button>
-    </div>
-  </div>
-
-  <div class="page-toolbar todo-toolbar">
-    <button class="btn-secondary" onclick="clearDoneTodos()">🗑 清除已完成</button>
-  </div>
-
-  <div class="todo-layout-container" id="todoLayoutContainer">
-    <!-- 左侧：任务列表 -->
-    <div class="todo-list-panel">
-      <!-- 待办分组 -->
-      <div class="todo-group-wrapper">
-        <div class="todo-group-header" onclick="toggleTodoGroup('todo')">
-          <span class="todo-group-dot dot-todo"></span>
-          <span>待办</span>
-          <span class="todo-group-count" id="todoCountTodo">0</span>
-        </div>
-        <div class="todo-group-items" id="todoListTodo"></div>
-      </div>
-
-      <!-- 进行中分组 -->
-      <div class="todo-group-wrapper">
-        <div class="todo-group-header" onclick="toggleTodoGroup('doing')">
-          <span class="todo-group-dot dot-doing"></span>
-          <span>进行中</span>
-          <span class="todo-group-count" id="todoCountDoing">0</span>
-        </div>
-        <div class="todo-group-items" id="todoListDoing"></div>
-      </div>
-
-      <!-- 已完成分组 -->
-      <div class="todo-group-wrapper">
-        <div class="todo-group-header" onclick="toggleTodoGroup('done')">
-          <span class="todo-group-dot dot-done"></span>
-          <span>已完成</span>
-          <span class="todo-group-count" id="todoCountDone">0</span>
-        </div>
-        <div class="todo-group-items" id="todoListDone"></div>
-      </div>
-    </div>
-
-    <!-- 右侧：详情面板 -->
-    <div class="todo-detail-panel" id="todoDetailPanel">
-      <div class="todo-detail-empty-state">
-        <span class="todo-empty-icon">📝</span>
-        <span>选择左侧列表中的待办任务以查看或编辑详情</span>
-      </div>
-    </div>
-  </div>
+  <div id="vue-todo-host" aria-live="polite"></div>
 </section>
 
 <!-- 工作日志 -->
@@ -471,153 +414,9 @@
   </div>
 </section>
 
-<!-- 纯净检测 -->
+<!-- 用量统计：正式 Vue SFC 入口 -->
 <section class="page" id="page-usage">
-  <div class="page-fixed-header">
-    <div class="page-header-bar page-header-simple">
-      <div>
-        <div class="page-title">📊 用量统计</div>
-        <div class="page-subtitle">AI 编码工具模型用量与成本统计 · 本地解析 Claude Code (~/.claude) 与 Codex (~/.codex) 会话日志</div>
-      </div>
-      <div class="page-header-actions">
-        <button class="btn-secondary" onclick="importCcSwitchUsage()">📥 导入 CC Switch 历史</button>
-        <button class="btn-secondary" onclick="editSubscriptionFee()">💳 订阅设置</button>
-        <button class="btn-secondary" onclick="toggleUsagePricing()">💰 单价设置</button>
-        <button class="btn-primary" onclick="forceUsageSync()">🔄 重新扫描</button>
-      </div>
-    </div>
-
-    <div class="page-toolbar usage-toolbar">
-      <div class="usage-chip-groups">
-        <div class="chips" id="usageRangeChips">
-          <button class="chip active" data-range="today" onclick="setUsageRange('today', this)">今天</button>
-          <button class="chip" data-range="7d" onclick="setUsageRange('7d', this)">近 7 天</button>
-          <button class="chip" data-range="month" onclick="setUsageRange('month', this)">本月</button>
-          <button class="chip" data-range="all" onclick="setUsageRange('all', this)">全部</button>
-        </div>
-        <span class="usage-chip-divider"></span>
-        <div class="chips" id="usageAppChips">
-          <button class="chip active" data-app="" onclick="setUsageApp('', this)">全部应用</button>
-          <button class="chip" data-app="claude" onclick="setUsageApp('claude', this)">Claude Code</button>
-          <button class="chip" data-app="codex" onclick="setUsageApp('codex', this)">Codex</button>
-        </div>
-      </div>
-      <div class="usage-sync-info" id="usageSyncInfo"></div>
-    </div>
-  </div>
-
-  <div class="page-scroll-body">
-
-  <!-- 核心指标 -->
-  <div class="usage-hero">
-    <div class="usage-hero-main">
-      <div class="usage-hero-label">⚡ 真实消耗 Tokens</div>
-      <div class="usage-hero-value" id="usageTotalTokens">-</div>
-      <div class="usage-hero-sub"><span id="usageTotalTokensApprox"></span> <span id="usageTokensDelta"></span></div>
-    </div>
-    <div class="usage-hero-side">
-      <div class="usage-mini">
-        <div class="usage-mini-label">总请求数</div>
-        <div class="usage-mini-value" id="usageRequests">-</div>
-        <div class="usage-mini-sub" id="usageReqDelta"></div>
-      </div>
-      <div class="usage-mini">
-        <div class="usage-mini-label">总成本</div>
-        <div class="usage-mini-value usage-cost-text" id="usageCost">-</div>
-        <div class="usage-mini-sub"><span id="usageCostCny"></span> <span id="usageCostDelta"></span></div>
-      </div>
-      <div class="usage-mini">
-        <div class="usage-mini-label">缓存命中率</div>
-        <div class="usage-mini-value" id="usageCacheRate">-</div>
-        <div class="usage-cache-bar"><div class="usage-cache-bar-fill" id="usageCacheRateBar"></div></div>
-      </div>
-      <div class="usage-mini">
-        <div class="usage-mini-label">缓存净节省</div>
-        <div class="usage-mini-value usage-cost-text" id="usageCacheSaved">-</div>
-        <div class="usage-mini-sub">对比无缓存全价输入</div>
-      </div>
-      <div class="usage-mini">
-        <div class="usage-mini-label">订阅回本 · 本月</div>
-        <div class="usage-mini-value" id="usageRoi">-</div>
-        <div class="usage-mini-sub" id="usageRoiSub"></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="usage-stat-row">
-    <div class="usage-stat-card">
-      <div class="usage-stat-label">📥 新增输入</div>
-      <div class="usage-stat-value" id="usageInputTokens">-</div>
-    </div>
-    <div class="usage-stat-card">
-      <div class="usage-stat-label">📤 输出</div>
-      <div class="usage-stat-value" id="usageOutputTokens">-</div>
-    </div>
-    <div class="usage-stat-card">
-      <div class="usage-stat-label">📦 缓存创建</div>
-      <div class="usage-stat-value" id="usageCacheCreation">-</div>
-    </div>
-    <div class="usage-stat-card">
-      <div class="usage-stat-label">⚡ 缓存命中</div>
-      <div class="usage-stat-value" id="usageCacheRead">-</div>
-    </div>
-  </div>
-
-  <!-- 趋势图 -->
-  <div class="usage-card">
-    <div class="usage-card-title">📈 使用趋势 <span class="usage-card-hint">按应用堆叠 · 底部滑块/滚轮可缩放时间段</span></div>
-    <div id="usageTrendChart" class="usage-trend-chart"></div>
-  </div>
-
-  <!-- 项目统计 + 时段热力图 -->
-  <div class="usage-grid-2">
-    <div class="usage-card">
-      <div class="usage-card-title">📁 项目统计</div>
-      <div id="usageProjectTable"></div>
-    </div>
-    <div class="usage-card">
-      <div class="usage-card-title">💰 成本构成 <span class="usage-card-hint">Top5 模型 · 环长 = 成本占比 · 跟随当前筛选</span></div>
-      <div id="usageCostPieChart" class="usage-heatmap-chart"></div>
-    </div>
-  </div>
-
-  <!-- 最贵请求 -->
-  <div class="usage-card">
-    <div class="usage-card-title">💸 最贵请求 Top 10</div>
-    <div id="usageTopTable"></div>
-  </div>
-
-  <!-- 单价设置（默认折叠） -->
-  <div class="usage-card" id="usagePricingCard" style="display:none">
-    <div class="usage-card-title usage-pricing-card-title">
-      <span>💰 模型单价 <span class="usage-card-hint">USD / 百万 Token · 公开目录仅作 API 价格参考</span></span>
-      <span class="usage-pricing-actions">
-        <span class="usage-sync-info" id="usagePricingSyncInfo"></span>
-        <button class="btn-secondary usage-pricing-sync-btn" onclick="syncUsagePricing()">↻ 自动同步价格</button>
-      </span>
-    </div>
-    <div id="usagePricingCandidates"></div>
-    <div id="usagePricingTable"></div>
-  </div>
-
-  <!-- 模型统计 -->
-  <div class="usage-card">
-    <div class="usage-card-title">🤖 模型统计</div>
-    <div id="usageModelTable"></div>
-  </div>
-
-  <!-- 请求日志 -->
-  <div class="usage-card">
-    <div class="usage-card-title">📋 请求日志
-      <select id="usageModelFilter" class="usage-model-select" onchange="setUsageModelFilter(this.value)">
-        <option value="">全部模型</option>
-      </select>
-    </div>
-    <div id="usageLogTable"></div>
-    <div class="usage-pager" id="usagePager"></div>
-  </div>
-
-  </div><!-- /page-scroll-body -->
+  <div id="vue-usage-host" aria-live="polite"></div>
 </section>
 
 <section class="page" id="page-ipcheck">
@@ -1367,7 +1166,6 @@
 <script src="js/deploy.js"></script>
 <script src="js/filetransfer.js"></script>
 <script src="js/run.js"></script>
-<script src="js/todo.js"></script>
 <script src="js/vendor/codemirror/cm.bundle.js"></script>
 <script src="js/editor.js"></script>
 <script src="js/xterm.js"></script>
@@ -1376,8 +1174,6 @@
 <script src="js/xterm-addon-webgl.js"></script>
 <script src="js/terminal.js"></script>
 <script src="js/twofa.js"></script>
-<script src="js/vendor/echarts/echarts.min.js"></script>
-<script src="js/usage.js"></script>
 <script type="module" src="/src/main.ts"></script>
 <script>
   window.addEventListener('error', function(e) {

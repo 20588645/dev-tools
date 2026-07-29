@@ -16,4 +16,10 @@
   --color-warning: #b45309;
   --color-danger: #b91c1c;
   --color-info: #0e7490;
+
+  /* 亮色下数据系列改用更深的色阶，保证在白底上的对比度 */
+  --color-series-1: var(--color-indigo-600);
+  --color-series-2: var(--color-teal-600);
+  --color-series-3: var(--color-cyan-500);
+  --color-series-muted: var(--color-neutral-400);
 }

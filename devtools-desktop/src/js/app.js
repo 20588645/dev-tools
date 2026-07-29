@@ -1064,11 +1064,9 @@ function switchPage(page, el, source = 'legacy') {
     loadRunStatuses().then(() => renderRunPage());
     startRunPagePolling();
   }
-  if (page === 'todo') loadTodos();
   if (page === 'editor') initEditor();
   if (page === 'terminal') loadCommands();
   if (page === 'twofa') initTwoFA();
-  if (page === 'usage') initUsage();
   emitLegacyPageActivation(page, source);
 }
 

@@ -504,12 +504,16 @@ function getSummary(start, end, app) {
            COALESCE(SUM(outputTokens), 0) AS outputTokens,
            COALESCE(SUM(cacheReadTokens), 0) AS cacheReadTokens,
            COALESCE(SUM(cacheCreationTokens), 0) AS cacheCreationTokens,
+           COALESCE(SUM(CASE WHEN pricingModel <> '' THEN 1 ELSE 0 END), 0) AS pricedRequests,
+           COALESCE(SUM(CASE WHEN pricingModel <> '' THEN
+             inputTokens + outputTokens + cacheReadTokens + cacheCreationTokens ELSE 0 END), 0) AS pricedTokens,
            COALESCE(SUM(costMicroUsd), 0) AS costMicroUsd
     FROM usage_logs ${where}
   `).get(...params);
   const totalInput = row.inputTokens + row.cacheReadTokens + row.cacheCreationTokens;
   row.totalTokens = totalInput + row.outputTokens;
   row.cacheHitRate = totalInput > 0 ? row.cacheReadTokens / totalInput : 0;
+  row.pricingCoverage = row.totalTokens > 0 ? row.pricedTokens / row.totalTokens : 0;
   row.costUsd = row.costMicroUsd / 1e6;
   // 缓存净节省：命中按全价输入计算省下的钱，减去缓存创建相对全价的溢价
   const saved = db.prepare(`
@@ -562,11 +566,14 @@ function getProjectStats(start, end, app) {
     .sort((x, y) => y.costMicroUsd - x.costMicroUsd);
 }
 
-function getTopRequests(start, end, app, limit = 10) {
+function getTopRequests(start, end, app, limit = 10, sort = 'cost') {
   const { where, params } = rangeFilter(start, end, app);
   const size = Math.min(Math.max(Number(limit) || 10, 1), 50);
+  const orderBy = sort === 'tokens'
+    ? '(inputTokens + outputTokens + cacheReadTokens + cacheCreationTokens) DESC, createdAt DESC'
+    : 'costMicroUsd DESC, createdAt DESC';
   return db.prepare(`
-    SELECT * FROM usage_logs ${where} ORDER BY costMicroUsd DESC LIMIT ?
+    SELECT * FROM usage_logs ${where} ORDER BY ${orderBy} LIMIT ?
   `).all(...params, size);
 }
 

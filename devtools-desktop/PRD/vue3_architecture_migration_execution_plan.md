@@ -1,12 +1,12 @@
 # DevTools Desktop Vue 3 架构渐进重构执行计划
 
-> 文档版本：1.33
-> 状态：执行中（Phase 5-2 系统设置 PG0～PG5 已全部完成，下一步进入 Phase 5-3 待办事项 PG0）
+> 文档版本：1.44
+> 状态：执行中（Phase 5-4 用量统计 PG5 自动清理完成；等待清理后真实 Tauri 简短回归）
 > 编制日期：2026-07-21  
-> 最近更新：2026-07-29
+> 最近更新：2026-07-30
 > 适用仓库：`devtools-desktop`  
 > 核心原则：保持软件持续可运行，按页面逐步替换，不进行一次性推倒重写。
-> 当前执行指针：Phase 5-2 系统设置 `settings` 已完成 PG0～PG5，自动验证与清理后真实 Tauri E2E 均已通过。下一步进入 Phase 5-3 待办事项 `todo` PG0 现状取证。
+> 当前执行指针：Phase 5-4 用量统计 `usage` 已完成 PG3～PG4、两轮增补优化与 PG5 旧实现清理，自动验证与内置浏览器复检均通过。下一步由用户做一次清理后简短真实 Tauri 回归；确认后 Phase 5-4 关闭，才开始 Phase 5-5。
 
 ---
 
@@ -510,8 +510,8 @@ L3 中纯前端且低风险的改动可以与页面 Vue 实现处于同一页面
 | 3 | Phase 4-3 | 独立代码周报 `report` | **取消，能力已吸收到 Notes** | 不再建立独立 View；保留 Sidecar service 和系统设置配置 | Notes 已覆盖查询、分组、复制、导出、写入和撤销 |
 | 4 | Phase 5-1 | 个人笔记 `notebook` | **PG0～PG5 已完成** | 已完成 | 本地提交 `f940bd8` |
 | 5 | Phase 5-2 | 系统设置 `settings` | **PG0～PG5 已完成** | 已完成 | 自动验证、清理后 Tauri E2E 与独立本地提交 |
-| 6 | Phase 5-3 | 待办事项 `todo` | **下一阶段** | 开始 PG0 现状取证 | timer、通知、分组和重复提醒检查通过 |
-| 7 | Phase 5-4 | 用量统计 `usage` | 等待 | 完成 `todo` 后开始 PG0 | ECharts、价格、异常数据和资源销毁通过 |
+| 6 | Phase 5-3 | 待办事项 `todo` | **已完成** | PG0～PG5、手动 E2E 与旧实现清理完成 | timer、通知、分组和重复提醒检查通过 |
+| 7 | Phase 5-4 | 用量统计 `usage` | **PG5 自动清理完成** | 执行清理后简短真实 Tauri 回归 | ECharts、价格、异常数据和资源销毁通过 |
 | 8 | Phase 5-5 | 2FA 验证码 `twofa` | 等待 | 完成 `usage` 后开始 PG0 | Secret、倒计时、导入导出安全专项通过 |
 | 9 | Phase 6-1 | 本地运行 `run` | 等待 | Phase 5 完成后开始 PG0 | 进程、轮询、WebSocket 和后台状态通过 |
 | 10 | Phase 6-2 | 部署面板 `deploy` | 等待 | 完成 `run` 后开始 PG0 | SSH、构建、部署任务和日志链路通过 |
@@ -1321,8 +1321,8 @@ frontend/src/services/modules/ipcheck-service.ts
 | — | 独立代码周报（已取消） | 能力已吸收到 Notes；保留 Sidecar report 路由 | — | GitLab 配置、查询接口 | Phase 4-3 | **取消** | 不再迁移独立页面 |
 | 4 | 个人笔记 | `views/notebook/`、`notebook-service.ts` | 中 | 编辑、图片、持久化 | Phase 5-1 | **PG5 已通过** | 保持回归，不重复迁移 |
 | 6 | 系统设置 | `views/settings/`、`settings-service.ts`、`legacy-runtime.css` | 中高 | 全局配置、Sidecar、菜单设置 | Phase 5-2 | **PG0～PG5 已完成** | 保持回归，不重复迁移 |
-| 7 | 待办事项 | `todo.js`、`todo.css` | 高 | timer、通知、分组 | Phase 5-3 | **下一阶段** | 开始 PG0 现状取证 |
-| 8 | 用量统计 | `usage.js`、`usage.css` | 高 | ECharts、扫描、价格 | Phase 5-4 | 等待 | `todo` 提交后开始 PG0 |
+| 7 | 待办事项 | `todo.js`、`todo.css` | 高 | timer、通知、分组 | Phase 5-3 | **已完成并删除旧实现** | Vue 页面、自动验收和手动 E2E 通过 |
+| 8 | 用量统计 | `views/usage/`、`usage-service.ts`；旧 `usage.js`、`usage.css`、ECharts vendor 已删除 | 高 | 扫描、价格、Canvas 生命周期 | Phase 5-4 | **PG5 自动清理完成** | 清理后简短 Tauri 回归 |
 | 9 | 2FA 验证码 | `twofa.js`、`twofa.css` | 高 | Secret、timer、导入导出 | Phase 5-5 | 等待 | `usage` 提交后开始 PG0 |
 | 10 | 本地运行 | `run.js`、`run.css` | 高 | 进程、轮询、WebSocket | Phase 6-1 | 等待 | Phase 5 完成后开始 PG0 |
 | 11 | 部署面板 | `deploy.js`、`deploy.css` | 很高 | 项目、SSH、构建、弹窗 | Phase 6-2 | 等待 | `run` 提交后开始 PG0 |
@@ -1760,7 +1760,62 @@ Phase 0～3 已完成，上表总量仅保留为原始规划参考；当前剩�
 
 ## 21. 当前下一批可立即执行的任务
 
-Phase 0～3、Phase 4-1、Phase 4-2、Phase 5-1 与 Phase 5-2 均已完成；系统设置 `settings` 已完成 L2 原型、正式 Vue 实现、旧实现与污染 CSS 清理、全部自动验证和清理后真实 Tauri E2E。下一批进入 Phase 5-3 待办事项 `todo` PG0 现状取证。
+Phase 0～3、Phase 4-1、Phase 4-2、Phase 5-1、Phase 5-2 与 Phase 5-3 均已完成。Phase 5-4 用量统计 `usage` 已完成 L2 原型确认、正式 Vue 实现、自动验收、两轮增补优化（均通过真实 Tauri 手动 E2E）以及 PG5 旧实现清理，当前等待清理后简短真实 Tauri 回归。
+
+### Batch 5-4A：PG0 现状取证（已完成）
+
+- [x] 使用 `DEVTOOLS_TEST=1` 启动 13900 测试 Sidecar，只连接 `sidecar/data-test`。
+- [x] 在内置浏览器采集 1665 × 1184、默认窗口和 900 × 600 的亮暗主题页面。
+- [x] 检查顶部、KPI、趋势、项目、成本构成、Top 10、模型统计、请求日志和分页。
+- [x] 记录默认窗口纵向长度、900px 页面级横向溢出和空成本卡片高度。
+- [x] 检查控制台；只发现已登记的 CodeMirror 旧错误和测试服务启动前的连接记录，没有发现 Usage 新增运行时错误。
+- [x] 截图保存在系统临时目录，没有进入仓库。
+
+### Batch 5-4B：PG1 代码与数据研究（已完成）
+
+- [x] 阅读 `#page-usage`、`usage.js`、`usage.css`、Usage API、数据库表和价格同步服务。
+- [x] 梳理 30 秒页面刷新、15 秒查询节流扫描、5 分钟后台强制扫描和 CC Switch 导入。
+- [x] 识别 ECharts、ResizeObserver、MutationObserver、timer 和请求竞态的生命周期缺口。
+- [x] 核验当前测试样本的价格覆盖：三个模型、2003 条请求均未匹配单价，成本与缓存节省不可作为可靠零值。
+- [x] 确认远程价格只写候选、必须用户应用的安全边界，同时记录全量历史重算和快照覆盖风险。
+- [x] 确认模型、项目和请求日志字段存在直接进入 `innerHTML` 的转义缺口。
+
+### Batch 5-4C：PG2 优化建议与 PG3 L2 原型（已完成）
+
+- [x] 输出 [用量统计页面 Vue 迁移评估](vue-migration/pages/usage/assessment.md)。
+- [x] 完成“保留、优化、删除、新增”清单。
+- [x] 给出 L0 可靠等价迁移、L1 公共组件统一、L2 可信聚焦仪表盘和 L3 数据可靠性专项。
+- [x] 推荐 L2，并明确未定价时不再把 `$0` 当作真实成本。
+- [x] 用户选择 L2“可信且聚焦的用量仪表盘”。
+- [x] 用户确认制作亮暗主题和 900 × 600 窄窗口 HTML 原型。
+- [x] 用户确认暂不加入 L3-A 价格历史、L3-B 扫描任务化或 L3-C 异常诊断。
+- [x] 生成 `design-preview/usage-l2.html`，覆盖趋势主视区、关键指标、Token 构成、项目排名、最大 Token 请求、数据探索 Tab 和价格设置弹窗。
+- [x] 根据用户反馈删除趋势图底部区间滑动条，不加入滚轮缩放；时间范围统一由顶部筛选控制。
+- [x] 根据用户反馈把在线价格交互调整为“同步并覆盖”，可靠匹配后直接覆盖本地单价，不再要求逐条应用候选。
+- [x] 完成亮暗主题和 900 × 600 复验：滑动条无残留占位、页面无横向溢出、同步后覆盖率和模型状态统一更新，控制台无新增错误。
+- [x] 记录 `PRD/vue-migration/pages/usage/decision.md`。
+- [x] 用户确认 HTML 原型整体布局、亮暗主题和 900 × 600 窄窗口效果，PG3 通过。
+
+本批只产生研究文档，不改变运行时代码。**手动 E2E：不需要**；PG3 已通过。
+
+PG4 已把价格同步作为独立受控子步骤完成：同步接口批量覆盖可靠匹配项，未匹配项保留旧本地价格，多来源冲突沿用既有来源优先级，全部写入后只执行一次历史成本重算，并返回覆盖、未变化、未匹配、冲突、来源和重算摘要。自动测试已通过；由于该子步骤涉及 Sidecar 与历史成本语义，真实 Tauri 手动 E2E 仍是 PG5 前置门禁。
+
+### Batch 5-4D：PG4 正式 Vue 实现与自动验收（已完成）
+
+- [x] 新增 `UsageView.vue`、页面私有组件、`useUsage.ts`、格式化模块和类型化 `usage-service.ts`。
+- [x] 使用公共 PageHeader、按钮、Tabs、输入框、卡片、Badge、Loading 和 Dialog 组件。
+- [x] 使用 Vue 管理的 Canvas 趋势图，完成 ResizeObserver、主题、KeepAlive 和卸载生命周期。
+- [x] 增加请求所有权、竞态取消、30 秒激活页刷新和错误/空状态。
+- [x] 汇总 API 增加定价请求数、定价 Token 数与覆盖率；Top 请求支持按成本或 Token 排序。
+- [x] 价格同步按来源优先级批量覆盖可靠匹配，未匹配项保留本地值，批量写入后只执行一次历史重算。
+- [x] 手动价格增加非负数服务端校验。
+- [x] `frontend/index.html` 只保留 `#vue-usage-host`；正式页面不加载旧 Usage DOM、JS、CSS 或 ECharts。
+- [x] 900 × 600 价格设置表收紧列宽，模型、四类价格、来源和保存操作无需横向滚动即可使用。
+- [x] TypeScript、ESLint、Stylelint、Design Token、生产构建、27 文件/97 项单元测试全部通过。
+- [x] Usage Playwright E2E 4 项通过：Vue 单入口、900 × 600 亮暗主题、筛选/分页、同步并覆盖。
+- [x] 内置浏览器完成 1280 × 720、900 × 600、亮暗主题、数据加载后边界、价格设置弹窗和控制台验收。
+
+本批自动验收完成。**真实 Tauri 手动 E2E：必须，待用户执行**。通过前保留 `src/js/usage.js`、`src/css/pages/usage.css`、ECharts vendor 和旧候选 API，不进入 PG5。
 
 ### Batch 4-1A：PG0 现状取证（已完成）
 
@@ -2037,6 +2092,47 @@ PG4 基础迁移自动验收结果（2026-07-27）：
 - [x] 用户于 2026-07-29 确认没有问题，Phase 5-2 Gate 关闭；允许建立独立本地提交并进入 Phase 5-3。
 
 内置浏览器刷新 `13900` 隔离测试页面时受到浏览器安全策略阻止，未使用其他浏览器控制方式绕过。全量 Playwright 已覆盖页面和交互；用户已完成删除旧运行时代码和拆分共享 CSS 后的简短真实 Tauri 回归。**手动 E2E：必须，已通过**。
+
+### Batch 5-3A：待办事项 PG0～PG2 研究与优化建议（已完成）
+
+- [x] 基于提交 `8937122` 启动 `DEVTOOLS_TEST=1` 隔离 Sidecar `13900` 和 `data-test`，未访问正式端口与正式数据库。
+- [x] 确认当前测试库待办数据为 0 条，本轮未新增、编辑或删除模拟数据。
+- [x] 读取旧 Todo DOM、1101 行 JS、1228 行 CSS、CRUD 路由、SQLite 表、提醒 localStorage 与全局通知依赖。
+- [x] 记录 46 个全局函数、40 个 JS 模板内联事件、690 处 `!important`、0 个页面媒体查询、0 个 `:focus-visible` 和 0 个减少动态规则。
+- [x] 确认页面实际按状态分组而非副标题所称的“按项目分组”，并记录提醒、错误态、响应式、可访问性和内容序列化风险。
+- [x] 输出 `PRD/vue-migration/pages/todo/assessment.md`，没有生成仓库内截图或验证报告。
+- [x] 用户明确打开并授权接管当前内置浏览器标签后，采集 1665 × 1184、900 × 600 亮暗主题、选中任务详情、新建弹窗和日期弹层。
+- [x] 测得 1665px 下列表/详情为 835px/614px 且存在大面积空白；900px 下仍保持 400px/304px 双栏，无横向溢出但详情明显受压缩。
+- [x] 记录父任务已完成但子任务仍为 `0/1`、同名任务难区分、已完成提醒噪音、次要文字对比度和自定义日期组件语义问题。
+- [x] 完成 PG1 数据所有权、内容兼容、提醒 timer、通知、API 和公共组件边界。
+- [x] 完成 PG2“保留、优化、删除、新增”清单与 L0～L3 方案，推荐 L2 自适应个人任务工作台。
+
+视觉取证页由用户直接打开为无 `apiPort` 参数的浏览器页面，按现有契约连接默认 `13456`；本轮只读页面并操作可逆主题/选择/弹窗状态，没有提交 CRUD 或清理动作。截图只保存在系统临时目录，未进入仓库。当前 **PG0～PG2 已完成，手动 E2E：不需要**。
+
+### Batch 5-3B：待办事项 PG3 L2 原型（已完成）
+
+- [x] 用户选择 L2“自适应个人任务工作台”，暂不加入 L3 的详情提醒编辑、提醒版本去重和后台系统调度。
+- [x] 基于真实旧页面视觉、项目 Token 与公共组件语言生成三种视觉方向，用户选择方案一“安静双栏工作区”。
+- [x] 生成 `design-preview/todo-l2.html`，覆盖亮暗主题、搜索、全部/今天/已逾期筛选、分组折叠、任务选择、主从切换、状态流转、父子完成确认、新建弹窗和保存反馈。
+- [x] 默认窗口 1665 × 1184 下采用内容密度双栏，不把少量任务强制拉成满高空卡片，详情操作贴近内容。
+- [x] 900 × 600 下改为列表/详情主从切换；页面 `scrollWidth === clientWidth === 900`，弹窗完整位于视口内。
+- [x] 亮暗主题、默认/窄窗口、筛选、空结果、新建、清单勾选、状态切换、返回列表和弹窗关闭均通过内置浏览器自动检查，控制台无新增错误。
+- [x] 用户确认 HTML 原型的信息层级、密度、主题与窄窗口交互，PG3 通过并允许进入 PG4。
+
+### Batch 5-3C：待办事项 PG4～PG5 正式迁移与收口（已完成）
+
+- [x] 新增 Todo 类型化 service、旧 `content` 兼容解析/序列化和对应单元测试。
+- [x] 新增 `useTodo.ts`，覆盖加载、错误重试、保存队列、搜索、今天/逾期筛选、状态分组和父子完成确认。
+- [x] 新增 `TodoView.vue` 与列表、详情、清单、新建弹窗组件；日期时间使用项目封装的 Naive UI 适配组件。
+- [x] `MigrationHost` 注册 `TodoView`，正式 Todo DOM 只保留 `#vue-todo-host`，旧 `loadTodos()` 和 `todo.js` / `todo.css` 运行时引用已移除。
+- [x] 提醒轮询迁入应用级唯一 service，继续保持任务 ID 去重，不加入 L3；通知正文不再显示清单语法。
+- [x] typecheck、JS/CSS/Token lint、86 项单元测试、前端构建和 4 项 Todo Playwright E2E 全部通过。
+- [x] 内置浏览器在隔离 Sidecar `13900/data-test` 完成 1280 × 720 亮暗主题视觉验收，无页面级横向或纵向溢出。
+- [x] 用户完成真实 Tauri 手动 E2E并确认没有问题。
+- [x] PG5 删除 `src/js/todo.js` 和 `src/css/pages/todo.css`，旧实现与 690 处 `!important` 污染源不再保留。
+- [x] Phase 5-3 页面 Gate 关闭，允许进入 Phase 5-4 用量统计 PG0。
+
+本批次只修改设计原型与决策文档，没有连接正式 Sidecar、SQLite、提醒 timer 或通知服务。视觉对照、浏览器截图和 QA 文件只保存在系统临时目录，不进入仓库。**手动 E2E：不需要**。
 
 ### 当前停止条件
 
@@ -2320,4 +2416,43 @@ PG4 基础迁移自动验收结果（2026-07-27）：
 - 如果发现现有 API 无法支持 Vue 页面，应先记录接口差距，再单独评审 Sidecar 变更。
 - 迁移期间所有临时兼容代码必须标记删除 Gate，不能无期限保留。
 
-当前执行停在 **Phase 5-3 待办事项 PG0 现状取证入口**。Phase 5-2 系统设置已完成 PG0～PG5、旧实现与污染 CSS 清理、全部自动验证和清理后真实 Tauri E2E；建立独立本地提交后，按页面 Gate 流程研究待办事项现状，暂不直接进入 Vue 实现。
+当前执行停在 **Phase 5-4 用量统计 PG5 清理后真实 Tauri 回归**。PG0～PG3 已完成，用户确认 L2 原型且暂不加入 L3；PG4 已完成正式 `UsageView.vue`、公共组件接入、Canvas 趋势、请求生命周期、价格批量覆盖语义、自动测试和内置浏览器验收，并通过真实 Tauri 手动 E2E。
+
+PG4 之后用户又提出两轮增补优化，均已实现并通过手动 E2E（详见 `PRD/vue-migration/pages/usage/decision.md`）：
+
+第一轮（功能与缺陷）：
+1. 新增「自定义」日期区间（任意 start/end、可跟随当前时刻），环比改为按区间长度等长回退，bucket 按跨度自动选择；预设档位语义不变。后端已支持任意 start/end，无需改动。
+2. 自动刷新间隔可配置为 关闭 / 10s / 30s / 60s（默认 30s，持久化）。刻意不做 5s：每次刷新都触发 `syncUsage()` 重扫日志。
+3. 顶部「数据与价格设置」按钮删除（与底部数据探索 Tab 重复）；「导入 CC Switch 历史」按钮以 `v-if="false"` 隐藏但保留全部代码，属一次性迁移入口。
+4. 排名列去掉第一名的土黄圆点（`color-mix(--color-warning 82%, white)` 亮暗两主题都不协调），改为弱化等宽序号 + 字重区分。
+5. 趋势图 Y 轴左边距由硬编码 44px 改为按 `measureText` 实测刻度宽度动态计算，修复亿级标签被裁。
+6. 趋势图新增十字准线与悬浮明细（输入/输出/缓存命中/缓存创建/请求数/成本）。`UsageTrendRow` 已带齐字段，无需改后端。
+
+第二轮（视觉与交互）：
+7. 悬浮卡片由「每应用一段纵向堆叠」改为「指标为行、应用为列」的紧凑表格，行数不再随应用数翻倍，宽度按列数自适应，修复超出图表高度。
+8. 新增**数据系列色** token（`--color-series-1/2/3/muted`，亮暗分别定值），把趋势线、构成条、应用标签从 `--color-success` 迁出。语义色不应当作品牌色大面积使用，且高饱和绿在暗色下过曝。`--color-success` 本身未改，其他页面不受影响。
+9. 请求日志的模型筛选下拉在 flex 容器内塌缩为 0 宽，补 `width: 100%` 与「全部模型」placeholder；该控件是有效功能，未删除。
+10. 修复对话框内日期弹层无法点选：Naive 浮层挂在 body 下 `.v-binder-follower-container`（内联 z-index 2000，CSS 覆盖不了，且规范禁止新增 `!important`），NDatePicker 也没有 z-index prop。方案是给 `BaseDialog` 增加 `below-overlays` prop，内嵌选择器时对话框降至 1900。
+11. `BaseDateTimePicker` 增加 `range` prop（默认 `future` 保持待办原行为；用量页传 `any`），修复原先硬编码禁用历史日期导致无法查询过去区间。
+12. 连带修复既有缺陷：待办「新建任务」对话框同样内嵌日期选择器且未传 `below-overlays`，提醒时间原本也点不了日期，已一并修正并通过 Todo E2E 回归。
+
+### PG5 旧实现清理（已完成自动验收）
+
+已删除：
+
+- `src/js/usage.js`（36KB，旧 Usage 全部运行时）
+- `src/css/pages/usage.css`
+- `src/js/vendor/echarts/echarts.min.js`（1MB；`rg` 确认唯一消费者是 `src/js/usage.js`，且 `frontend/index.html` 已不再加载）
+- `sidecar/routes/usage.js` 的 `GET /pricing/candidates` 与 `POST /pricing/candidates/:modelId/apply` 两个路由
+- `sidecar/services/pricing.js` 的 `getCandidates` 与 `applyCandidate`
+
+**刻意保留**（删除前逐项核对过消费者）：
+
+- `pricing.js` 内部的 `modelCandidates`、`candidateFromMatches` 等匹配算法函数——新同步逻辑仍在使用，与对外候选 API 同名但不同职责。
+- `pricing_candidates` 表及其写入（`syncPricing` 仍写入）——按设计用作最近一次同步的诊断记录，只是不再对外提供读取与逐条应用。
+- `src/js/app.js` 中的 `usage` 侧边栏菜单项与 `DEFAULT_MENU_ORDER` 条目。
+- `src/js/vendor/codemirror/`——由文件编辑页使用，与本次无关。
+
+清理后验证：lint、lint:tokens、build:frontend、单测 105 项、Usage + Todo E2E 共 10 项全部通过；测试 Sidecar 删除两个导出后正常启动；内置浏览器复检 1280×720 与 900×600 的亮暗主题，`window.echarts` 已为 `undefined`，旧脚本与样式零引用，无页面级横向溢出，硬刷新后控制台无 error 与 warning。旧 CSS Stylelint 基线保持 31（`usage.css` 原本不在基线表中，无需调整）。
+
+下一步：由用户做一次清理后简短真实 Tauri 回归，确认后 Phase 5-4 关闭，然后才开始 Phase 5-5。
