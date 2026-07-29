@@ -117,7 +117,7 @@ app.get('/api/health', (req, res) => {
     uptime: process.uptime(),
     pid: process.pid,
     version: sidecarPackage.version,
-    dataDir: path.join(__dirname, 'data'),
+    dataDir: path.join(__dirname, IS_TEST ? 'data-test' : 'data'),
   });
 });
 

@@ -10,6 +10,7 @@ defineOptions({ name: 'MigrationHost' })
 const IpCheckView = defineAsyncComponent(() => import('@/views/ipcheck/IpCheckView.vue'))
 const NotesView = defineAsyncComponent(() => import('@/views/notes/NotesView.vue'))
 const NotebookView = defineAsyncComponent(() => import('@/views/notebook/NotebookView.vue'))
+const SettingsView = defineAsyncComponent(() => import('@/views/settings/SettingsView.vue'))
 const app = useAppStore()
 const activePage = ref<LegacyPageId>(
   (document.querySelector('.page.active')?.id.replace(/^page-/, '') as LegacyPageId | undefined) ?? 'home',
@@ -21,6 +22,9 @@ notesTarget?.setAttribute('data-vue-owner', 'notes')
 const notebookTarget = document.querySelector('#vue-notebook-host')
 const hasNotebookTarget = Boolean(notebookTarget)
 notebookTarget?.setAttribute('data-vue-owner', 'notebook')
+const settingsTarget = document.querySelector('#vue-settings-host')
+const hasSettingsTarget = Boolean(settingsTarget)
+settingsTarget?.setAttribute('data-vue-owner', 'settings')
 let themeObserver: MutationObserver | null = null
 let stopPageActivation: (() => void) | null = null
 
@@ -64,6 +68,11 @@ onBeforeUnmount(() => {
     <Teleport v-if="hasNotebookTarget" to="#vue-notebook-host">
       <KeepAlive>
         <NotebookView v-if="activePage === 'notebook'" />
+      </KeepAlive>
+    </Teleport>
+    <Teleport v-if="hasSettingsTarget" to="#vue-settings-host">
+      <KeepAlive>
+        <SettingsView v-if="activePage === 'settings'" />
       </KeepAlive>
     </Teleport>
   </div>

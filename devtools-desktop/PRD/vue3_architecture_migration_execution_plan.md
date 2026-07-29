@@ -1,12 +1,12 @@
 # DevTools Desktop Vue 3 架构渐进重构执行计划
 
-> 文档版本：1.25
-> 状态：执行中（Phase 5-1 个人笔记 PG5 与清理后 Tauri 手动 E2E 已完成，等待本地提交）
+> 文档版本：1.33
+> 状态：执行中（Phase 5-2 系统设置 PG0～PG5 已全部完成，下一步进入 Phase 5-3 待办事项 PG0）
 > 编制日期：2026-07-21  
-> 最近更新：2026-07-28
+> 最近更新：2026-07-29
 > 适用仓库：`devtools-desktop`  
 > 核心原则：保持软件持续可运行，按页面逐步替换，不进行一次性推倒重写。
-> 当前执行指针：Phase 4-2 工时内容 `notes` 已通过本地提交 `dc2ea33` 完成；独立代码周报 Phase 4-3 已取消，其有效能力归入 Notes。Phase 5-1 个人笔记 `notebook` 已完成 L2 Vue 实现、旧实现清理、全量自动回归和清理后 Tauri 手动 E2E；当前等待建立独立本地提交，提交后进入 Phase 5-2 系统设置 PG0。
+> 当前执行指针：Phase 5-2 系统设置 `settings` 已完成 PG0～PG5，自动验证与清理后真实 Tauri E2E 均已通过。下一步进入 Phase 5-3 待办事项 `todo` PG0 现状取证。
 
 ---
 
@@ -508,9 +508,9 @@ L3 中纯前端且低风险的改动可以与页面 Vue 实现处于同一页面
 | 1 | Phase 4-1 | 纯净检测 `ipcheck` | **PG0～PG5 已完成** | 已完成 | PG5 通过并建立独立本地提交 |
 | 2 | Phase 4-2 | 工时内容 `notes` | **PG0～PG5 已完成** | 已完成 | 本地提交 `dc2ea33` |
 | 3 | Phase 4-3 | 独立代码周报 `report` | **取消，能力已吸收到 Notes** | 不再建立独立 View；保留 Sidecar service 和系统设置配置 | Notes 已覆盖查询、分组、复制、导出、写入和撤销 |
-| 4 | Phase 5-1 | 个人笔记 `notebook` | **PG5 与最终 Tauri E2E 已完成，等待提交** | 建立 Phase 5-1 独立本地提交 | PG5 通过并建立独立本地提交 |
-| 5 | Phase 5-2 | 系统设置 `settings` | 等待 | 完成 `notebook` 后开始 PG0 | Store、Sidecar 配置和表单状态通过 |
-| 6 | Phase 5-3 | 待办事项 `todo` | 等待 | 完成 `settings` 后开始 PG0 | timer、通知、分组和重复提醒检查通过 |
+| 4 | Phase 5-1 | 个人笔记 `notebook` | **PG0～PG5 已完成** | 已完成 | 本地提交 `f940bd8` |
+| 5 | Phase 5-2 | 系统设置 `settings` | **PG0～PG5 已完成** | 已完成 | 自动验证、清理后 Tauri E2E 与独立本地提交 |
+| 6 | Phase 5-3 | 待办事项 `todo` | **下一阶段** | 开始 PG0 现状取证 | timer、通知、分组和重复提醒检查通过 |
 | 7 | Phase 5-4 | 用量统计 `usage` | 等待 | 完成 `todo` 后开始 PG0 | ECharts、价格、异常数据和资源销毁通过 |
 | 8 | Phase 5-5 | 2FA 验证码 `twofa` | 等待 | 完成 `usage` 后开始 PG0 | Secret、倒计时、导入导出安全专项通过 |
 | 9 | Phase 6-1 | 本地运行 `run` | 等待 | Phase 5 完成后开始 PG0 | 进程、轮询、WebSocket 和后台状态通过 |
@@ -1319,9 +1319,9 @@ frontend/src/services/modules/ipcheck-service.ts
 | 2 | 纯净检测 | `views/ipcheck/`、`ipcheck-service.ts` | 中低 | IP API、首页摘要 | Phase 4-1 | **PG5 已通过** | 保持回归，不重复迁移 |
 | 3 | 工时内容 | `views/notes/`、`notes-service.ts`、`report-service.ts` | 中低 | 日期、数据库、Git 活动 service | Phase 4-2 | **PG5 已完成** | 保持回归，不重复迁移 |
 | — | 独立代码周报（已取消） | 能力已吸收到 Notes；保留 Sidecar report 路由 | — | GitLab 配置、查询接口 | Phase 4-3 | **取消** | 不再迁移独立页面 |
-| 4 | 个人笔记 | `views/notebook/`、`notebook-service.ts` | 中 | 编辑、图片、持久化 | Phase 5-1 | **PG5 与 Tauri E2E 已完成** | 建立独立本地提交 |
-| 6 | 系统设置 | `settings.js`、`settings.css` | 中高 | 全局配置、Sidecar、菜单设置 | Phase 5-2 | 等待 | `notebook` 提交后开始 PG0 |
-| 7 | 待办事项 | `todo.js`、`todo.css` | 高 | timer、通知、分组 | Phase 5-3 | 等待 | `settings` 提交后开始 PG0 |
+| 4 | 个人笔记 | `views/notebook/`、`notebook-service.ts` | 中 | 编辑、图片、持久化 | Phase 5-1 | **PG5 已通过** | 保持回归，不重复迁移 |
+| 6 | 系统设置 | `views/settings/`、`settings-service.ts`、`legacy-runtime.css` | 中高 | 全局配置、Sidecar、菜单设置 | Phase 5-2 | **PG0～PG5 已完成** | 保持回归，不重复迁移 |
+| 7 | 待办事项 | `todo.js`、`todo.css` | 高 | timer、通知、分组 | Phase 5-3 | **下一阶段** | 开始 PG0 现状取证 |
 | 8 | 用量统计 | `usage.js`、`usage.css` | 高 | ECharts、扫描、价格 | Phase 5-4 | 等待 | `todo` 提交后开始 PG0 |
 | 9 | 2FA 验证码 | `twofa.js`、`twofa.css` | 高 | Secret、timer、导入导出 | Phase 5-5 | 等待 | `usage` 提交后开始 PG0 |
 | 10 | 本地运行 | `run.js`、`run.css` | 高 | 进程、轮询、WebSocket | Phase 6-1 | 等待 | Phase 5 完成后开始 PG0 |
@@ -1760,7 +1760,7 @@ Phase 0～3 已完成，上表总量仅保留为原始规划参考；当前剩�
 
 ## 21. 当前下一批可立即执行的任务
 
-Phase 0～3、Phase 4-1 与 Phase 4-2 均已完成；工时内容通过本地提交 `dc2ea33` 归档。Phase 5-1 个人笔记 `notebook` 已完成 PG4、PG5 旧实现清理、全量自动回归和清理后 Tauri 手动 E2E，当前停在 **独立本地提交门禁**；建立提交前不进入 Phase 5-2。
+Phase 0～3、Phase 4-1、Phase 4-2、Phase 5-1 与 Phase 5-2 均已完成；系统设置 `settings` 已完成 L2 原型、正式 Vue 实现、旧实现与污染 CSS 清理、全部自动验证和清理后真实 Tauri E2E。下一批进入 Phase 5-3 待办事项 `todo` PG0 现状取证。
 
 ### Batch 4-1A：PG0 现状取证（已完成）
 
@@ -1945,7 +1945,98 @@ PG4 基础迁移自动验收结果（2026-07-27）：
 - [x] 全量 Playwright 16 项通过；内置浏览器确认唯一 Vue Notebook View、唯一活动页、旧资源与旧全局函数为 0。
 - [x] 凭据表输入提示改为真实占位符；点击空白不自动完成，手动“完成”或 `Command/Ctrl + S` 均可完成并保存；编辑焦点只保留单层边框。
 - [x] 用户在真实 Tauri 软件完成清理后的简短手动 E2E，并于 2026-07-28 确认没有问题、可继续推进。
-- [ ] 用户明确要求后建立 Phase 5-1 独立本地提交；不自动 push。
+- [x] 建立 Phase 5-1 独立本地提交 `f940bd8`；未自动 push。
+
+### Batch 5-2A：系统设置 PG0 现状取证（已完成）
+
+- [x] 基于提交 `f940bd8` 启动 `DEVTOOLS_TEST=1` 隔离 Sidecar `13900` 和 `data-test`，未访问正式端口与正式数据库。
+- [x] 使用内置浏览器采集通用、备份、菜单排序、通知、GitLab 配置、应用更新和关于区域。
+- [x] 检查暗色、亮色、1280 × 720 和 900 × 600；无横向溢出或重叠。
+- [x] 测得设置内容滚动高度约 2437px；备份与菜单排序占据主要纵向空间。
+- [x] 记录“已连接 13900 测试 Sidecar，但测试沙箱状态显示无进程”的运行态矛盾，留待 PG1 核查。
+- [x] 未触发重启、停止进程、备份、恢复、删除、通知授权、配置保存或应用更新等有副作用操作。
+- [x] 输出 `PRD/vue-migration/pages/settings/assessment.md`，临时截图未写入仓库。
+
+本批只进行只读运行态研究并更新文档。**手动 E2E：不需要**。
+
+### Batch 5-1F：Notebook 凭据表跟进修复（已完成）
+
+- [x] 清理凭据单元格删除后残留的尾部空 `div`、`p` 和 `br`，完成或失焦时再次规范化空节点。
+- [x] 新增字段不再写入“字段 N”真实文本，只显示临时占位提示，序列化时移除占位属性。
+- [x] 增加中文输入法 composition 边界，组合输入结束后再同步正文。
+- [x] 每张凭据卡标题单元格内部固定显示独立编辑图标；编辑操作直接在对应标题区域展开，删除 hover、外部浮层和滚动坐标换算依赖，序列化前剔除运行时操作节点。
+- [x] TypeScript、ESLint、迁移 CSS Stylelint、63 项单元测试、Notebook Playwright 7 项、全量 Playwright 16 项和前端生产构建通过。
+- [x] 内置浏览器在隔离 `13900` / `data-test` 中确认操作区直接挂载在卡片标题单元格内；滚动前后右侧间距保持 8px，展开工具条完整位于标题内部，新增字段占位、中文输入和 `Command + S` 正常。
+- [x] 用户在真实 Tauri 软件完成本轮必须级手动 E2E，并确认没有问题。
+- [x] 建立独立本地修复提交 `d15786e`；未自动 push。
+
+本批修改了正式 Notebook 运行时代码。**手动 E2E：已通过**；系统设置 PG1 已恢复。
+
+### Batch 5-2B：系统设置 PG1 代码与数据研究（已完成）
+
+- [x] 梳理 `loadSettings()` 的首次加载、每次进入刷新和旧全局生命周期。
+- [x] 梳理 Sidecar、测试沙箱、连接超时、备份、菜单、通知、GitLab、更新、Live2D、点击粒子和关于信息。
+- [x] 确认 SQLite、文件系统、localStorage、Tauri、WebSocket 和应用 Store 的数据所有权。
+- [x] 确认备份恢复、Sidecar 重启和本地应用更新的高风险副作用边界。
+- [x] 确认测试 Sidecar 进程接口只识别 `--test`、不识别 `DEVTOOLS_TEST=1` 的契约缺口。
+- [x] 确认 `settings.css` 混有弹窗、本地运行、部署、浏览器和全局表单规则，PG5 不可直接整文件删除。
+- [x] 将研究结论写入 `PRD/vue-migration/pages/settings/assessment.md`。
+
+本批只进行只读代码研究并更新文档。**手动 E2E：不需要**。
+
+### Batch 5-2C：系统设置 PG2 优化建议与 PG3 原型（已完成）
+
+- [x] 输出“保留 / 优化 / 删除或降级 / 新增”清单。
+- [x] 给出 L0 可靠等价迁移、L1 统一组件与轻量整理、L2 分类式系统控制台、L3 平台与安全增强方案。
+- [x] 推荐 L2，并建议制作亮色、暗色、1280 × 720 和 900 × 600 HTML 原型。
+- [x] 将 Keychain、扫描根目录配置、备份导入导出和更新回滚列为 L3 独立评审项，不随页面迁移静默加入。
+- [x] 用户在 PG3 确认 L2、制作 HTML 原型、菜单排序与键盘/按钮操作、实验功能默认关闭和紧凑关于分类。
+- [x] 生成 `design-preview/settings-l2.html`，覆盖六类导航、搜索、摘要、备份、菜单、通知、Git 活动、高级操作和关于。
+- [x] 内置浏览器完成 1280 × 720、900 × 600 的亮暗主题和六分类逐项检查，页面无横向溢出。
+- [x] 搜索跳转、备份展开、菜单下移、Git 未保存/保存状态和更新两段式对话框交互通过。
+- [x] 控制台没有新增 error 或 warning；临时截图与验证产物未写入仓库。
+- [x] 用户确认 HTML 原型整体效果，允许进入 PG4。
+- [x] 原型确认后才创建 `SettingsView.vue` 并进入正式实现，PG4 未提前删除旧页面。
+
+本批只形成设计和实施方案。**手动 E2E：不需要**；若确认制作 HTML 原型，原型阶段也不需要真实软件手动 E2E，PG4 正式 Vue 实现后为**必须**。
+
+### Batch 5-2D：系统设置 PG4 正式 Vue 实现（已完成）
+
+- [x] 新增 `SettingsView.vue`、分类面板、状态摘要、备份表格和更新任务弹窗，正式页面保持 PG3 确认的 L2 六分类结构。
+- [x] 新增 `settings-service.ts` 与 `useSettings.ts`，连接超时复用 `useSettingsStore`，主题复用 `useAppStore`，Git Token 只保留在页面局部表单和现有 SQLite。
+- [x] `report-service.ts` 增加共享保存方法，Notes 与 Settings 不复制第二套 Git 配置接口。
+- [x] 备份创建、恢复、取消恢复、删除、Sidecar 重启、通知、测试进程和更新任务分别维护操作状态。
+- [x] 接入 `#vue-settings-host`、`MigrationHost.vue` 和 KeepAlive；旧 `loadSettings()` 在 Vue owner 存在时不再双重请求。
+- [x] 增加菜单排序、实验功能、连接超时、Sidecar 重启和更新进度兼容事件，未迁移页面继续复用旧应用壳。
+- [x] 旧更新 WebSocket 监听在 Vue Settings owner 存在时只转发事件，不再同时打开旧更新弹窗。
+- [x] 修正测试 Sidecar 识别：同时支持 `--test` 与 `DEVTOOLS_TEST=1`，并要求 Node 可执行文件、Sidecar 路径和测试标记同时成立；正式 Sidecar 不会进入停止列表。
+- [x] `/api/health.dataDir` 在测试模式返回 `sidecar/data-test`，页面可以明确验证隔离数据目录。
+- [x] 公共 PageHeader、按钮、输入框、开关、分段选择、徽标、确认弹窗、进度条和状态组件均由项目二次封装组件提供。
+- [x] 新增 Settings service/composable 单元测试与 `tests/e2e/settings.spec.ts`；全量 71 项单元测试和 20 项 Playwright E2E 通过。
+- [x] TypeScript、ESLint、迁移与旧 CSS Stylelint、Design Token、Sidecar/旧脚本语法和前端生产构建通过。
+- [x] 内置浏览器连接 `DEVTOOLS_TEST=1`、13900、`data-test`，确认 1280 × 720 亮暗主题、六分类、搜索、测试 Sidecar 1 个进程和所有页面/工作区无横向溢出。
+- [x] 内置浏览器仅存在已登记的 CodeMirror `defineSimpleMode` 旧错误；没有 Settings 新增 error。
+- [x] 用户在真实 Tauri 软件确认除侧边栏拖拽外的 E2E 项目全部通过。
+- [x] 删除未改变顺序且不易使用的拖拽入口、专用状态与排序函数，只保留会持久化并同步左侧菜单的上移/下移按钮。
+- [x] 用户复测侧边栏上移/下移、左侧菜单同步和重新进入后的顺序保持并确认没有问题。
+- [x] 真实 Tauri 手动 E2E 全部通过，允许进入 PG5；PG5 开始前未提前删除 `src/js/settings.js`、旧设置 DOM 和混合 `src/css/pages/settings.css`。
+
+本批修改了正式系统设置运行时代码。**手动 E2E：必须，已通过**。
+
+### Batch 5-2E：系统设置 PG5 旧实现清理与回归（已完成）
+
+- [x] 删除 `src/js/settings.js`、旧设置 DOM、旧更新进度弹窗和 `frontend/index.html` 中的旧脚本/样式引用。
+- [x] 删除 `app.js` 中旧 `loadSettings()`、菜单排序、更新弹窗和设置页面进入回退逻辑；更新进度统一交给 Vue Settings。
+- [x] 将仍有其他旧页面消费者的共享样式拆至 `src/css/legacy-runtime.css`，删除 `src/css/pages/settings.css` 及全部设置专属旧选择器。
+- [x] 清理 `components.css`、`overrides.css` 中无消费者的旧设置规则，并更新旧 CSS 污染基线；无新增重复选择器错误。
+- [x] 将 Live2D、点击粒子偏好与全局监听迁入应用壳，保留原 localStorage key 和 Vue Settings 控制事件。
+- [x] E2E 增加旧 DOM、旧资源、旧全局函数不存在及点击粒子仍可控制的断言。
+- [x] TypeScript、ESLint、迁移 CSS Stylelint、旧 CSS 基线、Design Token、脚本语法、71 项单元测试、21 项全量 Playwright 和前端生产构建通过。
+- [x] 删除 Playwright 最后运行记录等临时验证产物；截图、trace 和报告未进入仓库。
+- [x] 用户执行清理后的简短真实 Tauri E2E：唯一新版设置、亮暗主题、六分类、箭头排序、点击粒子，以及首页/本地运行/部署面板共享 CSS 回归。
+- [x] 用户于 2026-07-29 确认没有问题，Phase 5-2 Gate 关闭；允许建立独立本地提交并进入 Phase 5-3。
+
+内置浏览器刷新 `13900` 隔离测试页面时受到浏览器安全策略阻止，未使用其他浏览器控制方式绕过。全量 Playwright 已覆盖页面和交互；用户已完成删除旧运行时代码和拆分共享 CSS 后的简短真实 Tauri 回归。**手动 E2E：必须，已通过**。
 
 ### 当前停止条件
 
@@ -2229,4 +2320,4 @@ PG4 基础迁移自动验收结果（2026-07-27）：
 - 如果发现现有 API 无法支持 Vue 页面，应先记录接口差距，再单独评审 Sidecar 变更。
 - 迁移期间所有临时兼容代码必须标记删除 Gate，不能无期限保留。
 
-当前执行停在 **Phase 5-1 个人笔记 `notebook` 的独立本地提交门禁**。L2 正式 Vue 页面、旧实现清理、全量自动回归和清理后 Tauri 手动 E2E 均已完成；建立独立本地提交前不进入 Phase 5-2。
+当前执行停在 **Phase 5-3 待办事项 PG0 现状取证入口**。Phase 5-2 系统设置已完成 PG0～PG5、旧实现与污染 CSS 清理、全部自动验证和清理后真实 Tauri E2E；建立独立本地提交后，按页面 Gate 流程研究待办事项现状，暂不直接进入 Vue 实现。

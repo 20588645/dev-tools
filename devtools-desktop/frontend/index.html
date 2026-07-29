@@ -26,7 +26,7 @@
 <link rel="stylesheet" href="css/pages/editor.css">
 <link rel="stylesheet" href="css/pages/twofa.css">
 <link rel="stylesheet" href="css/pages/usage.css">
-<link rel="stylesheet" href="css/pages/settings.css">
+<link rel="stylesheet" href="css/legacy-runtime.css">
 <link rel="stylesheet" href="css/pages/filetransfer.css">
 <link rel="stylesheet" href="css/overrides.css">
 <link rel="stylesheet" href="css/xterm.css">
@@ -684,233 +684,7 @@
 
 <!-- 设置 -->
 <section class="page" id="page-settings">
-  <div class="page-header-bar page-header-simple">
-    <div>
-      <div class="page-title">⚙️ 系统设置</div>
-      <div class="page-subtitle">全局配置与系统信息</div>
-    </div>
-  </div>
-
-  <div class="settings-content">
-    <!-- 通用 -->
-    <div class="settings-section">
-      <h3>通用</h3>
-      <div class="setting-item">
-        <div class="setting-info">
-          <div class="setting-label">Sidecar 状态</div>
-          <div class="setting-desc">Node.js 后端服务进程</div>
-        </div>
-        <div class="setting-control" style="display:flex;align-items:center;gap:10px">
-          <span class="setting-badge" id="settingSidecarStatus">检测中...</span>
-          <button class="btn-secondary" id="restartSidecarBtn" onclick="restartSidecar()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px" title="重启后端服务并自动重连">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-            <span>重启后端</span>
-          </button>
-        </div>
-      </div>
-      <div class="setting-item">
-        <div class="setting-info">
-          <div class="setting-label">测试沙箱进程</div>
-          <div class="setting-desc">开发测试用的独立后端（端口 13900+，独立数据库），与正式后端互不影响</div>
-        </div>
-        <div class="setting-control" style="display:flex;align-items:center;gap:10px">
-          <span class="setting-badge" id="settingTestSidecarStatus">检测中...</span>
-          <button class="btn-secondary" id="killTestSidecarBtn" onclick="killTestSidecars()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px" title="停止所有测试沙箱后端进程">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-            <span>停止测试服务</span>
-          </button>
-        </div>
-      </div>
-      <div class="setting-item">
-        <div class="setting-info">
-          <div class="setting-label">项目扫描目录</div>
-          <div class="setting-desc">部署面板扫描前端项目的根目录</div>
-        </div>
-        <div class="setting-control">
-          <span class="setting-value" id="settingScanDir">-</span>
-        </div>
-      </div>
-      <div class="setting-item">
-        <div class="setting-info">
-          <div class="setting-label">Node 版本</div>
-          <div class="setting-desc">当前系统使用的 Node.js 版本</div>
-        </div>
-        <div class="setting-control">
-          <span class="setting-value" id="settingNodeVersion">-</span>
-        </div>
-      </div>
-      <div class="setting-item">
-        <div class="setting-info">
-          <div class="setting-label">服务器连接超时</div>
-          <div class="setting-desc">测试连接 / 远程浏览 / 部署等 SSH 操作的连接超时（5–300 秒，默认 60）</div>
-        </div>
-        <div class="setting-control">
-          <input type="number" id="settingConnTimeout" min="5" max="300" step="5" onchange="saveConnTimeout(this)" style="width:72px;height:32px;text-align:center">
-          <span class="setting-value" style="margin-left:6px">秒</span>
-        </div>
-      </div>
-      <div class="setting-item">
-        <div class="setting-info">
-          <div class="setting-label">Live2D 看板娘</div>
-          <div class="setting-desc">在页面右下角显示 Live2D 看板娘（需联网加载）</div>
-        </div>
-        <div class="setting-control">
-          <label class="setting-switch">
-            <input type="checkbox" id="settingLive2dEnabled" onchange="toggleLive2d(this.checked)">
-            <span class="setting-switch-track"></span>
-          </label>
-        </div>
-      </div>
-      <div class="setting-item">
-        <div class="setting-info">
-          <div class="setting-label">点击粒子特效</div>
-          <div class="setting-desc">鼠标点击时在点击位置产生彩色粒子爆炸动画</div>
-        </div>
-        <div class="setting-control">
-          <label class="setting-switch">
-            <input type="checkbox" id="settingClickEffectEnabled" onchange="toggleClickEffect(this.checked)">
-            <span class="setting-switch-track"></span>
-          </label>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- 数据备份 -->
-    <div class="settings-section">
-      <h3>数据备份</h3>
-      <div class="setting-item">
-        <div class="setting-info">
-          <div class="setting-label">数据库自动备份</div>
-          <div class="setting-desc">每日自动备份一次，滚动保留最近 7 份；恢复需点击上方「重启后端」生效</div>
-        </div>
-        <div class="setting-control" style="display:flex;align-items:center;gap:10px">
-          <span class="setting-badge" id="settingBackupStatus">-</span>
-          <button class="btn-secondary" onclick="createDbBackup()" style="padding:6px 12px">💾 立即备份</button>
-        </div>
-      </div>
-      <div class="backup-list" id="backupList"></div>
-    </div>
-
-    <!-- 菜单排序 -->
-    <div class="settings-section">
-      <h3>菜单排序</h3>
-      <div class="setting-item" style="border-bottom:none;padding-bottom:8px">
-        <div class="setting-info">
-          <div class="setting-label">侧边栏菜单顺序</div>
-          <div class="setting-desc">使用箭头调整顺序，「应用首页」固定在最前，「系统设置」固定在最后</div>
-        </div>
-      </div>
-      <div class="menu-order-list" id="menuOrderList"></div>
-      <div class="settings-actions" style="margin-top:12px">
-        <button class="btn-secondary" onclick="resetMenuOrder()">↺ 恢复默认</button>
-      </div>
-    </div>
-
-    <!-- 通知 -->
-    <div class="settings-section">
-      <h3>通知</h3>
-      <div class="setting-item">
-        <div class="setting-info">
-          <div class="setting-label">系统通知</div>
-          <div class="setting-desc">构建、部署等任务完成或失败时发送 macOS 通知</div>
-        </div>
-        <div class="setting-control">
-          <label class="setting-switch">
-            <input type="checkbox" id="settingNotificationEnabled" onchange="toggleNotificationEnabled(this.checked)">
-            <span class="setting-switch-track"></span>
-          </label>
-          <span class="setting-badge" id="settingNotificationStatus">检测中...</span>
-        </div>
-      </div>
-      <div class="setting-item">
-        <div class="setting-info">
-          <div class="setting-label">测试通知</div>
-          <div class="setting-desc">发送一条测试通知，确认系统通知权限和展示效果</div>
-        </div>
-        <div class="setting-control">
-          <button class="btn-secondary" onclick="testDesktopNotification()">发送测试</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- GitLab 活动 -->
-    <div class="settings-section">
-      <h3>GitLab 活动配置</h3>
-      <div class="setting-item">
-        <div class="setting-info">
-          <div class="setting-label">Private Token</div>
-          <div class="setting-desc">用于访问 GitLab API 获取提交记录</div>
-        </div>
-        <div class="setting-control">
-          <input type="password" id="settingToken" class="setting-input" placeholder="输入 GitLab Token">
-        </div>
-      </div>
-      <div class="setting-item">
-        <div class="setting-info">
-          <div class="setting-label">默认作者</div>
-          <div class="setting-desc">查询提交活动时默认过滤的作者名</div>
-        </div>
-        <div class="setting-control">
-          <input type="text" id="settingAuthor" class="setting-input" placeholder="如 ledy">
-        </div>
-      </div>
-      <div class="setting-item" style="flex-direction:column;align-items:stretch;gap:12px">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div class="setting-info">
-            <div class="setting-label">仓库列表</div>
-            <div class="setting-desc">配置工时内容中需要查询的 GitLab 仓库</div>
-          </div>
-          <button class="btn-text" onclick="settingsAddRepo()">+ 添加仓库</button>
-        </div>
-        <div id="settingRepoList"></div>
-      </div>
-      <div class="settings-actions">
-        <button class="btn-primary" onclick="saveAllSettings()">💾 保存设置</button>
-      </div>
-    </div>
-
-    <!-- 应用更新 -->
-    <div class="settings-section">
-      <h3>应用更新</h3>
-      <div class="setting-item">
-        <div class="setting-info">
-          <div class="setting-label">重新打包并更新</div>
-          <div class="setting-desc">从 Git 拉取最新代码，重新打包安装并自动重启应用</div>
-        </div>
-        <div class="setting-control">
-          <button class="btn-primary" id="btnUpgrade" onclick="startUpgrade()">立即更新</button>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- 关于 -->
-    <div class="settings-section">
-      <h3>关于</h3>
-      <div class="setting-item">
-        <div class="setting-info">
-          <div class="setting-label">DevTools Desktop</div>
-          <div class="setting-desc">Tauri + Node.js Sidecar + SQLite</div>
-        </div>
-        <div class="setting-control">
-          <span class="setting-value" id="settingAbout">-</span>
-        </div>
-      </div>
-      <div class="setting-item">
-        <div class="setting-info">
-          <div class="setting-label">功能模块</div>
-          <div class="setting-desc">本地运行 · 部署面板 · 快捷命令 · 待办事项 · 工时内容 · 个人笔记</div>
-        </div>
-      </div>
-      <div class="setting-item">
-        <div class="setting-info">
-          <div class="setting-label">数据存储</div>
-          <div class="setting-desc">本地 SQLite 数据库，图片存储在 notebook-images 目录</div>
-        </div>
-      </div>
-    </div>
-  </div>
+  <div id="vue-settings-host" aria-live="polite"></div>
 </section>
 
 </main>
@@ -1577,24 +1351,6 @@
   </div>
 </div>
 
-<!-- 更新进度弹窗 -->
-<div class="modal-overlay" id="upgradeModal" style="z-index:9999">
-  <div class="modal" style="max-width:640px">
-    <div class="modal-header">
-      <div>
-        <h2>应用更新中</h2>
-        <p class="modal-subtitle">正在重新打包并安装，请勿关闭...</p>
-      </div>
-    </div>
-    <div class="modal-body" style="padding:16px 24px">
-      <div class="upgrade-progress-bar" id="upgradeProgressBar">
-        <div class="upgrade-progress-fill" id="upgradeProgressFill"></div>
-      </div>
-      <pre class="upgrade-log" id="upgradeLog"></pre>
-    </div>
-  </div>
-</div>
-
 <!-- 自定义系统弹窗 (替代 confirm / alert) -->
 <div class="sys-dialog-overlay" id="sysDialog">
   <div class="sys-dialog">
@@ -1619,7 +1375,6 @@
 <script src="js/xterm-addon-search.js"></script>
 <script src="js/xterm-addon-webgl.js"></script>
 <script src="js/terminal.js"></script>
-<script src="js/settings.js"></script>
 <script src="js/twofa.js"></script>
 <script src="js/vendor/echarts/echarts.min.js"></script>
 <script src="js/usage.js"></script>

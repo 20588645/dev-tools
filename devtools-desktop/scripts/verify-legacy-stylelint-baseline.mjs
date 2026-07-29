@@ -10,7 +10,7 @@ const maximumDuplicateSelectorErrors = new Map([
   ['src/css/overrides.css', 4],
   ['src/css/pages/deploy.css', 6],
   ['src/css/pages/run.css', 1],
-  ['src/css/pages/settings.css', 6],
+  ['src/css/legacy-runtime.css', 5],
 ])
 
 const stylelintBin = path.resolve('node_modules/.bin/stylelint')

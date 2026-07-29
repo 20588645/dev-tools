@@ -29,7 +29,85 @@ let APP_VERSION = '0.1.93';
 const LEGACY_PAGE_ACTIVATED_EVENT = 'devtools:legacy-page-activated';
 const LEGACY_PAGE_REQUESTED_EVENT = 'devtools:legacy-page-requested';
 const HOME_REFRESH_REQUESTED_EVENT = 'devtools:home-refresh-requested';
+const MENU_ORDER_CHANGED_EVENT = 'devtools:menu-order-changed';
+const EXPERIMENTAL_SETTING_CHANGED_EVENT = 'devtools:experimental-setting-changed';
+const SIDECAR_RESTARTED_EVENT = 'devtools:sidecar-restarted';
+const UPGRADE_PROGRESS_EVENT = 'devtools:upgrade-progress';
+const LIVE2D_ENABLED_KEY = 'devtools-live2d-enabled';
+const CLICK_EFFECT_ENABLED_KEY = 'devtools-click-effect-enabled';
 let vueNavigationBridgeBound = false;
+let clickEffectActive = false;
+
+function isLive2dEnabled() {
+  return localStorage.getItem(LIVE2D_ENABLED_KEY) === 'true';
+}
+
+function setLive2dEnabled(enabled) {
+  localStorage.setItem(LIVE2D_ENABLED_KEY, enabled ? 'true' : 'false');
+  const waifu = document.getElementById('waifu');
+  if (!enabled) {
+    if (waifu) waifu.style.display = 'none';
+    return;
+  }
+  if (waifu) {
+    waifu.style.display = '';
+    return;
+  }
+  if (document.getElementById('live2d-widget-script')) return;
+  const script = document.createElement('script');
+  script.id = 'live2d-widget-script';
+  script.src = 'https://fastly.jsdelivr.net/npm/live2d-widgets@1.0.0/dist/autoload.js';
+  script.onerror = () => {
+    console.warn('Live2D 看板娘加载失败，请检查网络连接');
+    showToast('⚠️ 看板娘加载失败', '请检查网络连接');
+  };
+  document.body.appendChild(script);
+}
+
+function handleClickParticle(event) {
+  const colors = [
+    'rgba(167, 139, 250, 0.9)',
+    'rgba(129, 140, 248, 0.9)',
+    'rgba(96, 165, 250, 0.85)',
+    'rgba(52, 211, 153, 0.85)',
+    'rgba(251, 191, 36, 0.85)',
+    'rgba(244, 114, 182, 0.9)',
+    'rgba(248, 113, 113, 0.85)',
+  ];
+  const particleCount = 7;
+  for (let index = 0; index < particleCount; index += 1) {
+    const particle = document.createElement('div');
+    const angle = (Math.PI * 2 * index) / particleCount + (Math.random() - 0.5) * 0.8;
+    const distance = 30 + Math.random() * 40;
+    const size = 4 + Math.random() * 4;
+    particle.className = 'click-particle';
+    particle.style.left = event.clientX + 'px';
+    particle.style.top = event.clientY + 'px';
+    particle.style.width = size + 'px';
+    particle.style.height = size + 'px';
+    particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+    particle.style.setProperty('--tx', Math.cos(angle) * distance + 'px');
+    particle.style.setProperty('--ty', Math.sin(angle) * distance + 'px');
+    document.body.appendChild(particle);
+    particle.addEventListener('animationend', () => particle.remove());
+  }
+}
+
+function setClickEffectEnabled(enabled) {
+  localStorage.setItem(CLICK_EFFECT_ENABLED_KEY, enabled ? 'true' : 'false');
+  if (enabled === clickEffectActive) return;
+  clickEffectActive = enabled;
+  document[enabled ? 'addEventListener' : 'removeEventListener']('click', handleClickParticle, true);
+}
+
+function restoreExperimentalPreferences() {
+  if (isLive2dEnabled()) {
+    setTimeout(() => setLive2dEnabled(true), 1500);
+  }
+  if (localStorage.getItem(CLICK_EFFECT_ENABLED_KEY) === 'true') {
+    setClickEffectEnabled(true);
+  }
+}
 
 function emitLegacyPageActivation(pageId, source = 'legacy') {
   window.dispatchEvent(new CustomEvent(LEGACY_PAGE_ACTIVATED_EVENT, {
@@ -45,6 +123,32 @@ function setupVueNavigationBridge() {
     if (!pageId || !document.getElementById('page-' + pageId)) return;
     const nav = document.querySelector(`.sidebar-item[data-page="${pageId}"], .dock-item[data-page="${pageId}"]`);
     switchPage(pageId, nav, 'vue');
+  });
+  window.addEventListener(MENU_ORDER_CHANGED_EVENT, () => {
+    renderSidebar();
+  });
+  window.addEventListener(EXPERIMENTAL_SETTING_CHANGED_EVENT, (event) => {
+    const { key, enabled } = event.detail || {};
+    if (key === 'live2d') setLive2dEnabled(Boolean(enabled));
+    if (key === 'click-effect') setClickEffectEnabled(Boolean(enabled));
+  });
+  window.addEventListener(SIDECAR_RESTARTED_EVENT, (event) => {
+    const port = Number(event.detail?.port);
+    if (!Number.isInteger(port) || port < 1 || port > 65535) return;
+    API_BASE = 'http://127.0.0.1:' + port;
+    clearTimeout(WS.reconnectTimer);
+    if (WS.socket) {
+      try {
+        WS.socket.onclose = null;
+        WS.socket.close();
+      } catch (e) {}
+    }
+    WS.reconnectAttempts = 0;
+    WS.connect(port);
+  });
+  window.addEventListener('devtools:connection-timeout-changed', (event) => {
+    const seconds = Number(event.detail?.seconds);
+    if (Number.isFinite(seconds)) connTimeoutSec = Math.min(Math.max(seconds, 5), 300);
   });
 }
 
@@ -270,6 +374,7 @@ function showPrompt(msg, opts = {}) {
 // ========== Init ==========
 document.addEventListener('DOMContentLoaded', async () => {
   initTheme();
+  restoreExperimentalPreferences();
   await initAPI();
   loadAppSettings();
   WS.connect();
@@ -524,8 +629,6 @@ function setupModalDismissal() {
   document.addEventListener('mousedown', (event) => {
     const overlay = event.target;
     if (overlay?.classList?.contains('modal-overlay') && overlay.classList.contains('active')) {
-      // 更新弹窗不可关闭（更新过程不可中断）
-      if (overlay.id === 'upgradeModal') return;
       closeModal(overlay.id);
       return;
     }
@@ -556,8 +659,6 @@ function setupModalDismissal() {
 
     const topModal = getTopActiveModal();
     if (topModal) {
-      // 更新弹窗不可通过 Escape 关闭
-      if (topModal.id === 'upgradeModal') return;
       event.preventDefault();
       event.stopPropagation();
       closeModal(topModal.id);
@@ -676,56 +777,7 @@ function setupWSHandlers() {
   });
 
   WS.on('upgrade-progress', (data) => {
-    const logEl = document.getElementById('upgradeLog');
-    const fill = document.getElementById('upgradeProgressFill');
-    const modal = document.getElementById('upgradeModal');
-    
-    if (modal && !modal.classList.contains('active')) {
-      modal.classList.add('active');
-    }
-
-    if (fill && data.percent !== undefined) {
-      fill.style.width = `${data.percent}%`;
-      if (data.event === 'Error') {
-        fill.style.background = 'var(--danger)';
-      } else {
-        fill.style.background = 'var(--accent)';
-      }
-    }
-
-    if (logEl && data.log) {
-      logEl.textContent += data.log;
-      logEl.scrollTop = logEl.scrollHeight;
-    }
-
-    if (data.event === 'Finished') {
-      // 退出旧 App 与打开新 App 已完全交由后端守护脚本负责（不依赖前端 IPC）。
-      // 这里仅更新 UI 提示；同时仍尝试调用 exit_app 作为冗余兜底（失败也不影响重启）。
-      const subtitle = modal ? modal.querySelector('.modal-subtitle') : null;
-      if (subtitle) subtitle.textContent = '更新完成，应用即将自动退出并重启...';
-      if (fill) {
-        fill.style.width = '100%';
-        fill.style.background = 'var(--success, #22c55e)';
-      }
-      setTimeout(() => {
-        const invoke = (typeof getTauriInvoke === 'function') ? getTauriInvoke() : null;
-        if (invoke) {
-          invoke('exit_app').catch((e) => {
-            console.error('退出应用失败（已由后端守护进程兜底重启）:', e);
-          });
-        }
-      }, 500);
-    }
-
-    if (data.event === 'Error') {
-      const subtitle = modal ? modal.querySelector('.modal-subtitle') : null;
-      if (subtitle) subtitle.textContent = '更新失败，请查看日志';
-      const btn = document.getElementById('btnUpgrade');
-      if (btn) {
-        btn.disabled = false;
-        btn.textContent = '立即更新';
-      }
-    }
+    window.dispatchEvent(new CustomEvent(UPGRADE_PROGRESS_EVENT, { detail: data }));
   });
 
   async function checkPortOccupancyForProject(projectName, port) {
@@ -870,10 +922,6 @@ function getMenuOrder() {
   return DEFAULT_MENU_ORDER;
 }
 
-function saveMenuOrder(order) {
-  localStorage.setItem(MENU_ORDER_KEY, JSON.stringify(order));
-}
-
 function getSortedMenuItems() {
   const order = getMenuOrder();
   const first = SIDEBAR_MENU_ITEMS.find(m => m.fixed === 'first');
@@ -892,46 +940,6 @@ function renderSidebar() {
     const isUpdateDot = '';
     return `<button class="sidebar-item${isActive}" data-page="${item.page}" onclick="switchPage('${item.page}', this)"><span class="nav-icon">${item.icon}</span><span>${item.label}</span>${isUpdateDot}</button>`;
   }).join('');
-}
-
-function renderMenuOrderSettings() {
-  const container = document.getElementById('menuOrderList');
-  if (!container) return;
-  const order = getMenuOrder();
-  container.innerHTML = order.map((page, idx) => {
-    const item = SIDEBAR_MENU_ITEMS.find(m => m.page === page);
-    if (!item) return '';
-    const isFirst = idx === 0;
-    const isLast = idx === order.length - 1;
-    return `<div class="menu-order-item" data-page="${page}">
-      <span class="menu-order-icon">${item.icon}</span>
-      <span class="menu-order-label">${item.label}</span>
-      <span class="menu-order-actions">
-        <button class="menu-order-btn" ${isFirst ? 'disabled' : ''} onclick="moveMenuItem('${page}','up')" title="上移">↑</button>
-        <button class="menu-order-btn" ${isLast ? 'disabled' : ''} onclick="moveMenuItem('${page}','down')" title="下移">↓</button>
-      </span>
-    </div>`;
-  }).join('');
-}
-
-function moveMenuItem(page, direction) {
-  const order = getMenuOrder();
-  const idx = order.indexOf(page);
-  if (idx === -1) return;
-  if (direction === 'up' && idx > 0) {
-    [order[idx - 1], order[idx]] = [order[idx], order[idx - 1]];
-  } else if (direction === 'down' && idx < order.length - 1) {
-    [order[idx], order[idx + 1]] = [order[idx + 1], order[idx]];
-  }
-  saveMenuOrder(order);
-  renderSidebar();
-  renderMenuOrderSettings();
-}
-
-function resetMenuOrder() {
-  localStorage.removeItem(MENU_ORDER_KEY);
-  renderSidebar();
-  renderMenuOrderSettings();
 }
 
 // ========== 公共页面顶部组件（吸附式） ==========
@@ -1056,7 +1064,6 @@ function switchPage(page, el, source = 'legacy') {
     loadRunStatuses().then(() => renderRunPage());
     startRunPagePolling();
   }
-  if (page === 'settings') loadSettings();
   if (page === 'todo') loadTodos();
   if (page === 'editor') initEditor();
   if (page === 'terminal') loadCommands();

@@ -24,9 +24,28 @@ export interface LegacyPageActivationDetail {
 export const LEGACY_PAGE_ACTIVATED_EVENT = 'devtools:legacy-page-activated'
 export const LEGACY_PAGE_REQUESTED_EVENT = 'devtools:legacy-page-requested'
 export const HOME_REFRESH_REQUESTED_EVENT = 'devtools:home-refresh-requested'
+export const MENU_ORDER_CHANGED_EVENT = 'devtools:menu-order-changed'
+export const EXPERIMENTAL_SETTING_CHANGED_EVENT = 'devtools:experimental-setting-changed'
+export const SIDECAR_RESTARTED_EVENT = 'devtools:sidecar-restarted'
+export const UPGRADE_PROGRESS_EVENT = 'devtools:upgrade-progress'
 
 export interface HomeRefreshRequestDetail {
   reason: 'activation' | 'runtime-change' | 'manual'
+}
+
+export interface SidecarRestartedDetail {
+  port: number
+}
+
+export interface ExperimentalSettingChangedDetail {
+  key: 'live2d' | 'click-effect'
+  enabled: boolean
+}
+
+export interface UpgradeProgressDetail {
+  event?: 'Started' | 'Progress' | 'Finished' | 'Error' | string
+  percent?: number
+  log?: string
 }
 
 export function isLegacyPageId(value: unknown): value is LegacyPageId {

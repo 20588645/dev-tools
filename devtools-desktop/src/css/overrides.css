@@ -7,8 +7,7 @@
 .home-quick-card,
 .project-card,
 .server-list,
-.history-table,
-.settings-section {
+.history-table {
   background: var(--bg-card) !important;
   border: 1px solid var(--border) !important;
   border-radius: 8px !important;
@@ -95,26 +94,8 @@ input[type="number"] {
   padding: 1px 5px;
 }
 
-.setting-repo-row input {
-  padding: 5px 8px;
-  background: var(--bg-input);
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  font-size: 11px;
-  outline: none;
-  width: 100% !important;
-  min-width: 0;
-}
-
 .project-card { /* 保留：与穿插规则存在层叠依赖 */
   border-radius: 7px !important;
-}
-
-.settings-section {
-  padding: 0 !important;
-  overflow: hidden;
-  border-radius: 7px !important;
-  margin-bottom: 12px;
 }
 
 .stat-card,
@@ -122,16 +103,14 @@ input[type="number"] {
 .home-activity-card,
 .server-list,
 .history-table,
-.history-stats,
-.settings-section {
+.history-stats {
   border: 1px solid var(--border-color) !important;
   background: var(--bg-card) !important;
   border-radius: var(--mac-radius) !important;
 }
 
 .home-card-title,
-.section-title,
-.settings-section h3 {
+.section-title {
   font-size: 12px !important;
 }
 
@@ -182,7 +161,6 @@ input[type="number"]:not([class^="n-"]):not([class*=" n-"]),
 input[type="date"]:not([class^="n-"]):not([class*=" n-"]),
 select,
 textarea:not([class^="n-"]):not([class*=" n-"]),
-.setting-input,
 .form-input {
   min-height: 27px !important;
   padding: 0 9px !important;
@@ -223,11 +201,6 @@ select {
   color: var(--text-muted) !important;
   font-size: 10px !important;
   font-weight: 650 !important;
-}
-
-.setting-repo-row {
-  border-radius: 6px !important;
-  border-color: var(--border-color) !important;
 }
 
 .run-card-meta span {
@@ -349,7 +322,6 @@ select {
 .project-card,
 .server-list,
 .history-table,
-.settings-section,
 .modal {
   background: var(--bg-card) !important;
   border: 1px solid var(--border) !important;
@@ -426,7 +398,6 @@ select {
 input:not([class^="n-"]):not([class*=" n-"]),
 select,
 textarea:not([class^="n-"]):not([class*=" n-"]),
-.setting-input,
 .form-input,
 .search-bar {
   min-height: 26px !important;
@@ -448,8 +419,7 @@ textarea:not([class^="n-"]):not([class*=" n-"]),
 .card-status,
 .card-last-deploy,
 .server-host,
-.history-row,
-.setting-desc { font-size: 10px !important; color: var(--text-muted) !important; }
+.history-row { font-size: 10px !important; color: var(--text-muted) !important; }
 
 .card-badge,
 .badge-tool,
@@ -487,7 +457,7 @@ textarea:not([class^="n-"]):not([class*=" n-"]),
 }
 
 .history-row {
-  /* B3b：height/padding/min-height 为 .history-row 唯一 setter，去 important 靠源序仍生效，0 回归。font-size 保留 important——需压制上方 .history-row 混合组(.setting-desc 等)的 10px important，去则被覆为 10px */
+  /* B3b：height/padding/min-height 为 .history-row 唯一 setter，去 important 靠源序仍生效，0 回归。 */
   transition: background 0.1s;
   height: auto;
   padding: 0 10px;
@@ -503,15 +473,6 @@ textarea:not([class^="n-"]):not([class*=" n-"]),
   border: 1px solid var(--border) !important;
   border-radius: 8px !important;
   background: var(--bg-card) !important;
-}
-
-.settings-section h3 {
-  min-height: 36px !important;
-  padding: 10px 12px !important;
-  font-size: 11px !important;
-  font-weight: 700 !important;
-  color: var(--text-primary) !important;
-  border-bottom: 1px solid var(--border) !important;
 }
 
 .modal {
@@ -580,7 +541,6 @@ textarea:not([class^="n-"]):not([class*=" n-"]),
 
 /* --- 3. 统一卡片圆角为 8px --- */
 .home-section-card,
-.settings-section,
 .project-card,
 .server-card,
 .server-list,
@@ -602,7 +562,6 @@ textarea:not([class^="n-"]):not([class*=" n-"]),
 
 /* --- 8. 统一 section title 字号 --- */
 .home-card-title,
-.settings-section h3,
 .todo-column-header span,
 .cmd-output-header,
 .section-title {

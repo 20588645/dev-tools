@@ -6,6 +6,7 @@ import {
   getReportConfig,
   normalizeGenerateReportResult,
   normalizeReportConfig,
+  saveReportConfig,
 } from './report-service'
 
 vi.mock('@/services/api-client', () => ({
@@ -96,5 +97,23 @@ describe('report service', () => {
       repos: config.repos,
     }, 180_000)
     expect(generated.markdown).toBe('# Git 仓库周报')
+  })
+
+  it('saves normalized report config through the shared service', async () => {
+    vi.mocked(apiClient.post).mockResolvedValue({ ok: true })
+
+    await saveReportConfig({
+      token: 'token',
+      author: 'Ledy',
+      outputDir: '',
+      repos: [{ repo: 'https://gitlab.example/devtools.git', branch: 'main', group: 'desktop' }],
+    })
+
+    expect(apiClient.post).toHaveBeenCalledWith('/api/report/config', {
+      token: 'token',
+      author: 'Ledy',
+      outputDir: '',
+      repos: [{ repo: 'https://gitlab.example/devtools.git', branch: 'main', group: 'desktop' }],
+    })
   })
 })

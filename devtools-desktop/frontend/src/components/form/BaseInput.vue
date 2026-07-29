@@ -6,6 +6,7 @@ const props = withDefaults(defineProps<{
   modelValue?: string | number
   id?: string
   label?: string
+  ariaLabel?: string
   type?: 'text' | 'search' | 'email' | 'url' | 'number' | 'password'
   placeholder?: string
   helpText?: string
@@ -15,7 +16,7 @@ const props = withDefaults(defineProps<{
   required?: boolean
   autocomplete?: string
 }>(), {
-  modelValue: '', id: undefined, label: undefined, type: 'text', placeholder: undefined,
+  modelValue: '', id: undefined, label: undefined, ariaLabel: undefined, type: 'text', placeholder: undefined,
   helpText: undefined, error: undefined, disabled: false, readonly: false, required: false,
   autocomplete: undefined,
 })
@@ -52,6 +53,7 @@ const inputType = computed<'text' | 'password'>(() => props.type === 'password' 
         id: inputId,
         type: props.type,
         autocomplete,
+        'aria-label': ariaLabel,
         'aria-labelledby': label ? labelId : undefined,
       }"
       @update:value="emit('update:modelValue', $event)"

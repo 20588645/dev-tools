@@ -141,6 +141,10 @@ export async function getReportConfig(): Promise<ReportConfig> {
   return normalizeReportConfig(value)
 }
 
+export async function saveReportConfig(config: ReportConfig): Promise<void> {
+  await apiClient.post('/api/report/config', normalizeReportConfig(config))
+}
+
 export async function generateGitActivity(input: GenerateReportInput): Promise<GenerateReportResult> {
   const value = await apiClient.post<GenerateReportResponseRaw>('/api/report/generate', input, REPORT_TIMEOUT)
   return normalizeGenerateReportResult(value)

@@ -1,4 +1,4 @@
-/* ===== pages/settings：页面专属样式（批次5 拆分自 style.css，规则保持原始相对顺序） ===== */
+/* ===== legacy-runtime：迁移期仍被旧页面、弹窗与全局实验效果使用的共享规则 ===== */
 
 .modal-header h2 { font-size: 16px; font-weight: 700; }
 
@@ -21,103 +21,6 @@
 .sys-dialog-overlay.active { display: flex; }
 
 .sys-dialog-btns { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
-
-/* ========== 设置页 ========== */
-.settings-section { /* 保留：与穿插规则存在层叠依赖 */
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-}
-
-.setting-item:last-child { border-bottom: none; }
-
-.setting-info { flex: 1; }
-
-.setting-input { /* 保留：与穿插规则存在层叠依赖 */
-  border: 1px solid var(--border);
-}
-
-.setting-input:focus { border-color: var(--accent); }
-
-.setting-value {
-  font-size: 11px;
-  color: var(--text-muted);
-  padding: 4px 10px;
-  background: var(--bg-input);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-}
-
-.setting-badge {
-  font-size: 11px;
-  padding: 3px 10px;
-  border-radius: 8px;
-  font-weight: 600;
-}
-
-.setting-badge.online { color: var(--success); background: var(--success-subtle); }
-
-.setting-badge.offline { color: var(--danger); background: var(--danger-subtle); }
-
-/* Settings Repo List */
-.setting-repo-row input { /* 保留：与穿插规则存在层叠依赖 */
-  border: 1px solid var(--border);
-}
-
-.setting-repo-row input:focus { border-color: var(--accent); }
-
-.setting-repo-row input.repo-url { flex: 3; }
-
-.setting-repo-row input.repo-branch { flex: 1; }
-
-.setting-repo-row input.repo-group { flex: 1; }
-
-.setting-repo-row button {
-  width: 24px;
-  height: 24px;
-  border: none;
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-  border-radius: var(--radius-xs);
-  font-size: 13px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.setting-repo-row button:hover { background: var(--danger-subtle); color: var(--danger); }
-
-/* Settings Upgrade Log */
-.upgrade-log {
-  background: var(--bg-input);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 12px 14px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  line-height: 1.6;
-  color: var(--text-secondary);
-  max-height: 320px;
-  overflow-y: auto;
-  white-space: pre-wrap;
-  word-break: break-all;
-}
-
-.upgrade-progress-bar {
-  height: 4px;
-  background: var(--bg-input);
-  border-radius: 2px;
-  margin-bottom: 12px;
-  overflow: hidden;
-}
-
-.upgrade-progress-fill {
-  height: 100%;
-  width: 0%;
-  background: linear-gradient(90deg, var(--primary), var(--accent));
-  border-radius: 2px;
-  transition: width 0.5s ease;
-}
 
 /* Quick Actions (right column - separate cards) */
 /* ========== 弹窗内模块网格 & 表单优化 ========== */
@@ -211,31 +114,6 @@
   border-color: var(--primary);
   outline: none;
   box-shadow: 0 0 0 3px var(--primary-light);
-}
-
-.settings-section h3 {
-  font-weight: 600;
-  margin-bottom: 14px;
-  padding-bottom: 10px;
-  font-size: 12px !important;
-  color: var(--text-primary) !important;
-  border-bottom: 1px solid var(--border);
-  margin: 0 !important;
-  padding: 11px 14px !important;
-  background: var(--bg-input);
-}
-
-.setting-desc {
-  color: var(--text-muted);
-  margin-top: 2px;
-  font-size: 10px !important;
-}
-
-.setting-value,
-.setting-badge {
-  border: 1px solid var(--border);
-  border-radius: 6px !important;
-  background: var(--bg-input);
 }
 
 .modal-overlay,
@@ -439,32 +317,6 @@
 .sys-dialog-btns .btn {
   flex: 1;
   min-width: 90px;
-}
-
-.setting-control {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-
-.setting-input {
-  background: var(--bg-input);
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  font-size: 12px;
-  padding: 6px 10px;
-  outline: none;
-  transition: border-color 0.15s;
-  width: min(320px, 38vw) !important;
-}
-
-.setting-repo-row {
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 6px;
-  display: grid !important;
-  grid-template-columns: minmax(180px, 2fr) minmax(110px, 1fr) minmax(110px, 1fr) 26px;
 }
 
 .form-group label {
@@ -880,53 +732,6 @@ body[data-theme="dark"] #logModal .log-terminal {
 
 }
 
-/* ========== Notification Settings ========== */
-.setting-switch {
-  position: relative;
-  width: 38px;
-  height: 22px;
-  display: inline-flex;
-  align-items: center;
-  cursor: pointer;
-}
-
-.setting-switch input {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.setting-switch-track {
-  width: 38px;
-  height: 22px;
-  border-radius: 999px;
-  background: var(--border-strong);
-  border: 1px solid var(--border);
-  transition: background 0.16s ease, border-color 0.16s ease;
-}
-
-.setting-switch-track::after {
-  content: "";
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--bg-elevated);
-  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.22);
-  transition: transform 0.16s ease;
-}
-
-.setting-switch input:checked + .setting-switch-track {
-  background: var(--primary);
-  border-color: var(--primary);
-}
-
-.setting-switch input:checked + .setting-switch-track::after {
-  transform: translateX(16px);
-}
-
 /* ========== Project Intro Modal ========== */
 .modal-intro {
   width: min(720px, calc(100vw - 48px)) !important;
@@ -1071,20 +876,6 @@ body[data-theme="dark"] #logModal .log-terminal {
 
 }
 
-.settings-actions {
-  margin: 0 !important;
-  padding: 14px 16px !important;
-  border-top: 1px solid var(--border) !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: flex-start !important;
-  background: color-mix(in srgb, var(--bg-elevated) 54%, transparent) !important;
-}
-
-.settings-actions .btn-primary {
-  min-width: 112px !important;
-}
-
 .modal-overlay {
   display: none;
   align-items: center;
@@ -1135,26 +926,6 @@ body[data-theme="dark"] #logModal .log-terminal {
     grid-template-columns: minmax(0, 1fr) !important;
   }
 
-}
-
-.settings-content {
-  padding-bottom: 18px !important;
-  max-width: none !important;
-}
-
-.setting-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 12px !important;
-  border-bottom: 1px solid var(--border) !important;
-  min-height: 44px !important;
-}
-
-.setting-label {
-  font-weight: 650 !important;
-  font-size: 11px !important;
-  color: var(--text-primary) !important;
 }
 
 .modal-overlay.active {
@@ -1322,24 +1093,6 @@ body[data-theme="dark"] #logModal .log-terminal {
   animation: clickParticleBurst 0.6s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
 }
 
-/* 9. 设置 */
-#page-settings.active {
-  display: flex !important;
-  flex-direction: column !important;
-  overflow: hidden !important;
-  height: 100% !important;
-}
-
-#page-settings > .page-header-bar {
-  flex-shrink: 0 !important;
-}
-
-#page-settings > .settings-content {
-  flex: 1 !important;
-  overflow-y: auto !important;
-  min-height: 0 !important;
-}
-
 /* ========== UI 优化：动画与视觉增强 ========== */
 /* --- 弹窗入场动画 --- */
 .modal-overlay.active .modal {
@@ -1350,29 +1103,3 @@ body[data-theme="dark"] #logModal .log-terminal {
 .sys-dialog-overlay.active .sys-dialog {
   animation: dialogIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
-
-/* 设置页 - 数据备份列表 */
-.backup-list { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
-
-.backup-row {
-  display: flex; align-items: center; gap: 12px;
-  padding: 8px 12px; border-radius: var(--radius-sm);
-  background: var(--bg-input); font-size: .82rem;
-}
-
-.backup-name {
-  font-family: var(--font-mono); color: var(--text-primary);
-  flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-
-.backup-meta { color: var(--text-muted); white-space: nowrap; font-size: .76rem; }
-
-.backup-actions { display: flex; gap: 6px; }
-
-.backup-btn { padding: 3px 10px; font-size: .76rem; }
-
-.backup-btn-danger { color: var(--danger); }
-
-.backup-pending { background: var(--warning-subtle); color: var(--warning); }
-
-.backup-pending a { color: var(--warning); text-decoration: underline; }
