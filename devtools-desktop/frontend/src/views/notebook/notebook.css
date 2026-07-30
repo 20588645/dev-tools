@@ -607,10 +607,13 @@
   cursor: text;
 }
 
+/*
+  定位相对 .notebook-rich-editor（非可编辑外层），top/right 由脚本按标题单元格实测写入内联样式。
+  不能再挂进 th[data-credential-project]：contenteditable="false" 的子节点
+  会让整个标题单元格在 WebKit 下无法编辑。
+*/
 .notebook-credential-toolbar {
   position: absolute;
-  top: 50%;
-  right: 8px;
   z-index: 4;
   display: flex;
   align-items: center;
@@ -620,7 +623,6 @@
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-lg);
-  transform: translateY(-50%);
   backdrop-filter: blur(12px);
 }
 

@@ -273,17 +273,29 @@ test('cleans pasted HTML and supports editable credential tables with copy feedb
   await expect(toolbar).toBeVisible()
   await expect(page.getByRole('button', { name: '完成', exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: '编辑', exact: true })).toHaveCount(0)
+  // 工具栏必须留在非可编辑外层容器里，绝不能挂进标题单元格：
+  // contenteditable="false" 的子节点会让整个 th 在 WebKit 下无法编辑，
+  // 表现为凭据卡片标题不能修改文字（字段名与值单元格无此子节点，故不受影响）。
   expect(await toolbar.evaluate((element) => ({
     insideProjectHeader: element.parentElement?.matches('th[data-credential-project]') ?? false,
-    insideSameTable: element.closest('table')?.matches('table[data-notebook-block="credential"]') ?? false,
-    inlineLeft: (element as HTMLElement).style.left,
-    inlineTop: (element as HTMLElement).style.top,
+    insideEditableContent: Boolean(element.closest('[contenteditable="true"]')),
+    inShell: element.parentElement?.matches('.notebook-rich-editor') ?? false,
+    positionedInline: Boolean((element as HTMLElement).style.top),
   }))).toEqual({
-    insideProjectHeader: true,
-    insideSameTable: true,
-    inlineLeft: '',
-    inlineTop: '',
+    insideProjectHeader: false,
+    insideEditableContent: false,
+    inShell: true,
+    positionedInline: true,
   })
+  // 标题单元格内不得残留任何元素节点，否则又会退回不可编辑
+  expect(await table.locator('th[data-credential-project]').evaluate(
+    (cell) => cell.querySelectorAll('*').length,
+  )).toBe(0)
+  // 实质断言：标题必须真的能写入文字
+  const projectTitle = table.locator('th[data-credential-project]')
+  await projectTitle.click()
+  await page.keyboard.type('示例项目')
+  await expect(projectTitle).toHaveText('示例项目')
   await page.getByRole('button', { name: '新增字段', exact: true }).click()
   await page.getByRole('button', { name: '新增记录', exact: true }).click()
   await expect(table.locator('th[data-credential-field]')).toHaveCount(3)

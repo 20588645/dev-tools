@@ -28,15 +28,17 @@ const emit = defineEmits<{
 
 const notifications = useNotificationStore()
 const editor = ref<HTMLElement | null>(null)
+const editorShell = ref<HTMLElement | null>(null)
 const activeTable = ref<HTMLTableElement | null>(null)
 const activeRow = ref<HTMLTableRowElement | null>(null)
 const activeColumn = ref(0)
 type CredentialControl = {
   table: HTMLTableElement
-  target: HTMLTableCellElement
   key: number
   index: number
   editing: boolean
+  /** 相对编辑器外层容器的绝对定位，避免把工具栏塞进可编辑单元格 */
+  style: { top: string; right: string }
 }
 const credentialControls = shallowRef<CredentialControl[]>([])
 const credentialControlKeys = new WeakMap<HTMLTableElement, number>()
@@ -450,20 +452,30 @@ function refreshCredentialControls() {
   credentialControls.value = Array.from(
     root.querySelectorAll<HTMLTableElement>('table[data-notebook-block="credential"]'),
   ).flatMap((table, index) => {
-    const target = table.querySelector<HTMLTableCellElement>('th[data-credential-project]')
-    if (!target) return []
+    const projectCell = table.querySelector<HTMLTableCellElement>('th[data-credential-project]')
+    const shell = editorShell.value
+    if (!projectCell || !shell) return []
     let key = credentialControlKeys.get(table)
     if (!key) {
       credentialControlKey += 1
       key = credentialControlKey
       credentialControlKeys.set(table, key)
     }
+    // 工具栏贴在标题行右上角。getBoundingClientRect 已含滚动偏移，
+    // 与同样是视口坐标的 shellRect 相减即可，不要再叠加 scrollTop。
+    const cellRect = projectCell.getBoundingClientRect()
+    const shellRect = shell.getBoundingClientRect()
     return [{
       table,
-      target,
       key,
       index,
       editing: table.dataset.editing === 'true',
+      style: {
+        top: `${Math.round(cellRect.top - shellRect.top + 4)}px`,
+        // 表格可能比容器宽（横向滚动），此时 cellRect.right 会超出容器右界导致负值，
+        // 钳到 8px 保证工具栏始终留在可视区内
+        right: `${Math.max(8, Math.round(shellRect.right - cellRect.right + 8))}px`,
+      },
     }]
   })
 }
@@ -887,15 +899,27 @@ watch(() => [props.noteId, props.modelValue] as const, ([, value]) => {
   void nextTick(() => applyModelValue(value))
 }, { immediate: true })
 
+// 工具栏改为绝对定位后，内容滚动或容器变宽都会让坐标失效，需要重算
+const scheduleCredentialControlSync = () => { void nextTick(refreshCredentialControls) }
+let shellResizeObserver: ResizeObserver | null = null
+
 onMounted(() => {
   document.addEventListener('pointerdown', captureSelectionBeforeFocusLeaves, true)
   document.addEventListener('selectionchange', handleDocumentSelectionChange)
+  editor.value?.addEventListener('scroll', scheduleCredentialControlSync, { passive: true })
+  if (editorShell.value && typeof ResizeObserver !== 'undefined') {
+    shellResizeObserver = new ResizeObserver(scheduleCredentialControlSync)
+    shellResizeObserver.observe(editorShell.value)
+  }
   void nextTick(refreshCredentialControls)
 })
 
 onBeforeUnmount(() => {
   document.removeEventListener('pointerdown', captureSelectionBeforeFocusLeaves, true)
   document.removeEventListener('selectionchange', handleDocumentSelectionChange)
+  editor.value?.removeEventListener('scroll', scheduleCredentialControlSync)
+  shellResizeObserver?.disconnect()
+  shellResizeObserver = null
   savedSelection = null
   if (selectionGuardTimer) globalThis.clearTimeout(selectionGuardTimer)
   if (copyTimer) globalThis.clearTimeout(copyTimer)
@@ -914,7 +938,7 @@ defineExpose({
 </script>
 
 <template>
-  <div class="notebook-rich-editor">
+  <div ref="editorShell" class="notebook-rich-editor">
     <article
       ref="editor"
       class="notebook-rich-editor__content"
@@ -932,22 +956,25 @@ defineExpose({
       @focusout="handleFocusOut"
       @keydown="handleKeydown"
     />
-    <Teleport
+    <!--
+      工具栏不能放进 th[data-credential-project]：
+      contenteditable="false" 的子节点会让整个标题单元格在 WebKit 下失去可编辑性
+      （字段名与值单元格没有该子节点，所以只有标题受影响）。
+      改为渲染在非可编辑的外层容器里，按表格位置绝对定位到卡片右上角。
+    -->
+    <div
       v-for="control in credentialControls"
       :key="control.key"
-      :to="control.target"
+      class="notebook-credential-toolbar"
+      :class="{ 'is-editing': control.editing }"
+      :style="control.style"
+      :data-credential-control-index="control.index"
+      data-credential-runtime-controls
+      role="toolbar"
+      :aria-label="`凭据信息表 ${control.index + 1} 操作`"
+      @pointerdown.prevent.stop
+      @click.stop
     >
-      <div
-        class="notebook-credential-toolbar"
-        :class="{ 'is-editing': control.editing }"
-        :data-credential-control-index="control.index"
-        data-credential-runtime-controls
-        contenteditable="false"
-        role="toolbar"
-        :aria-label="`凭据信息表 ${control.index + 1} 操作`"
-        @pointerdown.prevent.stop
-        @click.stop
-      >
         <BaseButton
           v-if="control.editing"
           variant="ghost"
@@ -1000,8 +1027,7 @@ defineExpose({
             <path d="M12 20h9" />
             <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
           </svg>
-        </BaseButton>
-      </div>
-    </Teleport>
+      </BaseButton>
+    </div>
   </div>
 </template>
