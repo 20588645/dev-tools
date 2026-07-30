@@ -1,12 +1,12 @@
 # DevTools Desktop Vue 3 架构渐进重构执行计划
 
-> 文档版本：1.44
-> 状态：执行中（Phase 5-4 用量统计 PG5 自动清理完成；等待清理后真实 Tauri 简短回归）
+> 文档版本：1.45
+> 状态：执行中（Phase 5-5 双因验证 PG5 自动清理完成；等待清理后真实 Tauri 简短回归）
 > 编制日期：2026-07-21  
 > 最近更新：2026-07-30
 > 适用仓库：`devtools-desktop`  
 > 核心原则：保持软件持续可运行，按页面逐步替换，不进行一次性推倒重写。
-> 当前执行指针：Phase 5-4 用量统计 `usage` 已完成 PG3～PG4、两轮增补优化与 PG5 旧实现清理，自动验证与内置浏览器复检均通过。下一步由用户做一次清理后简短真实 Tauri 回归；确认后 Phase 5-4 关闭，才开始 Phase 5-5。
+> 当前执行指针：Phase 5-4 用量统计 `usage` 已全部关闭并提交（`816caa6`）。Phase 5-5 双因验证 `twofa` 已完成 PG0～PG4、两轮增补优化与 PG5 旧实现清理，手动 E2E 均已通过。下一步由用户做一次清理后简短真实 Tauri 回归；确认后 Phase 5-5 关闭，才开始 Phase 6-1 本地运行。
 
 ---
 
@@ -512,7 +512,7 @@ L3 中纯前端且低风险的改动可以与页面 Vue 实现处于同一页面
 | 5 | Phase 5-2 | 系统设置 `settings` | **PG0～PG5 已完成** | 已完成 | 自动验证、清理后 Tauri E2E 与独立本地提交 |
 | 6 | Phase 5-3 | 待办事项 `todo` | **已完成** | PG0～PG5、手动 E2E 与旧实现清理完成 | timer、通知、分组和重复提醒检查通过 |
 | 7 | Phase 5-4 | 用量统计 `usage` | **PG5 自动清理完成** | 执行清理后简短真实 Tauri 回归 | ECharts、价格、异常数据和资源销毁通过 |
-| 8 | Phase 5-5 | 2FA 验证码 `twofa` | 等待 | 完成 `usage` 后开始 PG0 | Secret、倒计时、导入导出安全专项通过 |
+| 8 | Phase 5-5 | 双因验证 `twofa` | **PG5 自动清理完成** | 执行清理后简短真实 Tauri 回归 | Secret、倒计时、导入与快捷查询安全专项通过 |
 | 9 | Phase 6-1 | 本地运行 `run` | 等待 | Phase 5 完成后开始 PG0 | 进程、轮询、WebSocket 和后台状态通过 |
 | 10 | Phase 6-2 | 部署面板 `deploy` | 等待 | 完成 `run` 后开始 PG0 | SSH、构建、部署任务和日志链路通过 |
 | 11 | Phase 6-3 | 文件传输 `filetransfer` | 等待 | 完成 `deploy` 后开始 PG0 | SFTP 会话、队列、重连和 keepalive 通过 |
@@ -1323,7 +1323,7 @@ frontend/src/services/modules/ipcheck-service.ts
 | 6 | 系统设置 | `views/settings/`、`settings-service.ts`、`legacy-runtime.css` | 中高 | 全局配置、Sidecar、菜单设置 | Phase 5-2 | **PG0～PG5 已完成** | 保持回归，不重复迁移 |
 | 7 | 待办事项 | `todo.js`、`todo.css` | 高 | timer、通知、分组 | Phase 5-3 | **已完成并删除旧实现** | Vue 页面、自动验收和手动 E2E 通过 |
 | 8 | 用量统计 | `views/usage/`、`usage-service.ts`；旧 `usage.js`、`usage.css`、ECharts vendor 已删除 | 高 | 扫描、价格、Canvas 生命周期 | Phase 5-4 | **PG5 自动清理完成** | 清理后简短 Tauri 回归 |
-| 9 | 2FA 验证码 | `twofa.js`、`twofa.css` | 高 | Secret、timer、导入导出 | Phase 5-5 | 等待 | `usage` 提交后开始 PG0 |
+| 9 | 双因验证 | `views/twofa/`、`twofa-service.ts`；旧 `twofa.js`、`twofa.css` 已删除 | 高 | Secret、timer、导入与快捷查询 | Phase 5-5 | **PG5 自动清理完成** | 清理后简短 Tauri 回归 |
 | 10 | 本地运行 | `run.js`、`run.css` | 高 | 进程、轮询、WebSocket | Phase 6-1 | 等待 | Phase 5 完成后开始 PG0 |
 | 11 | 部署面板 | `deploy.js`、`deploy.css` | 很高 | 项目、SSH、构建、弹窗 | Phase 6-2 | 等待 | `run` 提交后开始 PG0 |
 | 12 | 文件传输 | `filetransfer.js`、`filetransfer.css` | 很高 | SFTP、会话、队列、keepalive | Phase 6-3 | 等待 | `deploy` 提交后开始 PG0 |
@@ -2455,4 +2455,57 @@ PG4 之后用户又提出两轮增补优化，均已实现并通过手动 E2E（
 
 清理后验证：lint、lint:tokens、build:frontend、单测 105 项、Usage + Todo E2E 共 10 项全部通过；测试 Sidecar 删除两个导出后正常启动；内置浏览器复检 1280×720 与 900×600 的亮暗主题，`window.echarts` 已为 `undefined`，旧脚本与样式零引用，无页面级横向溢出，硬刷新后控制台无 error 与 warning。旧 CSS Stylelint 基线保持 31（`usage.css` 原本不在基线表中，无需调整）。
 
-下一步：由用户做一次清理后简短真实 Tauri 回归，确认后 Phase 5-4 关闭，然后才开始 Phase 5-5。
+Phase 5-4 已由用户确认关闭，并建立本地提交 `816caa6`（与 Todo 合并提交，原因见提交说明）。
+
+---
+
+## Phase 5-5 双因验证 `twofa`
+
+### PG0～PG1 现状结论
+
+用户反馈这页「像半成品」。实测**功能层面并非半成品**：840 行 JS + 721 行 CSS + 8 个接口，分组折叠、收藏、标签、8 位/60 秒周期、密钥遮罩、最近使用、导入导出均已实现，AES-GCM 加密规范，`app.js` 也正确调用了 `stopTwoFAPolling` 清理定时器。`!important` 为 0。
+
+真正的问题在布局与交互，其中一处是硬伤：
+
+- **双栏在默认窗口失效**：`twofa.css:658` 断点写 `max-width: 1280px`，默认窗口正好 1280px（边界包含），双栏 `minmax(0,1fr) 388px` 被覆盖成单列，详情面板被推到 y=1187（视口外一千多像素），`position: sticky` 同时失效。这页核心的「点账号→看详情→取码」在默认尺寸下事实上不可用。设计稿 `design-preview/2fa-accounts.html` 本身就是 390px 固定右栏，在窄窗口没有解法。
+- 其余：114 个 `#page-twofa` ID 选择器、零 Design Token（全用 `--primary` 等旧变量）、每行四个常驻操作按钮（红色「删除」逐行扎眼）、「最近使用」空状态文案溢出且白占一块高度、长账号名无省略号。
+- 安全项：导出接口会解密返回明文密钥，且无任何确认或警示。
+
+### PG3 决策：L2，右栏重新设计
+
+用户明确要求「重新考虑这个地方的内容」，故不修断点数字，而是取消固定右栏。原型 `design-preview/twofa-l2.html`（亮暗 + 900×600 已验证）。
+
+核心形态：**行内取码**（验证码为行内最大元素 + 倒计时环 + 单个「复制」主操作）→ **点击行内展开详情**（算法/位数、周期、密钥遮罩、最近使用，次要操作收于此）→ **收藏置顶为「常用」卡片**。宽窄窗口同一套交互，不再存在「双栏塌陷」这一失效模式。
+
+窄窗口取舍：常用卡片隐藏倒计时环（233px 放不下头像+标题+验证码+环四件套），秒数信息在下方账号行仍存在。
+
+### PG4 实现
+
+新增 `twofa-service.ts`、`useTwofa.ts`、`TwofaView.vue` 与 5 个组件、`twofa.css`（全 Design Token，0 个 `!important`，无 ID 选择器）、`tests/e2e/twofa.spec.ts`。倒计时基于后端 `expiresAt` 本地推进，不逐秒打接口；`tick` 每秒自增只驱动倒计时重算，不重建列表。
+
+### PG4 后的两轮增补（用户提出，均已通过手动 E2E）
+
+第一轮：
+
+1. **删除账号无反应**：原实现用了原生 `globalThis.confirm`，Tauri WebView 会禁用它。改用项目既有 `ConfirmDialog`。E2E 断言取消时不发 DELETE。
+2. **折叠/展开图标错位**：`transform: rotate()` 直接作用在「⌄」文本节点上，该字形本身不居中。改为放入固定尺寸居中容器再旋转，实测折叠前后中心点位移为 0。
+3. **无法配置分组**：原为 `BaseSelect` 只能选已有分组。改为可输入文本框 + 已有分组 chips 快捷点选（未改公共组件，避免影响其他页）。
+4. **移除导出功能**：前端按钮/弹窗/service/composable、后端 `/api/twofa/export` 路由与 `exportAccounts` 全部删除。该函数会解出明文密钥，留着只是无用暴露面。
+5. **新增快捷查询**：`POST /api/twofa/preview` 无状态计算，不落库不加密保存，支持裸 Base32 与 otpauth 链接，倒计时归零自动重算，可复制或一键转为正式账号，关闭弹窗即丢弃密钥。正确性验证：同一密钥的 preview 结果与已入库账号 `currentCode` 完全一致。
+
+第二轮：
+
+6. **分组与标签错位 + 移除标签**：错位源于分组带说明文字与候选 chips，与并排单行输入高度不齐。分组改为独占一行；标签编辑移除，但**保留数据层 tag 字段**并在行上继续显示，编辑保存时透传原值——已导入账号可能带标签，删字段会丢数据。
+7. **菜单名规范**：`2FA 验证码` → **双因验证**（4 个汉字，与其余 10 个菜单一致）。改动侧边栏 `app.js`、设置页菜单排序 `useSettings.ts`、页面标题三处。
+
+顺带修复既有缺陷：`sidecar/services/twofa.js` 的 otpauth 解析中 `if (!issuer) issuer = parts.shift()` —— `shift()` 仅在 issuer 为空时执行，导致链接同时带 `issuer=` 参数与 `Issuer:account` 标签时，账号名被解析为 `Issuer:account`（带前缀）。会影响从 Google Authenticator 导入。已修，三种 label 形态均验证。
+
+### PG5 旧实现清理（已完成自动验收）
+
+已删除 `src/js/twofa.js`、`src/css/pages/twofa.css`，以及 `sidecar` 侧的 `/api/twofa/export` 路由与 `exportAccounts`。`rg` 确认旧全局函数（`initTwoFA`、`stopTwoFAPolling`、`twofaOpenAdd` 等）零消费者，`index.html` 中 `#page-twofa` 只余 `#vue-twofa-host`，旧两个弹窗 DOM 也已移除（替换时用嵌套深度计数定位，避免误删相邻 section）。
+
+**刻意保留**：`decryptSecret`、`getAccounts`、`generateTotp`、`normalizeSecretInput` 等仍被模块内部使用（算码、保存时保留原密钥、导入）；`importAccounts` 保留用于从其他工具迁入；`app.js` 的 twofa 侧边栏菜单项保留。
+
+清理后验证：lint、lint:tokens、build:frontend、单测 119 项、全站 E2E 41 项全部通过；测试 Sidecar 正常启动，`/accounts` 200、`/export` 404、`/preview` 200；内置浏览器复检 1280×720 与 900×600 的亮暗主题，四个旧全局函数均为 undefined，旧脚本样式零引用，无页面级横向溢出，硬刷新后控制台无 error 与 warning。旧 CSS Stylelint 基线保持 31（`twofa.css` 原本不在基线表中）。
+
+下一步：由用户做一次清理后简短真实 Tauri 回归，确认后 Phase 5-5 关闭，然后才开始 Phase 6-1 本地运行 `run`。

@@ -71,7 +71,7 @@ export const MENU_ITEMS: MenuItemDefinition[] = [
   { page: 'notebook', label: '个人笔记' },
   { page: 'editor', label: '文件编辑' },
   { page: 'ipcheck', label: '纯净检测' },
-  { page: 'twofa', label: '2FA 验证码' },
+  { page: 'twofa', label: '双因验证' },
   { page: 'usage', label: '用量统计' },
 ]
 

@@ -1,0 +1,681 @@
+#vue-twofa-host {
+  width: 100%;
+  min-width: 0;
+  min-height: calc(100vh - 58px);
+}
+
+.twofa-view {
+  position: relative;
+  height: calc(100vh - 58px);
+  min-width: 0;
+  min-height: 520px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 92% 2%, color-mix(in srgb, var(--color-action) 6%, transparent), transparent 26%),
+    var(--color-page);
+}
+
+.twofa-view > .page-frame__body {
+  display: flex;
+  min-height: 0;
+  padding: 0;
+}
+
+.twofa-view__title-mark {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  color: var(--color-action-hover);
+  background: color-mix(in srgb, var(--color-action) 10%, var(--color-surface-raised));
+  border: 1px solid color-mix(in srgb, var(--color-action) 26%, var(--color-border));
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.twofa-view__scroll {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  padding: var(--space-4);
+  overflow: auto;
+  scrollbar-width: thin;
+}
+
+.twofa-board {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  gap: var(--space-5);
+}
+
+/* ---------- 工具栏 ---------- */
+.twofa-toolbar,
+.twofa-toolbar__filters,
+.twofa-toolbar__actions {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.twofa-toolbar {
+  width: 100%;
+  justify-content: space-between;
+}
+
+.twofa-toolbar__search {
+  width: 210px;
+}
+
+.twofa-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.twofa-chip {
+  display: inline-flex;
+  height: 26px;
+  align-items: center;
+  gap: 5px;
+  padding: 0 var(--space-3);
+  color: var(--color-text-muted);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--font-size-xs);
+}
+
+.twofa-chip:hover {
+  color: var(--color-text);
+}
+
+.twofa-chip.is-active {
+  color: var(--color-text);
+  background: color-mix(in srgb, var(--color-action) 13%, transparent);
+  border-color: transparent;
+}
+
+.twofa-chip b {
+  color: var(--color-text-subtle);
+  font-family: var(--font-family-mono);
+  font-size: 10px;
+  font-weight: var(--font-weight-medium);
+}
+
+.twofa-chip.is-active b {
+  color: var(--color-text-muted);
+}
+
+/* ---------- 区块标题 ---------- */
+.twofa-section-heading {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.twofa-section-heading h2 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.twofa-section-heading > span {
+  color: var(--color-text-subtle);
+  font-size: 10px;
+}
+
+/* ---------- 常用卡片 ---------- */
+.twofa-pinned__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(212px, 1fr));
+  gap: var(--space-2);
+}
+
+.twofa-pinned__card {
+  display: grid;
+  min-width: 0;
+  align-items: center;
+  gap: var(--space-3);
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  padding: 11px var(--space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+}
+
+.twofa-pinned__card:hover {
+  border-color: var(--color-border-strong);
+}
+
+.twofa-pinned__meta {
+  min-width: 0;
+}
+
+.twofa-pinned__issuer {
+  display: block;
+  overflow: hidden;
+  color: var(--color-text);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.twofa-pinned__code {
+  display: block;
+  margin-top: 2px;
+  color: var(--color-text);
+  font-family: var(--font-family-mono);
+  font-size: 17px;
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: .08em;
+  white-space: nowrap;
+}
+
+/* ---------- 分组 ---------- */
+.twofa-groups {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.twofa-group__header {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 7px 2px;
+  color: var(--color-text-muted);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--font-size-xs);
+  text-align: left;
+}
+
+.twofa-group__header:hover {
+  color: var(--color-text);
+}
+
+/*
+  箭头放在固定尺寸的居中容器里再旋转：
+  「⌄」字形本身不居中，直接对文本节点做 rotate 会让图标偏移。
+*/
+.twofa-group__caret {
+  display: inline-grid;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  place-items: center;
+  font-size: 13px;
+  line-height: 1;
+  transition: transform var(--duration-fast) var(--ease-standard);
+}
+
+.twofa-group.is-collapsed .twofa-group__caret {
+  transform: rotate(-90deg);
+}
+
+.twofa-group__header b {
+  color: var(--color-text);
+  font-weight: var(--font-weight-semibold);
+}
+
+.twofa-group__header > span:last-child {
+  color: var(--color-text-subtle);
+  font-family: var(--font-family-mono);
+  font-size: 10px;
+}
+
+.twofa-group__rows {
+  display: grid;
+  gap: 5px;
+}
+
+/* ---------- 账号行 ---------- */
+.twofa-row-shell {
+  min-width: 0;
+  overflow: hidden;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.twofa-row-shell:hover {
+  border-color: var(--color-border-strong);
+}
+
+.twofa-row-shell.is-open {
+  border-color: color-mix(in srgb, var(--color-action) 60%, var(--color-border));
+}
+
+.twofa-row {
+  display: grid;
+  min-width: 0;
+  align-items: center;
+  gap: var(--space-3);
+  grid-template-columns: 32px minmax(0, 1fr) auto auto auto;
+  padding: 10px var(--space-3);
+  cursor: pointer;
+}
+
+.twofa-avatar {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  place-items: center;
+  color: var(--color-text-muted);
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+}
+
+.twofa-row__meta {
+  min-width: 0;
+}
+
+.twofa-row__title {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+}
+
+.twofa-row__issuer {
+  overflow: hidden;
+  color: var(--color-text);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.twofa-row__star {
+  flex-shrink: 0;
+  color: var(--color-warning);
+  font-size: 11px;
+}
+
+.twofa-row__tag {
+  flex-shrink: 0;
+  padding: 1px 6px;
+  color: var(--color-text-subtle);
+  background: var(--color-surface-subtle);
+  border-radius: var(--radius-pill);
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+.twofa-row__account {
+  display: block;
+  overflow: hidden;
+  margin-top: 2px;
+  color: var(--color-text-subtle);
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 验证码是行内主信息，字号最大 */
+.twofa-row__code {
+  color: var(--color-text);
+  font-family: var(--font-family-mono);
+  font-size: 21px;
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: .1em;
+  white-space: nowrap;
+}
+
+/* ---------- 倒计时环 ---------- */
+.twofa-countdown {
+  position: relative;
+  display: grid;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  place-items: center;
+}
+
+.twofa-countdown svg {
+  transform: rotate(-90deg);
+}
+
+.twofa-countdown circle {
+  fill: none;
+  stroke-width: 2.5;
+}
+
+.twofa-countdown__track {
+  stroke: var(--color-surface-subtle);
+}
+
+.twofa-countdown__bar {
+  stroke: var(--color-series-2);
+  stroke-linecap: round;
+  transition: stroke-dashoffset .95s linear, stroke var(--duration-normal) var(--ease-standard);
+}
+
+.twofa-countdown.is-soon .twofa-countdown__bar {
+  stroke: var(--color-warning);
+}
+
+.twofa-countdown > span {
+  position: absolute;
+  color: var(--color-text-subtle);
+  font-family: var(--font-family-mono);
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+}
+
+.twofa-row__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* 同上：固定容器居中，避免展开/收起时图标跳位 */
+.twofa-row__chevron {
+  display: inline-grid;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  place-items: center;
+  color: var(--color-text-subtle);
+  font-size: 14px;
+  line-height: 1;
+  transition: transform var(--duration-fast) var(--ease-standard);
+}
+
+.twofa-row-shell.is-open .twofa-row__chevron {
+  transform: rotate(180deg);
+}
+
+/* ---------- 内联详情 ---------- */
+.twofa-detail {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-3) 13px;
+  border-top: 1px solid var(--color-border);
+}
+
+.twofa-detail__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+  gap: 11px;
+  margin: 0;
+}
+
+.twofa-detail__grid dt {
+  margin-bottom: 3px;
+  color: var(--color-text-subtle);
+  font-size: 9px;
+}
+
+.twofa-detail__grid dd {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+  overflow-wrap: anywhere;
+}
+
+.twofa-detail__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* ---------- 弹窗内容 ---------- */
+.twofa-form,
+.twofa-import {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.twofa-form__row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.twofa-form__row--triple {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.twofa-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+.twofa-group-field {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.twofa-group-field__suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+/* ---------- 快捷查询 ---------- */
+.twofa-quick {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.twofa-quick__error {
+  margin: 0;
+  color: var(--color-danger);
+  font-size: var(--font-size-xs);
+}
+
+.twofa-quick__result {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.twofa-quick__code-line {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+}
+
+.twofa-quick__code {
+  color: var(--color-text);
+  font-family: var(--font-family-mono);
+  font-size: 28px;
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: .1em;
+}
+
+.twofa-quick__remaining {
+  color: var(--color-text-subtle);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+}
+
+.twofa-quick__meta {
+  margin: 0;
+  color: var(--color-text-subtle);
+  font-size: 10px;
+}
+
+.twofa-quick__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.twofa-import__result {
+  margin: 0;
+  color: var(--color-success);
+  font-size: var(--font-size-xs);
+}
+
+.twofa-import__result.is-empty {
+  color: var(--color-warning);
+}
+
+.twofa-export-warn {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: var(--space-2);
+  padding: 11px;
+  color: var(--color-warning);
+  background: color-mix(in srgb, var(--color-warning) 8%, var(--color-surface));
+  border: 1px solid color-mix(in srgb, var(--color-warning) 30%, var(--color-border));
+  border-radius: var(--radius-md);
+}
+
+.twofa-export-warn strong {
+  color: var(--color-warning);
+  font-size: var(--font-size-xs);
+}
+
+.twofa-export-warn p {
+  margin: var(--space-1) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  line-height: 1.6;
+}
+
+.twofa-footnote {
+  margin: 0;
+  color: var(--color-text-subtle);
+  font-size: 10px;
+  text-align: center;
+}
+
+/* ---------- 窄窗口 900 × 600 ---------- */
+@media (max-width: 1000px) {
+  .twofa-toolbar,
+  .twofa-toolbar__filters {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .twofa-toolbar__search {
+    width: 100%;
+  }
+
+  /* 不用绝对定位：本页工具栏是纵向堆叠，脱离文档流会压到下方内容上 */
+  .twofa-toolbar__actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  /*
+    常用卡片放不下「头像 + 标题 + 验证码 + 倒计时环」四件套，
+    改用 flex 并隐藏环：秒数信息在下方账号行里仍然存在。
+    用 grid 隐藏会残留空列把内容挤成 0 宽。
+  */
+  .twofa-pinned__grid {
+    grid-template-columns: repeat(auto-fill, minmax(196px, 1fr));
+  }
+
+  .twofa-pinned__card {
+    display: flex;
+    gap: 9px;
+    padding: 10px;
+  }
+
+  .twofa-pinned__card .twofa-avatar {
+    width: 26px;
+    height: 26px;
+    font-size: 11px;
+  }
+
+  .twofa-pinned__meta {
+    flex: 1;
+  }
+
+  .twofa-pinned__card .twofa-countdown {
+    display: none;
+  }
+
+  .twofa-pinned__code {
+    font-size: 16px;
+    letter-spacing: .06em;
+  }
+
+  /* 账号行收敛为两行，验证码独占一行，避免横向溢出 */
+  .twofa-row {
+    grid-template-areas:
+      "avatar meta chevron"
+      "code code actions";
+    grid-template-columns: 28px minmax(0, 1fr) auto;
+    row-gap: 9px;
+  }
+
+  .twofa-row .twofa-avatar {
+    width: 28px;
+    height: 28px;
+    grid-area: avatar;
+  }
+
+  .twofa-row__meta {
+    grid-area: meta;
+  }
+
+  .twofa-row__code {
+    font-size: 19px;
+    grid-area: code;
+  }
+
+  .twofa-row .twofa-countdown {
+    display: none;
+  }
+
+  .twofa-row__actions {
+    grid-area: actions;
+  }
+
+  .twofa-row__chevron {
+    grid-area: chevron;
+  }
+
+  .twofa-detail__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .twofa-form__row,
+  .twofa-form__row--triple {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .twofa-view *,
+  .twofa-view *::before,
+  .twofa-view *::after {
+    scroll-behavior: auto;
+    transition-duration: .01ms;
+    animation-duration: .01ms;
+  }
+}

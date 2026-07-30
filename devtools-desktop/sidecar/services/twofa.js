@@ -40,8 +40,11 @@ function normalizeSecretInput(rawSecret) {
       let issuer = issuerParam;
       let accountName = label;
       if (label.includes(':')) {
+        // label 形如 "Issuer:account"，冒号前一段始终是 issuer 前缀：
+        // 无论是否已有 issuer 参数都要剥掉，否则账号名会带上 "Issuer:" 前缀
         const parts = label.split(':');
-        if (!issuer) issuer = parts.shift().trim();
+        const labelIssuer = parts.shift().trim();
+        if (!issuer) issuer = labelIssuer;
         accountName = parts.join(':').trim();
       }
       return { secret, issuer, accountName, algorithm, period, digits };
@@ -303,15 +306,8 @@ function touchAccount(id) {
   return { success: true, lastUsedAt: now };
 }
 
-function exportAccounts(query = {}) {
-  return getAccounts(query, false).map(item => {
-    const row = getAccountRow(item.id);
-    return {
-      ...item,
-      secret: decryptSecret(row?.secretCipherJson),
-    };
-  });
-}
+// 已移除 exportAccounts：导出功能按需求下线，且该函数会解出明文密钥，
+// 留着只是无用的暴露面。导入仍保留，用于从其他工具迁入。
 
 function importAccounts(items = []) {
   const list = Array.isArray(items) ? items : [];
@@ -337,7 +333,6 @@ module.exports = {
   saveAccount,
   deleteAccount,
   touchAccount,
-  exportAccounts,
   importAccounts,
   decryptSecret,
 };

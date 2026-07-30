@@ -23,7 +23,6 @@
 <link rel="stylesheet" href="css/pages/deploy.css">
 <link rel="stylesheet" href="css/pages/terminal.css">
 <link rel="stylesheet" href="css/pages/editor.css">
-<link rel="stylesheet" href="css/pages/twofa.css">
 <link rel="stylesheet" href="css/legacy-runtime.css">
 <link rel="stylesheet" href="css/pages/filetransfer.css">
 <link rel="stylesheet" href="css/overrides.css">
@@ -424,61 +423,7 @@
 </section>
 
 <section class="page" id="page-twofa">
-  <div class="page-fixed-header">
-    <div class="page-header-bar page-header-simple">
-      <div>
-        <div class="page-title">2FA 账号列表</div>
-        <div class="page-subtitle">本地加密保存密钥，按账号快速取码，支持批量导入与收藏常用账号</div>
-      </div>
-      <div class="page-header-actions">
-        <button class="btn btn--sm" onclick="twofaOpenImport()">⇪ 批量导入</button>
-        <button class="btn btn--sm" onclick="twofaExport()">⇓ 导出 JSON</button>
-        <button class="btn btn--primary" onclick="twofaOpenAdd()">＋ 添加账号</button>
-      </div>
-    </div>
-
-    <div class="page-toolbar twofa-toolbar">
-      <div class="twofa-toolbar-left">
-        <div class="search-bar twofa-search">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-          <input type="text" id="twofaSearchInput" placeholder="搜索账号、平台或标签" autocomplete="off">
-        </div>
-        <div class="chips" id="twofaGroupChips"></div>
-      </div>
-      <div class="twofa-toolbar-meta">
-        <span id="twofaStatusText">正在加载…</span>
-        <button class="btn btn--sm" onclick="twofaReload()">↻ 刷新</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="page-scroll-body">
-    <div class="twofa-layout">
-      <div class="twofa-main">
-        <section class="card twofa-strip-card">
-          <div class="card__header">
-            <div class="card__title">最近使用</div>
-            <div class="twofa-list-meta" id="twofaRecentMeta"></div>
-          </div>
-          <div class="twofa-strip" id="twofaRecentStrip"></div>
-        </section>
-
-        <section class="card twofa-list-card">
-          <div class="card__header">
-            <div class="card__title">账号列表 <small id="twofaAccountCount"></small></div>
-            <div class="twofa-list-meta" id="twofaListMeta"></div>
-          </div>
-          <div id="twofaGroupBlocks"></div>
-          <div class="twofa-empty" id="twofaEmptyState" style="display:none">没有找到匹配账号</div>
-        </section>
-      </div>
-
-      <aside class="card twofa-detail-card">
-        <div id="twofaDetailPanel"></div>
-      </aside>
-    </div>
-    <div class="twofa-footer-note">密钥仅本地加密保存 · 验证码由当前本机时间生成</div>
-  </div>
+  <div id="vue-twofa-host" aria-live="polite"></div>
 </section>
 
 <!-- 设置 -->
@@ -1059,97 +1004,7 @@
 </div>
 
 <!-- 2FA 账号弹窗 -->
-<div class="modal-overlay" id="twofaAccountModal">
-  <div class="modal twofa-modal">
-    <div class="modal-header">
-      <div>
-        <h2 id="twofaAccountModalTitle">添加账号</h2>
-        <p class="modal-subtitle" id="twofaAccountModalSubtitle">保存为本地加密数据，密钥不会外发。</p>
-      </div>
-      <button class="modal-close" onclick="closeModal('twofaAccountModal')">✕</button>
-    </div>
-    <form id="twofaAccountForm">
-      <input type="hidden" id="twofaAccountId">
-      <div class="modal-body twofa-modal-body">
-        <div class="twofa-form-grid">
-          <div class="twofa-field">
-            <label>平台 / 服务</label>
-            <input type="text" id="twofaIssuer" placeholder="GitHub" required>
-          </div>
-          <div class="twofa-field">
-            <label>账号名</label>
-            <input type="text" id="twofaAccountName" placeholder="alice@example.com" required>
-          </div>
-          <div class="twofa-field">
-            <label>分组</label>
-            <input type="text" id="twofaGroupName" placeholder="开发 / 工作 / 个人">
-          </div>
-          <div class="twofa-field">
-            <label>标签</label>
-            <input type="text" id="twofaTag" placeholder="常用 / 重要">
-          </div>
-          <div class="twofa-field">
-            <label>算法</label>
-            <select id="twofaAlgorithm">
-              <option value="SHA1">SHA1</option>
-              <option value="SHA256">SHA256</option>
-              <option value="SHA512">SHA512</option>
-            </select>
-          </div>
-          <div class="twofa-field">
-            <label>周期（秒）</label>
-            <input type="number" id="twofaPeriod" min="15" step="1" value="30">
-          </div>
-          <div class="twofa-field">
-            <label>位数</label>
-            <select id="twofaDigits">
-              <option value="6">6 位</option>
-              <option value="8">8 位</option>
-            </select>
-          </div>
-          <div class="twofa-field">
-            <label>收藏</label>
-            <label class="twofa-check">
-              <input type="checkbox" id="twofaFavorite">
-              <span>加入收藏</span>
-            </label>
-          </div>
-          <div class="twofa-field twofa-field-full">
-            <label>2FA Secret 或 otpauth 链接</label>
-            <textarea id="twofaSecret" placeholder="JBSWY3DPEHPK3PXP"></textarea>
-            <div class="twofa-field-hint">编辑时留空表示不修改密钥。</div>
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn" type="button" onclick="closeModal('twofaAccountModal')">取消</button>
-        <button class="btn btn--primary" type="submit">保存</button>
-      </div>
-    </form>
-  </div>
-</div>
-
 <!-- 2FA 批量导入弹窗 -->
-<div class="modal-overlay" id="twofaImportModal">
-  <div class="modal twofa-modal">
-    <div class="modal-header">
-      <div>
-        <h2>批量导入 2FA 账号</h2>
-        <p class="modal-subtitle">支持 JSON 数组，字段可包含 issuer、accountName、secret、groupName、tag、algorithm、period、digits、favorite。</p>
-      </div>
-      <button class="modal-close" onclick="closeModal('twofaImportModal')">✕</button>
-    </div>
-    <div class="modal-body twofa-modal-body">
-      <textarea id="twofaImportTextarea" class="twofa-import-textarea" placeholder='[{"issuer":"GitHub","accountName":"alice","secret":"JBSWY3DPEHPK3PXP","groupName":"开发"}]'></textarea>
-      <div class="twofa-field-hint">也支持直接粘贴 `otpauth://` 链接数组。</div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn" type="button" onclick="closeModal('twofaImportModal')">取消</button>
-      <button class="btn btn--primary" type="button" onclick="twofaConfirmImport()">确认导入</button>
-    </div>
-  </div>
-</div>
-
 <!-- 自定义系统弹窗 (替代 confirm / alert) -->
 <div class="sys-dialog-overlay" id="sysDialog">
   <div class="sys-dialog">
@@ -1173,7 +1028,6 @@
 <script src="js/xterm-addon-search.js"></script>
 <script src="js/xterm-addon-webgl.js"></script>
 <script src="js/terminal.js"></script>
-<script src="js/twofa.js"></script>
 <script type="module" src="/src/main.ts"></script>
 <script>
   window.addEventListener('error', function(e) {

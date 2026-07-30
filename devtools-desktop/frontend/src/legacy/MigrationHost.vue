@@ -13,6 +13,7 @@ const NotesView = defineAsyncComponent(() => import('@/views/notes/NotesView.vue
 const NotebookView = defineAsyncComponent(() => import('@/views/notebook/NotebookView.vue'))
 const SettingsView = defineAsyncComponent(() => import('@/views/settings/SettingsView.vue'))
 const TodoView = defineAsyncComponent(() => import('@/views/todo/TodoView.vue'))
+const TwofaView = defineAsyncComponent(() => import('@/views/twofa/TwofaView.vue'))
 const UsageView = defineAsyncComponent(() => import('@/views/usage/UsageView.vue'))
 const app = useAppStore()
 const todoReminderService = createTodoReminderService()
@@ -32,6 +33,9 @@ todoTarget?.setAttribute('data-vue-owner', 'todo')
 const settingsTarget = document.querySelector('#vue-settings-host')
 const hasSettingsTarget = Boolean(settingsTarget)
 settingsTarget?.setAttribute('data-vue-owner', 'settings')
+const twofaTarget = document.querySelector('#vue-twofa-host')
+const hasTwofaTarget = Boolean(twofaTarget)
+twofaTarget?.setAttribute('data-vue-owner', 'twofa')
 const usageTarget = document.querySelector('#vue-usage-host')
 const hasUsageTarget = Boolean(usageTarget)
 usageTarget?.setAttribute('data-vue-owner', 'usage')
@@ -90,6 +94,11 @@ onBeforeUnmount(() => {
     <Teleport v-if="hasSettingsTarget" to="#vue-settings-host">
       <KeepAlive>
         <SettingsView v-if="activePage === 'settings'" />
+      </KeepAlive>
+    </Teleport>
+    <Teleport v-if="hasTwofaTarget" to="#vue-twofa-host">
+      <KeepAlive>
+        <TwofaView v-if="activePage === 'twofa'" />
       </KeepAlive>
     </Teleport>
     <Teleport v-if="hasUsageTarget" to="#vue-usage-host">
