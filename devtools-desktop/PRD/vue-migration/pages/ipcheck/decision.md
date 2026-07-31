@@ -124,3 +124,13 @@ frontend/src/services/modules/ipcheck-service.ts
 - 控制台只存在既有 CodeMirror `defineSimpleMode` 错误，没有新增纯净检测或 Vue 运行错误。
 
 本文件与 Phase 4-1 纯净检测实现、测试和旧实现清理一并纳入独立本地提交。下一步进入 Phase 4-2 `notes` 的 PG0，不提前进入功能实现。
+
+## 9. 组件架构二次收口（2026-07-31）
+
+本轮不改变已确认的信息结构、查询流程、数据契约或视觉布局。人工架构复核确认页面已经使用 `BaseButton`、`BaseCard`、`BaseProgress`、`Page*` 与 Feedback 公共组件，不存在第三方内部选择器、原生交互控件、直接网络调用、直接 DOM 查询或裸 `setInterval`。
+
+风险摘要中的渐变刻度包含分段阈值与 `role="meter"` 语义，是纯净检测私有的风险可视化，不等同于普通线性进度条；继续保留页面私有实现。共享程度属于普通进度语义，已经使用 `BaseProgress`，无需调整。
+
+唯一重复实现是“复制详情”原先在页面内维护局部状态、2 秒定时器和固定定位提示层。现已统一调用 `useNotificationStore`，由全站 Naive Message 适配层呈现成功与剪贴板权限错误反馈，并删除局部提示 DOM、样式和定时器。Playwright 增加成功写入与失败反馈断言；该收口不产生或减少机器基线计数。
+
+自动验证通过：IpCheck Playwright 4 项、`npm run lint`、`npm test`（单元测试 188 项 + 架构门禁 4 项）、`npm run typecheck`、`npm run build:frontend`、`git diff --check`。网页人工验收使用 `http://127.0.0.1:1420/?apiPort=13456` 连接正式 Sidecar，只读取当前 IP 并写入本机剪贴板，确认成功 Message 正常显示；未执行正式数据写入。该网页验收不替代最终真实 Tauri Smoke Test。

@@ -100,3 +100,30 @@ test('stays readable without horizontal overflow at the minimum window size', as
   await expect(page.getByRole('progressbar', { name: '共享程度' })).toHaveAttribute('aria-valuenow', '10')
   await expectNoHorizontalOverflow(page)
 })
+
+test('uses the shared notification host for copy feedback', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: {
+        writeText: async (value: string) => localStorage.setItem('ipcheck-copied-text', value),
+      },
+    })
+  })
+  await openIpCheck(page)
+
+  await page.getByRole('button', { name: '复制详情', exact: true }).click()
+  await expect(page.locator('.n-message').filter({ hasText: '已复制当前 IP 详情' })).toBeVisible()
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('ipcheck-copied-text'))).toContain('IP: 8.8.8.8')
+
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: {
+        writeText: async () => Promise.reject(new Error('clipboard denied')),
+      },
+    })
+  })
+  await page.getByRole('button', { name: '复制详情', exact: true }).click()
+  await expect(page.locator('.n-message').filter({ hasText: '当前环境未开放剪贴板权限' })).toBeVisible()
+})

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref } from 'vue'
+import { computed } from 'vue'
 
 import BaseButton from '@/components/base/BaseButton.vue'
 import BaseCard from '@/components/base/BaseCard.vue'
@@ -11,6 +11,7 @@ import PageFrame from '@/components/layout/PageFrame.vue'
 import PageHeader from '@/components/layout/PageHeader.vue'
 import PageToolbar from '@/components/layout/PageToolbar.vue'
 import PageTop from '@/components/layout/PageTop.vue'
+import { useNotificationStore } from '@/stores/notification'
 
 import IpNetworkDetails from './components/IpNetworkDetails.vue'
 import IpQueryBar from './components/IpQueryBar.vue'
@@ -35,8 +36,7 @@ const {
   clearQuery,
 } = useIpCheck()
 
-const copyStatus = ref('')
-let copyStatusTimer: ReturnType<typeof setTimeout> | null = null
+const notifications = useNotificationStore()
 
 const serviceStatus = computed(() => {
   if (loading.value) return { label: '检测中', status: 'checking' as const }
@@ -57,20 +57,11 @@ async function copyDetails() {
 
   try {
     await navigator.clipboard.writeText(text)
-    copyStatus.value = '已复制当前 IP 详情'
+    notifications.push('已复制当前 IP 详情', 'success')
   } catch {
-    copyStatus.value = '当前环境未开放剪贴板权限'
+    notifications.push('当前环境未开放剪贴板权限', 'error')
   }
-  if (copyStatusTimer) globalThis.clearTimeout(copyStatusTimer)
-  copyStatusTimer = globalThis.setTimeout(() => {
-    copyStatus.value = ''
-    copyStatusTimer = null
-  }, 2_000)
 }
-
-onBeforeUnmount(() => {
-  if (copyStatusTimer) globalThis.clearTimeout(copyStatusTimer)
-})
 </script>
 
 <template>
@@ -133,7 +124,5 @@ onBeforeUnmount(() => {
         </div>
       </template>
     </div>
-
-    <div class="ip-check-copy-status" role="status" aria-live="polite">{{ copyStatus }}</div>
   </PageFrame>
 </template>

@@ -1,6 +1,6 @@
 # 组件架构合规专项
 
-> 状态：规则与自动门禁、首批公共组件能力、通知适配层及首个消费者 Settings 已完成自动验收；Settings 已由用户通过网页前端连接正式 Sidecar 完成人工验收。其余存量页面收口与最终真实 Tauri Smoke Test 待执行。在本专项和全站回归完成前，不进入 Phase 6-2 Deploy
+> 状态：规则与自动门禁、首批公共组件能力、通知适配层及 Settings、Home、IpCheck 三个页面收口已完成；Settings 与 IpCheck 已通过连接正式 Sidecar 的网页人工验收。其余存量页面收口与最终真实 Tauri Smoke Test 待执行。在本专项和全站回归完成前，不进入 Phase 6-2 Deploy
 >
 > 生效范围：`frontend/src/views/**` 及所有后续迁移业务页面。公共组件、适配层和第三方宿主的职责边界以本文为唯一专项入口；原执行计划中的一致规则继续有效，发生歧义时先暂停实现并更新本文。
 
@@ -64,7 +64,7 @@ npm run lint:architecture
 
 ## 6. 2026-07-31 存量快照
 
-当前业务页面直接导入第三方 UI、直接网络/IPC 调用和直接 DOM 查询均为 0。Settings 与 Home 收口后，待归零项由 68 个降至 63 个机器计数：
+当前业务页面直接导入第三方 UI、直接网络/IPC 调用和直接 DOM 查询均为 0。Settings、Home 与 IpCheck 收口后，待归零项由 68 个降至 63 个机器计数：
 
 | 类型 | 数量 | 主要页面 |
 | --- | ---: | --- |
@@ -187,3 +187,11 @@ UI Foundation 的“反馈状态”已经增加 success、warning、error 和持
 Home 人工审计未发现遗漏的公共组件：页面操作均使用 `BaseButton`，外壳使用 `PageFrame`；没有第三方内部选择器、原生交互控件、原生表格、裸定时器或直接网络调用。
 
 唯一机器债务是 `useHomeDashboard` 启动时查询 `#page-home.active`。现改为由 `MigrationHost` 将其权威 `activePage` 作为响应式 prop/ref 传入，composable 通过 `watch` 保留重新进入首页时刷新数据的行为，不再重复订阅 legacy 激活事件或查询页面 DOM。架构基线由 64 降至 63，直接 DOM 查询归零。
+
+## 14. IpCheck 页面架构收口记录（2026-07-31）
+
+IpCheck 人工审计确认查询、状态、卡片、普通进度和页面骨架均已使用现有项目公共组件；没有第三方内部选择器、原生交互控件、原生表格、直接网络调用、直接 DOM 查询或裸 `setInterval`。风险摘要的分段渐变刻度具有页面专属阈值和 `role="meter"` 语义，保留为页面私有风险可视化，不错误替换为普通 `BaseProgress`。
+
+“复制详情”原先单独维护局部提示状态、2 秒清理定时器和固定定位 Toast 样式，与第 11 节统一通知能力重复。现改为调用 `useNotificationStore`，成功与权限错误均由 Naive Message 适配层呈现；页面内提示 DOM、样式和定时器已删除。Playwright 覆盖复制内容、成功 Message 与失败 Message。该项属于人工识别的重复实现收口，机器递减基线保持 63，批准例外仍为 0。
+
+完整自动回归通过：`npm run lint`、`npm test`（单元测试 188 项 + 架构门禁 4 项）、`npm run typecheck`、`npm run build:frontend`、`git diff --check`；IpCheck Playwright 4 项单独通过。正式 Sidecar 网页人工验收确认当前 IP 结果与复制成功 Message 正常，未执行正式数据写入；真实 Tauri 通知验收仍合并到专项最终 Smoke Test。
