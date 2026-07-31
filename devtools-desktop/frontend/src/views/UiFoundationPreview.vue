@@ -6,6 +6,7 @@ import BaseButton from '@/components/base/BaseButton.vue'
 import BaseCard from '@/components/base/BaseCard.vue'
 import BaseIconButton from '@/components/base/BaseIconButton.vue'
 import BaseProgress from '@/components/base/BaseProgress.vue'
+import BaseSelectableItem from '@/components/base/BaseSelectableItem.vue'
 import StatusIndicator from '@/components/base/StatusIndicator.vue'
 import BaseDataTable from '@/components/data/BaseDataTable.vue'
 import type { BaseDataTableColumn, BaseDataTableRow } from '@/components/data/base-data-table'
@@ -118,6 +119,10 @@ const previewTableRowKey = (row: PreviewTableRow) => row.name
               <span class="progress-preview">32s</span>
             </BaseProgress>
           </div>
+          <BaseSelectableItem selected :pressed="true" class="selectable-preview">
+            <strong>已选择的列表项</strong>
+            <span>用于日期、笔记和任务等可选择列表，不由页面重复实现按钮状态。</span>
+          </BaseSelectableItem>
         </BaseCard>
       </PageSection>
 
@@ -251,6 +256,9 @@ const previewTableRowKey = (row: PreviewTableRow) => row.name
 .preview-grid { display: grid; gap: var(--space-6); max-width: 1120px; margin: 0 auto; }
 .component-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
 .component-row + .component-row { margin-top: var(--space-4); }
+.selectable-preview { max-width: 360px; margin-top: var(--space-4); gap: var(--space-1); }
+.selectable-preview strong { font-size: var(--font-size-sm); }
+.selectable-preview span { color: var(--color-text-muted); font-size: var(--font-size-xs); }
 .card-preview { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); }
 .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
 .choice-stack { display: grid; align-content: start; gap: var(--space-3); }

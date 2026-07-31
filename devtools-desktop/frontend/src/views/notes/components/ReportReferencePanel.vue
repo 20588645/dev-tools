@@ -364,14 +364,19 @@ watch([() => props.open, weekKey], ([open]) => {
           <BaseSegmented v-model="filterMode" :options="filterOptions" aria-label="Git 活动日期过滤" />
         </div>
 
-        <BaseSelect
-          class="notes-reference-target"
-          :model-value="targetDate"
-          :options="dateOptions"
-          label="目标工时日期"
-          help-text="逐条加入时写入这里，也可以直接点击左侧日期切换"
-          @update:model-value="chooseTargetDate"
-        />
+        <div class="notes-reference-target">
+          <div class="notes-reference-target__copy">
+            <strong>目标工时日期</strong>
+            <span>逐条加入时写入这里，也可以直接点击左侧日期切换</span>
+          </div>
+          <BaseSelect
+            class="notes-reference-target__control"
+            :model-value="targetDate"
+            :options="dateOptions"
+            aria-label="目标工时日期"
+            @update:model-value="chooseTargetDate"
+          />
+        </div>
 
         <div class="notes-reference-groups">
           <section v-for="group in groupedActivities" :key="group.key" class="notes-reference-group">

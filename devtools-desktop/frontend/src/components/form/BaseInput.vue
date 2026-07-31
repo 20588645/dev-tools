@@ -16,12 +16,13 @@ const props = withDefaults(defineProps<{
   required?: boolean
   autocomplete?: string
   variant?: 'default' | 'plain' | 'search' | 'title'
+  labelVariant?: 'default' | 'eyebrow'
   size?: 'sm' | 'md' | 'lg'
 }>(), {
   modelValue: '', id: undefined, label: undefined, ariaLabel: undefined, type: 'text', placeholder: undefined,
   helpText: undefined, error: undefined, disabled: false, readonly: false, required: false,
   autocomplete: undefined,
-  variant: 'default', size: 'md',
+  variant: 'default', labelVariant: 'default', size: 'md',
 })
 
 const emit = defineEmits<{
@@ -73,7 +74,10 @@ defineExpose({
 </script>
 
 <template>
-  <div class="field-control" :class="`field-control--${variant}`">
+  <div
+    class="field-control"
+    :class="[`field-control--${variant}`, `field-control--size-${size}`, { 'field-control--label-eyebrow': labelVariant === 'eyebrow' }]"
+  >
     <label v-if="label" :id="labelId" class="field-control__label" :for="inputId">
       {{ label }}<span v-if="required" aria-hidden="true"> *</span>
     </label>
@@ -118,4 +122,39 @@ defineExpose({
 .field-control__message--error { color: var(--color-danger); }
 .field-control--search :deep(.n-input) { box-shadow: var(--shadow-sm); }
 .field-control--title { gap: var(--space-1); }
+.field-control--label-eyebrow .field-control__label {
+  color: var(--color-text-subtle);
+  font-size: 10px;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.field-control--title :deep(.n-input) { background: transparent; border-radius: 0; }
+.field-control--title :deep(.n-input__border) {
+  border: 0;
+  border-bottom: 1px solid var(--color-border);
+  border-radius: 0;
+}
+.field-control--title :deep(.n-input__state-border) {
+  border: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-action) 64%, var(--color-border));
+  border-radius: 0;
+}
+.field-control--title :deep(.n-input__input-el) {
+  height: 40px;
+  padding: 0;
+  font-size: 18px;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: -0.025em;
+}
+.field-control--title.field-control--size-lg :deep(.n-input__input-el) {
+  height: 48px;
+  font-size: clamp(20px, 2.1vw, 29px);
+}
+@media (max-width: 980px) {
+  .field-control--title.field-control--size-lg :deep(.n-input__input-el) {
+    height: 40px;
+    font-size: 19px;
+  }
+}
 </style>

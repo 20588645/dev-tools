@@ -10,6 +10,7 @@
 | `PageTop` / `PageHeader` | 标题、说明和主操作 | 已实现 | 每页只有一个 h1，窄窗口操作进入更多菜单 |
 | `PageToolbar` / `PageSection` | 筛选、状态和分区 | 已实现 | 工具栏最多两行，统一间距 |
 | `BaseButton` / `BaseIconButton` | 页面操作 | 已实现 | primary、secondary、outline、ghost、danger；统一 loading/disabled |
+| `BaseSelectableItem` | 日期、笔记、任务等可选择列表项 | 已实现 | 统一 selected、pressed、disabled、焦点、悬停和选择态；页面只负责内容布局 |
 | `BaseInput` / `BaseTextarea` / `BaseSelect` | 表单输入 | 已实现 | label、错误、焦点和禁用状态由公共组件负责；Input 支持 default/plain/search/title，其中 search 提供明确的输入表面与边界；Textarea 支持 default/plain/editor、autosize 与 fillHeight |
 | `BaseCheckbox` / `BaseRadio` / `BaseSwitch` | 选择输入 | 已实现 | 由 Naive UI 提供交互和可访问性，统一选中、禁用和说明文本 |
 | `BaseTabs` / `BaseSegmented` / `FilterChip` | 导航与筛选 | 已实现 | 键盘导航、选中态、数量 Badge 和移除操作 |
@@ -67,6 +68,7 @@
 - 侧边导航：`BaseSideNav.vue`，首个目标消费者为 Settings 分类导航。
 - 进度：`BaseProgress` 新增 circle，首个目标消费者为 Twofa 倒计时环。
 - 布局变体：`BaseCard`、`BaseInput`、`BaseTextarea` 新增公开能力，用于消除 Notes、Notebook、Todo、Usage、Run 对 `.n-*` 内部类的依赖。
+- 可选择列表项：`BaseSelectableItem` 统一 Notes 日期、Notebook 笔记和 Todo 任务列表已经重复出现的选择、焦点与悬停语义；首个消费者为 Notes。
 
 通知宿主已在后续独立子项完成：`AppToastHost` 不再绘制 Toast 或管理定时器，而是通过项目 adapter 驱动 Naive Message；`NNotificationProvider` 保留给未来需要标题、描述或操作区的富通知，业务页面仍不得直接访问任一 Provider API。
 

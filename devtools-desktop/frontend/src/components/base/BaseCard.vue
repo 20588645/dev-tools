@@ -8,6 +8,7 @@ const props = withDefaults(defineProps<{
   contentPadding?: string
   contentLayout?: 'block' | 'column' | 'fill'
   contentOverflow?: 'visible' | 'hidden' | 'auto'
+  contentBackground?: string
   fillHeight?: boolean
 }>(), {
   variant: 'default',
@@ -15,6 +16,7 @@ const props = withDefaults(defineProps<{
   contentPadding: 'var(--component-card-padding)',
   contentLayout: 'block',
   contentOverflow: 'visible',
+  contentBackground: undefined,
   fillHeight: false,
 })
 
@@ -25,6 +27,7 @@ const contentStyle = computed<CSSProperties>(() => ({
   flex: props.contentLayout === 'fill' ? '1 1 auto' : undefined,
   minHeight: props.contentLayout === 'fill' ? '0' : undefined,
   overflow: props.contentOverflow,
+  background: props.contentBackground,
 }))
 
 // Naive UI's `embedded` card variant defaults to the primary action color.

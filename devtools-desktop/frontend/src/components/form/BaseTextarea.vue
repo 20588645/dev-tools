@@ -15,13 +15,14 @@ const props = withDefaults(defineProps<{
   required?: boolean
   ariaLabel?: string
   variant?: 'default' | 'plain' | 'editor'
+  labelVariant?: 'default' | 'eyebrow'
   resize?: 'vertical' | 'none'
   autosize?: boolean | { minRows?: number, maxRows?: number }
   fillHeight?: boolean
 }>(), {
   modelValue: '', id: undefined, label: undefined, placeholder: undefined, rows: 4,
   helpText: undefined, error: undefined, disabled: false, readonly: false, required: false,
-  ariaLabel: undefined, variant: 'default', resize: 'vertical', autosize: false, fillHeight: false,
+  ariaLabel: undefined, variant: 'default', labelVariant: 'default', resize: 'vertical', autosize: false, fillHeight: false,
 })
 
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
@@ -45,7 +46,14 @@ const textareaThemeOverrides = computed(() => props.variant === 'default' ? unde
 <template>
   <div
     class="field-control"
-    :class="[`field-control--${variant}`, { 'field-control--fill-height': fillHeight }]"
+    :class="[
+      `field-control--${variant}`,
+      {
+        'field-control--fill-height': fillHeight,
+        'field-control--has-message': Boolean(error || helpText),
+        'field-control--label-eyebrow': labelVariant === 'eyebrow',
+      },
+    ]"
   >
     <label v-if="label" :id="labelId" class="field-control__label" :for="textareaId">
       {{ label }}<span v-if="required" aria-hidden="true"> *</span>
@@ -79,9 +87,35 @@ const textareaThemeOverrides = computed(() => props.variant === 'default' ? unde
 .field-control__label span { color: var(--color-danger); }
 .field-control__message { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-xs); line-height: var(--line-height-normal); }
 .field-control__message--error { color: var(--color-danger); }
-.field-control--fill-height { grid-template-rows: auto minmax(0, 1fr) auto; height: 100%; min-height: 0; }
+.field-control--label-eyebrow .field-control__label {
+  color: var(--color-text-subtle);
+  font-size: 10px;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.field-control--editor :deep(.n-input) { background: transparent; }
+.field-control--editor :deep(.n-input__border),
+.field-control--editor :deep(.n-input__state-border) { display: none; }
+.field-control--editor :deep(.n-input__textarea-el) {
+  min-height: 0;
+  padding: 2px 0;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  line-height: 1.9;
+  overflow-y: auto;
+}
+.field-control--fill-height { grid-template-rows: auto minmax(0, 1fr); height: 100%; min-height: 0; }
+.field-control--fill-height.field-control--has-message { grid-template-rows: auto minmax(0, 1fr) auto; }
 .field-control--fill-height :deep(.n-input) { height: 100%; min-height: 0; }
 .field-control--fill-height :deep(.n-input-wrapper),
 .field-control--fill-height :deep(.n-input__textarea) { height: 100%; min-height: 0; }
 .field-control--fill-height :deep(.n-input__textarea-el) { height: 100%; }
+@media (max-width: 980px) {
+  .field-control--editor :deep(.n-input__textarea-el) {
+    min-height: 42px;
+    font-size: 12px;
+    line-height: 1.7;
+  }
+}
 </style>

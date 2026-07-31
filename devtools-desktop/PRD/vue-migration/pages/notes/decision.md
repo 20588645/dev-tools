@@ -292,3 +292,13 @@ frontend/src/services/modules/notes-service.ts
 - `npm run build:frontend`、`npm run lint`、5 项 Notes 专项 E2E 和 9 项全量 E2E 通过。
 
 本次运行时样式修复的手动 E2E：**必须，已通过**。用户于 2026-07-28 确认真实软件默认窗口没有问题；Phase 4-2 已通过本地提交 `dc2ea33` 归档。
+
+## 12. 组件架构二次收口（2026-07-31）
+
+本轮不改变已确认的周导航、日期选择、自动保存、Git 活动参考、信息结构和数据契约。人工架构复核确认页面已正确使用 Page、Feedback、BaseButton、BaseSelect、BaseSegmented、BaseCheckbox 与通知 Store；需要调整的是日期列表按钮和对 BaseCard、BaseInput、BaseTextarea 内部结构的页面级覆盖。
+
+Notes、Notebook 与 Todo 已经重复出现可选择列表项，因此公共层新增 `BaseSelectableItem`，Notes 日期项通过 selected/pressed 契约保留原选择语义、视觉和响应式布局。周列表与编辑区使用 `BaseCard` 填充布局和内容背景公开 API；标题与正文使用 title/editor、eyebrow label、fillHeight 与 resize 契约；Git 活动目标日期的说明文字改为页面自有布局，实际选择控件仍由 `BaseSelect` 负责。
+
+Notes 原生按钮 1 → 0、Naive 内部 selector token 20 → 0，专项机器基线由 63 降至 42。首次 E2E 发现公共编辑器在无帮助文字时保留了 8px 空轨道，且窄窗口标题未压缩；两项均在公共组件层修正。重新执行 Notes Playwright 5 项全部通过，包括自动保存、切换日期立即 flush、错误重试、跨页状态和 900×600 编辑区几何断言。
+
+专项全量回归已通过：`npm run lint`、`npm test`（35 个测试文件 / 189 项单元与组件测试 + 架构门禁 4 项）、`npm run typecheck`、`npm run build:frontend`、`git diff --check`。2026-07-31 使用网页前端连接正式 Sidecar `13456/data` 完成只读验收：五个工作日数据正常读取，当前日期保留 `aria-pressed` 选中语义，周列表和编辑区铺满，当前窗口与 900×600 紧凑布局无横向溢出。验收期间未修改工时、未打开 Git 活动参考、未触发写入；控制台没有新增 Notes 错误，只有迁移前已知的 CodeMirror `defineSimpleMode` 错误。该网页验收不替代专项最终真实 Tauri Smoke Test。

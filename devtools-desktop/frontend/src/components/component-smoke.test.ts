@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest'
 import '@/styles/tokens/index.css'
 import BaseButton from './base/BaseButton.vue'
 import BaseCard from './base/BaseCard.vue'
+import BaseSelectableItem from './base/BaseSelectableItem.vue'
 import BaseDialog from './feedback/BaseDialog.vue'
 import AppToastHost from './feedback/AppToastHost.vue'
 import BaseDataTable from './data/BaseDataTable.vue'
@@ -33,6 +34,18 @@ describe('shared UI foundation', () => {
     expect(button.attributes('aria-busy')).toBe('true')
     expect(button.attributes('disabled')).toBeDefined()
     expect(button.text()).toContain('保存')
+  })
+
+  it('exposes selectable list-item state through the project contract', async () => {
+    const wrapper = mount(BaseSelectableItem, {
+      props: { selected: true, pressed: true },
+      slots: { default: '<strong>周一</strong><span>已保存</span>' },
+    })
+
+    expect(wrapper.classes()).toContain('is-selected')
+    expect(wrapper.get('button').attributes('aria-pressed')).toBe('true')
+    await wrapper.trigger('click')
+    expect(wrapper.emitted('click')).toHaveLength(1)
   })
 
   it('keeps page top outside the scrollable body slot', () => {
@@ -175,20 +188,32 @@ describe('shared UI foundation', () => {
 
   it('exposes layout variants without page-level internal selectors', () => {
     const card = mount(BaseCard, {
-      props: { fillHeight: true, contentLayout: 'fill', contentOverflow: 'auto' },
+      props: {
+        fillHeight: true,
+        contentLayout: 'fill',
+        contentOverflow: 'auto',
+        contentBackground: 'var(--color-surface-subtle)',
+      },
       slots: { default: '内容' },
     })
     expect(card.classes()).toContain('base-card--fill-height')
+    expect(card.get('.n-card-content').attributes('style')).toContain('background')
 
-    const title = mount(BaseInput, { props: { modelValue: '标题', variant: 'title', size: 'lg' } })
+    const title = mount(BaseInput, {
+      props: { modelValue: '标题', variant: 'title', label: '项目', labelVariant: 'eyebrow', size: 'lg' },
+    })
     expect(title.get('.field-control').classes()).toContain('field-control--title')
+    expect(title.get('.field-control').classes()).toContain('field-control--label-eyebrow')
 
     const search = mount(BaseInput, { props: { modelValue: '', type: 'search', variant: 'search' } })
     expect(search.get('.field-control').classes()).toContain('field-control--search')
     expect(search.get('input').attributes('type')).toBe('search')
 
-    const editor = mount(BaseTextarea, { props: { modelValue: '正文', variant: 'editor', fillHeight: true } })
+    const editor = mount(BaseTextarea, {
+      props: { modelValue: '正文', variant: 'editor', label: '正文', labelVariant: 'eyebrow', fillHeight: true },
+    })
     expect(editor.get('.field-control').classes()).toContain('field-control--fill-height')
+    expect(editor.get('.field-control').classes()).toContain('field-control--label-eyebrow')
   })
 
   it('closes the Naive UI-backed dialog through its project contract', async () => {

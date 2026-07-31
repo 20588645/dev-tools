@@ -28,7 +28,14 @@ const showBlockingLoadError = computed(() => (
 </script>
 
 <template>
-  <BaseCard class="notes-editor-panel" content-padding="0">
+  <BaseCard
+    class="notes-editor-panel"
+    content-padding="0"
+    content-layout="fill"
+    content-overflow="hidden"
+    content-background="var(--notes-editor-content-background)"
+    fill-height
+  >
     <header class="notes-editor-panel__header">
       <div class="notes-selected-day">
         <span class="notes-selected-day__number">{{ day.dayNumber }}</span>
@@ -61,6 +68,9 @@ const showBlockingLoadError = computed(() => (
       <BaseInput
         class="notes-editor-title"
         label="项目 / 标题"
+        label-variant="eyebrow"
+        variant="title"
+        size="lg"
         :model-value="day.note.title"
         placeholder="今天主要推进了什么？"
         autocomplete="off"
@@ -69,6 +79,10 @@ const showBlockingLoadError = computed(() => (
       <BaseTextarea
         class="notes-editor-content"
         label="工作内容"
+        label-variant="eyebrow"
+        variant="editor"
+        resize="none"
+        fill-height
         :rows="12"
         :model-value="day.note.content"
         placeholder="记录完成事项、关键决定或下一步安排…"

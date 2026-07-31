@@ -1,6 +1,6 @@
 # 组件架构合规专项
 
-> 状态：规则与自动门禁、首批公共组件能力、通知适配层及 Settings、Home、IpCheck 三个页面收口已完成；Settings 与 IpCheck 已通过连接正式 Sidecar 的网页人工验收。其余存量页面收口与最终真实 Tauri Smoke Test 待执行。在本专项和全站回归完成前，不进入 Phase 6-2 Deploy
+> 状态：规则与自动门禁、首批公共组件能力、通知适配层及 Settings、Home、IpCheck、Notes 四个页面收口已完成；Settings、IpCheck 与 Notes 已通过连接正式 Sidecar 的网页人工验收。其余存量页面收口与最终真实 Tauri Smoke Test 待执行。在本专项和全站回归完成前，不进入 Phase 6-2 Deploy
 >
 > 生效范围：`frontend/src/views/**` 及所有后续迁移业务页面。公共组件、适配层和第三方宿主的职责边界以本文为唯一专项入口；原执行计划中的一致规则继续有效，发生歧义时先暂停实现并更新本文。
 
@@ -64,13 +64,13 @@ npm run lint:architecture
 
 ## 6. 2026-07-31 存量快照
 
-当前业务页面直接导入第三方 UI、直接网络/IPC 调用和直接 DOM 查询均为 0。Settings、Home 与 IpCheck 收口后，待归零项由 68 个降至 63 个机器计数：
+当前业务页面直接导入第三方 UI、直接网络/IPC 调用和直接 DOM 查询均为 0。Settings、Home、IpCheck 与 Notes 收口后，待归零项由 68 个降至 42 个机器计数：
 
 | 类型 | 数量 | 主要页面 |
 | --- | ---: | --- |
-| `.n-*` 第三方内部选择器 | 38 个 selector token（分布在 36 行） | Notes、Notebook、Todo、Usage、Run |
+| `.n-*` 第三方内部选择器 | 18 个 selector token | Notebook、Todo、Usage、Run |
 | `:deep()` | 2 | Run |
-| 原生基础按钮 | 12 | Notebook 1、Notes 1、Run 1、Todo 4、Twofa 4、Usage 1 |
+| 原生基础按钮 | 11 | Notebook 1、Run 1、Todo 4、Twofa 4、Usage 1 |
 | 原生 `<table>` | 7 | Usage 6、Run 1 |
 | 裸 `setInterval` | 4 | Usage 1、Twofa 3 |
 | 直接 DOM 查询 | 0 | Home 已归零 |
@@ -195,3 +195,18 @@ IpCheck 人工审计确认查询、状态、卡片、普通进度和页面骨架
 “复制详情”原先单独维护局部提示状态、2 秒清理定时器和固定定位 Toast 样式，与第 11 节统一通知能力重复。现改为调用 `useNotificationStore`，成功与权限错误均由 Naive Message 适配层呈现；页面内提示 DOM、样式和定时器已删除。Playwright 覆盖复制内容、成功 Message 与失败 Message。该项属于人工识别的重复实现收口，机器递减基线保持 63，批准例外仍为 0。
 
 完整自动回归通过：`npm run lint`、`npm test`（单元测试 188 项 + 架构门禁 4 项）、`npm run typecheck`、`npm run build:frontend`、`git diff --check`；IpCheck Playwright 4 项单独通过。正式 Sidecar 网页人工验收确认当前 IP 结果与复制成功 Message 正常，未执行正式数据写入；真实 Tauri 通知验收仍合并到专项最终 Smoke Test。
+
+## 15. Notes 页面架构收口记录（2026-07-31）
+
+Notes 的机器债务包括 1 个日期列表原生按钮和 20 个 Naive 内部选择器。人工复核确认页面的周次、反馈、Git 活动、选择框和操作按钮均已正确使用项目组件；需要收口的是日期选择项、卡片填充布局与标题/正文编辑器样式所有权。
+
+- Notes、Notebook 与 Todo 已出现相同的可选择列表项模式，因此先建立 `BaseSelectableItem`，统一 selected、pressed、disabled、焦点、悬停和选择态；Notes 日期列表只保留日期内容与响应式栅格布局。
+- 周列表与编辑卡接入 `BaseCard` 的 fillHeight、contentLayout、contentOverflow 和 contentBackground 公开契约，不再查询或覆盖 `.n-card-content`。
+- 标题和正文接入 `BaseInput title`、`BaseTextarea editor/fillHeight` 与 eyebrow label 公开契约；公共层补齐紧凑窗口尺寸和无消息时的两行填充轨道，页面不再覆盖 `.n-input*`。
+- Git 活动目标日期使用页面自有说明布局包裹 `BaseSelect`，不再通过 `.n-select` 调整第三方根节点。
+
+Notes 的 21 项机器债务全部归零：第三方内部选择器 20 → 0、原生控件 1 → 0；专项总基线 63 → 42，批准例外仍为 0。组件 smoke test 已覆盖选择项语义、卡片背景和编辑器公开变体；Notes Playwright 5 项覆盖自动保存、切日 flush、错误重试、跨页状态和 900×600 几何回归并全部通过。
+
+完整自动回归通过：`npm run lint`、`npm test`（35 个测试文件 / 189 项单元与组件测试 + 架构门禁 4 项）、`npm run typecheck`、`npm run build:frontend`、`git diff --check`；生产构建仅保留迁移前既有 legacy script/CSS 提示。
+
+正式 Sidecar 网页只读验收使用 `http://127.0.0.1:1420/?apiPort=13456`，确认五个工作日读取、当前日期 `aria-pressed` 选中态、周列表与编辑区填充布局、当前窗口及 900×600 紧凑布局均正常，页面无横向溢出；未编辑正式工时内容，未打开 Git 活动参考，也未执行任何写入。控制台仅有迁移前已知的 CodeMirror `defineSimpleMode` 错误，没有新增 Notes 或公共组件错误。该结果不替代专项最终真实 Tauri Smoke Test。

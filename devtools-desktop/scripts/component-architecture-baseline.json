@@ -7,7 +7,6 @@
     "third-party-ui-import": {},
     "naive-internal-selector": {
       "frontend/src/views/notebook/notebook.css": 5,
-      "frontend/src/views/notes/notes.css": 20,
       "frontend/src/views/run/RunView.vue": 1,
       "frontend/src/views/run/components/RunProjectCard.vue": 1,
       "frontend/src/views/todo/todo.css": 9,
@@ -19,7 +18,6 @@
     },
     "native-control": {
       "frontend/src/views/notebook/components/NotebookSidebar.vue": 1,
-      "frontend/src/views/notes/components/WeekDayList.vue": 1,
       "frontend/src/views/run/components/RunGroupSection.vue": 1,
       "frontend/src/views/todo/components/TodoChecklist.vue": 1,
       "frontend/src/views/todo/components/TodoTaskDetail.vue": 1,

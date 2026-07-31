@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import BaseCard from '@/components/base/BaseCard.vue'
+import BaseSelectableItem from '@/components/base/BaseSelectableItem.vue'
 
 import { hasNoteContent, noteSaveLabel, type WeekDayEntry } from '../composables/useWeeklyNotes'
 
@@ -17,7 +18,13 @@ function preview(content: string) {
 </script>
 
 <template>
-  <BaseCard class="notes-week-panel" content-padding="0">
+  <BaseCard
+    class="notes-week-panel"
+    content-padding="0"
+    content-layout="fill"
+    content-overflow="hidden"
+    fill-height
+  >
     <div class="notes-week-panel__header">
       <div>
         <strong>本周记录</strong>
@@ -27,12 +34,13 @@ function preview(content: string) {
     </div>
 
     <div class="notes-day-list" :class="{ 'notes-day-list--weekend': days.length === 7 }">
-      <button
+      <BaseSelectableItem
         v-for="day in days"
         :key="day.date"
-        type="button"
         class="notes-day-item"
         :class="{ 'is-active': selectedDate === day.date, 'is-today': day.isToday }"
+        :selected="selectedDate === day.date"
+        :pressed="selectedDate === day.date"
         :data-save-state="day.note.saveState"
         :aria-pressed="selectedDate === day.date"
         :aria-label="`${day.weekday} ${day.fullDate}，${noteSaveLabel(day.note)}`"
@@ -52,7 +60,7 @@ function preview(content: string) {
           </span>
           <span class="notes-day-item__preview">{{ preview(day.note.content) }}</span>
         </span>
-      </button>
+      </BaseSelectableItem>
     </div>
 
     <div class="notes-week-panel__footer">
