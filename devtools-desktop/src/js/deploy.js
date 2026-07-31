@@ -1,5 +1,25 @@
 // ========== Module: Deploy (部署面板) ==========
 
+// —— 项目分组的视图偏好（折叠态/自定义排序存 localStorage）——
+// 原定义在 js/run.js；本地运行页迁到 Vue 后该文件不再加载，部署面板仍用同一套
+// 分组顺序，故在此保留。键名与 Vue 侧 useRunGroups 保持一致，两边共享同一偏好。
+const RUN_UNGROUPED = '__ungrouped__';
+
+function getRunGroupOrder() {
+  try { return JSON.parse(localStorage.getItem('runGroupOrder') || '[]'); } catch (e) { return []; }
+}
+
+function setRunGroupOrder(order) {
+  localStorage.setItem('runGroupOrder', JSON.stringify(order));
+}
+
+// 具名分组按自定义顺序优先，未在顺序里的新组按名称补在后
+function orderedRunGroups(namedKeys) {
+  const saved = getRunGroupOrder().filter(k => namedKeys.includes(k));
+  const rest = namedKeys.filter(k => !saved.includes(k)).sort((a, b) => a.localeCompare(b, 'zh'));
+  return [...saved, ...rest];
+}
+
 // ========== Node Versions ==========
 async function loadNodeVersions() {
   try {
@@ -20,7 +40,6 @@ async function loadProjects() {
     projects = await API.get('/api/projects');
     await loadRunStatuses();
     renderProjects();
-    renderRunPage();
     requestHomeRefreshIfVisible();
     syncTrayMenu();
   } catch (e) {
@@ -1198,23 +1217,18 @@ async function testServer(id, btn) {
   const serverName = server ? server.name : id;
   const serverHost = server ? `${server.username}@${server.host}:${server.port}` : '';
 
-  document.getElementById('logTitle').textContent = '连接测试';
-  document.getElementById('logSubtitle').textContent = `${serverName} (${serverHost})`;
-  document.getElementById('logTerminal').innerHTML = '';
-  document.getElementById('deployResult').style.display = 'none';
-  document.getElementById('progressBar').style.width = '0%';
-  document.getElementById('progressText').textContent = '';
-
-  const steps = ['连接中', 'SFTP', '完成'];
-  document.getElementById('progressSteps').innerHTML = steps.map((s, i) =>
-    `<div class="step${i === 0 ? ' active' : ''}" id="step${i}"><div class="step-dot"></div>${s}</div>`
-  ).join('');
-
-  document.getElementById('logModal').classList.add('active');
+  openLogViewer({
+    kind: 'deploy',
+    title: '连接测试',
+    subtitle: `${serverName} (${serverHost})`,
+    projectName: serverName,
+    steps: ['连接中', 'SFTP', '完成'],
+  });
 
   try {
     const data = await API.post(`/api/servers/${id}/test`);
     currentDeployId = data.id;
+    logViewer()?.attachTaskId(data.id);
   } catch (e) {
     appendLog('请求失败: ' + e.message, 'error');
   }
@@ -1407,19 +1421,22 @@ async function viewLog(id) {
   try {
     const record = await API.get(`/api/history/${id}`);
     currentDeployId = id;
-    document.getElementById('logTitle').textContent = '部署日志';
-    document.getElementById('logSubtitle').textContent = `${record.projectName} · ${(record.modules || []).join(', ')}`;
-    document.getElementById('logTerminal').innerHTML = '';
-    document.getElementById('progressBar').style.width = '100%';
-    document.getElementById('progressText').textContent = '100%';
-    document.getElementById('progressSteps').innerHTML = '';
-    const result = document.getElementById('deployResult');
-    result.style.display = 'flex';
-    document.getElementById('resultIcon').textContent = record.status === 'success' ? '✅' : '❌';
-    document.getElementById('resultText').innerHTML = record.status === 'success'
-      ? `部署完成！耗时 <strong>${escapeHtml(record.duration)}</strong>` : '部署失败';
-    (record.logs || []).forEach(l => appendLog(l.text, l.type));
-    document.getElementById('logModal').classList.add('active');
+    const ok = record.status === 'success';
+    // 历史回放：任务早已结束，running=false 让关闭按钮保持「关闭」而非「最小化」
+    openLogViewer({
+      kind: 'deploy',
+      id,
+      title: '部署日志',
+      subtitle: `${record.projectName} · ${(record.modules || []).join(', ')}`,
+      projectName: record.projectName,
+      running: false,
+    });
+    logViewer()?.setProgress({ percent: 100, label: '100%', tone: ok ? 'success' : 'danger' });
+    logViewer()?.setResult({
+      icon: ok ? '✅' : '❌',
+      text: ok ? `部署完成！耗时 ${record.duration}` : '部署失败',
+    });
+    logViewer()?.replaceLines((record.logs || []).map(l => ({ text: l.text, type: l.type })));
   } catch (e) {
     showAlert('加载日志失败: ' + e.message, { icon: '❌' });
   }
@@ -1602,20 +1619,14 @@ function gitTimeAgo(ts) {
 }
 
 function showLogModal(buildOnly) {
-  document.getElementById('logTitle').textContent = buildOnly ? '构建进度' : '部署进度';
   const modules = currentProject.type === 'multi-module' ? [...modalState[activeCtx].checkedModules] : ['整体构建'];
-  document.getElementById('logSubtitle').textContent = `${currentProject.name} · ${modules.join(', ')}`;
-  document.getElementById('logTerminal').innerHTML = '';
-  document.getElementById('deployResult').style.display = 'none';
-  document.getElementById('progressBar').style.width = '0%';
-  document.getElementById('progressBar').parentElement?.classList.remove('is-indeterminate');
-  document.getElementById('progressText').textContent = '0%';
-
-  const steps = buildOnly ? ['拉取代码', '构建中'] : ['预检', '拉取代码', '构建中', '上传中', '完成'];
-  document.getElementById('progressSteps').innerHTML = steps.map((s, i) =>
-    `<div class="step${i === 0 ? ' active' : ''}" id="step${i}"><div class="step-dot"></div>${s}</div>`
-  ).join('');
-
-  document.getElementById('logModal').classList.add('active');
+  openLogViewer({
+    kind: 'deploy',
+    title: buildOnly ? '构建进度' : '部署进度',
+    subtitle: `${currentProject.name} · ${modules.join(', ')}`,
+    projectName: currentProject.name,
+    steps: buildOnly ? ['拉取代码', '构建中'] : ['预检', '拉取代码', '构建中', '上传中', '完成'],
+  });
+  logViewer()?.setProgress({ percent: 0, indeterminate: false, label: '0%' });
   updateLogModalCloseBtn();
 }

@@ -229,67 +229,6 @@ select {
   white-space: nowrap;
 }
 
-.run-config-panel input,
-.run-config-panel select {
-  width: 100%;
-  height: 32px;
-  border: 1px solid var(--border);
-  border-radius: 7px;
-  background: var(--bg-elevated);
-  color: var(--text-primary);
-  padding: 0 10px;
-  font-size: 12px;
-}
-
-.run-module-option input {
-  flex: 0 0 14px !important;
-  width: 14px !important;
-  height: 14px !important;
-  min-height: 14px !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  border-radius: 4px !important;
-  box-shadow: none !important;
-  accent-color: var(--primary);
-}
-
-.run-home-check input {
-  flex: 0 0 14px !important;
-  width: 14px !important;
-  height: 14px !important;
-  min-height: 14px !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  border-radius: 4px !important;
-  box-shadow: none !important;
-  accent-color: var(--primary);
-}
-
-.run-hint code {
-  color: var(--primary);
-  background: var(--primary-light);
-  border: 1px solid color-mix(in srgb, var(--primary) 24%, transparent);
-  border-radius: 4px;
-  padding: 1px 4px;
-}
-
-/* ========== Final Log Modal Polish ========== */
-#logModal .modal {
-  width: min(980px, 90vw) !important;
-  max-width: min(980px, 90vw) !important;
-  height: min(680px, 82vh) !important;
-  max-height: min(680px, 82vh) !important;
-  background: var(--bg-elevated) !important;
-}
-
-@media (max-width: 720px) {
-#logModal .modal {
-    width: 94vw !important;
-    height: 84vh !important;
-  }
-
-}
-
 .intro-meta span {
   padding: 5px 9px;
   border: 1px solid var(--border);

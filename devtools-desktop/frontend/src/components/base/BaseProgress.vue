@@ -6,9 +6,15 @@ const props = withDefaults(defineProps<{
   value: number
   label?: string
   tone?: 'action' | 'info' | 'success' | 'warning' | 'danger'
+  /**
+   * 进行中但时长未知（如编译阶段）。开启后轨道显示流动效果，
+   * 避免用一个固定百分比暗示「卡在中间」。
+   */
+  processing?: boolean
 }>(), {
   label: undefined,
   tone: 'action',
+  processing: false,
 })
 
 const percentage = computed(() => Math.max(0, Math.min(100, props.value)))
@@ -31,6 +37,7 @@ const color = computed(() => ({
     :border-radius="999"
     :fill-border-radius="999"
     :color="color"
+    :processing="processing"
     rail-color="var(--color-surface-subtle)"
     :aria-label="label"
   />

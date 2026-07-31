@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, useId } from 'vue'
+import { computed, useId, useTemplateRef } from 'vue'
 import { NInput } from 'naive-ui'
 
 const props = withDefaults(defineProps<{
@@ -32,6 +32,14 @@ const inputId = computed(() => props.id ?? `base-input-${generatedId}`)
 const labelId = computed(() => `${inputId.value}-label`)
 const messageId = computed(() => `${inputId.value}-message`)
 const inputType = computed<'text' | 'password'>(() => props.type === 'password' ? 'password' : 'text')
+
+/* 转发底层输入控制，供调用方在弹窗打开、校验失败等场景主动聚焦 */
+const input = useTemplateRef<InstanceType<typeof NInput>>('input')
+defineExpose({
+  focus: () => input.value?.focus(),
+  blur: () => input.value?.blur(),
+  select: () => input.value?.select(),
+})
 </script>
 
 <template>
@@ -40,6 +48,7 @@ const inputType = computed<'text' | 'password'>(() => props.type === 'password' 
       {{ label }}<span v-if="required" aria-hidden="true"> *</span>
     </label>
     <NInput
+      ref="input"
       :value="String(modelValue ?? '')"
       :type="inputType"
       :placeholder="placeholder"

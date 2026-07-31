@@ -30,7 +30,10 @@ function recordRunHistory(job) {
       JSON.stringify(job.moduleNames || []),
       job.command || '',
       job.nodeVersion || '',
-      job.status === 'stopped' ? 'success' : job.status,
+      // 三档区分「自然结束 / 用户手动停止 / 异常退出」，便于排查「是我停的还是它崩的」。
+      // job.status 本身分不出前两者：手动停止与退出码 0 都会落到 'stopped'，
+      // 因此以 /stop、/batch-stop 打的 stopRequested 标记为准。
+      job.status === 'stopped' ? (job.stopRequested ? 'stopped' : 'success') : job.status,
       job.startedAt ? new Date(job.startedAt).toISOString() : '',
       job.stoppedAt ? new Date(job.stoppedAt).toISOString() : '',
       job.stoppedAt && job.startedAt ? formatDuration(job.stoppedAt - job.startedAt) : '',
@@ -759,6 +762,7 @@ router.post('/batch-stop', (req, res) => {
     const job = [...runJobs.values()].find(j => j.projectName === name && ['starting', 'running'].includes(j.status));
     if (job) {
       job.status = 'stopping';
+      job.stopRequested = true;   // 同 /stop：批量停止同样属于用户手动停止
       pushLog(req.app, job, 'warn', '正在停止本地运行服务（批量操作）...');
       broadcastStatus(req.app, job);
       try {
@@ -816,7 +820,10 @@ router.post('/start', async (req, res) => {
     includeHome: !!includeHome,
     command: finalCommand,
     nodeVersion: nodeVersion || project.nodeVersion || '',
-    port: port || inferProjectPort(project, finalCommand),
+    // F3：优先级为「本次请求显式指定 > 项目配置的 runPort > 从项目文件推断」。
+    // 旧实现漏了 project.runPort，导致用户在配置里填的端口只用于占用检测，
+    // 实际注入进程的 PORT 仍是推断值——填了没反应且无任何提示。
+    port: port || project.runPort || inferProjectPort(project, finalCommand),
     url: '',
     status: 'starting',
     pid: null,
@@ -832,6 +839,7 @@ router.post('/start', async (req, res) => {
     autoRestart: !!autoRestart,
     autoRestartMax: Math.min(parseInt(autoRestartMax) || 3, 10),
     autoRestartCount: 0,
+    stopRequested: false,
     logs: [],
     child: null,
   };
@@ -859,6 +867,7 @@ router.post('/:id/stop', (req, res) => {
   if (!['starting', 'running'].includes(job.status)) return res.json(publicJob(job));
 
   job.status = 'stopping';
+  job.stopRequested = true;   // 供历史记录区分「用户手动停止」与「自然退出」
   pushLog(req.app, job, 'warn', '正在停止本地运行服务...');
   broadcastStatus(req.app, job);
 
@@ -886,6 +895,7 @@ router.post('/:id/restart', (req, res) => {
 
   // 打重启标记后按 stop 流程终止；进程 close 时 processJobClose 见标记会就地重启
   job.restartRequested = true;
+  job.stopRequested = false;  // 重启不是「停止」，别让后续记录误判
   job.status = 'stopping';
   pushLog(req.app, job, 'warn', '正在重启本地运行服务...');
   broadcastStatus(req.app, job);

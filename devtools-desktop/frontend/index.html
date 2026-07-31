@@ -19,7 +19,6 @@
 <link rel="stylesheet" href="css/segmented.css">
 <link rel="stylesheet" href="css/badge.css">
 <link rel="stylesheet" href="css/card.css">
-<link rel="stylesheet" href="css/pages/run.css">
 <link rel="stylesheet" href="css/pages/deploy.css">
 <link rel="stylesheet" href="css/pages/terminal.css">
 <link rel="stylesheet" href="css/pages/editor.css">
@@ -252,37 +251,7 @@
 
 <!-- 本地运行 -->
 <section class="page" id="page-run">
-  <div class="page-fixed-header">
-    <div class="page-header-bar page-header-simple">
-      <div>
-        <div class="page-title">▶ 本地运行</div>
-        <div class="page-subtitle">快速启动前端开发服务，管理模块、日志和本地地址</div>
-      </div>
-      <div class="page-header-actions">
-        <button class="btn btn--primary" onclick="showAddProject()" style="white-space:nowrap">+ 添加项目</button>
-      </div>
-    </div>
-
-    <div class="page-toolbar run-page-toolbar">
-      <div class="run-page-search search-bar">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        <input type="text" placeholder="搜索可运行项目..." id="runSearchInput" autocomplete="off">
-      </div>
-      <div class="run-page-filters">
-        <button class="chip active" data-run-filter="all">全部</button>
-        <button class="chip" data-run-filter="running">运行中</button>
-        <button class="chip" data-run-filter="multi">多模块</button>
-        <button class="chip" data-run-filter="single">单体项目</button>
-      </div>
-      <button class="btn" onclick="batchStopAllRun()" id="btnBatchStopRun" style="white-space:nowrap;display:none">■ 全部停止</button>
-      <button class="btn" onclick="showRunHistory()" style="white-space:nowrap">📋 运行历史</button>
-    </div>
-  </div>
-
-  <div class="page-scroll-body">
-    <div class="run-overview" id="runOverview"></div>
-    <div class="run-project-grid" id="runProjectGrid"></div>
-  </div>
+  <div id="vue-run-host" aria-live="polite"></div>
 </section>
 
 <!-- 待办看板 -->
@@ -570,113 +539,6 @@
       <div style="flex:1;font-size:13px;color:var(--text-muted)" id="browserCurrentPath">/</div>
       <button class="btn" onclick="closeModal('remoteBrowserModal')">取消</button>
       <button class="btn btn--primary" onclick="confirmRemotePath()">✓ 选择此目录</button>
-    </div>
-  </div>
-</div>
-
-<!-- 部署日志弹窗 -->
-<div class="modal-overlay" id="logModal">
-  <div class="modal modal-log">
-    <div class="modal-header">
-      <div>
-        <h2 id="logTitle">部署进度</h2>
-        <p class="modal-subtitle" id="logSubtitle"></p>
-      </div>
-      <button class="modal-close" onclick="closeModal('logModal')">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="deploy-progress">
-        <div class="progress-steps" id="progressSteps"></div>
-        <div class="progress-bar-container">
-          <div class="progress-bar" id="progressBar"></div>
-        </div>
-        <span class="progress-text" id="progressText">0%</span>
-      </div>
-      <div class="log-search-bar" id="logSearchBar">
-        <span>🔍</span>
-        <input type="text" id="logSearchInput" placeholder="搜索日志..." oninput="doLogSearch()" onkeydown="logSearchKeydown(event)">
-        <span class="log-search-info" id="logSearchInfo"></span>
-        <button class="log-search-btn" onclick="logSearchPrev()" title="上一个">↑</button>
-        <button class="log-search-btn" onclick="logSearchNext()" title="下一个">↓</button>
-        <button class="log-search-btn" onclick="closeLogSearch()" title="关闭">✕</button>
-      </div>
-      <div class="log-terminal" id="logTerminal"></div>
-    </div>
-    <div class="modal-footer">
-      <div class="deploy-result" id="deployResult" style="display:none">
-        <span class="result-icon" id="resultIcon">✅</span>
-        <span id="resultText">部署完成！</span>
-        <span class="run-start-elapsed" id="runStartElapsed"></span>
-      </div>
-      <button class="btn" onclick="closeModal('logModal')">关闭</button>
-    </div>
-  </div>
-</div>
-
-<!-- 本地运行弹窗 -->
-<div class="modal-overlay" id="runModal">
-  <div class="modal modal-run">
-    <div class="modal-header">
-      <div>
-        <h2 id="runModalTitle">▶ 运行本地项目</h2>
-        <p class="modal-subtitle" id="runSubtitle"></p>
-      </div>
-      <button class="modal-close" onclick="closeModal('runModal')">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="run-layout">
-        <div class="run-config-panel">
-          <div class="run-section-title" id="runSectionTitle">运行配置</div>
-          <div class="config-row">
-            <label>Node 版本</label>
-            <select id="runNodeVersion"></select>
-          </div>
-          <div class="config-row" id="runModuleRow">
-            <label>收藏模块</label>
-            <div class="run-module-config">
-              <input type="search" id="runModuleSearch" placeholder="搜索模块..." oninput="filterRunConfigModules()">
-              <div class="run-module-picker" id="runModuleSelect"></div>
-            </div>
-          </div>
-          <div class="config-row" id="runHomeRow">
-            <label>首页模块</label>
-            <div class="run-home-control">
-              <label class="run-home-check">
-                <input type="checkbox" id="runIncludeHome">
-                <span>同步运行</span>
-              </label>
-              <input type="text" id="runHomeModuleName" placeholder="home">
-            </div>
-          </div>
-          <div class="config-row">
-            <label>启动命令</label>
-            <input type="text" id="runCommand" placeholder="npm run dev">
-          </div>
-          <div class="config-row">
-            <label>服务端口</label>
-            <input type="text" inputmode="numeric" id="runPortInput" placeholder="自动推断 (例如 8080)">
-          </div>
-          <div class="config-row" id="runGroupRow">
-            <label>分组</label>
-            <select id="runGroupSelect" onchange="onRunGroupSelectChange(this)"></select>
-          </div>
-          <div class="config-row run-auto-restart-row">
-            <label>自动重启</label>
-            <label class="run-auto-restart-label">
-              <input type="checkbox" id="runAutoRestart">
-              <span>异常退出时自动重启（最多3次）</span>
-            </label>
-          </div>
-          <div class="run-hint">运行时会使用所选 Node 版本执行启动命令；端口以项目自身配置为准。</div>
-        </div>
-        <div class="run-status-panel" id="runStatusPanel">
-          <div class="run-status-empty">选择配置后启动，本地服务日志会显示在统一日志弹窗中。</div>
-        </div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn" onclick="closeModal('runModal')">取消</button>
-      <button class="btn btn--primary" id="runStartBtn" onclick="startLocalRunFromModal()">▶ 启动运行</button>
     </div>
   </div>
 </div>
@@ -983,26 +845,6 @@
   </div>
 </div>
 
-<!-- 运行历史弹窗 -->
-<div class="modal-overlay" id="runHistoryModal">
-  <div class="modal" style="max-width:720px">
-    <div class="modal-header">
-      <div>
-        <h2>📋 本地运行历史</h2>
-        <p class="modal-subtitle">最近 100 条运行记录</p>
-      </div>
-      <button class="modal-close" onclick="closeModal('runHistoryModal')">✕</button>
-    </div>
-    <div class="modal-body" style="padding:16px 20px">
-      <div id="runHistoryList" class="run-history-list"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn--danger" onclick="clearRunHistory(event)">🗑 清空历史</button>
-      <button class="btn" onclick="closeModal('runHistoryModal')">关闭</button>
-    </div>
-  </div>
-</div>
-
 <!-- 2FA 账号弹窗 -->
 <!-- 2FA 批量导入弹窗 -->
 <!-- 自定义系统弹窗 (替代 confirm / alert) -->
@@ -1020,7 +862,6 @@
 <script src="js/app.js"></script>
 <script src="js/deploy.js"></script>
 <script src="js/filetransfer.js"></script>
-<script src="js/run.js"></script>
 <script src="js/vendor/codemirror/cm.bundle.js"></script>
 <script src="js/editor.js"></script>
 <script src="js/xterm.js"></script>

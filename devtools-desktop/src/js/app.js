@@ -14,7 +14,6 @@ let checkedAvailableProjects = new Set();
 let busyProjects = new Set();       // 防重复部署锁
 let lastDeployCache = {};            // 项目最近部署记录缓存
 let runningProjects = {};            // projectName -> 本地运行任务
-let portOccupancyAlerts = {};        // projectName -> 端口占用诊断信息
 let currentRunId = null;             // 当前日志弹窗展示的本地运行任务
 let runModalProjectName = '';
 let runModalMode = 'start';
@@ -158,6 +157,22 @@ function requestHomeRefreshIfVisible(reason = 'runtime-change') {
   window.dispatchEvent(new CustomEvent(HOME_REFRESH_REQUESTED_EVENT, {
     detail: { reason },
   }));
+}
+
+// 运行态兜底加载：托盘菜单与首页卡片仍读 runningProjects（本地运行页自身已由
+// Vue run store 驱动）。原定义在 js/run.js，该文件随本地运行页迁移不再加载。
+async function loadRunStatuses() {
+  try {
+    const list = await API.get('/api/run/status');
+    runningProjects = {};
+    (list || []).forEach(job => {
+      if (['starting', 'running'].includes(job.status)) {
+        runningProjects[job.projectName] = job;
+      }
+    });
+  } catch (e) {
+    runningProjects = {};
+  }
 }
 
 // ========== 托盘菜单同步 ==========
@@ -640,15 +655,7 @@ function setupModalDismissal() {
   document.addEventListener('keydown', (event) => {
     if (event.key !== 'Escape') return;
 
-    const logSearchBar = document.getElementById('logSearchBar');
-    const logSearchInput = document.getElementById('logSearchInput');
-    if (logSearchBar?.classList.contains('active') && document.activeElement === logSearchInput) {
-      event.preventDefault();
-      event.stopPropagation();
-      closeLogSearch();
-      return;
-    }
-
+    // 日志搜索的 Esc 已由 Vue LogViewer 自行处理，这里不再拦截。
     const sysDialog = document.getElementById('sysDialog');
     if (sysDialog?.classList.contains('active') && activeSysDialogClose) {
       event.preventDefault();
@@ -700,8 +707,7 @@ function setupWSHandlers() {
   WS.on('progress', (data) => {
     if (data.id !== currentDeployId && !(activeTask && !currentDeployId)) return;
     const pct = data.percent || 0;
-    document.getElementById('progressBar').style.width = pct + '%';
-    document.getElementById('progressText').textContent = pct + '%';
+    logViewer()?.setProgress({ percent: pct, label: pct + '%' });
   });
 
   WS.on('status', (data) => {
@@ -712,18 +718,15 @@ function setupWSHandlers() {
     }
 
     if (data.id.startsWith('test-') && data.phase === 'done') {
-      document.querySelectorAll('.step').forEach(s => { s.classList.remove('active'); s.classList.add('done'); });
-      document.getElementById('progressBar').style.width = '100%';
-      document.getElementById('progressText').textContent = '';
-      const result = document.getElementById('deployResult');
-      result.style.display = 'flex';
-      if (data.status === 'success') {
-        document.getElementById('resultIcon').textContent = '✅';
-        document.getElementById('resultText').innerHTML = `连接测试通过 <strong>${data.duration}ms</strong>`;
-      } else {
-        document.getElementById('resultIcon').textContent = '❌';
-        document.getElementById('resultText').textContent = `连接失败: ${data.error || '未知错误'}`;
-      }
+      const ok = data.status === 'success';
+      logViewer()?.finishAllSteps();
+      logViewer()?.setProgress({ percent: 100, indeterminate: false, label: '', tone: ok ? 'success' : 'danger' });
+      logViewer()?.setResult({
+        icon: ok ? '✅' : '❌',
+        text: ok ? `连接测试通过 ${data.duration}ms` : `连接失败: ${data.error || '未知错误'}`,
+      });
+      logViewer()?.setRunning(false);
+      if (activeTask) activeTask.isRunning = false;
       return;
     }
 
@@ -739,26 +742,21 @@ function setupWSHandlers() {
     } else if (data.phase === 'uploading') {
       if (stepCount > 3) { setStepDone(0); setStepDone(1); setStepDone(2); setStepActive(3); }
     } else if (data.phase === 'done') {
-      document.querySelectorAll('.step').forEach(s => { s.classList.remove('active'); s.classList.add('done'); });
-      document.getElementById('progressBar').style.width = '100%';
-      document.getElementById('progressText').textContent = '100%';
-      const result = document.getElementById('deployResult');
-      result.style.display = 'flex';
-      if (data.status === 'success') {
+      const ok = data.status === 'success';
+      logViewer()?.finishAllSteps();
+      logViewer()?.setProgress({ percent: 100, indeterminate: false, label: '100%', tone: ok ? 'success' : 'danger' });
+      if (ok) {
         const doneLabel = data.type === 'build-only' ? '构建完成' : '部署完成';
-        document.getElementById('resultIcon').textContent = '✅';
-        document.getElementById('resultText').innerHTML = `${doneLabel}！耗时 <strong>${data.duration}</strong>`;
+        logViewer()?.setResult({ icon: '✅', text: `${doneLabel}！耗时 ${data.duration}` });
       } else {
-        const failLabel = data.type === 'build-only' ? '构建失败' : '部署失败';
-        document.getElementById('resultIcon').textContent = '❌';
-        document.getElementById('resultText').textContent = failLabel;
+        logViewer()?.setResult({ icon: '❌', text: data.type === 'build-only' ? '构建失败' : '部署失败' });
       }
       if (activeTask) activeTask.isRunning = false;
       updateLogModalCloseBtn();
-      const logModal = document.getElementById('logModal');
-      if (!logModal.classList.contains('active')) {
-        logModal.classList.add('active');
-        showToast(data.status === 'success' ? '✅ 任务完成' : '❌ 任务失败', data.projectName);
+      // 任务在后台完成（弹窗已最小化）时重新弹出并提示
+      if (!logViewer()?.isVisible()) {
+        logViewer()?.reopen();
+        showToast(ok ? '✅ 任务完成' : '❌ 任务失败', data.projectName);
       }
       if (data.projectName) clearBusy(data.projectName);
       const typeText = data.type === 'build-only' ? '构建' : '部署';
@@ -780,35 +778,12 @@ function setupWSHandlers() {
     window.dispatchEvent(new CustomEvent(UPGRADE_PROGRESS_EVENT, { detail: data }));
   });
 
-  async function checkPortOccupancyForProject(projectName, port) {
-    if (!port) return;
-    try {
-      const res = await API.get('/api/run/port-owner/' + port);
-      if (res && res.inUse) {
-        portOccupancyAlerts[projectName] = {
-          port: port,
-          pid: res.pid,
-          pids: res.pids,
-          user: res.user,
-          command: res.command,
-          commandPath: res.commandPath
-        };
-      } else {
-        delete portOccupancyAlerts[projectName];
-      }
-    } catch (err) {
-      console.error('[Port Diagnosis] Failed to check port owner:', err);
-    }
-  }
-
-  window.checkPortOccupancyForProject = checkPortOccupancyForProject;
-
   // WS 重连后全量对账：断线期间的 run-status 推送会全部丢失，重连后从后端拉一次
   // 真实运行态，纠正可能失真的卡片/统计（首连也会触发，loadRunStatuses 幂等故安全）
   WS.on('open', () => {
+    // 本地运行页的对账已由 Vue useRunRealtime 负责；这里只刷新部署侧项目卡片
     loadRunStatuses().then(() => {
       renderProjects();
-      renderRunPage();
       requestHomeRefreshIfVisible();
       syncTrayMenu();
     });
@@ -818,12 +793,8 @@ function setupWSHandlers() {
     const isActive = ['starting', 'running'].includes(data.status);
     if (isActive) {
       runningProjects[data.projectName] = data;
-      delete portOccupancyAlerts[data.projectName];
     } else {
       delete runningProjects[data.projectName];
-      if (data.status === 'error' && data.port) {
-        await checkPortOccupancyForProject(data.projectName, data.port);
-      }
     }
 
     if (data.status === 'running' && !notifiedRunIds.has(data.id)) {
@@ -839,9 +810,8 @@ function setupWSHandlers() {
       clearNotifiedCompileErrors(data.id);
     }
 
-    if (data.id === currentRunId) updateRunLogStatus(data);
+    // 日志弹窗与本地运行页的状态由 Vue 侧（log-task store / useRunRealtime）驱动
     renderProjects();
-    renderRunPage();
     requestHomeRefreshIfVisible();
     syncTrayMenu();
   });
@@ -1008,28 +978,11 @@ function setupNavigation() {
     clearTimeout(_searchTimer);
     _searchTimer = setTimeout(renderProjects, 150);
   });
-  const runSearchInput = document.getElementById('runSearchInput');
-  let _runSearchTimer = null;
-  if (runSearchInput) runSearchInput.addEventListener('input', () => {
-    clearTimeout(_runSearchTimer);
-    _runSearchTimer = setTimeout(renderRunPage, 150);
-  });
-  document.querySelectorAll('#page-run .chip[data-run-filter]').forEach(chip => {
-    chip.addEventListener('click', () => {
-      document.querySelectorAll('#page-run .chip[data-run-filter]').forEach(c => c.classList.remove('active'));
-      chip.classList.add('active');
-      currentRunFilter = chip.dataset.runFilter;
-      renderRunPage();
-    });
-  });
-
   emitLegacyPageActivation('home', 'legacy');
 }
 
 // ========== 页面切换 ==========
 function switchPage(page, el, source = 'legacy') {
-  // 离开本地运行页时停掉其轮询（运行时长刷新 + 起停对账），避免后台空转
-  if (typeof stopRunPagePolling === 'function') stopRunPagePolling();
   const targetPage = document.getElementById('page-' + page);
   if (!targetPage) {
     console.warn('[Navigation] 未找到目标页面:', page);
@@ -1059,10 +1012,6 @@ function switchPage(page, el, source = 'legacy') {
     if (activeSub) switchSubTab(activeSub.dataset.sub, activeSub);
   }
   if (page === 'filetransfer') initFileTransfer();
-  if (page === 'run') {
-    loadRunStatuses().then(() => renderRunPage());
-    startRunPagePolling();
-  }
   if (page === 'editor') initEditor();
   if (page === 'terminal') loadCommands();
   emitLegacyPageActivation(page, source);
@@ -1173,71 +1122,39 @@ async function withButtonBusy(btn, busyText, fn) {
   }
 }
 
+// ========== Log Viewer 桥（过渡期） ==========
+// 日志弹窗已迁到 Vue 公共 LogViewer（frontend/src/components/logviewer/），由
+// window.__logViewer 暴露命令式接口。部署面板尚未迁移，仍走这些包装函数；
+// deploy 页迁完后本节连同下方的包装一并删除。
+function logViewer() {
+  return window.__logViewer || null;
+}
+
+// 步骤总数由打开时传入的 steps 决定，改为在本地缓存，替代原先从 DOM 数节点。
+let logViewerStepCount = 0;
+
+function openLogViewer({ kind, id = null, title, subtitle = '', projectName = '', steps = [], running = true }) {
+  logViewerStepCount = steps.length;
+  logViewer()?.open({ kind, id, title, subtitle, projectName, steps, running });
+}
+
 function setStepActive(idx) {
-  document.querySelectorAll('.step').forEach((s, i) => {
-    s.classList.toggle('active', i === idx);
-    if (i < idx) s.classList.add('done');
-  });
+  logViewer()?.activateStep(idx);
 }
 
 function setStepDone(idx) {
-  const step = document.getElementById('step' + idx);
-  if (step) { step.classList.remove('active'); step.classList.add('done'); }
+  // 旧语义：把第 idx 步标完成。等价于推进到下一步（前序自动置 done）。
+  logViewer()?.activateStep(idx + 1);
 }
 
 function getProgressStepCount() {
-  return document.querySelectorAll('#progressSteps .step').length;
+  return logViewerStepCount;
 }
 
-// ========== Log Modal ==========
-// 智能滚动：内容未占满容器时强制回到顶部（保证日志开头/盒子头部不被裁切）；
-// 占满时仅在用户原本就在底部时跟随到最新。用 rAF 等布局结算，规避弹窗开场动画期间的瞬态尺寸。
-function scrollLogTerminal(terminal, wasAtBottom = true) {
-  if (!terminal) return;
-  requestAnimationFrame(() => {
-    if (terminal.scrollHeight <= terminal.clientHeight + 2) {
-      terminal.scrollTop = 0;
-    } else if (wasAtBottom) {
-      terminal.scrollTop = terminal.scrollHeight;
-    }
-  });
-}
-
+// 行分类、ANSI 着色、源码链接与智能滚动均已由 LogViewer 组件承担
+// （frontend/src/components/logviewer/log-format.ts）。这里只做转发。
 function appendLog(text, type = 'info') {
-  const terminal = document.getElementById('logTerminal');
-  const MAX_LOG_LINES = 3000;
-  while (terminal.childElementCount >= MAX_LOG_LINES) {
-    terminal.removeChild(terminal.firstChild);
-  }
-  const clsMap = { cmd: 'log-cmd', info: 'log-info', success: 'log-success', warn: 'log-warn', error: 'log-error' };
-  const clean = text.replace(/\x1B\[[0-9;]*[a-zA-Z]/g, '').replace(/\[[\d;]*m/g, '');
-  
-  let finalType = type;
-  
-  // 识别并拦截 HPM 代理报错，强行降级为 warn，不显示为红色
-  const isHpmError = /\[HPM\]\s+Error/i.test(clean);
-  if (isHpmError) {
-    finalType = 'warn';
-  } else if (type === 'info') {
-    const hasError = /ERROR|Exception|Failed|TypeError|ReferenceError|CompileError|ValidationError/i.test(clean);
-    const hasWarning = /WARN|Warning|Deprecated|Deprecation/i.test(clean);
-    const hasSuccess = /SUCCESS|Compiled successfully|Listening at/i.test(clean);
-
-    if (hasError) {
-      finalType = 'error';
-    } else if (hasWarning) {
-      finalType = 'warn';
-    } else if (hasSuccess) {
-      finalType = 'success';
-    }
-  }
-
-  const atBottom = terminal.scrollHeight - terminal.scrollTop - terminal.clientHeight < 60;
-  const div = document.createElement('div');
-  div.className = `log-line ${clsMap[finalType] || 'log-info'}`;
-  div.innerHTML = colorizeAndLinkLog(ansiToHtml(text));
-  terminal.appendChild(div);
-  scrollLogTerminal(terminal, atBottom);
+  logViewer()?.append(text, type);
 }
 
 function escapeHtml(str) {
@@ -1250,212 +1167,57 @@ function escapeHtml(str) {
     .replace(/'/g, '&#039;');
 }
 
-function ansiToHtml(text) {
-  const colors = {
-    30: 'var(--text-muted, #6b7280)', // black / gray
-    31: 'var(--danger, #ef4444)',      // red
-    32: 'var(--success, #10b981)',     // green
-    33: 'var(--warning, #f59e0b)',     // yellow
-    34: 'var(--accent, #6366f1)',      // blue
-    35: '#d946ef',                     // magenta
-    36: '#06b6d4',                     // cyan
-    37: '#f3f4f6',                     // white
-    90: '#9ca3af',                     // bright black (gray)
-  };
-
-  let html = escapeHtml(text);
-
-  // 把 \x1b[1m 替换成 <strong>，\x1b[22m 替换成 </strong>
-  html = html.replace(/\x1B\[1m/gi, '<strong>');
-  html = html.replace(/\x1B\[22m/gi, '</strong>');
-
-  let openSpans = 0;
-  html = html.replace(/\x1B\[([0-9;]*)m/g, (match, codeStr) => {
-    const codes = codeStr.split(';');
-    let style = '';
-    let reset = false;
-
-    for (const code of codes) {
-      const num = parseInt(code);
-      if (num === 0 || num === 39) {
-        reset = true;
-      } else if (colors[num]) {
-        style += `color: ${colors[num]};`;
-      }
-    }
-
-    if (reset) {
-      let closes = '';
-      while (openSpans > 0) {
-        closes += '</span>';
-        openSpans--;
-      }
-      return closes;
-    } else if (style) {
-      openSpans++;
-      return `<span style="${style}">`;
-    }
-    return '';
-  });
-
-  while (openSpans > 0) {
-    html += '</span>';
-    openSpans--;
-  }
-
-  return html;
-}
-
-function colorizeAndLinkLog(cleanText) {
-  if (/https?:\/\//i.test(cleanText)) {
-    return cleanText;
-  }
-
-  const pathRegex = /(?:^|\s|file:\/\/\/|at\s+|internal\/)([\w.\-_/\\+]+?\.(?:js|ts|jsx|tsx|vue|css|scss|less|html|json)):(\d+)(?::(\d+))?\b/gi;
-  return cleanText.replace(pathRegex, (match, filepath, line, col) => {
-    const displayPath = filepath.length > 35 ? '...' + filepath.slice(-32) : filepath;
-    const lineLabel = col ? `${line}:${col}` : line;
-    return ` <a href="#" class="log-editor-link" data-path="${encodeURIComponent(filepath)}" data-line="${line}" onclick="openFileInEditor(event, this)">${displayPath}:${lineLabel}</a>`;
-  });
-}
-
-async function openFileInEditor(e, el) {
-  e.preventDefault();
-  const filepath = decodeURIComponent(el.dataset.path);
-  const line = el.dataset.line || '1';
-  const projectName = (typeof activeTask !== 'undefined' && activeTask) ? (activeTask.projectName || '') : '';
+// 供 Vue LogViewer 的源码链接调用：路径与行号已由组件解析好，projectName 由其
+// 自身的任务态提供，不再依赖旧 activeTask 全局。
+async function openFileInEditorByPath(filepath, line, projectName = '') {
   try {
-    await API.post('/api/run/open-editor', { projectName, path: filepath, line: parseInt(line) });
+    await API.post('/api/run/open-editor', { projectName, path: filepath, line: parseInt(line) || 1 });
     showToast('正在编辑器中定位代码...', filepath);
   } catch (err) {
     showToast('无法定位代码: ' + err.message);
   }
 }
 
+async function openFileInEditor(e, el) {
+  e.preventDefault();
+  const filepath = decodeURIComponent(el.dataset.path);
+  const projectName = (typeof activeTask !== 'undefined' && activeTask) ? (activeTask.projectName || '') : '';
+  await openFileInEditorByPath(filepath, el.dataset.line || '1', projectName);
+}
+
 window.openFileInEditor = openFileInEditor;
-
-// ========== 日志搜索 ==========
-let logSearchMatches = [];
-let logSearchCurrentIdx = -1;
-
-document.addEventListener('keydown', (e) => {
-  if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
-    const logModal = document.getElementById('logModal');
-    if (logModal.classList.contains('active')) {
-      e.preventDefault();
-      openLogSearch();
-    }
-  }
-});
-
-function openLogSearch() {
-  const bar = document.getElementById('logSearchBar');
-  bar.classList.add('active');
-  document.getElementById('logSearchInput').focus();
-}
-
-function closeLogSearch() {
-  document.getElementById('logSearchBar').classList.remove('active');
-  document.getElementById('logSearchInput').value = '';
-  clearLogHighlights();
-  logSearchMatches = [];
-  logSearchCurrentIdx = -1;
-  document.getElementById('logSearchInfo').textContent = '';
-}
-
-function doLogSearch() {
-  const keyword = document.getElementById('logSearchInput').value.trim();
-  clearLogHighlights();
-  logSearchMatches = [];
-  logSearchCurrentIdx = -1;
-
-  if (!keyword) { document.getElementById('logSearchInfo').textContent = ''; return; }
-
-  const terminal = document.getElementById('logTerminal');
-  const lines = terminal.querySelectorAll('.log-line');
-  const lowerKey = keyword.toLowerCase();
-
-  lines.forEach(line => {
-    if (line.textContent.toLowerCase().includes(lowerKey)) {
-      line.classList.add('log-highlight');
-      logSearchMatches.push(line);
-    }
-  });
-
-  if (logSearchMatches.length > 0) {
-    logSearchCurrentIdx = 0;
-    logSearchMatches[0].classList.add('log-highlight-active');
-    logSearchMatches[0].scrollIntoView({ block: 'center', behavior: 'smooth' });
-  }
-  updateLogSearchInfo();
-}
-
-function logSearchNext() {
-  if (logSearchMatches.length === 0) return;
-  logSearchMatches[logSearchCurrentIdx].classList.remove('log-highlight-active');
-  logSearchCurrentIdx = (logSearchCurrentIdx + 1) % logSearchMatches.length;
-  logSearchMatches[logSearchCurrentIdx].classList.add('log-highlight-active');
-  logSearchMatches[logSearchCurrentIdx].scrollIntoView({ block: 'center', behavior: 'smooth' });
-  updateLogSearchInfo();
-}
-
-function logSearchPrev() {
-  if (logSearchMatches.length === 0) return;
-  logSearchMatches[logSearchCurrentIdx].classList.remove('log-highlight-active');
-  logSearchCurrentIdx = (logSearchCurrentIdx - 1 + logSearchMatches.length) % logSearchMatches.length;
-  logSearchMatches[logSearchCurrentIdx].classList.add('log-highlight-active');
-  logSearchMatches[logSearchCurrentIdx].scrollIntoView({ block: 'center', behavior: 'smooth' });
-  updateLogSearchInfo();
-}
-
-function logSearchKeydown(e) {
-  if (e.key === 'Enter') { e.shiftKey ? logSearchPrev() : logSearchNext(); }
-  if (e.key === 'Escape') closeLogSearch();
-}
-
-function updateLogSearchInfo() {
-  const info = document.getElementById('logSearchInfo');
-  if (logSearchMatches.length === 0) { info.textContent = '无匹配'; }
-  else { info.textContent = `${logSearchCurrentIdx + 1}/${logSearchMatches.length}`; }
-}
-
-function clearLogHighlights() {
-  document.querySelectorAll('.log-line.log-highlight').forEach(el => {
-    el.classList.remove('log-highlight', 'log-highlight-active');
-  });
-}
+window.openFileInEditorByPath = openFileInEditorByPath;
 
 // ========== Modal Utils ==========
+// 日志弹窗已由 Vue LogViewer 承担，不再有 #logModal 这个 DOM；其开关走 store。
+// 组件自身的关闭按钮走 requestClose（running 时发 minimize 事件），这里只服务
+// 旧代码里可能残留的命令式调用，语义与之保持一致：进行中只收起、不丢任务态。
 function closeModal(id) {
-  if (id === 'logModal' && typeof stopRunStartElapsed === 'function') stopRunStartElapsed();
-  if (id === 'logModal' && activeTask && activeTask.isRunning) {
-    document.getElementById(id).classList.remove('active');
-    const title = activeTask.taskKind === 'run' ? '▶ 本地服务仍在运行' : '📌 任务仍在后台运行';
-    const message = activeTask.taskKind === 'run' ? '点击此处可查看运行日志' : '点击此处可查看进度';
-    showToast(title, message, { clickable: true, persistent: true });
+  if (id === 'logModal') {
+    if (activeTask && activeTask.isRunning) {
+      logViewer()?.minimize();
+      const isRun = activeTask.taskKind === 'run';
+      showToast(
+        isRun ? '▶ 本地服务仍在运行' : '📌 任务仍在后台运行',
+        isRun ? '点击此处可查看运行日志' : '点击此处可查看进度',
+        { clickable: true, persistent: true },
+      );
+      return;
+    }
+    logViewer()?.close();
+    activeTask = null;
     return;
   }
-  document.getElementById(id).classList.remove('active');
-  if (id === 'logModal') {
-    activeTask = null;
-  }
+  document.getElementById(id)?.classList.remove('active');
 }
 
 function reopenLogModal() {
-  const logModal = document.getElementById('logModal');
-  if (logModal) logModal.classList.add('active');
+  logViewer()?.reopen();
 }
 
+// 「关闭/最小化」文案与标题现由 LogViewer 依据 running 自行切换，这里只同步任务态。
 function updateLogModalCloseBtn() {
-  const closeBtn = document.querySelector('#logModal .modal-footer .btn-secondary');
-  const closeIcon = document.querySelector('#logModal .modal-close');
-  if (activeTask && activeTask.isRunning) {
-    if (closeBtn) closeBtn.textContent = '最小化';
-    if (closeIcon) closeIcon.title = '最小化到后台';
-  } else {
-    if (closeBtn) closeBtn.textContent = '关闭';
-    if (closeIcon) closeIcon.title = '关闭';
-  }
+  logViewer()?.setRunning(!!(activeTask && activeTask.isRunning));
 }
 
 // ========== Toast ==========
@@ -1521,43 +1283,27 @@ async function checkActiveJob() {
 
     const isBuildOnly = job.type === 'build';
     const typeLabel = isBuildOnly ? '构建' : '部署';
-    document.getElementById('logTitle').textContent = `${typeLabel}进度`;
-    document.getElementById('logSubtitle').textContent = `${job.projectName} · ${job.modules.join(', ')}`;
-    document.getElementById('logTerminal').innerHTML = '';
-    document.getElementById('deployResult').style.display = 'none';
-    document.getElementById('progressBar').style.width = '0%';
-    document.getElementById('progressText').textContent = '0%';
-
     const steps = isBuildOnly
       ? ['拉取代码', '构建中']
       : ['预检', '拉取代码', '构建中', '上传中', '完成'];
-    document.getElementById('progressSteps').innerHTML = steps.map((s, i) =>
-      `<div class="step" id="step${i}"><div class="step-dot"></div>${s}</div>`
-    ).join('');
+    openLogViewer({
+      kind: 'deploy',
+      id: job.id,
+      title: `${typeLabel}进度`,
+      subtitle: `${job.projectName} · ${job.modules.join(', ')}`,
+      projectName: job.projectName,
+      steps,
+    });
+    logViewer()?.setProgress({ percent: 0, label: '0%' });
 
     const phaseMap = job.type === 'build-only'
       ? { pulling: 0, building: 1 }
       : { preflight: 0, pulling: 1, building: 2, uploading: 3 };
-    const activeIdx = phaseMap[job.phase] ?? 0;
-    for (let i = 0; i < activeIdx; i++) setStepDone(i);
-    setStepActive(activeIdx);
+    setStepActive(phaseMap[job.phase] ?? 0);
 
     if (job.logs && job.logs.length > 0) {
-      const terminal = document.getElementById('logTerminal');
-      const fragment = document.createDocumentFragment();
-      const clsMap = { cmd: 'log-cmd', info: 'log-info', success: 'log-success', warn: 'log-warn', error: 'log-error' };
-      job.logs.forEach(log => {
-        const clean = log.text.replace(/\x1B\[[0-9;]*[a-zA-Z]/g, '').replace(/\[[\d;]*m/g, '');
-        const div = document.createElement('div');
-        div.className = `log-line ${clsMap[log.type] || 'log-info'}`;
-        div.textContent = clean;
-        fragment.appendChild(div);
-      });
-      terminal.appendChild(fragment);
-      scrollLogTerminal(terminal, true);
+      logViewer()?.replaceLines(job.logs.map(log => ({ text: log.text, type: log.type })));
     }
-
-    document.getElementById('logModal').classList.add('active');
     updateLogModalCloseBtn();
 
     const elapsed = Math.round((Date.now() - job.startTime) / 1000);

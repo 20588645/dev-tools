@@ -1,21 +1,26 @@
 <script setup lang="ts">
 import { defineAsyncComponent, onBeforeUnmount, onMounted, ref } from 'vue'
 
+import LogViewer from '@/components/logviewer/LogViewer.vue'
 import { onLegacyPageActivation, type LegacyPageId } from '@/legacy/legacy-bridge'
+import { installLogViewerBridge } from '@/legacy/log-viewer-bridge'
 import { createTodoReminderService } from '@/services/todo-reminder-service'
 import { normalizeThemeMode, useAppStore, type Theme } from '@/stores/app'
+import { useLogTaskStore } from '@/stores/log-task'
 import HomeView from '@/views/home/HomeView.vue'
 
 defineOptions({ name: 'MigrationHost' })
 
 const IpCheckView = defineAsyncComponent(() => import('@/views/ipcheck/IpCheckView.vue'))
 const NotesView = defineAsyncComponent(() => import('@/views/notes/NotesView.vue'))
+const RunView = defineAsyncComponent(() => import('@/views/run/RunView.vue'))
 const NotebookView = defineAsyncComponent(() => import('@/views/notebook/NotebookView.vue'))
 const SettingsView = defineAsyncComponent(() => import('@/views/settings/SettingsView.vue'))
 const TodoView = defineAsyncComponent(() => import('@/views/todo/TodoView.vue'))
 const TwofaView = defineAsyncComponent(() => import('@/views/twofa/TwofaView.vue'))
 const UsageView = defineAsyncComponent(() => import('@/views/usage/UsageView.vue'))
 const app = useAppStore()
+const logTask = useLogTaskStore()
 const todoReminderService = createTodoReminderService()
 const activePage = ref<LegacyPageId>(
   (document.querySelector('.page.active')?.id.replace(/^page-/, '') as LegacyPageId | undefined) ?? 'home',
@@ -39,8 +44,28 @@ twofaTarget?.setAttribute('data-vue-owner', 'twofa')
 const usageTarget = document.querySelector('#vue-usage-host')
 const hasUsageTarget = Boolean(usageTarget)
 usageTarget?.setAttribute('data-vue-owner', 'usage')
+const runTarget = document.querySelector('#vue-run-host')
+const hasRunTarget = Boolean(runTarget)
+runTarget?.setAttribute('data-vue-owner', 'run')
 let themeObserver: MutationObserver | null = null
 let stopPageActivation: (() => void) | null = null
+let stopLogViewerBridge: (() => void) | null = null
+
+/**
+ * 旧脚本里日志链路的两个副作用：最小化时给出可点击回来的 Toast、点击日志中的
+ * 源码位置拉起编辑器。迁移期仍复用旧全局函数，等 deploy 页迁完再一并收敛。
+ */
+function onLogMinimize() {
+  logTask.minimize()
+  const isRun = logTask.kind === 'run'
+  const title = isRun ? '▶ 本地服务仍在运行' : '📌 任务仍在后台运行'
+  const message = isRun ? '点击此处可查看运行日志' : '点击此处可查看进度'
+  window.showToast?.(title, message, { clickable: true, persistent: true })
+}
+
+function onOpenSource(payload: { path: string; line: number; column: number | null }) {
+  void window.openFileInEditorByPath?.(payload.path, payload.line, logTask.projectName)
+}
 
 function syncLegacyTheme() {
   const theme: Theme = document.body.getAttribute('data-theme') === 'light' ? 'light' : 'dark'
@@ -59,12 +84,14 @@ onMounted(() => {
     attributeFilter: ['data-theme', 'data-theme-mode'],
   })
   todoReminderService.start()
+  stopLogViewerBridge = installLogViewerBridge()
 })
 
 onBeforeUnmount(() => {
   stopPageActivation?.()
   themeObserver?.disconnect()
   todoReminderService.stop()
+  stopLogViewerBridge?.()
 })
 </script>
 
@@ -106,6 +133,29 @@ onBeforeUnmount(() => {
         <UsageView v-if="activePage === 'usage'" />
       </KeepAlive>
     </Teleport>
+    <Teleport v-if="hasRunTarget" to="#vue-run-host">
+      <KeepAlive>
+        <RunView v-if="activePage === 'run'" />
+      </KeepAlive>
+    </Teleport>
+    <!-- LogViewer 内部用 BaseDialog（NModal），自带 teleport 到 body -->
+    <LogViewer
+      v-model="logTask.visible"
+      :title="logTask.title"
+      :subtitle="logTask.subtitle"
+      :lines="logTask.lines"
+      :steps="logTask.steps"
+      :percent="logTask.percent"
+      :indeterminate="logTask.indeterminate"
+      :progress-label="logTask.progressLabel"
+      :progress-tone="logTask.progressTone"
+      :result-icon="logTask.resultIcon"
+      :result-text="logTask.resultText"
+      :result-note="logTask.resultNote"
+      :running="logTask.running"
+      @minimize="onLogMinimize"
+      @open-source="onOpenSource"
+    />
   </div>
 </template>
 

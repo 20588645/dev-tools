@@ -48,6 +48,7 @@ devtools-desktop/dist/
 devtools-desktop/coverage/
 devtools-desktop/test-results/
 devtools-desktop/playwright-report/
+devtools-desktop/blob-report/
 devtools-desktop/sidecar/data/backups/
 devtools-desktop/sidecar/data/restore-pending.db
 
