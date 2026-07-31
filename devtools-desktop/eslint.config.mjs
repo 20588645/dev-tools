@@ -94,4 +94,21 @@ export default [
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
     },
   },
+  {
+    files: ['frontend/src/views/**/*.vue', 'frontend/src/views/**/*.ts'],
+    rules: {
+      'no-restricted-imports': ['error', {
+        paths: [
+          {
+            name: 'naive-ui',
+            message: '业务页面只能使用项目 Base 组件或适配层，禁止直接导入 Naive UI。',
+          },
+          {
+            name: 'element-plus',
+            message: '业务页面只能使用项目 Base 组件或适配层，禁止直接导入第三方 UI 库。',
+          },
+        ],
+      }],
+    },
+  },
 ];

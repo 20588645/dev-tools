@@ -57,9 +57,14 @@
 }
 
 .settings-header-actions kbd {
+  padding: 2px 5px;
   color: var(--color-text-subtle);
+  background: color-mix(in srgb, var(--color-surface) 72%, transparent);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
   font-family: var(--font-family-mono);
   font-size: 9px;
+  line-height: 1;
 }
 
 .settings-view__stage {
@@ -162,71 +167,14 @@
 }
 
 .settings-category-nav {
-  display: flex;
   min-width: 0;
   min-height: 0;
-  flex-direction: column;
+  align-content: start;
   gap: 3px;
   padding: 11px 9px;
   overflow: auto;
   background: color-mix(in srgb, var(--color-surface-raised) 36%, transparent);
   border-right: 1px solid var(--color-border);
-}
-
-.settings-category-nav__caption {
-  padding: 3px 10px 8px;
-  color: var(--color-text-subtle);
-  font-size: 8px;
-  font-weight: var(--font-weight-bold);
-  letter-spacing: .14em;
-  text-transform: uppercase;
-}
-
-.settings-category-nav__item {
-  position: relative;
-  display: grid;
-  min-height: 38px;
-  grid-template-columns: 24px minmax(0, 1fr);
-  align-items: center;
-  gap: 8px;
-  padding: 0 10px;
-  color: var(--color-text-muted);
-  background: transparent;
-  border: 0;
-  border-radius: 9px;
-  cursor: pointer;
-  text-align: left;
-}
-
-.settings-category-nav__item > span {
-  color: var(--color-text-subtle);
-  font-family: var(--font-family-mono);
-  font-size: 8px;
-}
-
-.settings-category-nav__item strong {
-  font-size: 11px;
-  font-weight: var(--font-weight-medium);
-}
-
-.settings-category-nav__item:hover {
-  color: var(--color-text);
-  background: color-mix(in srgb, var(--color-surface-raised) 60%, transparent);
-}
-
-.settings-category-nav__item.is-active {
-  color: var(--color-action);
-  background: var(--settings-accent-soft);
-}
-
-.settings-category-nav__item.is-active::before {
-  position: absolute;
-  width: 2px;
-  height: 18px;
-  background: var(--color-action);
-  border-radius: var(--radius-pill);
-  content: "";
-  left: -9px;
 }
 
 .settings-workspace__content {
@@ -521,21 +469,7 @@
 
 .settings-experimental__summary {
   display: flex;
-  width: 100%;
-  min-height: 42px;
   align-items: center;
-  justify-content: space-between;
-  padding: 8px 11px;
-  color: var(--color-text);
-  background: transparent;
-  border: 0;
-  cursor: pointer;
-  text-align: left;
-}
-
-.settings-experimental__summary > span {
-  display: flex;
-  align-items: baseline;
   gap: 10px;
 }
 
@@ -546,11 +480,6 @@
 .settings-experimental__summary small {
   color: var(--color-text-subtle);
   font-size: 8px;
-}
-
-.settings-experimental__summary b {
-  color: var(--color-text-subtle);
-  font-size: 15px;
 }
 
 .settings-git-card {
@@ -693,27 +622,23 @@
   gap: 6px;
 }
 
-.settings-search-results__list > button {
-  display: grid;
+.settings-search-result {
+  width: 100%;
+  height: auto;
   min-height: 52px;
-  grid-template-columns: 32px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 10px;
   padding: 7px 10px;
-  color: inherit;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  cursor: pointer;
   text-align: left;
 }
 
-.settings-search-results__list > button:hover {
-  background: var(--settings-accent-soft);
-  border-color: color-mix(in srgb, var(--color-action) 28%, var(--color-border));
+.settings-search-result__layout {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
 }
 
-.settings-search-results__list > button > span:first-child {
+.settings-search-result__mark {
   display: grid;
   width: 28px;
   height: 28px;
@@ -725,8 +650,9 @@
   font-size: 8px;
 }
 
-.settings-search-results__list > button > span:nth-child(2) {
+.settings-search-result__copy {
   display: grid;
+  min-width: 0;
   gap: 2px;
 }
 
@@ -865,29 +791,10 @@
   }
 
   .settings-category-nav {
-    flex-direction: row;
-    gap: 4px;
     padding: 7px;
-    overflow: auto hidden;
+    overflow: hidden;
     border-right: 0;
     border-bottom: 1px solid var(--color-border);
-  }
-
-  .settings-category-nav__caption {
-    display: none;
-  }
-
-  .settings-category-nav__item {
-    min-width: max-content;
-    min-height: 34px;
-    grid-template-columns: 20px auto;
-    padding: 0 9px;
-  }
-
-  .settings-category-nav__item.is-active::before {
-    width: calc(100% - 28px);
-    height: 2px;
-    inset: auto auto -7px 14px;
   }
 
   .settings-category-panel,

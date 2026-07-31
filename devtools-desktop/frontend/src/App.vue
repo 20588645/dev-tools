@@ -15,13 +15,12 @@ const showUiFoundationPreview = import.meta.env.DEV
   <div v-if="showUiFoundationPreview" id="ui-foundation-preview" class="ui-foundation-preview">
     <UiLibraryProvider>
       <UiFoundationPreview />
+      <AppToastHost />
     </UiLibraryProvider>
   </div>
   <UiLibraryProvider v-else>
     <MigrationHost />
-    <Teleport to="body">
-      <AppToastHost />
-    </Teleport>
+    <AppToastHost />
   </UiLibraryProvider>
 </template>
 

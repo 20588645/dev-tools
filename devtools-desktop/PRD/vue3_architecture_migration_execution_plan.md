@@ -1,12 +1,12 @@
 # DevTools Desktop Vue 3 架构渐进重构执行计划
 
-> 文档版本：1.45
-> 状态：执行中（Phase 5-5 双因验证 PG5 自动清理完成；等待清理后真实 Tauri 简短回归）
+> 文档版本：1.46
+> 状态：执行中（Phase 6-1 Run 初版已阶段性提交；当前暂停新页面，执行组件架构合规专项）
 > 编制日期：2026-07-21  
-> 最近更新：2026-07-30
+> 最近更新：2026-07-31
 > 适用仓库：`devtools-desktop`  
 > 核心原则：保持软件持续可运行，按页面逐步替换，不进行一次性推倒重写。
-> 当前执行指针：Phase 5-4 用量统计 `usage` 已全部关闭并提交（`816caa6`）。Phase 5-5 双因验证 `twofa` 已完成 PG0～PG4、两轮增补优化与 PG5 旧实现清理，手动 E2E 均已通过。下一步由用户做一次清理后简短真实 Tauri 回归；确认后 Phase 5-5 关闭，才开始 Phase 6-1 本地运行。
+> 当前执行指针：Phase 6-1 Run 初版已创建阶段性提交 `2f1b93d`，但体验优化和真实 Tauri E2E 尚未关闭。用户确认先执行[组件架构合规专项](./vue-migration/component-architecture-compliance.md)，完成规则、自动门禁、公共能力补齐和已迁移页面收口后，再完成 Run 验收；此前不得进入 Phase 6-2 Deploy。
 
 ---
 
@@ -498,7 +498,7 @@ L3 中纯前端且低风险的改动可以与页面 Vue 实现处于同一页面
 
 ## 10. 分阶段执行计划
 
-### 当前执行指针与剩余唯一顺序（2026-07-28）
+### 当前执行指针与剩余唯一顺序（2026-07-31）
 
 当前已经完成 G1、G2 和 Phase 3 首页；首页提交基线为 `0a52146`。后续默认严格按下表顺序推进。页面顺序、优化等级或阶段边界需要变化时，必须先更新本文档并由用户确认，不能只在会话中临时改变。
 
@@ -513,13 +513,14 @@ L3 中纯前端且低风险的改动可以与页面 Vue 实现处于同一页面
 | 6 | Phase 5-3 | 待办事项 `todo` | **已完成** | PG0～PG5、手动 E2E 与旧实现清理完成 | timer、通知、分组和重复提醒检查通过 |
 | 7 | Phase 5-4 | 用量统计 `usage` | **PG5 自动清理完成** | 执行清理后简短真实 Tauri 回归 | ECharts、价格、异常数据和资源销毁通过 |
 | 8 | Phase 5-5 | 双因验证 `twofa` | **PG5 自动清理完成** | 执行清理后简短真实 Tauri 回归 | Secret、倒计时、导入与快捷查询安全专项通过 |
-| 9 | Phase 6-1 | 本地运行 `run` | 等待 | Phase 5 完成后开始 PG0 | 进程、轮询、WebSocket 和后台状态通过 |
-| 10 | Phase 6-2 | 部署面板 `deploy` | 等待 | 完成 `run` 后开始 PG0 | SSH、构建、部署任务和日志链路通过 |
-| 11 | Phase 6-3 | 文件传输 `filetransfer` | 等待 | 完成 `deploy` 后开始 PG0 | SFTP 会话、队列、重连和 keepalive 通过 |
-| 12 | Phase 7-1 | 文件编辑 `editor` | 等待 | Phase 6 完成后开始 PG0 | CodeMirror 生命周期和未保存保护通过 |
-| 13 | Phase 7-2 | 快捷命令 `terminal` | 等待 | 完成 `editor` 后开始 PG0 | Xterm、PTY、WebGL 降级和多标签恢复通过 |
-| 14 | Phase 8 | Vue 应用壳与 Router | 等待全部业务页 | 升级现有 `App.vue`，创建 `AppLayout.vue` | 侧边栏、主题、Router 和全局反馈由 Vue 接管 |
-| 15 | Phase 9 | 旧架构清理与发布 | 等待 Phase 8 | 删除 legacy bridge、旧 `src` 和污染 CSS | G7/G8、正式构建、升级与全量回归通过 |
+| 9 | 组件架构合规专项 | 已迁移页面与公共组件 | **基础能力、通知适配与首个消费者 Settings 已完成；其余页面收口中** | 按迁移矩阵顺序继续存量页面收口 | 存量页面收口、架构验收、最终 Tauri Smoke Test 与全站回归通过 |
+| 10 | Phase 6-1 | 本地运行 `run` | **初版阶段性提交，Gate 未关闭** | 合规基础完成后处理体验问题 | 体验、进程、轮询、WebSocket、后台状态和真实 Tauri E2E 通过 |
+| 11 | Phase 6-2 | 部署面板 `deploy` | 等待 | 合规专项和 Run Gate 全部关闭后开始 PG0 | SSH、构建、部署任务和日志链路通过 |
+| 12 | Phase 6-3 | 文件传输 `filetransfer` | 等待 | 完成 `deploy` 后开始 PG0 | SFTP 会话、队列、重连和 keepalive 通过 |
+| 13 | Phase 7-1 | 文件编辑 `editor` | 等待 | Phase 6 完成后开始 PG0 | CodeMirror 生命周期和未保存保护通过 |
+| 14 | Phase 7-2 | 快捷命令 `terminal` | 等待 | 完成 `editor` 后开始 PG0 | Xterm、PTY、WebGL 降级和多标签恢复通过 |
+| 15 | Phase 8 | Vue 应用壳与 Router | 等待全部业务页 | 升级现有 `App.vue`，创建 `AppLayout.vue` | 侧边栏、主题、Router 和全局反馈由 Vue 接管 |
+| 16 | Phase 9 | 旧架构清理与发布 | 等待 Phase 8 | 删除 legacy bridge、旧 `src` 和污染 CSS | G7/G8、正式构建、升级与全量回归通过 |
 
 #### 每个功能页面的固定执行循环
 
@@ -1324,8 +1325,8 @@ frontend/src/services/modules/ipcheck-service.ts
 | 7 | 待办事项 | `todo.js`、`todo.css` | 高 | timer、通知、分组 | Phase 5-3 | **已完成并删除旧实现** | Vue 页面、自动验收和手动 E2E 通过 |
 | 8 | 用量统计 | `views/usage/`、`usage-service.ts`；旧 `usage.js`、`usage.css`、ECharts vendor 已删除 | 高 | 扫描、价格、Canvas 生命周期 | Phase 5-4 | **PG5 自动清理完成** | 清理后简短 Tauri 回归 |
 | 9 | 双因验证 | `views/twofa/`、`twofa-service.ts`；旧 `twofa.js`、`twofa.css` 已删除 | 高 | Secret、timer、导入与快捷查询 | Phase 5-5 | **PG5 自动清理完成** | 清理后简短 Tauri 回归 |
-| 10 | 本地运行 | `run.js`、`run.css` | 高 | 进程、轮询、WebSocket | Phase 6-1 | 等待 | Phase 5 完成后开始 PG0 |
-| 11 | 部署面板 | `deploy.js`、`deploy.css` | 很高 | 项目、SSH、构建、弹窗 | Phase 6-2 | 等待 | `run` 提交后开始 PG0 |
+| 10 | 本地运行 | `views/run/`、`run-service.ts`、`stores/run.ts`；旧 `run.js`、`run.css` 已删除 | 高 | 进程、轮询、WebSocket | Phase 6-1 | **初版阶段性提交，Gate 未关闭** | 合规基础完成后处理体验问题与真实 Tauri E2E |
+| 11 | 部署面板 | `deploy.js`、`deploy.css` | 很高 | 项目、SSH、构建、弹窗 | Phase 6-2 | 等待 | 合规专项与 Run Gate 全部关闭后开始 PG0 |
 | 12 | 文件传输 | `filetransfer.js`、`filetransfer.css` | 很高 | SFTP、会话、队列、keepalive | Phase 6-3 | 等待 | `deploy` 提交后开始 PG0 |
 | 13 | 文件编辑 | `editor.js`、`editor.css` | 高 | CodeMirror、未保存状态 | Phase 7-1 | 等待 | Phase 6 完成后开始 PG0 |
 | 14 | 快捷命令 | `terminal.js`、`terminal.css` | 很高 | Xterm、PTY、WebSocket、WebGL | Phase 7-2 | 等待 | `editor` 提交后开始 PG0 |
@@ -2381,6 +2382,9 @@ PG4 基础迁移自动验收结果（2026-07-27）：
 - 删除旧文件：
 - 新增测试：
 - 自动化验证：通过 / 未通过
+- `lint:architecture`：通过 / 未通过
+- 组件架构人工验收：通过 / 未通过
+- 架构基线变化：无 / 已减少并同步 / 已批准例外
 - 浏览器验收：通过 / 未通过
 - Tauri 验收：通过 / 未通过
 - 手动 E2E 等级：必须 / 建议 / 不需要
@@ -2508,4 +2512,4 @@ Phase 5-4 已由用户确认关闭，并建立本地提交 `816caa6`（与 Todo 
 
 清理后验证：lint、lint:tokens、build:frontend、单测 119 项、全站 E2E 41 项全部通过；测试 Sidecar 正常启动，`/accounts` 200、`/export` 404、`/preview` 200；内置浏览器复检 1280×720 与 900×600 的亮暗主题，四个旧全局函数均为 undefined，旧脚本样式零引用，无页面级横向溢出，硬刷新后控制台无 error 与 warning。旧 CSS Stylelint 基线保持 31（`twofa.css` 原本不在基线表中）。
 
-下一步：由用户做一次清理后简短真实 Tauri 回归，确认后 Phase 5-5 关闭，然后才开始 Phase 6-1 本地运行 `run`。
+当前顺序已被 2026-07-31 用户决策替代：先完成组件架构合规专项的规则、自动门禁、公共能力补齐和存量页面收口，再恢复 Run 体验优化与真实 Tauri E2E；全部通过后才进入 Phase 6-2 Deploy。

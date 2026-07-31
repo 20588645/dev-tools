@@ -5,7 +5,11 @@ import BaseBadge from '@/components/base/BaseBadge.vue'
 import BaseButton from '@/components/base/BaseButton.vue'
 import BaseCard from '@/components/base/BaseCard.vue'
 import BaseIconButton from '@/components/base/BaseIconButton.vue'
+import BaseProgress from '@/components/base/BaseProgress.vue'
 import StatusIndicator from '@/components/base/StatusIndicator.vue'
+import BaseDataTable from '@/components/data/BaseDataTable.vue'
+import type { BaseDataTableColumn, BaseDataTableRow } from '@/components/data/base-data-table'
+import BaseDisclosure from '@/components/disclosure/BaseDisclosure.vue'
 import BaseDialog from '@/components/feedback/BaseDialog.vue'
 import EmptyState from '@/components/feedback/EmptyState.vue'
 import ErrorState from '@/components/feedback/ErrorState.vue'
@@ -24,10 +28,13 @@ import BaseSwitch from '@/components/form/BaseSwitch.vue'
 import BaseTabs from '@/components/navigation/BaseTabs.vue'
 import BaseSegmented from '@/components/navigation/BaseSegmented.vue'
 import FilterChip from '@/components/navigation/FilterChip.vue'
+import BaseSideNav from '@/components/navigation/BaseSideNav.vue'
 import NaiveUiShowcase from '@/components/vendor/NaiveUiShowcase.vue'
 import { useAppStore } from '@/stores/app'
+import { useNotificationStore } from '@/stores/notification'
 
 const app = useAppStore()
+const notifications = useNotificationStore()
 const themeModeLabel = computed(() => {
   if (app.themeMode === 'system') return `跟随系统 · ${app.theme === 'dark' ? '暗色' : '亮色'}`
   return app.themeMode === 'dark' ? '暗色' : '亮色'
@@ -49,6 +56,25 @@ const radioValue = ref('local')
 const switchValue = ref(true)
 const segmentedValue = ref('全部')
 const filterSelected = ref(true)
+const disclosureOpen = ref(true)
+const sideNavValue = ref('general')
+
+type PreviewTableRow = BaseDataTableRow & {
+  name: string
+  status: string
+  updated: string
+}
+
+const previewTableRows: PreviewTableRow[] = [
+  { name: 'personalTools', status: '运行中', updated: '刚刚' },
+  { name: 'devtools-lab', status: '已停止', updated: '昨天' },
+]
+const previewTableColumns: BaseDataTableColumn<PreviewTableRow>[] = [
+  { key: 'name', title: '项目', minWidth: 150 },
+  { key: 'status', title: '状态', width: 100 },
+  { key: 'updated', title: '最近更新', width: 120 },
+]
+const previewTableRowKey = (row: PreviewTableRow) => row.name
 </script>
 
 <template>
@@ -88,6 +114,9 @@ const filterSelected = ref(true)
             <BaseBadge tone="success">成功</BaseBadge>
             <BaseBadge tone="warning">注意</BaseBadge>
             <BaseBadge tone="danger">错误</BaseBadge>
+            <BaseProgress :value="68" shape="circle" :size="52" label="环形进度">
+              <span class="progress-preview">32s</span>
+            </BaseProgress>
           </div>
         </BaseCard>
       </PageSection>
@@ -105,8 +134,11 @@ const filterSelected = ref(true)
         <BaseCard variant="raised">
           <div class="form-grid">
             <BaseInput v-model="inputValue" label="项目名称" help-text="用于列表和页面标题。" />
+            <BaseInput v-model="inputValue" label="明确搜索入口" type="search" variant="search" placeholder="搜索设置，如：备份" />
             <BaseSelect v-model="selectValue" label="默认主题" :options="[{ label: '暗色主题', value: 'dark' }, { label: '亮色主题', value: 'light' }]" />
             <BaseTextarea v-model="textareaValue" label="描述" :rows="3" />
+            <BaseInput v-model="inputValue" label="无边框标题" variant="title" size="lg" />
+            <BaseTextarea v-model="textareaValue" label="编辑器正文" variant="editor" :rows="3" resize="none" />
             <div class="choice-stack">
               <BaseCheckbox v-model="checked" label="自动保存" description="离开页面前保存当前设置。" />
               <BaseRadio v-model="radioValue" name="preview-source" value="local" label="本地数据" />
@@ -126,10 +158,59 @@ const filterSelected = ref(true)
         </BaseCard>
       </PageSection>
 
+      <PageSection title="数据表格、折叠与侧边导航">
+        <div class="foundation-pattern-grid">
+          <BaseCard content-padding="0" class="foundation-pattern-grid__table">
+            <BaseDataTable
+              :columns="previewTableColumns"
+              :rows="previewTableRows"
+              :row-key="previewTableRowKey"
+              aria-label="项目状态预览"
+            />
+          </BaseCard>
+          <BaseDisclosure v-model="disclosureOpen" title="高级设置" variant="card">
+            折叠内容由公共组件统一管理键盘、箭头与展开状态。
+          </BaseDisclosure>
+          <BaseCard content-padding="var(--space-2)">
+            <BaseSideNav
+              v-model="sideNavValue"
+              caption="Settings"
+              aria-label="设置分类预览"
+              :items="[
+                { value: 'general', label: '常规', meta: '01' },
+                { value: 'appearance', label: '外观与通知', meta: '02' },
+                { value: 'about', label: '关于', meta: '03' },
+              ]"
+            />
+          </BaseCard>
+          <BaseCard content-padding="var(--space-2)" class="foundation-pattern-grid__wide">
+            <BaseSideNav
+              v-model="sideNavValue"
+              mode="horizontal"
+              density="compact"
+              aria-label="紧凑横向导航预览"
+              :items="[
+                { value: 'general', label: '常规', meta: '01' },
+                { value: 'appearance', label: '外观与通知', meta: '02' },
+                { value: 'about', label: '关于', meta: '03' },
+              ]"
+            />
+          </BaseCard>
+        </div>
+      </PageSection>
+
       </template>
 
       <template v-else-if="selectedTab === '反馈状态'">
         <PageSection title="反馈状态">
+        <BaseCard>
+          <div class="component-row">
+            <BaseButton @click="notifications.push('操作已成功完成', 'success')">成功通知</BaseButton>
+            <BaseButton variant="outline" @click="notifications.push('请检查当前配置', 'warning')">警告通知</BaseButton>
+            <BaseButton variant="danger" @click="notifications.push('连接 Sidecar 失败', 'error')">错误通知</BaseButton>
+            <BaseButton variant="ghost" @click="notifications.push('这条通知需要手动关闭', 'info', 0)">持久通知</BaseButton>
+          </div>
+        </BaseCard>
         <BaseCard><LoadingState compact label="正在读取 Sidecar 状态…" /></BaseCard>
         <BaseCard><EmptyState title="还没有项目" description="添加第一个项目后，它会显示在这里。" /></BaseCard>
         <BaseCard><ErrorState title="连接失败" description="Sidecar 暂时没有响应。" @retry="app.markSidecarOffline()" /></BaseCard>
@@ -174,8 +255,13 @@ const filterSelected = ref(true)
 .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
 .choice-stack { display: grid; align-content: start; gap: var(--space-3); }
 .navigation-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.foundation-pattern-grid { display: grid; grid-template-columns: minmax(0, 2fr) repeat(2, minmax(220px, 1fr)); gap: var(--space-4); align-items: start; }
+.foundation-pattern-grid__table { min-width: 0; }
+.foundation-pattern-grid__wide { min-width: 0; grid-column: 1 / -1; }
+.progress-preview { color: var(--color-text); font-size: var(--font-size-xs); font-variant-numeric: tabular-nums; }
 strong { color: var(--color-text); font-size: var(--font-size-lg); }
 p { margin: var(--space-2) 0 0; color: var(--color-text-muted); font-size: var(--font-size-sm); line-height: var(--line-height-relaxed); }
 .dialog-copy { margin: 0; }
+@media (max-width: 900px) { .foundation-pattern-grid { grid-template-columns: 1fr; } }
 @media (max-width: 720px) { .card-preview { align-items: flex-start; flex-direction: column; } .form-grid { grid-template-columns: 1fr; } }
 </style>

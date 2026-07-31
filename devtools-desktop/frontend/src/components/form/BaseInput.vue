@@ -15,10 +15,13 @@ const props = withDefaults(defineProps<{
   readonly?: boolean
   required?: boolean
   autocomplete?: string
+  variant?: 'default' | 'plain' | 'search' | 'title'
+  size?: 'sm' | 'md' | 'lg'
 }>(), {
   modelValue: '', id: undefined, label: undefined, ariaLabel: undefined, type: 'text', placeholder: undefined,
   helpText: undefined, error: undefined, disabled: false, readonly: false, required: false,
   autocomplete: undefined,
+  variant: 'default', size: 'md',
 })
 
 const emit = defineEmits<{
@@ -32,6 +35,33 @@ const inputId = computed(() => props.id ?? `base-input-${generatedId}`)
 const labelId = computed(() => `${inputId.value}-label`)
 const messageId = computed(() => `${inputId.value}-message`)
 const inputType = computed<'text' | 'password'>(() => props.type === 'password' ? 'password' : 'text')
+const inputSize = computed(() => ({ sm: 'small' as const, md: 'medium' as const, lg: 'large' as const })[props.size])
+const inputThemeOverrides = computed(() => {
+  if (props.variant === 'default') return undefined
+  if (props.variant === 'search') {
+    return {
+      color: 'var(--color-surface-raised)',
+      colorFocus: 'var(--color-surface-raised)',
+      border: '1px solid var(--component-control-border)',
+      borderHover: '1px solid var(--component-control-border-hover)',
+      borderFocus: '1px solid var(--component-control-border-focus)',
+      boxShadowFocus: 'var(--component-control-focus-ring)',
+    }
+  }
+  return {
+    color: 'transparent',
+    colorFocus: 'transparent',
+    border: '1px solid transparent',
+    borderHover: '1px solid var(--component-control-border-hover)',
+    borderFocus: '1px solid var(--component-control-border-focus)',
+    boxShadowFocus: 'var(--component-control-focus-ring)',
+    paddingSmall: props.variant === 'title' ? '0' : undefined,
+    paddingMedium: props.variant === 'title' ? '0' : undefined,
+    paddingLarge: props.variant === 'title' ? '0' : undefined,
+    fontSizeLarge: props.variant === 'title' ? 'var(--font-size-xl)' : undefined,
+    fontWeight: props.variant === 'title' ? 'var(--font-weight-semibold)' : undefined,
+  }
+})
 
 /* 转发底层输入控制，供调用方在弹窗打开、校验失败等场景主动聚焦 */
 const input = useTemplateRef<InstanceType<typeof NInput>>('input')
@@ -43,7 +73,7 @@ defineExpose({
 </script>
 
 <template>
-  <div class="field-control">
+  <div class="field-control" :class="`field-control--${variant}`">
     <label v-if="label" :id="labelId" class="field-control__label" :for="inputId">
       {{ label }}<span v-if="required" aria-hidden="true"> *</span>
     </label>
@@ -51,6 +81,7 @@ defineExpose({
       ref="input"
       :value="String(modelValue ?? '')"
       :type="inputType"
+      :size="inputSize"
       :placeholder="placeholder"
       :disabled="disabled"
       :readonly="readonly"
@@ -65,6 +96,7 @@ defineExpose({
         'aria-label': ariaLabel,
         'aria-labelledby': label ? labelId : undefined,
       }"
+      :theme-overrides="inputThemeOverrides"
       @update:value="emit('update:modelValue', $event)"
       @blur="emit('blur', $event)"
       @focus="emit('focus', $event)"
@@ -84,4 +116,6 @@ defineExpose({
 .field-control__label span { color: var(--color-danger); }
 .field-control__message { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-xs); line-height: var(--line-height-normal); }
 .field-control__message--error { color: var(--color-danger); }
+.field-control--search :deep(.n-input) { box-shadow: var(--shadow-sm); }
+.field-control--title { gap: var(--space-1); }
 </style>

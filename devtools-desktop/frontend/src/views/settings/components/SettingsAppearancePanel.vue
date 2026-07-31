@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import BaseBadge from '@/components/base/BaseBadge.vue'
 import BaseButton from '@/components/base/BaseButton.vue'
+import BaseDisclosure from '@/components/disclosure/BaseDisclosure.vue'
 import BaseSwitch from '@/components/form/BaseSwitch.vue'
 import BaseSegmented from '@/components/navigation/BaseSegmented.vue'
 
@@ -75,11 +76,20 @@ const themeOptions = [
       </article>
     </div>
 
-    <article class="settings-card settings-experimental" data-setting-id="experimental" tabindex="-1">
-      <button type="button" class="settings-experimental__summary" :aria-expanded="experimentalExpanded" @click="experimentalExpanded = !experimentalExpanded">
-        <span><strong>实验功能</strong><small>默认关闭 · 非核心体验</small></span>
-        <b>{{ experimentalExpanded ? '−' : '+' }}</b>
-      </button>
+    <BaseDisclosure
+      v-model="experimentalExpanded"
+      class="settings-card settings-experimental"
+      variant="plain"
+      arrow-placement="right"
+      header-padding="0 var(--space-3)"
+      header-min-height="42px"
+      content-padding="0"
+      data-setting-id="experimental"
+      tabindex="-1"
+    >
+      <template #header>
+        <span class="settings-experimental__summary"><strong>实验功能</strong><small>默认关闭 · 非核心体验</small></span>
+      </template>
       <template v-if="experimentalExpanded">
         <div class="settings-row">
           <BaseSwitch
@@ -100,6 +110,6 @@ const themeOptions = [
           />
         </div>
       </template>
-    </article>
+    </BaseDisclosure>
   </section>
 </template>

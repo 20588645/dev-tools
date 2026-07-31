@@ -152,7 +152,7 @@ async function expectNoPageOverflow(page: Page) {
 function categoryButton(page: Page, name: string) {
   return page
     .getByRole('navigation', { name: '设置分类' })
-    .getByRole('button', { name })
+    .getByRole('menuitem', { name })
 }
 
 test('mounts one formal Vue settings page and keeps both themes inside the default window', async ({ page }) => {
@@ -191,7 +191,7 @@ test('mounts one formal Vue settings page and keeps both themes inside the defau
 test('keeps experimental effects owned by the app shell after removing legacy settings', async ({ page }) => {
   await openSettings(page)
   await categoryButton(page, '外观与通知').click()
-  await page.locator('.settings-experimental__summary').click()
+  await page.getByRole('button', { name: /实验功能/ }).click()
 
   const clickEffectRow = page.locator('.settings-switch-row').filter({ hasText: '点击粒子' })
   await clickEffectRow.locator('.n-switch').click()
@@ -223,6 +223,31 @@ test('keeps six categories and search usable at 900 by 600', async ({ page }) =>
   await page.getByRole('button', { name: /数据备份/ }).click()
   await expect(page.getByRole('heading', { name: '数据与备份', exact: true })).toBeVisible()
   await expectNoPageOverflow(page)
+})
+
+test('keeps the full selected navigation row highlighted and exposes settings search clearly', async ({ page }) => {
+  await openSettings(page)
+
+  const selectedContent = categoryButton(page, '常规').locator('.n-menu-item-content')
+  const selectedLayout = await selectedContent.evaluate((element) => {
+    const content = element.getBoundingClientRect()
+    const meta = element.querySelector('.base-side-nav__meta')?.getBoundingClientRect()
+    const indicator = getComputedStyle(element, '::before')
+    return {
+      indicatorLeft: indicator.left,
+      indicatorRight: indicator.right,
+      metaInset: meta ? Math.round(meta.left - content.left) : -1,
+    }
+  })
+  expect(selectedLayout).toEqual({ indicatorLeft: '0px', indicatorRight: '0px', metaInset: 8 })
+
+  const search = page.getByRole('searchbox', { name: '搜索设置' })
+  await expect(search).toHaveAttribute('placeholder', '搜索设置，如：备份')
+  await page.keyboard.press('Meta+k')
+  await expect(search).toBeFocused()
+  await search.fill('备份')
+  await page.getByRole('button', { name: /数据备份/ }).click()
+  await expect(page.getByRole('heading', { name: '数据与备份', exact: true })).toBeVisible()
 })
 
 test('saves timeout, menu order, backups, and Git config through their authoritative stores', async ({ page }) => {

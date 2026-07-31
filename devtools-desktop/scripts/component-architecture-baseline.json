@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "policy": "ratchet",
+  "description": "存量违规必须逐步归零；任何新增、跨文件转移或未同步的减少都会使 lint:architecture 失败。",
+  "exceptions": [],
+  "baseline": {
+    "third-party-ui-import": {},
+    "naive-internal-selector": {
+      "frontend/src/views/notebook/notebook.css": 5,
+      "frontend/src/views/notes/notes.css": 20,
+      "frontend/src/views/run/RunView.vue": 1,
+      "frontend/src/views/run/components/RunProjectCard.vue": 1,
+      "frontend/src/views/todo/todo.css": 9,
+      "frontend/src/views/usage/usage.css": 2
+    },
+    "deep-selector": {
+      "frontend/src/views/run/RunView.vue": 1,
+      "frontend/src/views/run/components/RunProjectCard.vue": 1
+    },
+    "native-control": {
+      "frontend/src/views/notebook/components/NotebookSidebar.vue": 1,
+      "frontend/src/views/notes/components/WeekDayList.vue": 1,
+      "frontend/src/views/run/components/RunGroupSection.vue": 1,
+      "frontend/src/views/todo/components/TodoChecklist.vue": 1,
+      "frontend/src/views/todo/components/TodoTaskDetail.vue": 1,
+      "frontend/src/views/todo/components/TodoTaskList.vue": 2,
+      "frontend/src/views/twofa/TwofaView.vue": 2,
+      "frontend/src/views/twofa/components/TwofaAccountDialog.vue": 1,
+      "frontend/src/views/twofa/components/TwofaPinnedCards.vue": 1,
+      "frontend/src/views/usage/UsageView.vue": 1
+    },
+    "native-table": {
+      "frontend/src/views/run/components/RunHistoryDialog.vue": 1,
+      "frontend/src/views/usage/components/UsageDataExplorer.vue": 2,
+      "frontend/src/views/usage/components/UsageProjectRanking.vue": 1,
+      "frontend/src/views/usage/components/UsageRequestRanking.vue": 1,
+      "frontend/src/views/usage/components/UsageSettingsDialog.vue": 1,
+      "frontend/src/views/usage/components/UsageTrendChart.vue": 1
+    },
+    "direct-interval": {
+      "frontend/src/views/twofa/components/TwofaQuickDialog.vue": 1,
+      "frontend/src/views/twofa/composables/useTwofa.ts": 2,
+      "frontend/src/views/usage/composables/useUsage.ts": 1
+    },
+    "view-network-or-ipc": {},
+    "document-query": {
+      "frontend/src/views/home/composables/useHomeDashboard.ts": 1
+    }
+  }
+}

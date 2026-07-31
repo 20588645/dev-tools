@@ -279,9 +279,6 @@ export function useSettings(options: UseSettingsDependencies = {}) {
   const chooseSearchResult = (item: SettingsSearchItem) => {
     activeCategory.value = item.category
     searchQuery.value = ''
-    requestAnimationFrame(() => {
-      document.querySelector<HTMLElement>(`[data-setting-id="${item.id}"]`)?.focus({ preventScroll: false })
-    })
   }
 
   const saveConnectionTimeout = async () => {

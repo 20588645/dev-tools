@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onActivated, onBeforeUnmount, onMounted, reactive } from 'vue'
+import { onActivated, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 
 import BaseButton from '@/components/base/BaseButton.vue'
 import StatusIndicator from '@/components/base/StatusIndicator.vue'
@@ -19,7 +19,7 @@ import SettingsGeneralPanel from './components/SettingsGeneralPanel.vue'
 import SettingsGitPanel from './components/SettingsGitPanel.vue'
 import SettingsStatusOverview from './components/SettingsStatusOverview.vue'
 import UpgradeProgressDialog from './components/UpgradeProgressDialog.vue'
-import { settingsCategoryLabel, useSettings } from './composables/useSettings'
+import { settingsCategoryLabel, type SettingsSearchItem, useSettings } from './composables/useSettings'
 import './settings.css'
 
 defineOptions({ name: 'SettingsView' })
@@ -27,6 +27,8 @@ defineOptions({ name: 'SettingsView' })
 type ConfirmKind = 'restart' | 'reset-menu' | 'restore' | 'delete' | 'kill-test'
 
 const controller = useSettings()
+const workspaceContent = ref<HTMLElement | null>(null)
+const searchInput = ref<InstanceType<typeof BaseInput> | null>(null)
 const confirm = reactive({
   visible: false,
   kind: 'restart' as ConfirmKind,
@@ -83,7 +85,23 @@ async function runConfirmedAction() {
   if (kind === 'kill-test') await controller.stopTestSidecars()
 }
 
+function chooseSearchResult(item: SettingsSearchItem) {
+  controller.chooseSearchResult(item)
+  requestAnimationFrame(() => {
+    workspaceContent.value
+      ?.querySelector<HTMLElement>(`[data-setting-id="${item.id}"]`)
+      ?.focus({ preventScroll: false })
+  })
+}
+
+function handleSearchShortcut(event: KeyboardEvent) {
+  if (!(event.metaKey || event.ctrlKey) || event.key.toLocaleLowerCase() !== 'k') return
+  event.preventDefault()
+  searchInput.value?.focus()
+}
+
 onMounted(() => {
+  window.addEventListener('keydown', handleSearchShortcut)
   void controller.initialize()
 })
 
@@ -91,7 +109,10 @@ onActivated(() => {
   if (controller.initialized.value) void controller.initialize(true)
 })
 
-onBeforeUnmount(controller.dispose)
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleSearchShortcut)
+  controller.dispose()
+})
 </script>
 
 <template>
@@ -103,10 +124,12 @@ onBeforeUnmount(controller.dispose)
           <template #actions>
             <div class="settings-header-actions">
               <BaseInput
+                ref="searchInput"
                 v-model="controller.searchQuery.value"
                 type="search"
+                variant="search"
                 aria-label="搜索设置"
-                placeholder="搜索设置"
+                placeholder="搜索设置，如：备份"
                 autocomplete="off"
               >
                 <template #prefix>⌕</template>
@@ -141,23 +164,26 @@ onBeforeUnmount(controller.dispose)
 
       <div class="settings-workspace">
         <SettingsCategoryNav v-model="controller.activeCategory.value" />
-        <main class="settings-workspace__content">
+        <main ref="workspaceContent" class="settings-workspace__content">
           <section v-if="controller.searchQuery.value" class="settings-search-results" aria-labelledby="settingsSearchResultsTitle">
             <div class="settings-panel-heading">
               <div><h2 id="settingsSearchResultsTitle">搜索结果</h2><p>找到 {{ controller.searchResults.value.length }} 项设置</p></div>
               <BaseButton variant="ghost" size="sm" @click="controller.searchQuery.value = ''">清除搜索</BaseButton>
             </div>
             <div v-if="controller.searchResults.value.length" class="settings-search-results__list">
-              <button
+              <BaseButton
                 v-for="item in controller.searchResults.value"
                 :key="item.id"
-                type="button"
-                @click="controller.chooseSearchResult(item)"
+                class="settings-search-result"
+                variant="outline"
+                @click="chooseSearchResult(item)"
               >
-                <span>{{ item.title.slice(0, 2).toUpperCase() }}</span>
-                <span><strong>{{ item.title }}</strong><small>{{ item.description }}</small></span>
-                <small>{{ settingsCategoryLabel(item.category) }}</small>
-              </button>
+                <span class="settings-search-result__layout">
+                  <span class="settings-search-result__mark">{{ item.title.slice(0, 2).toUpperCase() }}</span>
+                  <span class="settings-search-result__copy"><strong>{{ item.title }}</strong><small>{{ item.description }}</small></span>
+                  <small>{{ settingsCategoryLabel(item.category) }}</small>
+                </span>
+              </BaseButton>
             </div>
             <div v-else class="settings-search-empty">
               <strong>没有匹配的设置</strong><p>试试“备份”“主题”或“Git”</p>

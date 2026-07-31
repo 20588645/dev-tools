@@ -27,7 +27,13 @@ onBeforeUnmount(() => app.stopThemeSync())
 
 <template>
   <NConfigProvider class="ui-library-provider" :locale="zhCN" :date-locale="dateZhCN" :theme="theme" :theme-overrides="themeOverrides">
-    <NMessageProvider :to="overlayTarget">
+    <NMessageProvider
+      :to="overlayTarget"
+      placement="bottom-right"
+      closable
+      keep-alive-on-hover
+      container-class="app-toast-container"
+    >
       <NDialogProvider :to="overlayTarget">
         <NNotificationProvider :to="overlayTarget">
           <slot />

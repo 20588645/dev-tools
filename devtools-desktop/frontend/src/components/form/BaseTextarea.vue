@@ -11,10 +11,17 @@ const props = withDefaults(defineProps<{
   helpText?: string
   error?: string
   disabled?: boolean
+  readonly?: boolean
   required?: boolean
+  ariaLabel?: string
+  variant?: 'default' | 'plain' | 'editor'
+  resize?: 'vertical' | 'none'
+  autosize?: boolean | { minRows?: number, maxRows?: number }
+  fillHeight?: boolean
 }>(), {
   modelValue: '', id: undefined, label: undefined, placeholder: undefined, rows: 4,
-  helpText: undefined, error: undefined, disabled: false, required: false,
+  helpText: undefined, error: undefined, disabled: false, readonly: false, required: false,
+  ariaLabel: undefined, variant: 'default', resize: 'vertical', autosize: false, fillHeight: false,
 })
 
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
@@ -22,10 +29,24 @@ const generatedId = useId()
 const textareaId = computed(() => props.id ?? `base-textarea-${generatedId}`)
 const labelId = computed(() => `${textareaId.value}-label`)
 const messageId = computed(() => `${textareaId.value}-message`)
+const textareaThemeOverrides = computed(() => props.variant === 'default' ? undefined : ({
+  color: 'transparent',
+  colorFocus: 'transparent',
+  border: '1px solid transparent',
+  borderHover: '1px solid var(--component-control-border-hover)',
+  borderFocus: '1px solid var(--component-control-border-focus)',
+  boxShadowFocus: 'var(--component-control-focus-ring)',
+  paddingSmall: props.variant === 'editor' ? '0' : undefined,
+  paddingMedium: props.variant === 'editor' ? '0' : undefined,
+  paddingLarge: props.variant === 'editor' ? '0' : undefined,
+}))
 </script>
 
 <template>
-  <div class="field-control">
+  <div
+    class="field-control"
+    :class="[`field-control--${variant}`, { 'field-control--fill-height': fillHeight }]"
+  >
     <label v-if="label" :id="labelId" class="field-control__label" :for="textareaId">
       {{ label }}<span v-if="required" aria-hidden="true"> *</span>
     </label>
@@ -35,11 +56,15 @@ const messageId = computed(() => `${textareaId.value}-message`)
       :placeholder="placeholder"
       :rows="rows"
       :disabled="disabled"
+      :readonly="readonly"
+      :autosize="autosize"
+      :resizable="resize === 'vertical'"
       :status="error ? 'error' : undefined"
       :aria-required="required || undefined"
       :aria-invalid="Boolean(error)"
       :aria-describedby="helpText || error ? messageId : undefined"
-      :input-props="{ id: textareaId, 'aria-labelledby': label ? labelId : undefined }"
+      :input-props="{ id: textareaId, 'aria-label': ariaLabel, 'aria-labelledby': label ? labelId : undefined }"
+      :theme-overrides="textareaThemeOverrides"
       @update:value="emit('update:modelValue', $event)"
     />
     <p v-if="error || helpText" :id="messageId" class="field-control__message" :class="{ 'field-control__message--error': error }">
@@ -54,4 +79,9 @@ const messageId = computed(() => `${textareaId.value}-message`)
 .field-control__label span { color: var(--color-danger); }
 .field-control__message { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-xs); line-height: var(--line-height-normal); }
 .field-control__message--error { color: var(--color-danger); }
+.field-control--fill-height { grid-template-rows: auto minmax(0, 1fr) auto; height: 100%; min-height: 0; }
+.field-control--fill-height :deep(.n-input) { height: 100%; min-height: 0; }
+.field-control--fill-height :deep(.n-input-wrapper),
+.field-control--fill-height :deep(.n-input__textarea) { height: 100%; min-height: 0; }
+.field-control--fill-height :deep(.n-input__textarea-el) { height: 100%; }
 </style>
