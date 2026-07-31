@@ -48,10 +48,6 @@
   width: min(410px, 48vw);
 }
 
-.notebook-toolbar__search .field-control {
-  gap: 0;
-}
-
 .notebook-toolbar__actions {
   display: flex;
   min-width: 0;
@@ -86,18 +82,6 @@
   min-height: 0;
   overflow: hidden;
   box-shadow: var(--shadow-md);
-}
-
-.notebook-list-panel > .n-card-content,
-.notebook-editor-panel > .n-card-content {
-  height: 100%;
-  min-height: 0;
-  padding: 0;
-}
-
-.notebook-list-panel > .n-card-content {
-  display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
 }
 
 .notebook-list-panel__header {
@@ -138,6 +122,7 @@
 
 .notebook-list-panel__state {
   display: grid;
+  flex: 1 1 auto;
   min-height: 0;
   place-items: center;
   padding: var(--space-5);
@@ -145,6 +130,7 @@
 
 .notebook-note-list {
   display: grid;
+  flex: 1 1 auto;
   min-height: 0;
   align-content: start;
   gap: 7px;
@@ -153,46 +139,22 @@
   scrollbar-width: thin;
 }
 
-.notebook-note-item {
+.notebook-note-row {
   position: relative;
-  display: grid;
-  width: 100%;
   min-width: 0;
-  min-height: 86px;
-  gap: 7px;
-  padding: 12px;
-  color: var(--color-text-muted);
-  text-align: left;
-  background: color-mix(in srgb, var(--color-surface-raised) 28%, transparent);
-  border: 1px solid transparent;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition:
-    color var(--duration-normal) var(--ease-standard),
-    background-color var(--duration-normal) var(--ease-standard),
-    border-color var(--duration-normal) var(--ease-standard),
-    transform var(--duration-normal) var(--ease-standard);
 }
 
-.notebook-note-item:hover {
-  color: var(--color-text);
-  background: color-mix(in srgb, var(--color-surface-raised) 56%, transparent);
-  border-color: var(--color-border);
-  transform: translateX(2px);
-}
-
-.notebook-note-item:focus-visible {
-  outline: 0;
-  box-shadow: var(--component-focus-outline);
-}
-
-.notebook-note-item.is-active {
-  color: var(--color-text);
-  background:
+.notebook-note-item {
+  --base-selectable-min-height: 86px;
+  --base-selectable-padding: 12px;
+  --base-selectable-background: color-mix(in srgb, var(--color-surface-raised) 28%, transparent);
+  --base-selectable-hover-background: color-mix(in srgb, var(--color-surface-raised) 56%, transparent);
+  --base-selectable-hover-transform: translateX(2px);
+  --base-selectable-selected-background:
     linear-gradient(135deg, color-mix(in srgb, var(--color-action) 11%, transparent), transparent 72%),
     color-mix(in srgb, var(--color-surface-raised) 52%, transparent);
-  border-color: color-mix(in srgb, var(--color-action) 38%, var(--color-border));
-  box-shadow: inset 3px 0 0 var(--color-action);
+  --base-selectable-selected-border: color-mix(in srgb, var(--color-action) 38%, var(--color-border));
+  gap: 7px;
 }
 
 .notebook-note-item__heading,
@@ -240,9 +202,10 @@
   right: 7px;
   bottom: 5px;
   display: flex;
+  z-index: 1;
 }
 
-.notebook-note-item:has(.notebook-note-item__order) .notebook-note-item__meta {
+.notebook-note-row:has(.notebook-note-item__order) .notebook-note-item__meta {
   padding-right: 64px;
 }
 
@@ -254,15 +217,10 @@
   text-align: center;
 }
 
-.notebook-editor-panel > .n-card-content {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
-}
-
 .notebook-editor-panel__empty,
 .notebook-editor-panel__state {
   display: grid;
-  grid-row: 1 / -1;
+  flex: 1 1 auto;
   min-height: 0;
   place-items: center;
   padding: var(--space-6);
@@ -304,6 +262,7 @@
 
 .notebook-editor-panel__body {
   display: grid;
+  flex: 1 1 auto;
   min-height: 0;
   grid-template-rows: auto auto auto minmax(0, 1fr);
   overflow: hidden;
@@ -324,24 +283,6 @@
 
 .notebook-editor-title {
   padding: 14px 18px 8px;
-}
-
-.notebook-editor-title .field-control {
-  gap: 4px;
-}
-
-.notebook-editor-title .field-control__label {
-  color: var(--color-text-subtle);
-  font-size: 9px;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-}
-
-.notebook-editor-title .n-input {
-  --n-height: 40px;
-  font-size: 18px;
-  font-weight: var(--font-weight-semibold);
-  background: transparent;
 }
 
 .notebook-rich-editor {
@@ -716,8 +657,8 @@
   }
 
   .notebook-note-item {
-    min-height: 76px;
-    padding: 10px;
+    --base-selectable-min-height: 76px;
+    --base-selectable-padding: 10px;
   }
 
   .notebook-editor-panel__header {

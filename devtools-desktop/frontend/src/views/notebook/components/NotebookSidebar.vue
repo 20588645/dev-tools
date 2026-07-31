@@ -3,6 +3,7 @@ import { computed } from 'vue'
 
 import BaseButton from '@/components/base/BaseButton.vue'
 import BaseCard from '@/components/base/BaseCard.vue'
+import BaseSelectableItem from '@/components/base/BaseSelectableItem.vue'
 import EmptyState from '@/components/feedback/EmptyState.vue'
 import ErrorState from '@/components/feedback/ErrorState.vue'
 import LoadingState from '@/components/feedback/LoadingState.vue'
@@ -56,7 +57,13 @@ function formatUpdated(value: string) {
 </script>
 
 <template>
-  <BaseCard class="notebook-list-panel" content-padding="0">
+  <BaseCard
+    class="notebook-list-panel"
+    content-padding="0"
+    content-layout="fill"
+    content-overflow="hidden"
+    fill-height
+  >
     <header class="notebook-list-panel__header">
       <div>
         <strong>全部笔记</strong>
@@ -91,25 +98,29 @@ function formatUpdated(value: string) {
       />
     </div>
     <div v-else class="notebook-note-list" role="listbox" aria-label="笔记列表">
-      <button
+      <div
         v-for="(note, index) in notes"
         :key="note.id"
-        class="notebook-note-item"
-        :class="{ 'is-active': note.id === currentId, 'is-pinned': note.pinned }"
-        type="button"
-        role="option"
-        :aria-selected="note.id === currentId"
-        @click="emit('select', note.id)"
+        class="notebook-note-row"
+        role="presentation"
       >
-        <span class="notebook-note-item__heading">
-          <strong>{{ note.title || '无标题' }}</strong>
-          <small v-if="note.pinned">PIN</small>
-        </span>
-        <span class="notebook-note-item__preview">{{ note.preview || '暂无正文内容' }}</span>
-        <span class="notebook-note-item__meta">
-          <span>{{ formatUpdated(note.updatedAt) }}</span>
-          <span v-if="note.hasMedia">含图片</span>
-        </span>
+        <BaseSelectableItem
+          class="notebook-note-item"
+          :selected="note.id === currentId"
+          role="option"
+          :aria-selected="note.id === currentId"
+          @click="emit('select', note.id)"
+        >
+          <span class="notebook-note-item__heading">
+            <strong>{{ note.title || '无标题' }}</strong>
+            <small v-if="note.pinned">PIN</small>
+          </span>
+          <span class="notebook-note-item__preview">{{ note.preview || '暂无正文内容' }}</span>
+          <span class="notebook-note-item__meta">
+            <span>{{ formatUpdated(note.updatedAt) }}</span>
+            <span v-if="note.hasMedia">含图片</span>
+          </span>
+        </BaseSelectableItem>
         <span v-if="sort === 'manual'" class="notebook-note-item__order" @click.stop>
           <BaseButton
             variant="ghost"
@@ -126,7 +137,7 @@ function formatUpdated(value: string) {
             @click="emit('move', note.id, 1)"
           >↓</BaseButton>
         </span>
-      </button>
+      </div>
     </div>
 
     <footer v-if="sort === 'manual' && manualDisabled" class="notebook-list-panel__footer">

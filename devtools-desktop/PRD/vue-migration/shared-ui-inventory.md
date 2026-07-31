@@ -68,7 +68,7 @@
 - 侧边导航：`BaseSideNav.vue`，首个目标消费者为 Settings 分类导航。
 - 进度：`BaseProgress` 新增 circle，首个目标消费者为 Twofa 倒计时环。
 - 布局变体：`BaseCard`、`BaseInput`、`BaseTextarea` 新增公开能力，用于消除 Notes、Notebook、Todo、Usage、Run 对 `.n-*` 内部类的依赖。
-- 可选择列表项：`BaseSelectableItem` 统一 Notes 日期、Notebook 笔记和 Todo 任务列表已经重复出现的选择、焦点与悬停语义；首个消费者为 Notes。
+- 可选择列表项：`BaseSelectableItem` 统一 Notes 日期、Notebook 笔记和 Todo 任务列表已经重复出现的选择、焦点与悬停语义；Notes 与 Notebook 已接入，Todo 待逐页收口时评审。
 
 通知宿主已在后续独立子项完成：`AppToastHost` 不再绘制 Toast 或管理定时器，而是通过项目 adapter 驱动 Naive Message；`NNotificationProvider` 保留给未来需要标题、描述或操作区的富通知，业务页面仍不得直接访问任一 Provider API。
 

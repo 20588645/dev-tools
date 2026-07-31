@@ -1,6 +1,6 @@
 # 组件架构合规专项
 
-> 状态：规则与自动门禁、首批公共组件能力、通知适配层及 Settings、Home、IpCheck、Notes 四个页面收口已完成；Settings、IpCheck 与 Notes 已通过连接正式 Sidecar 的网页人工验收。其余存量页面收口与最终真实 Tauri Smoke Test 待执行。在本专项和全站回归完成前，不进入 Phase 6-2 Deploy
+> 状态：规则与自动门禁、首批公共组件能力、通知适配层及 Settings、Home、IpCheck、Notes、Notebook 五个页面收口已完成；Settings、IpCheck、Notes 与 Notebook 已通过连接正式 Sidecar 的网页人工验收。其余存量页面收口与最终真实 Tauri Smoke Test 待执行。在本专项和全站回归完成前，不进入 Phase 6-2 Deploy
 >
 > 生效范围：`frontend/src/views/**` 及所有后续迁移业务页面。公共组件、适配层和第三方宿主的职责边界以本文为唯一专项入口；原执行计划中的一致规则继续有效，发生歧义时先暂停实现并更新本文。
 
@@ -64,13 +64,13 @@ npm run lint:architecture
 
 ## 6. 2026-07-31 存量快照
 
-当前业务页面直接导入第三方 UI、直接网络/IPC 调用和直接 DOM 查询均为 0。Settings、Home、IpCheck 与 Notes 收口后，待归零项由 68 个降至 42 个机器计数：
+当前业务页面直接导入第三方 UI、直接网络/IPC 调用和直接 DOM 查询均为 0。Settings、Home、IpCheck、Notes 与 Notebook 收口后，待归零项由 68 个降至 36 个机器计数：
 
 | 类型 | 数量 | 主要页面 |
 | --- | ---: | --- |
-| `.n-*` 第三方内部选择器 | 18 个 selector token | Notebook、Todo、Usage、Run |
+| `.n-*` 第三方内部选择器 | 13 个 selector token | Todo、Usage、Run |
 | `:deep()` | 2 | Run |
-| 原生基础按钮 | 11 | Notebook 1、Run 1、Todo 4、Twofa 4、Usage 1 |
+| 原生基础按钮 | 10 | Run 1、Todo 4、Twofa 4、Usage 1 |
 | 原生 `<table>` | 7 | Usage 6、Run 1 |
 | 裸 `setInterval` | 4 | Usage 1、Twofa 3 |
 | 直接 DOM 查询 | 0 | Home 已归零 |
@@ -210,3 +210,18 @@ Notes 的 21 项机器债务全部归零：第三方内部选择器 20 → 0、�
 完整自动回归通过：`npm run lint`、`npm test`（35 个测试文件 / 189 项单元与组件测试 + 架构门禁 4 项）、`npm run typecheck`、`npm run build:frontend`、`git diff --check`；生产构建仅保留迁移前既有 legacy script/CSS 提示。
 
 正式 Sidecar 网页只读验收使用 `http://127.0.0.1:1420/?apiPort=13456`，确认五个工作日读取、当前日期 `aria-pressed` 选中态、周列表与编辑区填充布局、当前窗口及 900×600 紧凑布局均正常，页面无横向溢出；未编辑正式工时内容，未打开 Git 活动参考，也未执行任何写入。控制台仅有迁移前已知的 CodeMirror `defineSimpleMode` 错误，没有新增 Notes 或公共组件错误。该结果不替代专项最终真实 Tauri Smoke Test。
+
+## 16. Notebook 页面架构收口记录（2026-07-31）
+
+Notebook 的机器债务包括 1 个笔记列表原生按钮和 5 个 Naive 内部选择器。人工复核确认页面头部、搜索、筛选、排序、编辑操作、状态、弹窗和富文本宿主已有明确的项目组件或页面私有语义；本轮只收口笔记列表选择、卡片填充布局和标题输入样式所有权。
+
+- 笔记列表接入 `BaseSelectableItem`，使用 `role="option"` / `aria-selected` 保留 listbox 语义；手动排序按钮从列表选择按钮内部移为同级操作，消除按钮嵌套，同时保持原位置和移动能力。
+- 列表卡与编辑卡接入 `BaseCard` 的 fillHeight、contentLayout 和 contentOverflow 公开契约，页面不再覆盖 `.n-card-content`。
+- 标题接入 `BaseInput title` 与 eyebrow label，搜索接入 search 变体，页面不再覆盖 `.n-input` 或 `.field-control*` 内部结构。
+- 富文本 `contenteditable`、凭据表和普通语义表格仍是页面专属编辑器宿主，不属于 CA-04/CA-05 的平行业务控件实现，不错误替换为 BaseTextarea 或 BaseDataTable。
+
+Notebook 的 6 项机器债务全部归零：第三方内部选择器 5 → 0、原生控件 1 → 0；专项总基线 42 → 36，批准例外仍为 0。Notebook Playwright 7 项全部通过，覆盖亮暗主题、900×600、自动保存与 flush、HTML 清洗、凭据表、显式链接和插入位置；新增断言确认列表 option 数量、唯一选中态与列表按钮内部没有嵌套交互控件。统一通知上线后两处旧文本断言已收窄到 Message 宿主，没有改变业务行为。
+
+完整自动回归通过：`npm run lint`、`npm test`（35 个测试文件 / 189 项单元与组件测试 + 架构门禁 4 项）、`npm run typecheck`、`npm run build:frontend`、`git diff --check`；生产构建仅保留迁移前既有 legacy script/CSS 提示。
+
+正式 Sidecar 网页只读验收使用 `http://127.0.0.1:1420/?apiPort=13456`，当前窗口下 5 条笔记均以 option 呈现、唯一选中、编辑区完整铺满；900×600 下正文可编辑区约 380×202px，页面和文档均无横向溢出，列表项内部交互控件为 0。验收未搜索、新建、编辑、打开菜单或复制内容，也未执行任何写入；控制台仅有迁移前已知的 CodeMirror `defineSimpleMode` 错误。该结果不替代专项最终真实 Tauri Smoke Test。

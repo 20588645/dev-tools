@@ -206,7 +206,18 @@ test('keeps the list and editor usable at 900 by 600', async ({ page }) => {
   await page.setViewportSize({ width: 900, height: 600 })
   await openNotebook(page)
   await expect(page.locator('.notebook-note-item')).toHaveCount(2)
+  await expect(page.getByRole('option')).toHaveCount(2)
+  await expect(page.locator('.notebook-note-item[aria-selected="true"]')).toHaveCount(1)
+  await expect(page.locator('.notebook-note-item button')).toHaveCount(0)
   await expectNoOverflow(page)
+
+  await page.locator('.notebook-list-panel__sort').click()
+  await page.getByText('手动排序', { exact: true }).click()
+  const moveDown = page.getByRole('button', { name: '下移笔记：系统凭据' })
+  await expect(moveDown).toBeVisible()
+  await expect(page.locator('.notebook-note-item button')).toHaveCount(0)
+  await moveDown.click()
+  await expect(page.locator('.notebook-note-item__heading strong').first()).toHaveText('日常备忘')
 
   await page.getByRole('button', { name: '收起列表', exact: true }).click()
   await expect(page.locator('.notebook-list-panel')).toHaveCount(0)
@@ -342,7 +353,7 @@ test('cleans pasted HTML and supports editable credential tables with copy feedb
   await expect(page.getByRole('button', { name: '完成', exact: true })).toBeVisible()
   await page.keyboard.press('Meta+s')
   await expect(table).toHaveAttribute('data-editing', 'false')
-  await expect(page.getByText('笔记已保存', { exact: true })).toBeVisible()
+  await expect(page.locator('.n-message').filter({ hasText: '笔记已保存' })).toBeVisible()
   await expect.poll(() => mock.writes.length).toBeGreaterThan(0)
   expect(mock.writes.at(-1)?.content).not.toContain('data-credential-runtime-controls')
   expect(mock.writes.at(-1)?.content).not.toContain('＋ 记录')
@@ -363,7 +374,7 @@ test('cleans pasted HTML and supports editable credential tables with copy feedb
 
   await value.click()
   await expect(value).toHaveAttribute('data-copy-state', 'done')
-  await expect(page.getByText('已复制此项', { exact: true })).toBeVisible()
+  await expect(page.locator('.n-message').filter({ hasText: '已复制此项' })).toBeVisible()
 })
 
 test('matches the credential card structure in light and dark themes', async ({ page }) => {

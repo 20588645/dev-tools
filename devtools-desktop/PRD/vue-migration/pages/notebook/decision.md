@@ -183,3 +183,11 @@ PG5 已完成：
 本轮不改变 SQLite 表结构、Notebook API、历史 HTML 存储格式或凭据复制语义。
 
 本轮真实 Tauri 手动 E2E 已由用户于 2026-07-28 确认通过，允许建立独立修复提交并恢复系统设置 PG1。
+
+## 11. 组件架构二次收口（2026-07-31）
+
+本轮不改变已确认的双栏布局、笔记选择、搜索、排序、自动保存、富文本、凭据表或 SQLite 数据契约。架构复核确认富文本 `contenteditable`、凭据表与普通语义表格属于页面专属编辑器宿主；页面操作、反馈和筛选已正确使用项目组件。需要调整的是笔记列表原生选择按钮、BaseCard 内部内容布局覆盖和 BaseInput 内部标题样式覆盖。
+
+笔记列表接入 `BaseSelectableItem` 并保留 `role="option"` / `aria-selected`；手动排序按钮移到选择按钮的同级，消除原有按钮嵌套。列表卡和编辑卡使用 `BaseCard` 的 fillHeight/contentLayout/contentOverflow，标题与搜索分别使用 `BaseInput` 的 title/eyebrow 和 search 公开契约。Notebook 原生按钮 1 → 0、Naive 内部 selector token 5 → 0，专项机器基线由 42 降至 36，批准例外仍为 0。
+
+Notebook Playwright 7 项全部通过，并增加列表 option、唯一选中态和无嵌套交互控件断言。全量 `npm run lint`、`npm test`（35 个测试文件 / 189 项单元与组件测试 + 架构门禁 4 项）、`npm run typecheck`、`npm run build:frontend`、`git diff --check` 通过。正式 Sidecar `13456/data` 网页只读验收确认当前窗口与 900×600 下列表、编辑区、选择态和横向溢出均正常；未搜索、新建、编辑、打开菜单、复制或执行写入。控制台没有新增 Notebook 错误，只有迁移前已知的 CodeMirror `defineSimpleMode` 错误。该网页验收不替代专项最终真实 Tauri Smoke Test。

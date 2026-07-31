@@ -123,7 +123,13 @@ defineExpose({ focusTitle })
 </script>
 
 <template>
-  <BaseCard class="notebook-editor-panel" content-padding="0">
+  <BaseCard
+    class="notebook-editor-panel"
+    content-padding="0"
+    content-layout="fill"
+    content-overflow="hidden"
+    fill-height
+  >
     <div v-if="!draft" class="notebook-editor-panel__empty">
       <EmptyState title="选择一篇笔记" description="从左侧列表选择内容，或新建一篇笔记开始记录" />
     </div>
@@ -170,6 +176,8 @@ defineExpose({ focusTitle })
           ref="titleInput"
           class="notebook-editor-title"
           label="笔记标题"
+          label-variant="eyebrow"
+          variant="title"
           :model-value="draft.title"
           placeholder="无标题笔记"
           autocomplete="off"

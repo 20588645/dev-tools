@@ -101,6 +101,7 @@ async function handleManualSave() {
               v-model="search"
               class="notebook-toolbar__search"
               type="search"
+              variant="search"
               placeholder="搜索标题或正文…"
               aria-label="搜索个人笔记"
             >
