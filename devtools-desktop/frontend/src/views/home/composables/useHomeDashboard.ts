@@ -1,10 +1,9 @@
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch, type Ref } from 'vue'
 
 import { useInterval } from '@/composables/use-interval'
 import { usePageVisibility } from '@/composables/use-page-visibility'
 import {
   HOME_REFRESH_REQUESTED_EVENT,
-  onLegacyPageActivation,
   type HomeRefreshRequestDetail,
 } from '@/legacy/legacy-bridge'
 import {
@@ -209,9 +208,8 @@ function errorMessage(reason: unknown) {
   return reason instanceof Error ? reason.message : String(reason || '数据加载失败')
 }
 
-export function useHomeDashboard() {
+export function useHomeDashboard(active: Readonly<Ref<boolean>>) {
   const now = ref(new Date())
-  const active = ref(document.querySelector('#page-home')?.classList.contains('active') ?? true)
   const deploymentHistory = ref<DeploymentHistoryItem[]>([])
   const runHistory = ref<RunHistoryItem[]>([])
   const usage = ref<UsageSummary | null>(null)
@@ -227,7 +225,6 @@ export function useHomeDashboard() {
   const { visible } = usePageVisibility()
   let refreshVersion = 0
   let lastPurityLoadedAt = 0
-  let stopActivationListener: (() => void) | null = null
   let dashboardRefreshPromise: Promise<void> | null = null
   let purityRefreshPromise: Promise<void> | null = null
   let quoteTimer: number | null = null
@@ -402,11 +399,11 @@ export function useHomeDashboard() {
     if (active.value && visible.value) void refreshDashboard()
   }, 60_000)
 
+  watch(active, (isActive, wasActive) => {
+    if (isActive && !wasActive) void refresh({ includePurity: true })
+  })
+
   onMounted(() => {
-    stopActivationListener = onLegacyPageActivation((detail) => {
-      active.value = detail.pageId === 'home'
-      if (active.value) void refresh({ includePurity: true })
-    })
     window.addEventListener(HOME_REFRESH_REQUESTED_EVENT, handleRefreshRequest)
     void refresh({ includePurity: true })
   })
@@ -414,7 +411,6 @@ export function useHomeDashboard() {
   onBeforeUnmount(() => {
     refreshVersion += 1
     if (quoteTimer) window.clearTimeout(quoteTimer)
-    stopActivationListener?.()
     window.removeEventListener(HOME_REFRESH_REQUESTED_EVENT, handleRefreshRequest)
   })
 

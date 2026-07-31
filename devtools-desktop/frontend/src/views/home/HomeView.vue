@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { toRef } from 'vue'
+
 import PageFrame from '@/components/layout/PageFrame.vue'
 import { requestLegacyPage } from '@/legacy/legacy-bridge'
 
@@ -16,6 +18,8 @@ import { useHomeDashboard } from './composables/useHomeDashboard'
 import './home.css'
 
 defineOptions({ name: 'HomeView' })
+
+const props = defineProps<{ active: boolean }>()
 
 const {
   dateLabel,
@@ -49,7 +53,7 @@ const {
   moon,
   refreshDashboard,
   refreshPurity,
-} = useHomeDashboard()
+} = useHomeDashboard(toRef(props, 'active'))
 </script>
 
 <template>

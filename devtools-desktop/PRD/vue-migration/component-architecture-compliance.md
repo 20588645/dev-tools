@@ -64,7 +64,7 @@ npm run lint:architecture
 
 ## 6. 2026-07-31 存量快照
 
-当前业务页面直接导入第三方 UI、直接网络/IPC 调用均为 0。Settings 首个消费者收口后，待归零项由 68 个降至 64 个机器计数：
+当前业务页面直接导入第三方 UI、直接网络/IPC 调用和直接 DOM 查询均为 0。Settings 与 Home 收口后，待归零项由 68 个降至 63 个机器计数：
 
 | 类型 | 数量 | 主要页面 |
 | --- | ---: | --- |
@@ -73,7 +73,7 @@ npm run lint:architecture
 | 原生基础按钮 | 12 | Notebook 1、Notes 1、Run 1、Todo 4、Twofa 4、Usage 1 |
 | 原生 `<table>` | 7 | Usage 6、Run 1 |
 | 裸 `setInterval` | 4 | Usage 1、Twofa 3 |
-| 直接 DOM 查询 | 1 | Home 1 |
+| 直接 DOM 查询 | 0 | Home 已归零 |
 
 无法可靠静态判断、必须人工验收的已知项：
 
@@ -181,3 +181,9 @@ UI Foundation 的“反馈状态”已经增加 success、warning、error 和持
 内置浏览器使用隔离测试 Sidecar `DEVTOOLS_TEST=1` / `13900` / `data-test` 验证：1280×720 垂直导航、900×600 横向完整分类名、六分类语义、实验功能展开/收起、搜索“备份”后跳转与焦点、页面无横向溢出。启动测试 Sidecar 时显式使用与 `better-sqlite3` ABI 匹配的 Node 18.20.4；未连接正式 13456/data。截图与 Playwright 最后运行记录均未保留在仓库。
 
 人工 E2E：**已通过**。2026-07-31 用户使用 `http://127.0.0.1:1420/?apiPort=13456` 连接正式 Sidecar，确认垂直导航整行选中态、8px 内容缩进、设置搜索与“备份 → 数据与备份”跳转均无问题。该结果是正式数据链路上的网页人工验收，不冒充 Tauri 壳验收；通知和壳能力仍按第 11 节合并到专项最终 Tauri Smoke Test。Settings 首个消费者 Gate 已关闭，可以继续存量页面收口。
+
+## 13. Home 页面架构收口记录（2026-07-31）
+
+Home 人工审计未发现遗漏的公共组件：页面操作均使用 `BaseButton`，外壳使用 `PageFrame`；没有第三方内部选择器、原生交互控件、原生表格、裸定时器或直接网络调用。
+
+唯一机器债务是 `useHomeDashboard` 启动时查询 `#page-home.active`。现改为由 `MigrationHost` 将其权威 `activePage` 作为响应式 prop/ref 传入，composable 通过 `watch` 保留重新进入首页时刷新数据的行为，不再重复订阅 legacy 激活事件或查询页面 DOM。架构基线由 64 降至 63，直接 DOM 查询归零。

@@ -117,3 +117,4 @@ frontend/src/services/modules/home-service.ts
 | 2026-07-22 | 完成正式 Vue SFC、真实摘要数据、旧首页清理和浏览器 QA | PG4 通过；PG5 待 Tauri 手动 E2E |
 | 2026-07-22 | 增加跟随系统/亮色/暗色三态主题菜单、系统变化监听与持久化测试 | PG5 自动验收通过；待 Tauri 手动 E2E |
 | 2026-07-22 | 用户完成正式 Tauri 软件手动 E2E，清理过程原型与临时 QA 产物 | PG5 通过；Phase 3 首页完成 |
+| 2026-07-31 | 组件架构专项复核：首页活动状态改由 MigrationHost 响应式传入，删除页面 composable 的直接 DOM 查询 | 架构验收通过；不重新打开 PG0～PG5 |

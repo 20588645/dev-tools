@@ -43,8 +43,6 @@
       "frontend/src/views/usage/composables/useUsage.ts": 1
     },
     "view-network-or-ipc": {},
-    "document-query": {
-      "frontend/src/views/home/composables/useHomeDashboard.ts": 1
-    }
+    "document-query": {}
   }
 }

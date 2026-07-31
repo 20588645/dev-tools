@@ -97,7 +97,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="migration-host" data-migration-host>
-    <HomeView />
+    <HomeView :active="activePage === 'home'" />
     <Teleport v-if="hasIpCheckTarget" to="#vue-ipcheck-host">
       <KeepAlive>
         <IpCheckView v-if="activePage === 'ipcheck'" />
