@@ -1,6 +1,6 @@
 # 组件架构合规专项
 
-> 状态：规则与自动门禁、首批公共组件能力、通知适配层及 Settings、Home、IpCheck、Notes、Notebook 五个页面收口已完成；Settings、IpCheck、Notes 与 Notebook 已通过连接正式 Sidecar 的网页人工验收。其余存量页面收口与最终真实 Tauri Smoke Test 待执行。在本专项和全站回归完成前，不进入 Phase 6-2 Deploy
+> 状态：规则与自动门禁、首批公共组件能力、通知适配层及 Settings、Home、IpCheck、Notes、Notebook、Todo 六个页面收口已完成；Settings、IpCheck、Notes、Notebook 与 Todo 已通过连接正式 Sidecar 的网页人工验收。其余存量页面收口与最终真实 Tauri Smoke Test 待执行。在本专项和全站回归完成前，不进入 Phase 6-2 Deploy
 >
 > 生效范围：`frontend/src/views/**` 及所有后续迁移业务页面。公共组件、适配层和第三方宿主的职责边界以本文为唯一专项入口；原执行计划中的一致规则继续有效，发生歧义时先暂停实现并更新本文。
 
@@ -64,13 +64,13 @@ npm run lint:architecture
 
 ## 6. 2026-07-31 存量快照
 
-当前业务页面直接导入第三方 UI、直接网络/IPC 调用和直接 DOM 查询均为 0。Settings、Home、IpCheck、Notes 与 Notebook 收口后，待归零项由 68 个降至 36 个机器计数：
+当前业务页面直接导入第三方 UI、直接网络/IPC 调用和直接 DOM 查询均为 0。Settings、Home、IpCheck、Notes、Notebook 与 Todo 收口后，待归零项由 68 个降至 23 个机器计数：
 
 | 类型 | 数量 | 主要页面 |
 | --- | ---: | --- |
-| `.n-*` 第三方内部选择器 | 13 个 selector token | Todo、Usage、Run |
+| `.n-*` 第三方内部选择器 | 4 个 selector token | Usage、Run |
 | `:deep()` | 2 | Run |
-| 原生基础按钮 | 10 | Run 1、Todo 4、Twofa 4、Usage 1 |
+| 原生基础按钮 | 6 | Run 1、Twofa 4、Usage 1 |
 | 原生 `<table>` | 7 | Usage 6、Run 1 |
 | 裸 `setInterval` | 4 | Usage 1、Twofa 3 |
 | 直接 DOM 查询 | 0 | Home 已归零 |
@@ -78,7 +78,7 @@ npm run lint:architecture
 无法可靠静态判断、必须人工验收的已知项：
 
 - Twofa 重复 FilterChip、环形进度与折叠结构。
-- Run、Todo、Twofa 的折叠模式是否统一。
+- Run、Twofa 的折叠模式是否统一。
 - 页面是否遗漏已有公共组件，以及第二个相同模式是否已出现。
 
 ## 7. 页面架构验收清单
@@ -225,3 +225,18 @@ Notebook 的 6 项机器债务全部归零：第三方内部选择器 5 → 0、
 完整自动回归通过：`npm run lint`、`npm test`（35 个测试文件 / 189 项单元与组件测试 + 架构门禁 4 项）、`npm run typecheck`、`npm run build:frontend`、`git diff --check`；生产构建仅保留迁移前既有 legacy script/CSS 提示。
 
 正式 Sidecar 网页只读验收使用 `http://127.0.0.1:1420/?apiPort=13456`，当前窗口下 5 条笔记均以 option 呈现、唯一选中、编辑区完整铺满；900×600 下正文可编辑区约 380×202px，页面和文档均无横向溢出，列表项内部交互控件为 0。验收未搜索、新建、编辑、打开菜单或复制内容，也未执行任何写入；控制台仅有迁移前已知的 CodeMirror `defineSimpleMode` 错误。该结果不替代专项最终真实 Tauri Smoke Test。
+
+## 17. Todo 页面架构收口记录（2026-08-03）
+
+Todo 的机器债务包括 4 个原生按钮和 9 个 Naive 内部选择器。人工复核确认搜索、筛选、任务创建、状态切换、确认、日期选择和普通操作已经使用项目组件；需要收口的是三状态分组折叠、任务行选择、保存重试、空清单入口、卡片填充布局和表单内部样式所有权。
+
+- `BaseSelectableItem` 增加 card/row 外观，Todo 任务行使用 row、selected/pressed 契约；任务标题、摘要、进度与日期仍由页面负责。
+- 三状态分组接入 `BaseDisclosure plain`，通过公开 header/content padding 与最小高度保持原密度，展开语义由公共组件统一提供。
+- `BaseInput` 增加 strong/completed 文本态，`BaseTextarea` 增加 relaxed 正文态，`BaseCheckbox` 增加隐藏视觉标签但保留可访问名称的公开契约；能力已同步组件预览、smoke test 与共享清单。
+- 列表卡与详情卡接入 `BaseCard` 的 fillHeight、contentLayout 和 contentOverflow；保存失败重试与空清单入口改用 `BaseButton`。页面不再覆盖 `.n-*`、`.field-control*`、`.choice-control*` 或 PageFrame 内部结构。
+
+Todo 的 13 项机器债务全部归零：第三方内部选择器 9 → 0、原生控件 4 → 0；专项总基线 36 → 23，批准例外仍为 0。Todo Playwright 4 项全部通过，覆盖亮暗主题、900×600 主从布局、搜索/筛选/创建、自动保存、清单、完成确认和批量清理；新增断言确认三组折叠状态、唯一任务选中态、任务行内部没有嵌套交互控件，以及空清单入口可添加首项。
+
+完整自动回归通过：`npm run lint`、`npm test`（35 个测试文件 / 189 项单元与组件测试 + 架构门禁 4 项）、`npm run typecheck`、`npm run build:frontend`、`git diff --check`；生产构建仅保留迁移前既有 legacy script/CSS 提示。
+
+正式 Sidecar 网页只读验收使用 `http://127.0.0.1:1420/?apiPort=13456`。1280×720 下 3 个分组、2 条任务、唯一选中态和双栏布局正常；900×600 自动切为 692px 宽列表主视图，页面与文档均无横向溢出，任务行内部交互控件为 0。验收未搜索、新建、选择、编辑、勾选、折叠或执行写入；控制台仅有迁移前已知的 CodeMirror `defineSimpleMode` 错误。该结果不替代专项最终真实 Tauri Smoke Test。

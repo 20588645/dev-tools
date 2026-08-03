@@ -6,9 +6,11 @@ const props = withDefaults(defineProps<{
   modelValue?: boolean
   id?: string
   label: string
+  ariaLabel?: string
+  labelVisible?: boolean
   description?: string
   disabled?: boolean
-}>(), { modelValue: false, id: undefined, description: undefined, disabled: false })
+}>(), { modelValue: false, id: undefined, ariaLabel: undefined, labelVisible: true, description: undefined, disabled: false })
 
 const emit = defineEmits<{ 'update:modelValue': [value: boolean] }>()
 const generatedId = useId()
@@ -20,9 +22,10 @@ const inputId = computed(() => props.id ?? `base-checkbox-${generatedId}`)
     :id="inputId"
     :checked="modelValue"
     :disabled="disabled"
+    :aria-label="ariaLabel ?? (labelVisible ? undefined : label)"
     @update:checked="emit('update:modelValue', $event)"
   >
-    <span class="choice-control__copy">
+    <span v-if="labelVisible" class="choice-control__copy">
       <span class="choice-control__label">{{ label }}</span>
       <span v-if="description" class="choice-control__description">{{ description }}</span>
     </span>

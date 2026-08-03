@@ -145,6 +145,15 @@ test('mounts one Vue todo page in both themes without the retired runtime', asyn
   await expect(page.locator('#todoLayoutContainer')).toHaveCount(0)
   await expect(page.locator('script[src="js/todo.js"]')).toHaveCount(0)
   await expect(page.locator('link[href="css/pages/todo.css"]')).toHaveCount(0)
+  await expect(page.locator('.todo-group .base-disclosure__trigger')).toHaveCount(3)
+  await expect(page.locator('.todo-task-row[aria-pressed="true"]')).toHaveCount(1)
+  await expect(page.locator('.todo-task-row button')).toHaveCount(0)
+  const todoGroupTrigger = page.locator('[data-test="todo-group-todo"] .base-disclosure__trigger')
+  await expect(todoGroupTrigger).toHaveAttribute('aria-expanded', 'true')
+  await todoGroupTrigger.click()
+  await expect(todoGroupTrigger).toHaveAttribute('aria-expanded', 'false')
+  await todoGroupTrigger.click()
+  await expect(todoGroupTrigger).toHaveAttribute('aria-expanded', 'true')
   expect(await page.evaluate(() => ({
     loadTodos: typeof (window as typeof window & { loadTodos?: unknown }).loadTodos,
     showAddTodo: typeof (window as typeof window & { showAddTodo?: unknown }).showAddTodo,
@@ -185,7 +194,7 @@ test('searches, filters, creates and auto-saves the legacy-compatible content', 
   await expect(detail.getByRole('textbox', { name: '任务标题' })).toHaveValue('新增正式任务')
 
   await detail.getByPlaceholder('补充目标、背景或完成标准').fill('保存新的描述')
-  await detail.getByRole('button', { name: '添加子项', exact: false }).click()
+  await detail.getByRole('button', { name: '暂无子任务，点击添加第一项', exact: true }).click()
   await detail.getByPlaceholder('输入子任务内容').fill('第一条子任务')
   await expect.poll(() => mock.writes.length).toBeGreaterThan(0)
   await expect.poll(() => mock.writes.at(-1)?.input.content).toBe(

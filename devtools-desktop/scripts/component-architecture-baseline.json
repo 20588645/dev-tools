@@ -8,7 +8,6 @@
     "naive-internal-selector": {
       "frontend/src/views/run/RunView.vue": 1,
       "frontend/src/views/run/components/RunProjectCard.vue": 1,
-      "frontend/src/views/todo/todo.css": 9,
       "frontend/src/views/usage/usage.css": 2
     },
     "deep-selector": {
@@ -17,9 +16,6 @@
     },
     "native-control": {
       "frontend/src/views/run/components/RunGroupSection.vue": 1,
-      "frontend/src/views/todo/components/TodoChecklist.vue": 1,
-      "frontend/src/views/todo/components/TodoTaskDetail.vue": 1,
-      "frontend/src/views/todo/components/TodoTaskList.vue": 2,
       "frontend/src/views/twofa/TwofaView.vue": 2,
       "frontend/src/views/twofa/components/TwofaAccountDialog.vue": 1,
       "frontend/src/views/twofa/components/TwofaPinnedCards.vue": 1,

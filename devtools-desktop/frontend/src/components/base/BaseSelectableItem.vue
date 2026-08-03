@@ -5,10 +5,12 @@ withDefaults(defineProps<{
   selected?: boolean
   pressed?: boolean
   disabled?: boolean
+  appearance?: 'card' | 'row'
 }>(), {
   selected: false,
   pressed: undefined,
   disabled: false,
+  appearance: 'card',
 })
 
 const emit = defineEmits<{ click: [event: MouseEvent] }>()
@@ -20,7 +22,7 @@ const emit = defineEmits<{ click: [event: MouseEvent] }>()
     block
     attr-type="button"
     class="base-selectable-item"
-    :class="{ 'is-selected': selected }"
+    :class="[`base-selectable-item--${appearance}`, { 'is-selected': selected }]"
     :disabled="disabled"
     :aria-pressed="pressed"
     @click="emit('click', $event)"
@@ -71,6 +73,20 @@ const emit = defineEmits<{ click: [event: MouseEvent] }>()
   );
   border-color: var(--base-selectable-selected-border, color-mix(in srgb, var(--color-action) 42%, var(--color-border)));
   box-shadow: var(--base-selectable-selected-shadow, inset 3px 0 0 var(--color-action));
+}
+
+.base-selectable-item--row.n-button {
+  border-bottom-color: var(--color-border);
+  border-radius: 0;
+}
+
+.base-selectable-item--row.n-button:not(.is-selected):hover {
+  border-color: transparent;
+  border-bottom-color: var(--color-border);
+}
+
+.base-selectable-item--row.n-button.is-selected {
+  border-radius: var(--base-selectable-selected-radius, var(--radius-md));
 }
 
 .base-selectable-item :deep(.n-button__content) {

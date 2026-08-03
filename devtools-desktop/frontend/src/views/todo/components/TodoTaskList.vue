@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import BaseCard from '@/components/base/BaseCard.vue'
+import BaseSelectableItem from '@/components/base/BaseSelectableItem.vue'
+import BaseDisclosure from '@/components/disclosure/BaseDisclosure.vue'
 import EmptyState from '@/components/feedback/EmptyState.vue'
 import ErrorState from '@/components/feedback/ErrorState.vue'
 import LoadingState from '@/components/feedback/LoadingState.vue'
@@ -42,7 +44,13 @@ function dateLabel(value: string) {
 </script>
 
 <template>
-  <BaseCard class="todo-list-panel" content-padding="0">
+  <BaseCard
+    class="todo-list-panel"
+    content-padding="0"
+    content-layout="fill"
+    content-overflow="hidden"
+    fill-height
+  >
     <div class="todo-list-panel__summary">
       <strong>个人任务</strong>
       <span><b>{{ visibleCount }}</b> 条可见任务</span>
@@ -58,33 +66,36 @@ function dateLabel(value: string) {
       <EmptyState title="没有找到匹配任务" description="换一个关键词或筛选条件试试" />
     </div>
     <div v-else class="todo-groups">
-      <section
+      <BaseDisclosure
         v-for="status in (['todo', 'doing', 'done'] as TodoStatus[])"
         v-show="groups[status].length"
         :key="status"
         class="todo-group"
-        :class="{ 'is-collapsed': collapsed[status] }"
+        :data-test="`todo-group-${status}`"
+        :model-value="!collapsed[status]"
+        variant="plain"
+        header-padding="0"
+        header-min-height="42px"
+        content-padding="0 4px 8px"
+        @update:model-value="emit('toggleGroup', status)"
       >
-        <button
-          class="todo-group__heading"
-          type="button"
-          :aria-expanded="!collapsed[status]"
-          @click="emit('toggleGroup', status)"
-        >
-          <span class="todo-group__chevron" aria-hidden="true">⌄</span>
-          <span class="todo-group__dot" :data-status="status" aria-hidden="true" />
-          <strong>{{ statusMeta[status].label }}</strong>
-          <span class="todo-group__count">{{ groups[status].length }}</span>
-        </button>
-        <div v-if="!collapsed[status]" class="todo-group__list">
-          <button
+        <template #header>
+          <span class="todo-group__heading-content">
+            <span class="todo-group__dot" :data-status="status" aria-hidden="true" />
+            <strong>{{ statusMeta[status].label }}</strong>
+            <span class="todo-group__count">{{ groups[status].length }}</span>
+          </span>
+        </template>
+        <div class="todo-group__list">
+          <BaseSelectableItem
             v-for="todo in groups[status]"
             :key="todo.id"
             class="todo-task-row"
-            :class="{ 'is-selected': currentId === todo.id }"
+            appearance="row"
+            :selected="currentId === todo.id"
+            :pressed="currentId === todo.id"
             :data-status="todo.status"
             :data-test="`todo-row-${todo.id}`"
-            type="button"
             @click="emit('select', todo.id)"
           >
             <span class="todo-task-row__state" aria-hidden="true">{{ statusMeta[todo.status].symbol }}</span>
@@ -104,9 +115,9 @@ function dateLabel(value: string) {
               >已逾期</span>
               <small>{{ dateLabel(todo.remindAt || todo.createdAt) }}</small>
             </span>
-          </button>
+          </BaseSelectableItem>
         </div>
-      </section>
+      </BaseDisclosure>
     </div>
   </BaseCard>
 </template>

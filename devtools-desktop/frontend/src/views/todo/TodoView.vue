@@ -153,6 +153,7 @@ async function confirmParentCompletion() {
                 v-model="search"
                 class="todo-toolbar__search"
                 type="search"
+                variant="search"
                 placeholder="搜索任务、描述或清单"
                 aria-label="搜索待办任务"
               >

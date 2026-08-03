@@ -17,12 +17,13 @@ const props = withDefaults(defineProps<{
   autocomplete?: string
   variant?: 'default' | 'plain' | 'search' | 'title'
   labelVariant?: 'default' | 'eyebrow'
+  textVariant?: 'default' | 'strong' | 'completed'
   size?: 'sm' | 'md' | 'lg'
 }>(), {
   modelValue: '', id: undefined, label: undefined, ariaLabel: undefined, type: 'text', placeholder: undefined,
   helpText: undefined, error: undefined, disabled: false, readonly: false, required: false,
   autocomplete: undefined,
-  variant: 'default', labelVariant: 'default', size: 'md',
+  variant: 'default', labelVariant: 'default', textVariant: 'default', size: 'md',
 })
 
 const emit = defineEmits<{
@@ -76,7 +77,12 @@ defineExpose({
 <template>
   <div
     class="field-control"
-    :class="[`field-control--${variant}`, `field-control--size-${size}`, { 'field-control--label-eyebrow': labelVariant === 'eyebrow' }]"
+    :class="[
+      `field-control--${variant}`,
+      `field-control--size-${size}`,
+      `field-control--text-${textVariant}`,
+      { 'field-control--label-eyebrow': labelVariant === 'eyebrow' },
+    ]"
   >
     <label v-if="label" :id="labelId" class="field-control__label" :for="inputId">
       {{ label }}<span v-if="required" aria-hidden="true"> *</span>
@@ -150,6 +156,11 @@ defineExpose({
 .field-control--title.field-control--size-lg :deep(.n-input__input-el) {
   height: 48px;
   font-size: clamp(20px, 2.1vw, 29px);
+}
+.field-control--text-strong :deep(.n-input__input-el) { font-weight: var(--font-weight-bold); }
+.field-control--text-completed :deep(.n-input__input-el) {
+  color: var(--color-text-subtle);
+  text-decoration: line-through;
 }
 @media (max-width: 980px) {
   .field-control--title.field-control--size-lg :deep(.n-input__input-el) {

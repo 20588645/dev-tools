@@ -123,6 +123,10 @@ const previewTableRowKey = (row: PreviewTableRow) => row.name
             <strong>已选择的列表项</strong>
             <span>用于日期、笔记和任务等可选择列表，不由页面重复实现按钮状态。</span>
           </BaseSelectableItem>
+          <BaseSelectableItem appearance="row" class="selectable-preview">
+            <strong>行式列表项</strong>
+            <span>用于紧凑任务列表，保留统一焦点与悬停状态。</span>
+          </BaseSelectableItem>
         </BaseCard>
       </PageSection>
 
@@ -143,9 +147,11 @@ const previewTableRowKey = (row: PreviewTableRow) => row.name
             <BaseSelect v-model="selectValue" label="默认主题" :options="[{ label: '暗色主题', value: 'dark' }, { label: '亮色主题', value: 'light' }]" />
             <BaseTextarea v-model="textareaValue" label="描述" :rows="3" />
             <BaseInput v-model="inputValue" label="无边框标题" variant="title" size="lg" />
-            <BaseTextarea v-model="textareaValue" label="编辑器正文" variant="editor" :rows="3" resize="none" />
+            <BaseInput v-model="inputValue" label="完成态输入" text-variant="completed" />
+            <BaseTextarea v-model="textareaValue" label="编辑器正文" variant="editor" text-variant="relaxed" :rows="3" resize="none" />
             <div class="choice-stack">
               <BaseCheckbox v-model="checked" label="自动保存" description="离开页面前保存当前设置。" />
+              <BaseCheckbox v-model="checked" label="仅复选框可访问标签" :label-visible="false" />
               <BaseRadio v-model="radioValue" name="preview-source" value="local" label="本地数据" />
               <BaseRadio v-model="radioValue" name="preview-source" value="remote" label="远程数据" />
               <BaseSwitch v-model="switchValue" label="启用通知" description="允许显示操作反馈。" />

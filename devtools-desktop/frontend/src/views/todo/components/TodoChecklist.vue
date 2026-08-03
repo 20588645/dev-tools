@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import BaseButton from '@/components/base/BaseButton.vue'
 import BaseIconButton from '@/components/base/BaseIconButton.vue'
 import BaseCheckbox from '@/components/form/BaseCheckbox.vue'
 import BaseInput from '@/components/form/BaseInput.vue'
@@ -31,11 +32,14 @@ function handleKeydown(event: KeyboardEvent, index: number) {
       <BaseCheckbox
         :model-value="item.done"
         :label="item.done ? '已完成' : '未完成'"
+        :label-visible="false"
         :aria-label="`切换子任务 ${index + 1}`"
         @update:model-value="emit('update', index, { done: $event })"
       />
       <BaseInput
         :model-value="item.text"
+        variant="plain"
+        :text-variant="item.done ? 'completed' : 'default'"
         :aria-label="`子任务 ${index + 1}`"
         placeholder="输入子任务内容"
         @update:model-value="emit('update', index, { text: $event })"
@@ -49,7 +53,7 @@ function handleKeydown(event: KeyboardEvent, index: number) {
       >×</BaseIconButton>
     </div>
   </div>
-  <button v-else class="todo-checklist__empty" type="button" @click="emit('add')">
+  <BaseButton v-else class="todo-checklist__empty" variant="ghost" @click="emit('add')">
     暂无子任务，点击添加第一项
-  </button>
+  </BaseButton>
 </template>

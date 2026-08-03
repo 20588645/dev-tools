@@ -12,6 +12,7 @@ import AppToastHost from './feedback/AppToastHost.vue'
 import BaseDataTable from './data/BaseDataTable.vue'
 import type { BaseDataTableColumn, BaseDataTableRow } from './data/base-data-table'
 import BaseDisclosure from './disclosure/BaseDisclosure.vue'
+import BaseCheckbox from './form/BaseCheckbox.vue'
 import BaseInput from './form/BaseInput.vue'
 import BaseTextarea from './form/BaseTextarea.vue'
 import BaseProgress from './base/BaseProgress.vue'
@@ -38,11 +39,12 @@ describe('shared UI foundation', () => {
 
   it('exposes selectable list-item state through the project contract', async () => {
     const wrapper = mount(BaseSelectableItem, {
-      props: { selected: true, pressed: true },
+      props: { selected: true, pressed: true, appearance: 'row' },
       slots: { default: '<strong>周一</strong><span>已保存</span>' },
     })
 
     expect(wrapper.classes()).toContain('is-selected')
+    expect(wrapper.classes()).toContain('base-selectable-item--row')
     expect(wrapper.get('button').attributes('aria-pressed')).toBe('true')
     await wrapper.trigger('click')
     expect(wrapper.emitted('click')).toHaveLength(1)
@@ -209,11 +211,21 @@ describe('shared UI foundation', () => {
     expect(search.get('.field-control').classes()).toContain('field-control--search')
     expect(search.get('input').attributes('type')).toBe('search')
 
+    const completedInput = mount(BaseInput, { props: { modelValue: '完成事项', textVariant: 'completed' } })
+    expect(completedInput.get('.field-control').classes()).toContain('field-control--text-completed')
+
+    const checkboxOnly = mount(BaseCheckbox, {
+      props: { modelValue: false, label: '未完成', ariaLabel: '切换子任务 1', labelVisible: false },
+    })
+    expect(checkboxOnly.get('.n-checkbox').attributes('aria-label')).toBe('切换子任务 1')
+    expect(checkboxOnly.find('.choice-control__copy').exists()).toBe(false)
+
     const editor = mount(BaseTextarea, {
-      props: { modelValue: '正文', variant: 'editor', label: '正文', labelVariant: 'eyebrow', fillHeight: true },
+      props: { modelValue: '正文', variant: 'editor', label: '正文', labelVariant: 'eyebrow', textVariant: 'relaxed', fillHeight: true },
     })
     expect(editor.get('.field-control').classes()).toContain('field-control--fill-height')
     expect(editor.get('.field-control').classes()).toContain('field-control--label-eyebrow')
+    expect(editor.get('.field-control').classes()).toContain('field-control--text-relaxed')
   })
 
   it('closes the Naive UI-backed dialog through its project contract', async () => {

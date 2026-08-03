@@ -70,7 +70,13 @@ function nextLabel(status: TodoStatus) {
 </script>
 
 <template>
-  <BaseCard class="todo-detail-panel" content-padding="0">
+  <BaseCard
+    class="todo-detail-panel"
+    content-padding="0"
+    content-layout="fill"
+    content-overflow="hidden"
+    fill-height
+  >
     <div v-if="narrowDetailOpen" class="todo-detail-panel__mobile-top">
       <BaseButton variant="ghost" size="sm" @click="emit('back')">← 返回任务列表</BaseButton>
     </div>
@@ -78,6 +84,7 @@ function nextLabel(status: TodoStatus) {
       <div class="todo-detail__title">
         <BaseInput
           :model-value="todo.title"
+          text-variant="strong"
           aria-label="任务标题"
           placeholder="输入任务标题"
           :error="!todo.title.trim() ? '任务标题不能为空' : undefined"
@@ -96,12 +103,13 @@ function nextLabel(status: TodoStatus) {
           ◷ {{ dateLabel(todo.remindAt) }}
         </BaseBadge>
         <BaseBadge tone="neutral">☷ {{ progress }}</BaseBadge>
-        <button
+        <BaseButton
           v-if="todo.saveState === 'error'"
           class="todo-detail__save is-error"
-          type="button"
+          variant="ghost"
+          size="sm"
           @click="emit('retrySave')"
-        >保存失败 · 点击重试</button>
+        >保存失败 · 点击重试</BaseButton>
         <span v-else class="todo-detail__save">{{ todoSaveLabel(todo) }}</span>
       </div>
 
@@ -109,6 +117,7 @@ function nextLabel(status: TodoStatus) {
         <h2>任务描述 / 备注</h2>
         <BaseTextarea
           :model-value="todo.description"
+          text-variant="relaxed"
           placeholder="补充目标、背景或完成标准"
           :rows="5"
           @update:model-value="emit('updateField', 'description', $event)"

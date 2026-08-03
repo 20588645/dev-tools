@@ -16,13 +16,14 @@ const props = withDefaults(defineProps<{
   ariaLabel?: string
   variant?: 'default' | 'plain' | 'editor'
   labelVariant?: 'default' | 'eyebrow'
+  textVariant?: 'default' | 'relaxed'
   resize?: 'vertical' | 'none'
   autosize?: boolean | { minRows?: number, maxRows?: number }
   fillHeight?: boolean
 }>(), {
   modelValue: '', id: undefined, label: undefined, placeholder: undefined, rows: 4,
   helpText: undefined, error: undefined, disabled: false, readonly: false, required: false,
-  ariaLabel: undefined, variant: 'default', labelVariant: 'default', resize: 'vertical', autosize: false, fillHeight: false,
+  ariaLabel: undefined, variant: 'default', labelVariant: 'default', textVariant: 'default', resize: 'vertical', autosize: false, fillHeight: false,
 })
 
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
@@ -48,6 +49,7 @@ const textareaThemeOverrides = computed(() => props.variant === 'default' ? unde
     class="field-control"
     :class="[
       `field-control--${variant}`,
+      `field-control--text-${textVariant}`,
       {
         'field-control--fill-height': fillHeight,
         'field-control--has-message': Boolean(error || helpText),
@@ -105,6 +107,7 @@ const textareaThemeOverrides = computed(() => props.variant === 'default' ? unde
   line-height: 1.9;
   overflow-y: auto;
 }
+.field-control--text-relaxed :deep(.n-input__textarea-el) { line-height: 1.72; }
 .field-control--fill-height { grid-template-rows: auto minmax(0, 1fr); height: 100%; min-height: 0; }
 .field-control--fill-height.field-control--has-message { grid-template-rows: auto minmax(0, 1fr) auto; }
 .field-control--fill-height :deep(.n-input) { height: 100%; min-height: 0; }

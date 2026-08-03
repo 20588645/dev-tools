@@ -51,3 +51,11 @@
 用户已确认原型的信息层级、内容密度、亮暗主题和窄窗口主从交互，PG3 通过。PG4 已按本文件冻结范围完成正式 Vue 实现，没有加入 L3 的提醒编辑、提醒版本去重或后台系统调度。
 
 PG4 自动验证和内置浏览器验收通过后，用户已完成真实 Tauri 手动 E2E并确认没有问题。PG5 已删除旧 `todo.js` / `todo.css`，正式页面只保留 Vue SFC、类型化服务、composable 和应用级提醒 service；本页迁移 Gate 关闭。
+
+## 6. 组件架构二次收口（2026-08-03）
+
+本轮不改变已确认的双栏/主从布局、三状态分组、任务选择、搜索筛选、自动保存、清单、提醒或 SQLite 数据契约。架构复核确认页面既有创建、状态、确认和日期能力已正确使用项目组件；需要调整的是分组折叠和任务行原生按钮、保存/空清单入口以及 BaseCard、BaseInput、BaseTextarea、BaseCheckbox 内部结构覆盖。
+
+三状态分组接入 `BaseDisclosure`，任务行接入 `BaseSelectableItem row`，保存重试和空清单入口接入 `BaseButton`；列表/详情卡使用 `BaseCard` 填充布局。公共表单层补齐 strong/completed 输入文本态、relaxed 正文态和 Checkbox 隐藏视觉标签契约，并先完成预览、组件测试与共享清单同步。Todo 原生按钮 4 → 0、Naive 内部 selector token 9 → 0，专项机器基线由 36 降至 23，批准例外仍为 0。
+
+Todo Playwright 4 项全部通过，并覆盖折叠 `aria-expanded`、唯一选中态、任务行无嵌套控件和空清单首项添加。全量 `npm run lint`、`npm test`（35 个测试文件 / 189 项单元与组件测试 + 架构门禁 4 项）、`npm run typecheck`、`npm run build:frontend`、`git diff --check` 通过。正式 Sidecar `13456/data` 网页只读验收确认 1280×720 双栏与 900×600 列表主视图、折叠/选中语义和横向溢出均正常；未搜索、新建、选择、编辑、勾选、折叠或执行写入。控制台没有新增 Todo 错误，只有迁移前已知的 CodeMirror `defineSimpleMode` 错误。该网页验收不替代专项最终真实 Tauri Smoke Test。
