@@ -1,5 +1,9 @@
 <script setup lang="ts">
+import { computed, h } from 'vue'
+
 import BaseBadge from '@/components/base/BaseBadge.vue'
+import BaseDataTable from '@/components/data/BaseDataTable.vue'
+import type { BaseDataTableColumn, BaseDataTableRow } from '@/components/data/base-data-table'
 import EmptyState from '@/components/feedback/EmptyState.vue'
 import type { UsageLogRecord } from '@/services/modules/usage-service'
 
@@ -11,10 +15,31 @@ import {
   usageProjectName,
 } from '../usage-format'
 
-defineProps<{
+const props = defineProps<{
   rows: UsageLogRecord[]
   priced: boolean
 }>()
+
+type RequestTableRow = UsageLogRecord & BaseDataTableRow & { rank: number }
+const tableRows = computed<RequestTableRow[]>(() => props.rows.slice(0, 6).map((row, index) => ({ ...row, rank: index + 1 })))
+const columns = computed<BaseDataTableColumn<RequestTableRow>[]>(() => [
+  { key: 'rank', title: '排名', width: 54, align: 'right', render: row => h('span', { class: ['usage-rank', { 'is-top': row.rank <= 3 }] }, row.rank) },
+  { key: 'createdAt', title: '时间', width: 132, render: row => h('span', { class: 'usage-mono' }, formatUsageDate(row.createdAt)) },
+  {
+    key: 'project', title: '项目 / 应用', minWidth: 170,
+    render: row => h('div', { class: 'usage-request-cell' }, [
+      h('span', { class: 'usage-request-project' }, usageProjectName(row.projectDir)),
+      h(BaseBadge, {
+        class: ['usage-app-tag', row.appType === 'codex' ? 'is-codex' : 'is-claude'],
+      }, () => row.appType === 'codex' ? 'Codex' : 'Claude'),
+    ]),
+  },
+  { key: 'model', title: '模型', minWidth: 150, render: row => h('span', { class: 'usage-mono' }, row.model) },
+  {
+    key: 'value', title: props.priced ? '成本' : 'Tokens', width: 104, align: 'right',
+    render: row => h('span', { class: 'usage-mono' }, props.priced ? formatUsageCost(row.costMicroUsd) : formatUsageNumber(usageLogTokens(row))),
+  },
+])
 </script>
 
 <template>
@@ -24,25 +49,14 @@ defineProps<{
       <span>{{ priced ? '按当前单价排序' : '单价不足时按 Token 峰值排序' }}</span>
     </div>
     <EmptyState v-if="!rows.length" compact title="暂无请求记录" />
-    <div v-else class="usage-table-wrap">
-      <table class="usage-table">
-        <thead><tr><th>排名</th><th>时间</th><th>项目 / 应用</th><th>模型</th><th>{{ priced ? '成本' : 'Tokens' }}</th></tr></thead>
-        <tbody>
-          <tr v-for="(row, index) in rows.slice(0, 6)" :key="row.requestId">
-            <td><span class="usage-rank">{{ index + 1 }}</span></td>
-            <td class="usage-mono">{{ formatUsageDate(row.createdAt) }}</td>
-            <td>
-              <span class="usage-request-project">{{ usageProjectName(row.projectDir) }}</span>
-              <BaseBadge
-                class="usage-app-tag"
-                :class="row.appType === 'codex' ? 'is-codex' : 'is-claude'"
-              >{{ row.appType === 'codex' ? 'Codex' : 'Claude' }}</BaseBadge>
-            </td>
-            <td class="usage-mono">{{ row.model }}</td>
-            <td class="usage-mono">{{ priced ? formatUsageCost(row.costMicroUsd) : formatUsageNumber(usageLogTokens(row)) }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <BaseDataTable
+      v-else
+      :columns="columns"
+      :rows="tableRows"
+      :row-key="row => row.requestId"
+      density="compact"
+      :scroll-x="650"
+      aria-label="高用量请求排名"
+    />
   </div>
 </template>

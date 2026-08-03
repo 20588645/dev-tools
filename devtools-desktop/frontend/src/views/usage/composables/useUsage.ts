@@ -8,6 +8,7 @@ import {
   watch,
 } from 'vue'
 
+import { useInterval } from '@/composables/use-interval'
 import * as usageService from '@/services/modules/usage-service'
 import type {
   UsageApp,
@@ -188,7 +189,6 @@ export function useUsage(options: UseUsageOptions = {}) {
   let mounted = false
   let loadVersion = 0
   let loadController: AbortController | null = null
-  let refreshTimer: ReturnType<typeof setInterval> | null = null
 
   const rangeInfo = computed(() => usageRangeQuery(range.value, now(), customRange.value))
   const query = computed<UsageQuery>(() => ({ ...rangeInfo.value.query, app: app.value }))
@@ -209,16 +209,19 @@ export function useUsage(options: UseUsageOptions = {}) {
       .map(([value, label]) => ({ label, value })),
   ])
 
+  const refreshTimer = useInterval(
+    () => refresh(true),
+    () => refreshSeconds.value > 0 ? refreshSeconds.value * 1000 : null,
+    { autoStart: false },
+  )
+
   function stopTimer() {
-    if (refreshTimer) globalThis.clearInterval(refreshTimer)
-    refreshTimer = null
+    refreshTimer.clear()
   }
 
   function startTimer() {
-    stopTimer()
     // 0 = 关闭自动刷新（每次刷新都会触发 Sidecar 重扫日志，间隔不宜过密）
-    if (refreshSeconds.value <= 0) return
-    refreshTimer = globalThis.setInterval(() => void refresh(true), refreshSeconds.value * 1000)
+    refreshTimer.start()
   }
 
   function setRefreshSeconds(seconds: number) {

@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, h, ref, watch } from 'vue'
 
 import BaseBadge from '@/components/base/BaseBadge.vue'
 import BaseButton from '@/components/base/BaseButton.vue'
+import BaseDataTable from '@/components/data/BaseDataTable.vue'
+import type { BaseDataTableColumn, BaseDataTableRow } from '@/components/data/base-data-table'
 import LoadingState from '@/components/feedback/LoadingState.vue'
 import BaseDialog from '@/components/feedback/BaseDialog.vue'
 import BaseInput from '@/components/form/BaseInput.vue'
@@ -59,6 +61,56 @@ function confidenceLabel(confidence: string) {
 function updateNumber(row: UsagePricingRow, key: 'inputPerM' | 'outputPerM' | 'cacheReadPerM' | 'cacheCreationPerM', value: string) {
   row[key] = Number(value)
 }
+
+type PricingTableRow = UsagePricingRow & BaseDataTableRow
+const pricingRows = computed<PricingTableRow[]>(() => draft.value.map(row => row as PricingTableRow))
+const pricingColumns: BaseDataTableColumn<PricingTableRow>[] = [
+  {
+    key: 'modelId', title: '模型', width: 180,
+    render: row => h('span', { class: 'usage-pricing-model usage-mono' }, row.modelId),
+  },
+  {
+    key: 'displayName', title: '显示名', width: 136,
+    render: row => h(BaseInput, {
+      modelValue: row.displayName,
+      class: 'usage-pricing-input',
+      ariaLabel: `${row.modelId} 显示名`,
+      'onUpdate:modelValue': (value: string) => { row.displayName = value },
+    }),
+  },
+  ...([
+    ['inputPerM', '输入', '输入价格'],
+    ['outputPerM', '输出', '输出价格'],
+    ['cacheReadPerM', '缓存命中', '缓存命中价格'],
+    ['cacheCreationPerM', '缓存创建', '缓存创建价格'],
+  ] as const).map(([key, title, label]): BaseDataTableColumn<PricingTableRow> => ({
+    key,
+    title,
+    width: 86,
+    render: row => h(BaseInput, {
+      modelValue: row[key],
+      type: 'number',
+      class: 'usage-pricing-input',
+      ariaLabel: `${row.modelId} ${label}`,
+      'onUpdate:modelValue': (value: string) => updateNumber(row, key, value),
+    }),
+  })),
+  {
+    key: 'source', title: '来源', width: 78,
+    render: row => h('div', { class: 'usage-pricing-source' }, [
+      h(BaseBadge, { tone: row.source === 'manual' ? 'neutral' : 'success' }, () => sourceLabel(row.source)),
+      h('small', confidenceLabel(row.confidence)),
+    ]),
+  },
+  {
+    key: 'action', title: '', width: 64, fixed: 'right',
+    render: row => h(BaseButton, {
+      variant: 'ghost',
+      size: 'sm',
+      onClick: () => emit('save', { ...row }),
+    }, () => '保存'),
+  },
+]
 </script>
 
 <template>
@@ -89,6 +141,7 @@ function updateNumber(row: UsagePricingRow, key: 'inputPerM' | 'outputPerM' | 'c
       <section class="usage-settings__subscription">
         <BaseInput
           :model-value="subscriptionFee"
+          class="usage-subscription-input"
           label="每月订阅总费用（USD）"
           type="number"
           placeholder="例如 220"
@@ -104,34 +157,17 @@ function updateNumber(row: UsagePricingRow, key: 'inputPerM' | 'outputPerM' | 'c
           <span>USD / 百万 Token</span>
         </div>
         <LoadingState v-if="loading" compact label="正在读取模型单价…" />
-        <div v-else class="usage-table-wrap">
-          <table class="usage-table usage-pricing-table">
-            <colgroup>
-              <col class="usage-pricing-table__model" />
-              <col class="usage-pricing-table__name" />
-              <col span="4" class="usage-pricing-table__price" />
-              <col class="usage-pricing-table__source" />
-              <col class="usage-pricing-table__action" />
-            </colgroup>
-            <thead><tr><th>模型</th><th>显示名</th><th>输入</th><th>输出</th><th>缓存命中</th><th>缓存创建</th><th>来源</th><th></th></tr></thead>
-            <tbody>
-              <tr v-for="row in draft" :key="row.modelId">
-                <td class="usage-mono">{{ row.modelId }}</td>
-                <td><BaseInput v-model="row.displayName" :aria-label="`${row.modelId} 显示名`" /></td>
-                <td><BaseInput :model-value="row.inputPerM" type="number" :aria-label="`${row.modelId} 输入价格`" @update:model-value="updateNumber(row, 'inputPerM', $event)" /></td>
-                <td><BaseInput :model-value="row.outputPerM" type="number" :aria-label="`${row.modelId} 输出价格`" @update:model-value="updateNumber(row, 'outputPerM', $event)" /></td>
-                <td><BaseInput :model-value="row.cacheReadPerM" type="number" :aria-label="`${row.modelId} 缓存命中价格`" @update:model-value="updateNumber(row, 'cacheReadPerM', $event)" /></td>
-                <td><BaseInput :model-value="row.cacheCreationPerM" type="number" :aria-label="`${row.modelId} 缓存创建价格`" @update:model-value="updateNumber(row, 'cacheCreationPerM', $event)" /></td>
-                <td>
-                  <BaseBadge :tone="row.source === 'manual' ? 'neutral' : 'success'">{{ sourceLabel(row.source) }}</BaseBadge>
-                  <small>{{ confidenceLabel(row.confidence) }}</small>
-                </td>
-                <td><BaseButton variant="ghost" size="sm" @click="emit('save', { ...row })">保存</BaseButton></td>
-              </tr>
-              <tr v-if="!draft.length"><td colspan="8">暂无本地模型价格记录</td></tr>
-            </tbody>
-          </table>
-        </div>
+        <BaseDataTable
+          v-else
+          class="usage-pricing-table"
+          :columns="pricingColumns"
+          :rows="pricingRows"
+          :row-key="row => row.modelId"
+          density="compact"
+          :scroll-x="806"
+          aria-label="模型单价设置"
+          empty-text="暂无本地模型价格记录"
+        />
       </section>
     </div>
   </BaseDialog>

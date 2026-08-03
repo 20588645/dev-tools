@@ -117,6 +117,9 @@ async function openUsage(page: Page, viewport = { width: 1280, height: 800 }) {
   await page.locator('.sidebar-item[data-page="usage"]').click()
   await expect(page.getByRole('heading', { name: '用量统计', exact: true })).toBeVisible()
   await expect(page.locator('.usage-primary-metric strong')).toHaveText('324,134,964')
+  await expect(page.getByRole('region', { name: '项目用量排名' })).toBeVisible()
+  await expect(page.getByRole('region', { name: '高用量请求排名' })).toBeVisible()
+  await expect(page.getByRole('region', { name: '模型用量统计' })).toBeVisible()
   return mock
 }
 
@@ -162,6 +165,7 @@ test('filters data and paginates logs through Vue state', async ({ page }) => {
   await expect.poll(() => mock.requests.some((request) => request.includes('start=') && request.includes('/api/usage/summary'))).toBe(true)
 
   await page.getByRole('tab', { name: '请求日志', exact: true }).click()
+  await expect(page.getByRole('region', { name: '用量请求日志' })).toBeVisible()
   await page.getByRole('button', { name: '下一页', exact: true }).click()
   await expect.poll(() => mock.requests.some((request) => request.includes('/api/usage/logs') && request.includes('page=2'))).toBe(true)
 })
@@ -172,6 +176,7 @@ test('syncs and overwrites matched pricing without candidate actions', async ({ 
   await page.getByRole('tab', { name: '价格设置', exact: true }).click()
   await page.getByRole('button', { name: '打开数据与价格设置', exact: true }).click()
   await expect(page.getByRole('dialog')).toBeVisible()
+  await expect(page.getByRole('region', { name: '模型单价设置' })).toBeVisible()
   await expect(page.getByText('可靠匹配项', { exact: false })).toBeVisible()
   await expect(page.getByRole('button', { name: '应用', exact: true })).toHaveCount(0)
   await expect(page.getByRole('button', { name: '应用候选', exact: true })).toHaveCount(0)

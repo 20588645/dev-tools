@@ -7,28 +7,19 @@
     "third-party-ui-import": {},
     "naive-internal-selector": {
       "frontend/src/views/run/RunView.vue": 1,
-      "frontend/src/views/run/components/RunProjectCard.vue": 1,
-      "frontend/src/views/usage/usage.css": 2
+      "frontend/src/views/run/components/RunProjectCard.vue": 1
     },
     "deep-selector": {
       "frontend/src/views/run/RunView.vue": 1,
       "frontend/src/views/run/components/RunProjectCard.vue": 1
     },
     "native-control": {
-      "frontend/src/views/run/components/RunGroupSection.vue": 1,
-      "frontend/src/views/usage/UsageView.vue": 1
+      "frontend/src/views/run/components/RunGroupSection.vue": 1
     },
     "native-table": {
-      "frontend/src/views/run/components/RunHistoryDialog.vue": 1,
-      "frontend/src/views/usage/components/UsageDataExplorer.vue": 2,
-      "frontend/src/views/usage/components/UsageProjectRanking.vue": 1,
-      "frontend/src/views/usage/components/UsageRequestRanking.vue": 1,
-      "frontend/src/views/usage/components/UsageSettingsDialog.vue": 1,
-      "frontend/src/views/usage/components/UsageTrendChart.vue": 1
+      "frontend/src/views/run/components/RunHistoryDialog.vue": 1
     },
-    "direct-interval": {
-      "frontend/src/views/usage/composables/useUsage.ts": 1
-    },
+    "direct-interval": {},
     "view-network-or-ipc": {},
     "document-query": {}
   }

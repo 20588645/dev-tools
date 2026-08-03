@@ -1,6 +1,6 @@
 # 用量统计页面迁移决策
 
-> 状态：PG3 已通过；PG4 正式 Vue 实现与自动验收完成，等待真实 Tauri 手动 E2E
+> 状态：PG3、PG4 手动 E2E、PG5 清理与组件架构收口均已完成；等待专项最终真实 Tauri Smoke Test
 > 关联评估：[assessment.md](./assessment.md)
 > 方向选择日期：2026-07-29
 > 原型：[usage-l2.html](../../../../design-preview/usage-l2.html)
@@ -125,4 +125,17 @@ PG4 手动 E2E 已于 2026-07-30 由用户确认通过。
 
 清理后 lint、tokens、build、单测 105 项、Usage + Todo E2E 10 项全通过；浏览器复检两档窗口与亮暗主题，`window.echarts` 已为 `undefined`，控制台无 error/warning。
 
-待用户完成清理后简短真实 Tauri 回归，Phase 5-4 即可关闭。
+清理后的简短真实 Tauri 回归已由用户确认通过，Phase 5-4 已关闭。
+
+## 9. 组件架构收口（2026-08-03）
+
+本次只收口组件所有权和生命周期资源，不重新设计已确认的 L2 信息架构，不改变价格同步、历史重算、日期范围、自动刷新档位或扫描契约。
+
+- 原有 6 处原生 `<table>` 中，项目排名、高用量请求、模型统计、请求日志和模型单价 5 类正式业务表格全部改用 `BaseDataTable`。
+- 趋势悬浮详情是瞬时指标矩阵，改为页面私有 ARIA 语义网格，不作为正式业务数据表格。
+- “查看价格设置”使用 `BaseButton`；自动刷新使用 `useInterval`，保留页面激活、停用和卸载语义。
+- 总览卡片和 PageFrame 只使用公开布局契约，页面不再引用 `.n-card-content`、`.field-control` 或 PageFrame 内部选择器。
+
+架构门禁中 Usage 的 10 项机器债务全部归零，专项总基线由 16 降至 6，剩余项全部位于 Run，批准例外为 0。Usage Playwright 6/6 通过；完整回归通过 `npm run lint`、`npm test`（36 个测试文件、190 项测试，另含 4 项架构门禁测试）、`npm run typecheck`、`npm run build:frontend` 与 `git diff --check`。
+
+连接正式 Sidecar 的网页验收覆盖 1280×720 与 900×600：三个可见公共数据表区域正常，页面无横向溢出。未点击重新扫描、价格同步、保存或导入；普通 Usage 查询本身可能推进节流增量扫描和扫描游标，因此该检查不视为严格只读，也不替代最终真实 Tauri Smoke Test。

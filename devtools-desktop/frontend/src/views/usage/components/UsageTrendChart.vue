@@ -277,22 +277,28 @@ onBeforeUnmount(() => {
     />
     <div v-if="hoverDetail" class="usage-trend__tip" :style="tooltipStyle" role="status">
       <strong>{{ hoverDetail.bucket }}</strong>
-      <table>
-        <thead>
-          <tr>
-            <td />
-            <th v-for="item in hoverDetail.series" :key="item.name" :class="`is-${item.tone}`">
+      <div class="usage-trend__tip-grid" role="table" aria-label="当前时段用量明细">
+        <div
+          class="usage-trend__tip-row usage-trend__tip-row--header"
+          role="row"
+          :style="{ gridTemplateColumns: `72px repeat(${hoverDetail.series.length}, 74px)` }"
+        >
+          <span role="columnheader" />
+          <span v-for="item in hoverDetail.series" :key="item.name" role="columnheader" :class="`is-${item.tone}`">
               <i :class="`usage-trend__line usage-trend__line--${item.tone}`" />{{ item.shortName }}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="metric in hoverDetail.metrics" :key="metric.label">
-            <th scope="row">{{ metric.label }}</th>
-            <td v-for="(value, index) in metric.values" :key="index">{{ value }}</td>
-          </tr>
-        </tbody>
-      </table>
+          </span>
+        </div>
+        <div
+          v-for="metric in hoverDetail.metrics"
+          :key="metric.label"
+          class="usage-trend__tip-row"
+          role="row"
+          :style="{ gridTemplateColumns: `72px repeat(${metric.values.length}, 74px)` }"
+        >
+          <span role="rowheader">{{ metric.label }}</span>
+          <span v-for="(value, index) in metric.values" :key="index" role="cell">{{ value }}</span>
+        </div>
+      </div>
       <div class="usage-trend__tip-total">
         <dt>成本</dt>
         <dd>{{ hoverDetail.costMicroUsd > 0 ? formatUsageCost(hoverDetail.costMicroUsd) : '不可计算' }}</dd>

@@ -1,6 +1,6 @@
 # 组件架构合规专项
 
-> 状态：规则与自动门禁、首批公共组件能力、通知适配层及 Settings、Home、IpCheck、Notes、Notebook、Todo、Twofa 七个页面收口已完成；Settings、IpCheck、Notes、Notebook、Todo 与 Twofa 已通过连接正式 Sidecar 的网页人工验收。其余存量页面收口与最终真实 Tauri Smoke Test 待执行。在本专项和全站回归完成前，不进入 Phase 6-2 Deploy
+> 状态：规则与自动门禁、首批公共组件能力、通知适配层及 Settings、Home、IpCheck、Notes、Notebook、Todo、Twofa、Usage 八个页面收口已完成；Settings、IpCheck、Notes、Notebook、Todo、Twofa 与 Usage 已通过连接正式 Sidecar 的网页人工验收。当前只剩 Run 专项收口与最终真实 Tauri Smoke Test；在两者和全站回归完成前，不进入 Phase 6-2 Deploy
 >
 > 生效范围：`frontend/src/views/**` 及所有后续迁移业务页面。公共组件、适配层和第三方宿主的职责边界以本文为唯一专项入口；原执行计划中的一致规则继续有效，发生歧义时先暂停实现并更新本文。
 
@@ -62,17 +62,17 @@ npm run lint:architecture
 
 基线只是迁移期棘轮，不是永久白名单。专项完成条件是除人工批准例外外所有基线归零。
 
-## 6. 2026-07-31 存量快照
+## 6. 2026-08-03 当前存量快照
 
-当前业务页面直接导入第三方 UI、直接网络/IPC 调用和直接 DOM 查询均为 0。Settings、Home、IpCheck、Notes、Notebook、Todo 与 Twofa 收口后，待归零项由 68 个降至 16 个机器计数：
+当前业务页面直接导入第三方 UI、直接网络/IPC 调用、直接 DOM 查询和裸 `setInterval` 均为 0。Settings、Home、IpCheck、Notes、Notebook、Todo、Twofa 与 Usage 收口后，待归零项由 68 个降至 6 个机器计数，且全部位于 Run：
 
 | 类型 | 数量 | 主要页面 |
 | --- | ---: | --- |
-| `.n-*` 第三方内部选择器 | 4 个 selector token | Usage、Run |
+| `.n-*` 第三方内部选择器 | 2 个 selector token | Run |
 | `:deep()` | 2 | Run |
-| 原生基础按钮 | 2 | Run 1、Usage 1 |
-| 原生 `<table>` | 7 | Usage 6、Run 1 |
-| 裸 `setInterval` | 1 | Usage |
+| 原生基础按钮 | 1 | Run |
+| 原生 `<table>` | 1 | Run |
+| 裸 `setInterval` | 0 | Usage 已归零 |
 | 直接 DOM 查询 | 0 | Home 已归零 |
 
 无法可靠静态判断、必须人工验收的已知项：
@@ -255,3 +255,19 @@ Twofa 的 7 项机器债务全部归零：原生控件 4 → 0、裸定时器 3 
 完整自动回归通过：`npm run lint`、`npm test`（36 个测试文件 / 190 项单元与组件测试 + 架构门禁 4 项）、`npm run typecheck`、`npm run build:frontend`、`git diff --check`；生产构建仅保留迁移前既有 legacy script/CSS 提示。
 
 正式 Sidecar 网页只读验收使用 `http://127.0.0.1:1420/?apiPort=13456`。1280×720 下 3 组、4 个账号、4 个可见圆形倒计时、唯一筛选态和全部展开分组正常；900×600 下按既定设计隐藏行内倒计时环，4 行账号均无截断。两个尺寸的页面、文档与 View 均无横向溢出，折叠触发器内部交互控件为 0。验收未搜索、复制、编辑、收藏、删除、导入或执行任何后端写入；该结果不替代专项最终真实 Tauri Smoke Test。
+
+## 19. Usage 页面架构收口记录（2026-08-03）
+
+Usage 的 10 项机器债务包括 1 个原生按钮、6 个原生表格节点、2 个 Naive 内部选择器和 1 个裸 `setInterval`。其中 5 个是正式业务数据表格，另 1 个是趋势悬浮指标矩阵；人工复核还发现页面直接覆盖 PageFrame 内部结构和表单内部 `.field-control`。
+
+- 项目排名、高用量请求、模型统计、请求日志和模型单价五类正式业务表格统一接入 `BaseDataTable`；页面只维护类型化 columns、rows 和单元格业务呈现，不再依赖 Naive UI 类型或内部 DOM。
+- 趋势悬浮详情属于瞬时小型指标矩阵，保留页面私有语义网格并使用 `table/row/rowheader/cell` ARIA，不误用正式数据表格组件。
+- 自动刷新改由 `useInterval` 承担启动、暂停、重新进入页面和卸载清理；原有关闭 / 10s / 30s / 60s 业务语义保持不变。
+- 总览区域使用 `BaseCard` 的公开内容布局与 overflow 契约，PageFrame 改用已有 immersive 变体；模型筛选、订阅费用和单价输入只通过 Base 组件根节点公开 class 定制页面布局，不穿透内部结构。
+- “查看价格设置”改用 `BaseButton`，价格、扫描、订阅与历史重算契约均未改变。
+
+Usage 的 10 项机器债务全部归零：原生按钮 1 → 0、原生表格 6 → 0、第三方内部选择器 2 → 0、裸定时器 1 → 0；专项总基线 16 → 6，批准例外仍为 0。Usage Playwright 6 项全部通过，并补充断言确认项目排名、高用量请求、模型统计、请求日志和模型单价均使用公共数据表格区域。
+
+完整自动回归通过：`npm run lint`、`npm test`（36 个测试文件 / 190 项单元与组件测试 + 架构门禁 4 项）、`npm run typecheck`、`npm run build:frontend`、`git diff --check`；生产构建仅保留迁移前既有 legacy script/CSS 提示。
+
+正式 Sidecar 网页验收使用 `http://127.0.0.1:1420/?apiPort=13456`。1280×720 和 900×600 下项目排名、高用量请求与模型统计三个公共数据表区域均正常存在，页面与文档无横向溢出。验收只执行正常页面加载和布局检查，未点击重新扫描、价格同步、保存或导入；但 Usage 的普通 GET 查询可能触发节流增量扫描并更新正式用量库或扫描游标，因此该验收不声明为严格只读，也不替代专项最终真实 Tauri Smoke Test。

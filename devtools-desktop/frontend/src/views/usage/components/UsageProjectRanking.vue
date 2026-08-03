@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, h } from 'vue'
 
 import BaseBadge from '@/components/base/BaseBadge.vue'
+import BaseDataTable from '@/components/data/BaseDataTable.vue'
+import type { BaseDataTableColumn, BaseDataTableRow } from '@/components/data/base-data-table'
 import EmptyState from '@/components/feedback/EmptyState.vue'
 import type { UsageProjectStat } from '@/services/modules/usage-service'
 
@@ -11,36 +13,45 @@ const props = defineProps<{ projects: UsageProjectStat[] }>()
 const visible = computed(() => props.projects.slice(0, 6))
 const max = computed(() => Math.max(...visible.value.map(usageProjectTokens), 1))
 const total = computed(() => props.projects.reduce((sum, project) => sum + usageProjectTokens(project), 0) || 1)
+
+type ProjectTableRow = UsageProjectStat & BaseDataTableRow & { rank: number }
+const tableRows = computed<ProjectTableRow[]>(() => visible.value.map((project, index) => ({ ...project, rank: index + 1 })))
+
+const columns = computed<BaseDataTableColumn<ProjectTableRow>[]>(() => [
+  { key: 'rank', title: '排名', width: 54, align: 'right', render: row => h('span', { class: ['usage-rank', { 'is-top': row.rank <= 3 }] }, row.rank) },
+  {
+    key: 'project', title: '项目 / 应用', minWidth: 230,
+    render: row => h('div', [
+      h('div', { class: 'usage-project-name' }, [
+        ...row.apps.map(app => h(BaseBadge, {
+          key: app,
+          class: ['usage-app-tag', app === 'codex' ? 'is-codex' : 'is-claude'],
+        }, () => app === 'codex' ? 'Codex' : 'Claude')),
+        h('strong', row.project),
+      ]),
+      h('div', { class: 'usage-project-bar' }, [
+        h('i', { style: { width: `${usageProjectTokens(row) / max.value * 100}%` } }),
+      ]),
+    ]),
+  },
+  { key: 'requests', title: '请求数', width: 82, align: 'right', render: row => formatUsageNumber(row.requests) },
+  { key: 'tokens', title: 'Tokens', width: 104, align: 'right', render: row => formatUsageNumber(usageProjectTokens(row)) },
+  { key: 'ratio', title: '占比', width: 76, align: 'right', render: row => formatUsagePercent(usageProjectTokens(row) / total.value) },
+])
 </script>
 
 <template>
   <div class="usage-ranking">
     <div class="usage-section-heading"><h2>项目用量</h2></div>
     <EmptyState v-if="!visible.length" compact title="暂无项目用量" />
-    <div v-else class="usage-table-wrap" aria-label="项目用量排名">
-      <table class="usage-table">
-        <thead><tr><th>排名</th><th>项目 / 应用</th><th>请求数</th><th>Tokens</th><th>占比</th></tr></thead>
-        <tbody>
-          <tr v-for="(project, index) in visible" :key="project.project">
-            <td><span class="usage-rank">{{ index + 1 }}</span></td>
-            <td>
-              <div class="usage-project-name">
-                <BaseBadge
-                  v-for="app in project.apps"
-                  :key="app"
-                  class="usage-app-tag"
-                  :class="app === 'codex' ? 'is-codex' : 'is-claude'"
-                >{{ app === 'codex' ? 'Codex' : 'Claude' }}</BaseBadge>
-                <strong>{{ project.project }}</strong>
-              </div>
-              <div class="usage-project-bar"><i :style="{ width: `${usageProjectTokens(project) / max * 100}%` }" /></div>
-            </td>
-            <td>{{ formatUsageNumber(project.requests) }}</td>
-            <td>{{ formatUsageNumber(usageProjectTokens(project)) }}</td>
-            <td>{{ formatUsagePercent(usageProjectTokens(project) / total) }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <BaseDataTable
+      v-else
+      :columns="columns"
+      :rows="tableRows"
+      :row-key="row => row.project"
+      density="compact"
+      :scroll-x="620"
+      aria-label="项目用量排名"
+    />
   </div>
 </template>

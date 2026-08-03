@@ -1,6 +1,10 @@
 <script setup lang="ts">
+import { computed, h } from 'vue'
+
 import BaseBadge from '@/components/base/BaseBadge.vue'
 import BaseButton from '@/components/base/BaseButton.vue'
+import BaseDataTable from '@/components/data/BaseDataTable.vue'
+import type { BaseDataTableColumn, BaseDataTableRow } from '@/components/data/base-data-table'
 import EmptyState from '@/components/feedback/EmptyState.vue'
 import BaseSelect, { type SelectOption } from '@/components/form/BaseSelect.vue'
 import BaseTabs from '@/components/navigation/BaseTabs.vue'
@@ -19,7 +23,7 @@ import {
   usageProjectName,
 } from '../usage-format'
 
-defineProps<{
+const props = defineProps<{
   activeTab: UsageExplorerTab
   models: UsageModelStat[]
   logs: UsageLogsPage
@@ -40,6 +44,50 @@ const tabs = [
   { label: '请求日志', value: 'logs' },
   { label: '价格设置', value: 'pricing' },
 ]
+
+type ModelTableRow = UsageModelStat & BaseDataTableRow
+type LogTableRow = UsageLogsPage['rows'][number] & BaseDataTableRow
+
+const modelRows = computed<ModelTableRow[]>(() => props.models.map((row) => ({ ...row })))
+const logRows = computed<LogTableRow[]>(() => props.logs.rows.map((row) => ({ ...row })))
+
+const modelColumns: BaseDataTableColumn<ModelTableRow>[] = [
+  {
+    key: 'model', title: '模型', minWidth: 180,
+    render: model => h('div', [
+      h('strong', model.displayName || model.model),
+      model.displayName && model.displayName !== model.model
+        ? h('span', { class: 'usage-model-id' }, model.model)
+        : null,
+    ]),
+  },
+  {
+    key: 'appType', title: '应用', width: 92,
+    render: model => h(BaseBadge, {
+      class: ['usage-app-tag', model.appType === 'codex' ? 'is-codex' : 'is-claude'],
+    }, () => model.appType === 'codex' ? 'Codex' : 'Claude'),
+  },
+  { key: 'requests', title: '请求数', width: 90, align: 'right', render: model => formatUsageNumber(model.requests) },
+  { key: 'tokens', title: 'Tokens', width: 110, align: 'right', render: model => formatUsageNumber(usageModelTokens(model)) },
+  {
+    key: 'cacheRatio', title: '缓存输入占比', width: 120, align: 'right',
+    render: model => formatUsagePercent(model.cacheReadTokens / Math.max(1, model.inputTokens + model.cacheReadTokens + model.cacheCreationTokens)),
+  },
+  {
+    key: 'pricingModel', title: '单价状态', width: 92,
+    render: model => h(BaseBadge, { tone: model.pricingModel ? 'success' : 'warning' }, () => model.pricingModel ? '已定价' : '未匹配'),
+  },
+]
+
+const logColumns: BaseDataTableColumn<LogTableRow>[] = [
+  { key: 'createdAt', title: '时间', width: 136, render: row => h('span', { class: 'usage-mono' }, formatUsageDate(row.createdAt)) },
+  { key: 'model', title: '模型', minWidth: 150, render: row => h('span', { class: 'usage-mono' }, row.model) },
+  { key: 'projectDir', title: '项目', minWidth: 120, render: row => usageProjectName(row.projectDir) },
+  { key: 'inputTokens', title: '新增输入', width: 92, align: 'right', render: row => formatUsageNumber(row.inputTokens) },
+  { key: 'outputTokens', title: '输出', width: 82, align: 'right', render: row => formatUsageNumber(row.outputTokens) },
+  { key: 'cacheReadTokens', title: '缓存命中', width: 96, align: 'right', render: row => formatUsageNumber(row.cacheReadTokens) },
+  { key: 'cost', title: '成本状态', width: 96, align: 'right', render: row => row.pricingModel ? formatUsageCost(row.costMicroUsd) : '不可计算' },
+]
 </script>
 
 <template>
@@ -55,30 +103,15 @@ const tabs = [
     </div>
 
     <div v-if="activeTab === 'models'" class="usage-explorer__body">
-      <EmptyState v-if="!models.length" compact title="暂无模型统计" />
-      <div v-else class="usage-table-wrap">
-        <table class="usage-table">
-          <thead><tr><th>模型</th><th>应用</th><th>请求数</th><th>Tokens</th><th>缓存输入占比</th><th>单价状态</th></tr></thead>
-          <tbody>
-            <tr v-for="model in models" :key="`${model.model}-${model.appType}`">
-              <td>
-                <strong>{{ model.displayName || model.model }}</strong>
-                <span v-if="model.displayName && model.displayName !== model.model" class="usage-model-id">{{ model.model }}</span>
-              </td>
-              <td>
-                <BaseBadge
-                  class="usage-app-tag"
-                  :class="model.appType === 'codex' ? 'is-codex' : 'is-claude'"
-                >{{ model.appType === 'codex' ? 'Codex' : 'Claude' }}</BaseBadge>
-              </td>
-              <td>{{ formatUsageNumber(model.requests) }}</td>
-              <td>{{ formatUsageNumber(usageModelTokens(model)) }}</td>
-              <td>{{ formatUsagePercent(model.cacheReadTokens / Math.max(1, model.inputTokens + model.cacheReadTokens + model.cacheCreationTokens)) }}</td>
-              <td><BaseBadge :tone="model.pricingModel ? 'success' : 'warning'">{{ model.pricingModel ? '已定价' : '未匹配' }}</BaseBadge></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <BaseDataTable
+        :columns="modelColumns"
+        :rows="modelRows"
+        :row-key="row => `${row.model}-${row.appType}`"
+        density="compact"
+        :scroll-x="760"
+        aria-label="模型用量统计"
+        empty-text="暂无模型统计"
+      />
     </div>
 
     <div v-else-if="activeTab === 'logs'" class="usage-explorer__body">
@@ -87,29 +120,21 @@ const tabs = [
         <BaseSelect
           :model-value="logModel"
           :options="modelOptions"
+          class="usage-explorer__model-select"
           placeholder="全部模型"
           aria-label="请求日志模型筛选"
           @update:model-value="emit('update:log-model', $event)"
         />
       </div>
-      <EmptyState v-if="!logs.rows.length" compact title="暂无请求日志" />
-      <template v-else>
-        <div class="usage-table-wrap">
-          <table class="usage-table">
-            <thead><tr><th>时间</th><th>模型</th><th>项目</th><th>新增输入</th><th>输出</th><th>缓存命中</th><th>成本状态</th></tr></thead>
-            <tbody>
-              <tr v-for="row in logs.rows" :key="row.requestId">
-                <td class="usage-mono">{{ formatUsageDate(row.createdAt) }}</td>
-                <td class="usage-mono">{{ row.model }}</td>
-                <td>{{ usageProjectName(row.projectDir) }}</td>
-                <td>{{ formatUsageNumber(row.inputTokens) }}</td>
-                <td>{{ formatUsageNumber(row.outputTokens) }}</td>
-                <td>{{ formatUsageNumber(row.cacheReadTokens) }}</td>
-                <td>{{ row.pricingModel ? formatUsageCost(row.costMicroUsd) : '不可计算' }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+      <template v-if="logs.rows.length">
+        <BaseDataTable
+          :columns="logColumns"
+          :rows="logRows"
+          :row-key="row => row.requestId"
+          density="compact"
+          :scroll-x="872"
+          aria-label="用量请求日志"
+        />
         <div class="usage-pager">
           <BaseButton
             variant="ghost"
@@ -126,6 +151,7 @@ const tabs = [
           >下一页</BaseButton>
         </div>
       </template>
+      <EmptyState v-else compact title="暂无请求日志" />
     </div>
 
     <div v-else class="usage-explorer__body usage-explorer__pricing">

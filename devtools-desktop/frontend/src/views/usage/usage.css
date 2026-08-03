@@ -15,12 +15,6 @@
     var(--color-page);
 }
 
-.usage-view > .page-frame__body {
-  display: flex;
-  min-height: 0;
-  padding: 0;
-}
-
 .usage-view__title-mark {
   display: grid;
   width: 26px;
@@ -81,7 +75,7 @@
 }
 
 .usage-view__scroll {
-  flex: 1;
+  height: 100%;
   min-width: 0;
   min-height: 0;
   padding: var(--space-4);
@@ -103,7 +97,7 @@
   box-shadow: var(--shadow-sm);
 }
 
-.usage-overview > .n-card-content {
+.usage-overview__grid {
   display: grid;
   min-width: 0;
   grid-template-columns: minmax(0, 1fr) minmax(260px, 30%);
@@ -221,13 +215,21 @@
   font-size: 10px;
 }
 
-.usage-trend__tip table {
-  width: 100%;
-  border-collapse: collapse;
+.usage-trend__tip-grid {
+  display: grid;
+  gap: 2px;
 }
 
-.usage-trend__tip thead th {
-  padding: 0 0 4px;
+.usage-trend__tip-row {
+  display: grid;
+  align-items: center;
+}
+
+.usage-trend__tip-row--header {
+  padding-bottom: 4px;
+}
+
+.usage-trend__tip-row--header [role="columnheader"] {
   color: var(--color-text-muted);
   text-align: right;
   font-size: 9px;
@@ -235,12 +237,12 @@
   white-space: nowrap;
 }
 
-.usage-trend__tip thead th i {
+.usage-trend__tip-row--header i {
   margin-right: 4px;
   vertical-align: middle;
 }
 
-.usage-trend__tip tbody th {
+.usage-trend__tip-row [role="rowheader"] {
   padding: 2px 0;
   color: var(--color-text-subtle);
   text-align: left;
@@ -249,7 +251,7 @@
   white-space: nowrap;
 }
 
-.usage-trend__tip tbody td {
+.usage-trend__tip-row [role="cell"] {
   padding: 2px 0 2px var(--space-3);
   color: var(--color-text-muted);
   text-align: right;
@@ -369,15 +371,6 @@
   line-height: 1.45;
 }
 
-.usage-pricing-state button {
-  padding: 0;
-  color: var(--color-action-hover);
-  background: transparent;
-  border: 0;
-  cursor: pointer;
-  font-size: 10px;
-}
-
 .usage-section-heading {
   display: flex;
   min-width: 0;
@@ -475,46 +468,6 @@
   gap: var(--space-3);
 }
 
-.usage-table-wrap {
-  width: 100%;
-  min-width: 0;
-  overflow: auto;
-  scrollbar-width: thin;
-}
-
-.usage-table {
-  width: 100%;
-  min-width: 640px;
-  border-collapse: collapse;
-  color: var(--color-text-muted);
-  font-size: 10px;
-}
-
-.usage-table th {
-  padding: 8px 10px;
-  color: var(--color-text-subtle);
-  text-align: left;
-  border-bottom: 1px solid var(--color-border);
-  font-size: 9px;
-  font-weight: var(--font-weight-medium);
-  white-space: nowrap;
-}
-
-.usage-table td {
-  height: 38px;
-  padding: 6px 10px;
-  border-bottom: 1px solid var(--color-border);
-  white-space: nowrap;
-}
-
-.usage-table tbody tr:last-child td {
-  border-bottom: 0;
-}
-
-.usage-table tbody tr:hover {
-  background: var(--color-surface-subtle);
-}
-
 /* 序号是次要信息：不用色块圆点，只做等宽右对齐的弱化排版，前三名靠字重区分 */
 .usage-rank {
   display: block;
@@ -525,16 +478,9 @@
   text-align: right;
 }
 
-.usage-table tbody tr:nth-child(-n + 3) .usage-rank {
+.usage-rank.is-top {
   color: var(--color-text-muted);
   font-weight: var(--font-weight-semibold);
-}
-
-.usage-table th:first-child,
-.usage-table td:first-child {
-  width: 34px;
-  padding-right: var(--space-3);
-  text-align: right;
 }
 
 /*
@@ -579,8 +525,13 @@
 }
 
 .usage-request-project {
-  margin-right: var(--space-2);
   color: var(--color-text);
+}
+
+.usage-request-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
 }
 
 .usage-mono {
@@ -623,7 +574,7 @@
 }
 
 /* Naive 的 selection 在 flex 容器里不会自己撑开，需显式占满，否则塌缩成一条竖线 */
-.usage-explorer__filters > .field-control {
+.usage-explorer__model-select {
   width: 100%;
 }
 
@@ -722,7 +673,7 @@
   color: var(--color-text-subtle);
 }
 
-.usage-settings__subscription .field-control {
+.usage-subscription-input {
   width: min(360px, 100%);
 }
 
@@ -730,47 +681,16 @@
   min-width: 0;
 }
 
-.usage-pricing-table {
-  min-width: 790px;
-  table-layout: fixed;
-}
-
-.usage-pricing-table .field-control {
+.usage-pricing-input {
   width: 100%;
 }
 
-.usage-pricing-table th,
-.usage-pricing-table td {
-  padding-right: 5px;
-  padding-left: 5px;
-}
-
-.usage-pricing-table__model {
-  width: 180px;
-}
-
-.usage-pricing-table__name {
-  width: 136px;
-}
-
-.usage-pricing-table__price {
-  width: 86px;
-}
-
-.usage-pricing-table__source {
-  width: 78px;
-}
-
-.usage-pricing-table__action {
-  width: 52px;
-}
-
-.usage-pricing-table .usage-mono {
+.usage-pricing-model {
   overflow-wrap: anywhere;
   white-space: normal;
 }
 
-.usage-pricing-table small {
+.usage-pricing-source small {
   display: block;
   margin-top: 4px;
   color: var(--color-text-subtle);
@@ -778,7 +698,7 @@
 }
 
 @media (max-width: 1100px) {
-  .usage-overview > .n-card-content {
+  .usage-overview__grid {
     grid-template-columns: minmax(0, 1fr);
   }
 

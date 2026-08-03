@@ -161,7 +161,7 @@ function deltaLabel(value: number | null) {
 </script>
 
 <template>
-  <PageFrame class="usage-view" variant="workspace" data-test="usage-view">
+  <PageFrame class="usage-view" variant="immersive" data-test="usage-view">
     <template #top>
       <PageTop>
         <PageHeader title="用量统计">
@@ -226,8 +226,9 @@ function deltaLabel(value: number | null) {
         @retry="refresh()"
       />
       <div v-else class="usage-dashboard">
-        <BaseCard class="usage-overview" content-padding="0">
-          <section class="usage-overview__trend" aria-labelledby="usage-total-title">
+        <BaseCard class="usage-overview" content-padding="0" content-overflow="hidden">
+          <div class="usage-overview__grid">
+            <section class="usage-overview__trend" aria-labelledby="usage-total-title">
             <div class="usage-primary-metric">
               <div>
                 <span id="usage-total-title">总 Token</span>
@@ -238,10 +239,10 @@ function deltaLabel(value: number | null) {
                 </small>
               </div>
             </div>
-            <UsageTrendChart :claude="claudeTrends" :codex="codexTrends" :range="range" />
-          </section>
+              <UsageTrendChart :claude="claudeTrends" :codex="codexTrends" :range="range" />
+            </section>
 
-          <aside class="usage-insights" aria-label="关键用量指标">
+            <aside class="usage-insights" aria-label="关键用量指标">
             <article>
               <span class="usage-insight-icon">⌁</span>
               <div>
@@ -272,10 +273,11 @@ function deltaLabel(value: number | null) {
               <div>
                 <strong>{{ summary.pricingCoverage >= 1 ? '成本数据完整' : '成本暂不可完全计算' }}</strong>
                 <p>{{ summary.pricingCoverage > 0 ? '部分请求已匹配单价，成本只代表已覆盖部分。' : '同步在线价格或手动补充未匹配模型单价。' }}</p>
-                <button type="button" @click="settingsOpen = true">查看价格设置 →</button>
+                  <BaseButton variant="ghost" size="sm" @click="settingsOpen = true">查看价格设置 →</BaseButton>
+                </div>
               </div>
-            </div>
-          </aside>
+            </aside>
+          </div>
         </BaseCard>
 
         <BaseCard><UsageTokenComposition :summary="summary" /></BaseCard>

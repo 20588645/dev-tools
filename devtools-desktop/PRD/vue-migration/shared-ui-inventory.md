@@ -63,13 +63,13 @@
 
 首批补齐已经完成源码、预览、类型和组件测试，真实消费者将在后续逐页收口子项中接入：
 
-- 表格：`BaseDataTable.vue` + `base-data-table.ts`，目标消费者为 Usage 正式数据表和 Run 历史表。
+- 表格：`BaseDataTable.vue` + `base-data-table.ts`，Usage 的项目排名、高用量请求、模型统计、请求日志与模型单价已接入；Run 历史表待收口。
 - 折叠：`BaseDisclosure.vue`，Settings、Todo、Twofa 已接入；Run 待逐页收口时评审。
 - 侧边导航：`BaseSideNav.vue`，首个目标消费者为 Settings 分类导航。
 - 进度：`BaseProgress` 新增 circle，首个目标消费者为 Twofa 倒计时环。
-- 布局与表单变体：`BaseCard`、`BaseInput`、`BaseTextarea`、`BaseCheckbox` 的公开能力已用于 Notes、Notebook、Todo；Usage、Run 待继续收口。
+- 布局与表单变体：`BaseCard`、`BaseInput`、`BaseTextarea`、`BaseCheckbox` 的公开能力已用于 Notes、Notebook、Todo 与 Usage；Run 待继续收口。
 - 可选择列表项：`BaseSelectableItem` 统一 Notes 日期、Notebook 笔记和 Todo 任务列表的选择、焦点与悬停语义，三个消费者均已接入。
-- 筛选、进度与定时器：Twofa 已接入 `FilterChip`、`BaseProgress circle` 与 `useInterval`；公共层补齐筛选 ARIA、折叠 contentGap 和 timer autoStart 契约，Usage 的存量轮询待其页面收口时继续接入。
+- 筛选、进度与定时器：Twofa 已接入 `FilterChip`、`BaseProgress circle` 与 `useInterval`，Usage 自动刷新也已接入 `useInterval`；公共层统一负责 timer 的 autoStart、暂停、恢复与卸载契约。
 
 通知宿主已在后续独立子项完成：`AppToastHost` 不再绘制 Toast 或管理定时器，而是通过项目 adapter 驱动 Naive Message；`NNotificationProvider` 保留给未来需要标题、描述或操作区的富通知，业务页面仍不得直接访问任一 Provider API。
 
