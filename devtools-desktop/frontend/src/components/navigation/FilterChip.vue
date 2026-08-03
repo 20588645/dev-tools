@@ -5,9 +5,10 @@ const props = withDefaults(defineProps<{
   label: string
   selected?: boolean
   count?: number
+  ariaLabel?: string
   removable?: boolean
   disabled?: boolean
-}>(), { selected: false, count: undefined, removable: false, disabled: false })
+}>(), { selected: false, count: undefined, ariaLabel: undefined, removable: false, disabled: false })
 
 const emit = defineEmits<{
   'update:selected': [value: boolean]
@@ -41,10 +42,13 @@ const filterChipThemeOverrides = {
 <template>
   <NTag
     class="filter-chip"
+    role="button"
     checkable
     :checked="props.selected"
+    :aria-pressed="props.selected"
     :closable="removable"
     :disabled="disabled"
+    :aria-label="ariaLabel"
     size="small"
     round
     :theme-overrides="filterChipThemeOverrides"

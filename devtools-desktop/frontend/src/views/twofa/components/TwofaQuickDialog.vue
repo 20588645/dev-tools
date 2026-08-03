@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 import BaseButton from '@/components/base/BaseButton.vue'
 import BaseDialog from '@/components/feedback/BaseDialog.vue'
 import BaseInput from '@/components/form/BaseInput.vue'
 import BaseSelect from '@/components/form/BaseSelect.vue'
+import { useInterval } from '@/composables/use-interval'
 import { previewTwofaCode, type TwofaAccountInput, type TwofaAlgorithm, type TwofaPreview } from '@/services/modules/twofa-service'
 import { useNotificationStore } from '@/stores/notification'
 
@@ -28,8 +29,6 @@ const querying = ref(false)
 const remaining = ref(0)
 const errorText = ref('')
 
-let tickTimer: ReturnType<typeof setInterval> | null = null
-
 const algorithmOptions = [
   { label: 'SHA1', value: 'SHA1' },
   { label: 'SHA256', value: 'SHA256' },
@@ -47,25 +46,21 @@ const digitsOptions = [
 const canQuery = computed(() => secret.value.trim().length > 0 && !querying.value)
 const displayCode = computed(() => (preview.value ? formatTwofaCode(preview.value.code) : ''))
 
-function stopTick() {
-  if (tickTimer) globalThis.clearInterval(tickTimer)
-  tickTimer = null
-}
+const tickTimer = useInterval(() => {
+  if (!preview.value) return
+  const next = Math.max(0, Math.ceil((preview.value.expiresAt - Date.now()) / 1000))
+  remaining.value = next
+  if (next <= 0) void query(true)
+}, 1_000, { autoStart: false })
 
 /** 倒计时归零后自动重算，避免用户看到过期的码 */
 function startTick() {
-  stopTick()
-  tickTimer = globalThis.setInterval(() => {
-    if (!preview.value) return
-    const next = Math.max(0, Math.ceil((preview.value.expiresAt - Date.now()) / 1000))
-    remaining.value = next
-    if (next <= 0) void query(true)
-  }, 1_000)
+  tickTimer.start()
 }
 
 async function query(silent = false) {
   const raw = secret.value.trim()
-  if (!raw) return
+  if (!raw || querying.value) return
   querying.value = true
   errorText.value = ''
   try {
@@ -86,7 +81,7 @@ async function query(silent = false) {
     const message = reason instanceof Error ? reason.message : '验证码计算失败'
     errorText.value = message
     preview.value = null
-    stopTick()
+    tickTimer.clear()
     if (!silent) notifications.push(message, 'error')
   } finally {
     querying.value = false
@@ -129,11 +124,9 @@ watch(() => props.modelValue, (open) => {
     // 关闭即丢弃密钥，不在内存里留存
     secret.value = ''
     preview.value = null
-    stopTick()
+    tickTimer.clear()
   }
 })
-
-onBeforeUnmount(stopTick)
 </script>
 
 <template>

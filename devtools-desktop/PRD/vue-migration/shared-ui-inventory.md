@@ -17,7 +17,7 @@
 | `BaseCard` / `BaseBadge` / `StatusIndicator` | 信息展示和状态 | 已实现 | variant 数量有限；BaseCard 通过 contentPadding/contentLayout/contentOverflow/fillHeight 承载布局差异，页面不得覆盖内部 `.n-card*` |
 | `BaseProgress` | 线性与环形进度 | 已实现 | 默认 line 保持既有行为；circle 通过 size/strokeWidth/indicator slot 表达倒计时等语义 |
 | `BaseDataTable` | 正式业务数据表格 | 已实现 | 内部使用 `NDataTable`；业务只依赖项目 columns/rows/density 类型，不直接导入 Naive UI 类型 |
-| `BaseDisclosure` | 单项折叠与复合标题 | 已实现 | 受控 `v-model`、header/actions slot、default/card/plain；公开 header/content padding 与最小标题高度，内部统一键盘、ARIA 和展开状态 |
+| `BaseDisclosure` | 单项折叠与复合标题 | 已实现 | 受控 `v-model`、header/actions slot、default/card/plain；公开 header padding、content gap/padding 与最小标题高度，内部统一键盘、ARIA 和展开状态 |
 | `BaseSideNav` | 页面内垂直/横向导航 | 已实现 | 内部使用 `NMenu`；支持 vertical/horizontal/responsive、compact；横向默认隐藏编号以优先显示完整名称 |
 | `BaseDialog` / `ConfirmDialog` | 弹窗与危险操作确认 | 已实现 | Esc、焦点、遮罩和堆叠策略统一 |
 | `LoadingState` / `EmptyState` / `ErrorState` | 页面反馈 | 已实现 | 提供文案和重试动作插槽 |
@@ -64,11 +64,12 @@
 首批补齐已经完成源码、预览、类型和组件测试，真实消费者将在后续逐页收口子项中接入：
 
 - 表格：`BaseDataTable.vue` + `base-data-table.ts`，目标消费者为 Usage 正式数据表和 Run 历史表。
-- 折叠：`BaseDisclosure.vue`，Settings 与 Todo 已接入；Twofa、Run 待逐页收口时评审。
+- 折叠：`BaseDisclosure.vue`，Settings、Todo、Twofa 已接入；Run 待逐页收口时评审。
 - 侧边导航：`BaseSideNav.vue`，首个目标消费者为 Settings 分类导航。
 - 进度：`BaseProgress` 新增 circle，首个目标消费者为 Twofa 倒计时环。
 - 布局与表单变体：`BaseCard`、`BaseInput`、`BaseTextarea`、`BaseCheckbox` 的公开能力已用于 Notes、Notebook、Todo；Usage、Run 待继续收口。
 - 可选择列表项：`BaseSelectableItem` 统一 Notes 日期、Notebook 笔记和 Todo 任务列表的选择、焦点与悬停语义，三个消费者均已接入。
+- 筛选、进度与定时器：Twofa 已接入 `FilterChip`、`BaseProgress circle` 与 `useInterval`；公共层补齐筛选 ARIA、折叠 contentGap 和 timer autoStart 契约，Usage 的存量轮询待其页面收口时继续接入。
 
 通知宿主已在后续独立子项完成：`AppToastHost` 不再绘制 Toast 或管理定时器，而是通过项目 adapter 驱动 Naive Message；`NNotificationProvider` 保留给未来需要标题、描述或操作区的富通知，业务页面仍不得直接访问任一 Provider API。
 

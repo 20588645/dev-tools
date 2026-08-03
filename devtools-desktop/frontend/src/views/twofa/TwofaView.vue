@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 
 import BaseButton from '@/components/base/BaseButton.vue'
 import StatusIndicator from '@/components/base/StatusIndicator.vue'
+import BaseDisclosure from '@/components/disclosure/BaseDisclosure.vue'
 import ConfirmDialog from '@/components/feedback/ConfirmDialog.vue'
 import EmptyState from '@/components/feedback/EmptyState.vue'
 import ErrorState from '@/components/feedback/ErrorState.vue'
@@ -12,6 +13,7 @@ import PageFrame from '@/components/layout/PageFrame.vue'
 import PageHeader from '@/components/layout/PageHeader.vue'
 import PageToolbar from '@/components/layout/PageToolbar.vue'
 import PageTop from '@/components/layout/PageTop.vue'
+import FilterChip from '@/components/navigation/FilterChip.vue'
 import type { TwofaAccount, TwofaAccountInput } from '@/services/modules/twofa-service'
 
 import TwofaAccountDialog from './components/TwofaAccountDialog.vue'
@@ -106,15 +108,19 @@ async function onConfirmRemove() {
   }
 }
 
-function toggleGroup(name: string) {
-  collapsedGroups.value = collapsedGroups.value.includes(name)
+function selectGroup(name: string, selected: boolean) {
+  if (selected) setGroup(name)
+}
+
+function setGroupExpanded(name: string, expanded: boolean) {
+  collapsedGroups.value = expanded
     ? collapsedGroups.value.filter((item) => item !== name)
-    : [...collapsedGroups.value, name]
+    : [...new Set([...collapsedGroups.value, name])]
 }
 </script>
 
 <template>
-  <PageFrame class="twofa-view" variant="workspace" data-test="twofa-view">
+  <PageFrame class="twofa-view" variant="immersive" data-test="twofa-view">
     <template #top>
       <PageTop>
         <PageHeader title="双因验证" description="密钥本地加密保存，验证码由本机时间生成">
@@ -132,23 +138,21 @@ function toggleGroup(name: string) {
               <BaseInput
                 v-model="query"
                 type="search"
+                variant="search"
                 class="twofa-toolbar__search"
                 aria-label="搜索账号"
                 placeholder="搜索发行方或账号"
               />
               <div class="twofa-chips" role="group" aria-label="分组筛选">
-                <button
+                <FilterChip
                   v-for="option in groupOptions"
                   :key="option.value || 'all'"
-                  type="button"
-                  class="twofa-chip"
-                  :class="{ 'is-active': activeGroup === option.value }"
-                  :aria-pressed="activeGroup === option.value"
+                  :label="option.label"
+                  :count="option.count"
+                  :selected="activeGroup === option.value"
                   :aria-label="`筛选${option.label}，${option.count} 个账号`"
-                  @click="setGroup(option.value)"
-                >
-                  {{ option.label }}<b>{{ option.count }}</b>
-                </button>
+                  @update:selected="selectGroup(option.value, $event)"
+                />
               </div>
             </div>
             <div class="twofa-toolbar__actions">
@@ -189,24 +193,24 @@ function toggleGroup(name: string) {
           <EmptyState v-if="!hasVisibleResult" compact title="没有匹配的账号" />
 
           <div v-else class="twofa-groups">
-            <section
+            <BaseDisclosure
               v-for="group in groupedAccounts"
               :key="group.name"
+              :model-value="!collapsedGroups.includes(group.name)"
               class="twofa-group"
-              :class="{ 'is-collapsed': collapsedGroups.includes(group.name) }"
+              variant="plain"
+              header-padding="7px 2px"
+              content-gap="0"
+              content-padding="0"
+              @update:model-value="setGroupExpanded(group.name, $event)"
             >
-              <button
-                type="button"
-                class="twofa-group__header"
-                :aria-expanded="!collapsedGroups.includes(group.name)"
-                :aria-label="`${collapsedGroups.includes(group.name) ? '展开' : '折叠'}${group.name}分组`"
-                @click="toggleGroup(group.name)"
-              >
-                <span class="twofa-group__caret" aria-hidden="true">⌄</span>
-                <b>{{ group.name }}</b>
-                <span>{{ group.accounts.length }}</span>
-              </button>
-              <div v-if="!collapsedGroups.includes(group.name)" class="twofa-group__rows">
+              <template #header>
+                <span class="twofa-group__label">
+                  <b>{{ group.name }}</b>
+                  <span>{{ group.accounts.length }}</span>
+                </span>
+              </template>
+              <div class="twofa-group__rows">
                 <TwofaAccountRow
                   v-for="account in group.accounts"
                   :key="account.id"
@@ -221,7 +225,7 @@ function toggleGroup(name: string) {
                   @remove="askRemove(account)"
                 />
               </div>
-            </section>
+            </BaseDisclosure>
           </div>
         </section>
 

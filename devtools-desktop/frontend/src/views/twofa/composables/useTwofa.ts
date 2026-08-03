@@ -1,5 +1,6 @@
 import { computed, onActivated, onBeforeUnmount, onDeactivated, onMounted, ref } from 'vue'
 
+import { useInterval } from '@/composables/use-interval'
 import * as twofaService from '@/services/modules/twofa-service'
 import type {
   TwofaAccount,
@@ -58,8 +59,6 @@ export function useTwofa(options: UseTwofaOptions = {}) {
   let mounted = false
   let loadVersion = 0
   let loadController: AbortController | null = null
-  let pollTimer: ReturnType<typeof setInterval> | null = null
-  let tickTimer: ReturnType<typeof setInterval> | null = null
   let copiedTimer: ReturnType<typeof setTimeout> | null = null
 
   const groupOptions = computed(() => {
@@ -146,18 +145,18 @@ export function useTwofa(options: UseTwofaOptions = {}) {
     }
   }
 
+  const pollTimer = useInterval(() => load(true), 5_000, { autoStart: false })
+  const tickTimer = useInterval(() => { tick.value += 1 }, 1_000, { autoStart: false })
+
   function stopTimers() {
-    if (pollTimer) globalThis.clearInterval(pollTimer)
-    if (tickTimer) globalThis.clearInterval(tickTimer)
-    pollTimer = null
-    tickTimer = null
+    pollTimer.clear()
+    tickTimer.clear()
   }
 
   function startTimers() {
-    stopTimers()
     // 验证码由后端按本机时间计算，轮询保证周期翻转后拿到新码
-    pollTimer = globalThis.setInterval(() => void load(true), 5_000)
-    tickTimer = globalThis.setInterval(() => { tick.value += 1 }, 1_000)
+    pollTimer.start()
+    tickTimer.start()
   }
 
   function toggleExpanded(id: string) {

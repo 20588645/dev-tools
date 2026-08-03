@@ -11,6 +11,7 @@ const props = withDefaults(defineProps<{
   arrowPlacement?: 'left' | 'right'
   headerPadding?: string
   headerMinHeight?: string
+  contentGap?: string
   contentPadding?: string
 }>(), {
   title: undefined,
@@ -20,6 +21,7 @@ const props = withDefaults(defineProps<{
   arrowPlacement: 'left',
   headerPadding: 'var(--space-3) 0',
   headerMinHeight: undefined,
+  contentGap: 'var(--space-4)',
   contentPadding: '0 0 var(--space-3)',
 })
 
@@ -60,6 +62,7 @@ function updateExpanded(names: string | number | Array<string | number> | null) 
     :display-directive="lazy ? 'if' : 'show'"
     :trigger-areas="['main', 'arrow']"
     :theme-overrides="disclosureThemeOverrides"
+    :style="{ '--base-disclosure-content-gap': contentGap }"
     @update:expanded-names="updateExpanded"
   >
     <NCollapseItem :name="itemName" :disabled="disabled">
@@ -138,5 +141,9 @@ function updateExpanded(names: string | number | Array<string | number> | null) 
 
 .base-disclosure__content {
   min-width: 0;
+}
+
+.base-disclosure.base-disclosure :deep(.n-collapse-item__content-inner) {
+  padding-top: var(--base-disclosure-content-gap);
 }
 </style>

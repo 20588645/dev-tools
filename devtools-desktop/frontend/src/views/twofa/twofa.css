@@ -15,12 +15,6 @@
     var(--color-page);
 }
 
-.twofa-view > .page-frame__body {
-  display: flex;
-  min-height: 0;
-  padding: 0;
-}
-
 .twofa-view__title-mark {
   display: grid;
   width: 26px;
@@ -34,7 +28,7 @@
 }
 
 .twofa-view__scroll {
-  flex: 1;
+  height: 100%;
   min-width: 0;
   min-height: 0;
   padding: var(--space-4);
@@ -75,42 +69,6 @@
   gap: var(--space-1);
 }
 
-.twofa-chip {
-  display: inline-flex;
-  height: 26px;
-  align-items: center;
-  gap: 5px;
-  padding: 0 var(--space-3);
-  color: var(--color-text-muted);
-  background: transparent;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-pill);
-  cursor: pointer;
-  font-family: inherit;
-  font-size: var(--font-size-xs);
-}
-
-.twofa-chip:hover {
-  color: var(--color-text);
-}
-
-.twofa-chip.is-active {
-  color: var(--color-text);
-  background: color-mix(in srgb, var(--color-action) 13%, transparent);
-  border-color: transparent;
-}
-
-.twofa-chip b {
-  color: var(--color-text-subtle);
-  font-family: var(--font-family-mono);
-  font-size: 10px;
-  font-weight: var(--font-weight-medium);
-}
-
-.twofa-chip.is-active b {
-  color: var(--color-text-muted);
-}
-
 /* ---------- 区块标题 ---------- */
 .twofa-section-heading {
   display: flex;
@@ -140,23 +98,17 @@
   gap: var(--space-2);
 }
 
-.twofa-pinned__card {
+.twofa-pinned__card.base-selectable-item {
+  --base-selectable-min-height: 0;
+  --base-selectable-padding: 11px var(--space-3);
+  --base-selectable-background: var(--color-surface);
+  --base-selectable-hover-background: var(--color-surface);
+  --base-selectable-hover-border: var(--color-border-strong);
   display: grid;
   min-width: 0;
   align-items: center;
   gap: var(--space-3);
   grid-template-columns: 30px minmax(0, 1fr) auto;
-  padding: 11px var(--space-3);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  font-family: inherit;
-  text-align: left;
-}
-
-.twofa-pinned__card:hover {
-  border-color: var(--color-border-strong);
 }
 
 .twofa-pinned__meta {
@@ -191,50 +143,21 @@
   gap: var(--space-3);
 }
 
-.twofa-group__header {
+.twofa-group__label {
   display: flex;
   width: 100%;
   align-items: center;
   gap: var(--space-2);
-  padding: 7px 2px;
   color: var(--color-text-muted);
-  background: none;
-  border: 0;
-  cursor: pointer;
-  font-family: inherit;
   font-size: var(--font-size-xs);
-  text-align: left;
 }
 
-.twofa-group__header:hover {
-  color: var(--color-text);
-}
-
-/*
-  箭头放在固定尺寸的居中容器里再旋转：
-  「⌄」字形本身不居中，直接对文本节点做 rotate 会让图标偏移。
-*/
-.twofa-group__caret {
-  display: inline-grid;
-  width: 14px;
-  height: 14px;
-  flex-shrink: 0;
-  place-items: center;
-  font-size: 13px;
-  line-height: 1;
-  transition: transform var(--duration-fast) var(--ease-standard);
-}
-
-.twofa-group.is-collapsed .twofa-group__caret {
-  transform: rotate(-90deg);
-}
-
-.twofa-group__header b {
+.twofa-group__label b {
   color: var(--color-text);
   font-weight: var(--font-weight-semibold);
 }
 
-.twofa-group__header > span:last-child {
+.twofa-group__label > span:last-child {
   color: var(--color-text-subtle);
   font-family: var(--font-family-mono);
   font-size: 10px;
@@ -246,15 +169,13 @@
 }
 
 /* ---------- 账号行 ---------- */
-.twofa-row-shell {
+.twofa-row-shell.base-disclosure {
   min-width: 0;
   overflow: hidden;
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
 }
 
-.twofa-row-shell:hover {
+.twofa-row-shell.base-disclosure:hover {
   border-color: var(--color-border-strong);
 }
 
@@ -264,12 +185,11 @@
 
 .twofa-row {
   display: grid;
+  width: 100%;
   min-width: 0;
   align-items: center;
   gap: var(--space-3);
-  grid-template-columns: 32px minmax(0, 1fr) auto auto auto;
-  padding: 10px var(--space-3);
-  cursor: pointer;
+  grid-template-columns: 32px minmax(0, 1fr) auto auto;
 }
 
 .twofa-avatar {
@@ -345,73 +265,21 @@
 
 /* ---------- 倒计时环 ---------- */
 .twofa-countdown {
-  position: relative;
-  display: grid;
-  width: 26px;
-  height: 26px;
   flex-shrink: 0;
-  place-items: center;
 }
 
-.twofa-countdown svg {
-  transform: rotate(-90deg);
-}
-
-.twofa-countdown circle {
-  fill: none;
-  stroke-width: 2.5;
-}
-
-.twofa-countdown__track {
-  stroke: var(--color-surface-subtle);
-}
-
-.twofa-countdown__bar {
-  stroke: var(--color-series-2);
-  stroke-linecap: round;
-  transition: stroke-dashoffset .95s linear, stroke var(--duration-normal) var(--ease-standard);
-}
-
-.twofa-countdown.is-soon .twofa-countdown__bar {
-  stroke: var(--color-warning);
-}
-
-.twofa-countdown > span {
-  position: absolute;
+.twofa-countdown__value {
   color: var(--color-text-subtle);
   font-family: var(--font-family-mono);
   font-size: 9px;
   font-variant-numeric: tabular-nums;
 }
 
-.twofa-row__actions {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-/* 同上：固定容器居中，避免展开/收起时图标跳位 */
-.twofa-row__chevron {
-  display: inline-grid;
-  width: 16px;
-  height: 16px;
-  flex-shrink: 0;
-  place-items: center;
-  color: var(--color-text-subtle);
-  font-size: 14px;
-  line-height: 1;
-  transition: transform var(--duration-fast) var(--ease-standard);
-}
-
-.twofa-row-shell.is-open .twofa-row__chevron {
-  transform: rotate(180deg);
-}
-
 /* ---------- 内联详情 ---------- */
 .twofa-detail {
   display: grid;
   gap: var(--space-3);
-  padding: var(--space-3) var(--space-3) 13px;
+  padding: var(--space-3) 0 13px;
   border-top: 1px solid var(--color-border);
 }
 
@@ -599,10 +467,10 @@
     grid-template-columns: repeat(auto-fill, minmax(196px, 1fr));
   }
 
-  .twofa-pinned__card {
+  .twofa-pinned__card.base-selectable-item {
     display: flex;
     gap: 9px;
-    padding: 10px;
+    --base-selectable-padding: 10px;
   }
 
   .twofa-pinned__card .twofa-avatar {
@@ -627,9 +495,9 @@
   /* 账号行收敛为两行，验证码独占一行，避免横向溢出 */
   .twofa-row {
     grid-template-areas:
-      "avatar meta chevron"
-      "code code actions";
-    grid-template-columns: 28px minmax(0, 1fr) auto;
+      "avatar meta"
+      "code code";
+    grid-template-columns: 28px minmax(0, 1fr);
     row-gap: 9px;
   }
 
@@ -650,14 +518,6 @@
 
   .twofa-row .twofa-countdown {
     display: none;
-  }
-
-  .twofa-row__actions {
-    grid-area: actions;
-  }
-
-  .twofa-row__chevron {
-    grid-area: chevron;
   }
 
   .twofa-detail__grid {

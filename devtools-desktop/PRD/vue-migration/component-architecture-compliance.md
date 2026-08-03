@@ -1,6 +1,6 @@
 # 组件架构合规专项
 
-> 状态：规则与自动门禁、首批公共组件能力、通知适配层及 Settings、Home、IpCheck、Notes、Notebook、Todo 六个页面收口已完成；Settings、IpCheck、Notes、Notebook 与 Todo 已通过连接正式 Sidecar 的网页人工验收。其余存量页面收口与最终真实 Tauri Smoke Test 待执行。在本专项和全站回归完成前，不进入 Phase 6-2 Deploy
+> 状态：规则与自动门禁、首批公共组件能力、通知适配层及 Settings、Home、IpCheck、Notes、Notebook、Todo、Twofa 七个页面收口已完成；Settings、IpCheck、Notes、Notebook、Todo 与 Twofa 已通过连接正式 Sidecar 的网页人工验收。其余存量页面收口与最终真实 Tauri Smoke Test 待执行。在本专项和全站回归完成前，不进入 Phase 6-2 Deploy
 >
 > 生效范围：`frontend/src/views/**` 及所有后续迁移业务页面。公共组件、适配层和第三方宿主的职责边界以本文为唯一专项入口；原执行计划中的一致规则继续有效，发生歧义时先暂停实现并更新本文。
 
@@ -64,21 +64,20 @@ npm run lint:architecture
 
 ## 6. 2026-07-31 存量快照
 
-当前业务页面直接导入第三方 UI、直接网络/IPC 调用和直接 DOM 查询均为 0。Settings、Home、IpCheck、Notes、Notebook 与 Todo 收口后，待归零项由 68 个降至 23 个机器计数：
+当前业务页面直接导入第三方 UI、直接网络/IPC 调用和直接 DOM 查询均为 0。Settings、Home、IpCheck、Notes、Notebook、Todo 与 Twofa 收口后，待归零项由 68 个降至 16 个机器计数：
 
 | 类型 | 数量 | 主要页面 |
 | --- | ---: | --- |
 | `.n-*` 第三方内部选择器 | 4 个 selector token | Usage、Run |
 | `:deep()` | 2 | Run |
-| 原生基础按钮 | 6 | Run 1、Twofa 4、Usage 1 |
+| 原生基础按钮 | 2 | Run 1、Usage 1 |
 | 原生 `<table>` | 7 | Usage 6、Run 1 |
-| 裸 `setInterval` | 4 | Usage 1、Twofa 3 |
+| 裸 `setInterval` | 1 | Usage |
 | 直接 DOM 查询 | 0 | Home 已归零 |
 
 无法可靠静态判断、必须人工验收的已知项：
 
-- Twofa 重复 FilterChip、环形进度与折叠结构。
-- Run、Twofa 的折叠模式是否统一。
+- Run 的折叠模式是否统一。
 - 页面是否遗漏已有公共组件，以及第二个相同模式是否已出现。
 
 ## 7. 页面架构验收清单
@@ -132,7 +131,7 @@ npm run lint:architecture
 | 能力 | 项目 API | 已确认消费者 |
 | --- | --- | --- |
 | `BaseDataTable` | rows、columns、rowKey、density、loading、滚动与空状态 | Usage 正式数据表、Run 历史表 |
-| `BaseDisclosure` | 受控 v-model、header/actions slot、三种 variant | Settings、Todo、Twofa、Run 折叠模式 |
+| `BaseDisclosure` | 受控 v-model、header/actions slot、三种 variant、content gap | Settings、Todo、Twofa、Run 折叠模式 |
 | `BaseSideNav` | 项目 items/value/caption 契约，内部使用 NMenu | Settings 分类导航 |
 | `BaseProgress circle` | shape、size、strokeWidth、indicator slot | Twofa 倒计时环 |
 | `BaseCard` 布局 | contentLayout、contentOverflow、fillHeight | Notes、Notebook、Todo、Usage、Run 卡片内部布局 |
@@ -240,3 +239,19 @@ Todo 的 13 项机器债务全部归零：第三方内部选择器 9 → 0、原
 完整自动回归通过：`npm run lint`、`npm test`（35 个测试文件 / 189 项单元与组件测试 + 架构门禁 4 项）、`npm run typecheck`、`npm run build:frontend`、`git diff --check`；生产构建仅保留迁移前既有 legacy script/CSS 提示。
 
 正式 Sidecar 网页只读验收使用 `http://127.0.0.1:1420/?apiPort=13456`。1280×720 下 3 个分组、2 条任务、唯一选中态和双栏布局正常；900×600 自动切为 692px 宽列表主视图，页面与文档均无横向溢出，任务行内部交互控件为 0。验收未搜索、新建、选择、编辑、勾选、折叠或执行写入；控制台仅有迁移前已知的 CodeMirror `defineSimpleMode` 错误。该结果不替代专项最终真实 Tauri Smoke Test。
+
+## 18. Twofa 页面架构收口记录（2026-08-03）
+
+Twofa 的机器债务包括 4 个原生按钮和 3 个裸 `setInterval`。人工复核还确认分组筛选、分组/账号折叠与圆形倒计时已经有项目公共契约，但页面仍保留平行实现；账号行使用 `role="button"` 包裹复制按钮，存在嵌套交互语义冲突。
+
+- 工具栏分组与账号弹窗的分组建议接入 `FilterChip`；公共组件补齐 `ariaLabel`、button role 与 `aria-pressed`，统一数量、选中态及键盘语义。
+- 分组和账号详情接入 `BaseDisclosure plain/card`。复制操作进入 actions slot，与展开触发器互为同级；公共组件补齐 contentGap 契约，页面不穿透 Naive 内部结构即可让分组列表和行内详情紧贴标题栏。
+- 账号行与常用卡片的手写 SVG 环改用 `BaseProgress circle`；常用卡片接入 `BaseSelectableItem`。验证码、发行方、标签和响应式排布仍由 Twofa 页面负责。
+- `useInterval` 增加 `autoStart` 生命周期契约，快捷查询仅在已有查询结果时手动启动；页面轮询和倒计时统一由 composable 负责暂停、恢复与卸载清理。
+- `PageFrame` 改用已有 immersive 变体，搜索接入 search 变体，不再覆盖 PageFrame 内部结构或维护重复输入表面。
+
+Twofa 的 7 项机器债务全部归零：原生控件 4 → 0、裸定时器 3 → 0；专项总基线 23 → 16，批准例外仍为 0。Twofa Playwright 11 项全部通过，新增覆盖圆形公共进度、FilterChip 选中语义、三组公共折叠、折叠后可见状态、账号行无嵌套交互控件和详情零额外间距。
+
+完整自动回归通过：`npm run lint`、`npm test`（36 个测试文件 / 190 项单元与组件测试 + 架构门禁 4 项）、`npm run typecheck`、`npm run build:frontend`、`git diff --check`；生产构建仅保留迁移前既有 legacy script/CSS 提示。
+
+正式 Sidecar 网页只读验收使用 `http://127.0.0.1:1420/?apiPort=13456`。1280×720 下 3 组、4 个账号、4 个可见圆形倒计时、唯一筛选态和全部展开分组正常；900×600 下按既定设计隐藏行内倒计时环，4 行账号均无截断。两个尺寸的页面、文档与 View 均无横向溢出，折叠触发器内部交互控件为 0。验收未搜索、复制、编辑、收藏、删除、导入或执行任何后端写入；该结果不替代专项最终真实 Tauri Smoke Test。

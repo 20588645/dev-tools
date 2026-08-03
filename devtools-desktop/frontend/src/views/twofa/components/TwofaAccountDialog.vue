@@ -6,6 +6,7 @@ import BaseDialog from '@/components/feedback/BaseDialog.vue'
 import BaseCheckbox from '@/components/form/BaseCheckbox.vue'
 import BaseInput from '@/components/form/BaseInput.vue'
 import BaseSelect from '@/components/form/BaseSelect.vue'
+import FilterChip from '@/components/navigation/FilterChip.vue'
 import type { TwofaAccount, TwofaAccountInput, TwofaAlgorithm } from '@/services/modules/twofa-service'
 
 const props = defineProps<{
@@ -111,14 +112,13 @@ function submit() {
           help-text="直接输入即可新建分组，或点下方已有分组。"
         />
         <div v-if="groupSuggestions.length" class="twofa-group-field__suggestions">
-          <button
+          <FilterChip
             v-for="name in groupSuggestions"
             :key="name"
-            type="button"
-            class="twofa-chip"
-            :class="{ 'is-active': draft.groupName === name }"
-            @click="draft.groupName = name"
-          >{{ name }}</button>
+            :label="name"
+            :selected="draft.groupName === name"
+            @update:selected="$event && (draft.groupName = name)"
+          />
         </div>
       </div>
 

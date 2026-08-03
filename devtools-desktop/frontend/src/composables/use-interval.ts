@@ -1,6 +1,14 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 
-export function useInterval(callback: () => void | Promise<void>, delay: number | (() => number | null)) {
+interface UseIntervalOptions {
+  autoStart?: boolean
+}
+
+export function useInterval(
+  callback: () => void | Promise<void>,
+  delay: number | (() => number | null),
+  options: UseIntervalOptions = {},
+) {
   const running = ref(false)
   let timer: ReturnType<typeof setInterval> | null = null
 
@@ -18,7 +26,9 @@ export function useInterval(callback: () => void | Promise<void>, delay: number 
     running.value = true
   }
 
-  onMounted(start)
+  onMounted(() => {
+    if (options.autoStart ?? true) start()
+  })
   onBeforeUnmount(clear)
 
   return { running, start, clear }

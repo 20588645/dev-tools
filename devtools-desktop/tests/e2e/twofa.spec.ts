@@ -100,6 +100,7 @@ async function openTwofa(page: Page, viewport = { width: 1280, height: 800 }) {
   await page.locator('.sidebar-item[data-page="twofa"]').click()
   await expect(page.getByRole('heading', { name: '双因验证', exact: true })).toBeVisible()
   await expect(page.locator('.twofa-row-shell')).toHaveCount(5)
+  await expect(page.locator('.twofa-countdown.base-progress--circle')).toHaveCount(7)
   return mock
 }
 
@@ -166,6 +167,7 @@ test('filters accounts by keyword and by group', async ({ page }) => {
 
   await page.getByRole('button', { name: '筛选开发，3 个账号' }).click()
   await expect(page.locator('.twofa-row-shell')).toHaveCount(3)
+  await expect(page.getByRole('button', { name: '筛选开发，3 个账号' })).toHaveAttribute('aria-pressed', 'true')
   await page.getByRole('button', { name: '筛选全部，5 个账号' }).click()
   await expect(page.locator('.twofa-row-shell')).toHaveCount(5)
 })
@@ -185,14 +187,30 @@ test('reveals account detail inline instead of in a fixed side panel', async ({ 
 
   // 详情必须紧贴所属行，而不是被推到列表末尾
   const gap = await row.evaluate((shell) => {
-    const rowRect = shell.querySelector('.twofa-row')!.getBoundingClientRect()
+    const headerRect = shell.querySelector('.n-collapse-item__header')!.getBoundingClientRect()
     const detailRect = shell.querySelector('.twofa-detail')!.getBoundingClientRect()
-    return detailRect.top - rowRect.bottom
+    return detailRect.top - headerRect.bottom
   })
   expect(Math.abs(gap)).toBeLessThan(4)
 
   await row.locator('.twofa-row').click()
   await expect(page.locator('.twofa-row-shell.is-open')).toHaveCount(0)
+})
+
+test('uses project disclosures for groups without nested interactive controls', async ({ page }) => {
+  await openTwofa(page)
+  const groups = page.locator('.twofa-group.base-disclosure')
+  await expect(groups).toHaveCount(3)
+
+  const development = groups.filter({ hasText: '开发' })
+  const trigger = development.locator('.base-disclosure__trigger').first()
+  await expect(trigger).toHaveAttribute('aria-expanded', 'true')
+  await expect(trigger.locator('button, [role="button"]')).toHaveCount(0)
+  await trigger.click()
+  await expect(trigger).toHaveAttribute('aria-expanded', 'false')
+  await expect(development.locator('.twofa-row-shell:visible')).toHaveCount(0)
+  await trigger.click()
+  await expect(development.locator('.twofa-row-shell:visible')).toHaveCount(3)
 })
 
 test('no longer offers exporting plaintext secrets', async ({ page }) => {

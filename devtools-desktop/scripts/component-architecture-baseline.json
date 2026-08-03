@@ -16,9 +16,6 @@
     },
     "native-control": {
       "frontend/src/views/run/components/RunGroupSection.vue": 1,
-      "frontend/src/views/twofa/TwofaView.vue": 2,
-      "frontend/src/views/twofa/components/TwofaAccountDialog.vue": 1,
-      "frontend/src/views/twofa/components/TwofaPinnedCards.vue": 1,
       "frontend/src/views/usage/UsageView.vue": 1
     },
     "native-table": {
@@ -30,8 +27,6 @@
       "frontend/src/views/usage/components/UsageTrendChart.vue": 1
     },
     "direct-interval": {
-      "frontend/src/views/twofa/components/TwofaQuickDialog.vue": 1,
-      "frontend/src/views/twofa/composables/useTwofa.ts": 2,
       "frontend/src/views/usage/composables/useUsage.ts": 1
     },
     "view-network-or-ipc": {},

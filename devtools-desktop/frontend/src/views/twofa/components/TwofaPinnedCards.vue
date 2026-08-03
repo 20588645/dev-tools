@@ -1,16 +1,20 @@
 <script setup lang="ts">
+import BaseProgress from '@/components/base/BaseProgress.vue'
+import BaseSelectableItem from '@/components/base/BaseSelectableItem.vue'
 import type { TwofaAccount } from '@/services/modules/twofa-service'
 
 import { formatTwofaCode, twofaAvatarText } from '../composables/useTwofa'
 
-defineProps<{
+const props = defineProps<{
   accounts: TwofaAccount[]
   remainingOf: (account: TwofaAccount) => number
 }>()
 
 const emit = defineEmits<{ copy: [account: TwofaAccount] }>()
 
-const CIRCUMFERENCE = 2 * Math.PI * 11
+function countdownValue(account: TwofaAccount) {
+  return props.remainingOf(account) / (account.period || 30) * 100
+}
 </script>
 
 <template>
@@ -20,10 +24,9 @@ const CIRCUMFERENCE = 2 * Math.PI * 11
       <span>收藏的账号会置顶显示，点击即可复制</span>
     </div>
     <div class="twofa-pinned__grid">
-      <button
+      <BaseSelectableItem
         v-for="account in accounts"
         :key="account.id"
-        type="button"
         class="twofa-pinned__card"
         :aria-label="`复制 ${account.issuer} 的验证码`"
         @click="emit('copy', account)"
@@ -34,21 +37,18 @@ const CIRCUMFERENCE = 2 * Math.PI * 11
           <span class="twofa-pinned__code">{{ formatTwofaCode(account.currentCode) }}</span>
         </span>
         <!-- 窄窗口下这个环会被隐藏，秒数信息在下方账号行里仍然存在 -->
-        <span class="twofa-countdown" :class="{ 'is-soon': remainingOf(account) <= 5 }">
-          <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
-            <circle class="twofa-countdown__track" cx="13" cy="13" r="11" />
-            <circle
-              class="twofa-countdown__bar"
-              cx="13"
-              cy="13"
-              r="11"
-              :stroke-dasharray="CIRCUMFERENCE"
-              :stroke-dashoffset="CIRCUMFERENCE * (1 - remainingOf(account) / (account.period || 30))"
-            />
-          </svg>
-          <span>{{ remainingOf(account) }}</span>
-        </span>
-      </button>
+        <BaseProgress
+          class="twofa-countdown"
+          shape="circle"
+          :size="26"
+          :stroke-width="10"
+          :value="countdownValue(account)"
+          :tone="remainingOf(account) <= 5 ? 'warning' : 'info'"
+          :label="`剩余 ${remainingOf(account)} 秒`"
+        >
+          <span class="twofa-countdown__value">{{ remainingOf(account) }}</span>
+        </BaseProgress>
+      </BaseSelectableItem>
     </div>
   </section>
 </template>

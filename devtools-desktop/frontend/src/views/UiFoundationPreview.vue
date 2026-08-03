@@ -179,7 +179,7 @@ const previewTableRowKey = (row: PreviewTableRow) => row.name
               aria-label="项目状态预览"
             />
           </BaseCard>
-          <BaseDisclosure v-model="disclosureOpen" title="高级设置" variant="card">
+          <BaseDisclosure v-model="disclosureOpen" title="高级设置" variant="card" content-gap="var(--space-2)">
             折叠内容由公共组件统一管理键盘、箭头与展开状态。
           </BaseDisclosure>
           <BaseCard content-padding="var(--space-2)">

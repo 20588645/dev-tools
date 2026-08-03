@@ -1,7 +1,7 @@
 # 双因验证 `twofa` 迁移决策记录
 
 > Phase 5-5 · 优化等级 L2 · 原型 `design-preview/twofa-l2.html`
-> 状态：PG0～PG5 已完成，等待清理后简短真实 Tauri 回归
+> 状态：PG0～PG5 已完成；组件架构二次收口完成，最终真实 Tauri Smoke Test 合并专项执行
 
 ## 1. 现状结论（PG0～PG1）
 
@@ -59,3 +59,11 @@
 **刻意保留**：`decryptSecret`、`getAccounts`、`generateTotp`、`normalizeSecretInput` 仍被模块内部使用（算码、保存时保留原密钥、导入）；`importAccounts` 保留用于从其他工具迁入；`app.js` 的 twofa 侧边栏菜单项保留。
 
 清理后 lint、tokens、build、单测 119 项、全站 E2E 41 项全部通过；Sidecar 正常启动且 `/accounts` 200、`/export` 404、`/preview` 200；浏览器复检两档窗口与亮暗主题，四个旧全局函数均为 undefined，控制台无 error/warning。
+
+## 6. 组件架构二次收口（2026-08-03）
+
+本轮不改变已确认的行内取码、分组、常用账号、行内详情、快捷查询、导入、编辑、删除确认或 AES-GCM/SQLite 数据契约。架构复核确认页面重复实现了 FilterChip、圆形倒计时和折叠结构，并保留 4 个原生按钮、3 个裸定时器以及账号展开触发区内嵌复制按钮的语义冲突。
+
+工具栏和分组建议接入 `FilterChip`，分组/账号详情接入 `BaseDisclosure`，倒计时接入 `BaseProgress circle`，常用卡片接入 `BaseSelectableItem`；复制按钮通过 Disclosure actions slot 与展开触发器分离。公共层补齐 FilterChip ARIA、Disclosure contentGap 和 `useInterval autoStart` 契约，并先同步组件预览、smoke test、独立 timer test 与共享清单。Twofa 原生控件 4 → 0、裸定时器 3 → 0，专项机器基线由 23 降至 16，批准例外仍为 0。
+
+Twofa Playwright 11 项全部通过，覆盖亮暗主题、900×600、筛选、分组折叠、行内详情、圆形倒计时、快捷查询无落库、删除确认、新分组、标签保留和批量导入。全量 `npm run lint`、`npm test`（36 个测试文件 / 190 项单元与组件测试 + 架构门禁 4 项）、`npm run typecheck`、`npm run build:frontend`、`git diff --check` 通过。正式 Sidecar `13456/data` 网页只读验收确认 1280×720 与 900×600 下 3 组、4 个账号、唯一筛选态、折叠语义及横向溢出均正常；未搜索、复制、编辑、收藏、删除、导入或执行后端写入。该网页验收不替代专项最终真实 Tauri Smoke Test。

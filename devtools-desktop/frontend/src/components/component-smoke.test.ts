@@ -18,6 +18,7 @@ import BaseTextarea from './form/BaseTextarea.vue'
 import BaseProgress from './base/BaseProgress.vue'
 import BaseSideNav from './navigation/BaseSideNav.vue'
 import BaseTabs from './navigation/BaseTabs.vue'
+import FilterChip from './navigation/FilterChip.vue'
 import PageFrame from './layout/PageFrame.vue'
 import NaiveUiShowcase from './vendor/NaiveUiShowcase.vue'
 import UiLibraryProvider from './vendor/UiLibraryProvider.vue'
@@ -98,6 +99,11 @@ describe('shared UI foundation', () => {
     })
     await tabs.findAll('[role="tab"]')[1].trigger('click')
     expect(tabs.emitted('update:modelValue')).toEqual([['two']])
+
+    const chip = mount(FilterChip, {
+      props: { label: '开发', count: 3, selected: true, ariaLabel: '筛选开发，3 个账号' },
+    })
+    expect(chip.get('[aria-label="筛选开发，3 个账号"]').attributes('aria-pressed')).toBe('true')
   })
 
   it('clamps shared progress values through the project adapter', () => {
@@ -151,12 +157,14 @@ describe('shared UI foundation', () => {
         title: '无内边距内容',
         headerPadding: '8px',
         headerMinHeight: '42px',
+        contentGap: '0',
         contentPadding: '0',
       },
       slots: { default: '内容' },
     })
     expect(flushDisclosure.get('.base-disclosure__content').attributes('style')).toContain('padding: 0px')
     expect(flushDisclosure.get('.base-disclosure__trigger').attributes('style')).toContain('min-height: 42px')
+    expect(flushDisclosure.attributes('style')).toContain('--base-disclosure-content-gap: 0')
 
     const nav = mount(BaseSideNav, {
       props: {
