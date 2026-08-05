@@ -1,6 +1,6 @@
 # 本地运行页面迁移决策
 
-> 状态：**PG3 已通过（2026-07-30，用户确认采纳推荐方向）**；PG4 初版实现与自动验收已完成，当前仅作阶段性代码封存。真实 Tauri E2E、已发现体验问题和组件架构专项均未关闭，Phase 6-1 尚未完成
+> 状态：**PG3 已通过（2026-07-30，用户确认采纳推荐方向）**；PG4 初版与组件架构自动收口已完成，机器基线为 0。用户体验确认和真实 Tauri E2E 尚未完成，Phase 6-1 仍未关闭
 > 关联评估：[assessment.md](./assessment.md)
 > 产出日期：2026-07-30
 
@@ -253,7 +253,7 @@ Vue 过渡的 `transform: scale` 会让 rect 量到动画中途值（曾误读�
 
 `BaseDialog`（日志弹窗外壳）、`BaseProgress`（进度条）、`BaseInput`（日志搜索框）、`FilterChip`（快捷模块 chip）、`BaseCheckbox`（收藏模块勾选）、`StatusIndicator`（卡片状态点 + 分组「运行中 N」，两处各写过一遍）、`BaseCard`（统计卡 + 项目卡）、`useInterval` + `usePageVisibility`（轮询定时器）、`useInterval`（「已等待」计时器）。
 
-**刻意保留手写**：运行历史 `<table>`（项目无公共表格组件，usage 页 6 处同样手写）、分组折叠触发器 `<button>`（整行可点复合区域，`BaseButton` 承载不了，原生 button 提供正确 `aria-expanded`）、卡片内小容器边框（无对应组件；`BaseBadge` 是语义状态徽标，不适合「vite」「18.20.4」这类中性信息）。
+**PG4 当时刻意保留手写**：运行历史 `<table>` 与分组折叠触发器 `<button>`；在后续组件架构专项建立 `BaseDataTable`、补齐 `BaseDisclosure` 复合标题/actions 契约后，两项已按第 12 节收口。卡片内小容器边框仍是页面内容布局，不属于交互控件或状态徽标。
 
 换 `usePageVisibility` 后有一处真实行为差异：手写版每次轮询实时读 `document.visibilityState`，公共版靠 `visibilitychange` 事件更新（后者更优）。单测已改为派发真实事件，并补了「回到前台恢复对账」断言。
 
@@ -265,12 +265,25 @@ Vue 过渡的 `transform: scale` 会让 rect 量到动画中途值（曾误读�
 
 ### 11.7 遗留待确认
 
-用户报告过一次现象：截图中「运行中」统计从 1 变 2，但第二张卡片仍显示「尚未运行」。**尚未复现与定位**，需在真实 Tauri 下确认是否真有两个服务在跑。若确有，说明卡片与统计的数据源存在不一致，需查 `useRunPage.stats` 与 `store.activeJobs` 的更新时序。
+用户报告过一次现象：截图中「运行中」统计从 1 变 2，但第二张卡片仍显示「尚未运行」。2026-08-03 正式 Sidecar 只读取证发现同一项目同时存在旧 `stopped` 与当前 `running` 两条状态记录；Store 会过滤旧记录并按 `projectName` 归并，新增 E2E 已确认统计与运行卡均为 1。当前未复现错位，但仍需在真实 Tauri 下观察多个真实服务并行时的状态。
 
 ### 11.8 下一步
 
-1. 当前代码按用户要求先创建本地阶段性提交，不代表 Phase 6-1 验收通过，也不推送远端。
-2. 暂停进入新页面，先执行组件架构合规专项：固化规则和自动门禁，补齐公共能力，再逐页收口存量偏差。
-3. 合规基础完成后恢复 Phase 6-1，处理用户已反馈的「页面改完后不太好用」问题，再按第 10 节清单完成真实 Tauri 手动 E2E；不得用当前自动验收结果替代真实进程验收。
-4. Run 和已迁移页面的功能/视觉验收、组件架构验收全部通过后执行全站回归。
+1. 组件架构专项自动基线已按第 12 节归零，但不代表 Phase 6-1 验收通过。
+2. 先由用户在测试前端确认 Run 当前布局、分组折叠和运行历史体验；若仍“不太好用”，回到 PG2/PG3 明确具体改动，不直接扩张为 L2 重设计。
+3. 视觉确认后按第 10 节完成真实 Tauri 手动 E2E；不得用 Playwright 或只读接口结果替代真实进程验收。
+4. Run 的功能/视觉与真实进程验收关闭后执行专项最终全站回归和 Tauri Smoke Test。
 5. 上述门禁全部关闭后才允许进入 Phase 6-2 部署面板；届时删除 `legacy/log-viewer-bridge.ts`，并把 `deploy.js` 里的分组辅助函数、`runningProjects` 全局、`loadRunStatuses` 一并收敛到 Vue store。
+
+## 12. 组件架构自动收口（2026-08-03）
+
+本轮只处理公共组件所有权和已报告状态一致性的回归覆盖，不改变第 1 节冻结的实时链路、进程副作用、端口语义、配置保存或日志行为。
+
+- 统计卡和项目卡接入 `BaseCard contentLayout/fillHeight`，移除两处 `.n-card__content` 与 `:deep()`。
+- 分组折叠接入 `BaseDisclosure card`，标题、数量、运行状态和分组操作保持复合 header/actions 结构。
+- 运行历史接入 `BaseDataTable`，保留模块字段、三档状态、单条删除和清空确认。
+- 正式 Sidecar 只读取证发现同一项目同时返回旧 stopped 与当前 running 记录，新增自动用例确认旧记录不会抬高统计或制造额外运行卡。
+
+Run 的 6 项机器债务全部归零，组件架构专项总基线 6 → 0，批准例外为 0。最新完整回归通过 `npm run lint`、`npm test`（36 个测试文件、191 项测试，另含 4 项架构门禁测试）、`npm run typecheck`、`npm run build:frontend`、`git diff --check`；Run Playwright 13/13 通过。
+
+本轮未调用正式 Sidecar 的启动、停止、重启、批量停止、打开地址、历史删除或强释端口接口。由于内置浏览器重新接管本地标签页被当前安全策略阻止，正式网页视觉验收不声明通过；用户体验确认和第 10 节真实 Tauri E2E 继续保持为独立 Gate。

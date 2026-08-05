@@ -1,6 +1,6 @@
 # 组件架构合规专项
 
-> 状态：规则与自动门禁、首批公共组件能力、通知适配层及 Settings、Home、IpCheck、Notes、Notebook、Todo、Twofa、Usage 八个页面收口已完成；Settings、IpCheck、Notes、Notebook、Todo、Twofa 与 Usage 已通过连接正式 Sidecar 的网页人工验收。当前只剩 Run 专项收口与最终真实 Tauri Smoke Test；在两者和全站回归完成前，不进入 Phase 6-2 Deploy
+> 状态：规则与自动门禁、公共组件能力、通知适配层及全部九个已迁移页面的组件架构自动收口已完成，机器基线与批准例外均为 0；Run 的用户体验确认、真实 Tauri E2E 与专项最终 Tauri Smoke Test 尚未完成。在这些 Gate 关闭前，不进入 Phase 6-2 Deploy
 >
 > 生效范围：`frontend/src/views/**` 及所有后续迁移业务页面。公共组件、适配层和第三方宿主的职责边界以本文为唯一专项入口；原执行计划中的一致规则继续有效，发生歧义时先暂停实现并更新本文。
 
@@ -64,21 +64,21 @@ npm run lint:architecture
 
 ## 6. 2026-08-03 当前存量快照
 
-当前业务页面直接导入第三方 UI、直接网络/IPC 调用、直接 DOM 查询和裸 `setInterval` 均为 0。Settings、Home、IpCheck、Notes、Notebook、Todo、Twofa 与 Usage 收口后，待归零项由 68 个降至 6 个机器计数，且全部位于 Run：
+当前业务页面直接导入第三方 UI、引用第三方内部类、使用 `:deep()`、重复原生交互/正式表格、直接网络/IPC、直接 DOM 查询和裸 `setInterval` 的机器基线均为 0。九个已迁移页面完成逐页收口后，待归零项由 68 个降至 0：
 
 | 类型 | 数量 | 主要页面 |
 | --- | ---: | --- |
-| `.n-*` 第三方内部选择器 | 2 个 selector token | Run |
-| `:deep()` | 2 | Run |
-| 原生基础按钮 | 1 | Run |
-| 原生 `<table>` | 1 | Run |
-| 裸 `setInterval` | 0 | Usage 已归零 |
+| `.n-*` 第三方内部选择器 | 0 | Run 已归零 |
+| `:deep()` | 0 | Run 已归零 |
+| 原生基础按钮 | 0 | Run 已归零 |
+| 原生 `<table>` | 0 | Run 已归零 |
+| 裸 `setInterval` | 0 | Twofa、Usage 已归零 |
 | 直接 DOM 查询 | 0 | Home 已归零 |
 
 无法可靠静态判断、必须人工验收的已知项：
 
-- Run 的折叠模式是否统一。
-- 页面是否遗漏已有公共组件，以及第二个相同模式是否已出现。
+- Run 的真实进程状态、折叠/表格视觉与用户此前“不太好用”反馈是否在真实 Tauri 中关闭。
+- 后续新页面是否遗漏已有公共组件，以及第二个相同模式是否已出现。
 
 ## 7. 页面架构验收清单
 
@@ -135,9 +135,10 @@ npm run lint:architecture
 | `BaseSideNav` | 项目 items/value/caption 契约，内部使用 NMenu | Settings 分类导航 |
 | `BaseProgress circle` | shape、size、strokeWidth、indicator slot | Twofa 倒计时环 |
 | `BaseCard` 布局 | contentLayout、contentOverflow、fillHeight | Notes、Notebook、Todo、Usage、Run 卡片内部布局 |
+| `BaseEntityCard` | icon/title/subtitle/badge/meta/body/status/actions/details、default/compact、受控详情与 ARIA | Twofa 账号卡；Deploy 项目卡待 Phase 6-2 接入 |
 | `BaseInput/BaseTextarea` 编辑变体 | plain/title/editor、autosize、fillHeight、resize | Notes 标题与正文、Notebook/Todo 编辑区域 |
 
-所有新增能力均已进入 `UiFoundationPreview.vue`，组件 smoke test 覆盖表格渲染、折叠事件、侧边导航事件、环形进度和布局变体。
+所有新增能力均已进入 `UiFoundationPreview.vue`，组件 smoke test 覆盖表格渲染、折叠事件、侧边导航事件、环形进度、结构化实体卡片和布局变体。
 
 内置浏览器已验证亮色、暗色与 900×600：新增区域无横向溢出，表格、环形进度和侧边导航显示正常；折叠触发器实测为原生语义按钮，具备 `aria-expanded`/`aria-controls`，展开与收起状态一致。控制台仅有迁移前已知的 CodeMirror `defineSimpleMode` 错误，没有新增组件错误。
 
@@ -245,7 +246,7 @@ Todo 的 13 项机器债务全部归零：第三方内部选择器 9 → 0、原
 Twofa 的机器债务包括 4 个原生按钮和 3 个裸 `setInterval`。人工复核还确认分组筛选、分组/账号折叠与圆形倒计时已经有项目公共契约，但页面仍保留平行实现；账号行使用 `role="button"` 包裹复制按钮，存在嵌套交互语义冲突。
 
 - 工具栏分组与账号弹窗的分组建议接入 `FilterChip`；公共组件补齐 `ariaLabel`、button role 与 `aria-pressed`，统一数量、选中态及键盘语义。
-- 分组和账号详情接入 `BaseDisclosure plain/card`。复制操作进入 actions slot，与展开触发器互为同级；公共组件补齐 contentGap 契约，页面不穿透 Naive 内部结构即可让分组列表和行内详情紧贴标题栏。
+- 分组接入 `BaseDisclosure plain`；账号详情最初接入公共折叠能力，后续真实 Tauri 视觉回归按第 21 节提升为 `BaseEntityCard`。复制操作与详情触发器保持同级，页面不再维护嵌套交互结构。
 - 账号行与常用卡片的手写 SVG 环改用 `BaseProgress circle`；常用卡片接入 `BaseSelectableItem`。验证码、发行方、标签和响应式排布仍由 Twofa 页面负责。
 - `useInterval` 增加 `autoStart` 生命周期契约，快捷查询仅在已有查询结果时手动启动；页面轮询和倒计时统一由 composable 负责暂停、恢复与卸载清理。
 - `PageFrame` 改用已有 immersive 变体，搜索接入 search 变体，不再覆盖 PageFrame 内部结构或维护重复输入表面。
@@ -271,3 +272,62 @@ Usage 的 10 项机器债务全部归零：原生按钮 1 → 0、原生表格 6
 完整自动回归通过：`npm run lint`、`npm test`（36 个测试文件 / 190 项单元与组件测试 + 架构门禁 4 项）、`npm run typecheck`、`npm run build:frontend`、`git diff --check`；生产构建仅保留迁移前既有 legacy script/CSS 提示。
 
 正式 Sidecar 网页验收使用 `http://127.0.0.1:1420/?apiPort=13456`。1280×720 和 900×600 下项目排名、高用量请求与模型统计三个公共数据表区域均正常存在，页面与文档无横向溢出。验收只执行正常页面加载和布局检查，未点击重新扫描、价格同步、保存或导入；但 Usage 的普通 GET 查询可能触发节流增量扫描并更新正式用量库或扫描游标，因此该验收不声明为严格只读，也不替代专项最终真实 Tauri Smoke Test。
+
+## 20. Run 页面组件架构收口记录（2026-08-03）
+
+Run 是专项最后一个存量页面，剩余 6 项机器债务包括 2 个 Naive 内部选择器、2 个 `:deep()`、1 个分组原生按钮和 1 个运行历史原生表格。人工复核确认实时状态、进程操作、端口释放、配置表单、日志弹窗和定时器已经有明确的 Store、Service、公共组件及 composable 所有权，本轮不改这些高风险业务契约。
+
+- 三张统计卡与项目卡使用 `BaseCard contentLayout/fillHeight`，页面不再穿透 `.n-card__content`。
+- 项目分组接入 `BaseDisclosure card`，复合标题、运行中状态和上移/下移/重命名 actions 保持原位置；展开状态、键盘和 ARIA 由公共组件统一负责。
+- 运行历史接入 `BaseDataTable`，保留最近 100 条、三档状态、模块字段、单条删除和清空确认；表格横向滚动收在组件内部。
+- 正式 Sidecar 只读接口取证发现同一项目会同时返回旧 `stopped` 与当前 `running` 记录，新增 E2E 断言确认旧记录不会抬高“运行中”统计，统计值与运行项目卡保持一致。
+
+Run 的 6 项机器债务全部归零，专项总基线 6 → 0，批准例外仍为 0。最新完整自动回归通过：`npm run lint`、`npm test`（36 个测试文件 / 191 项单元与组件测试 + 架构门禁 4 项）、`npm run typecheck`、`npm run build:frontend`、`git diff --check`；Run Playwright 13/13 通过，覆盖分组公共折叠、历史公共表格、宽窄窗口、亮暗主题和统计/卡片一致性。
+
+本轮没有把架构收口扩大为未经 PG2/PG3 确认的弹窗或页面重设计。正式 Sidecar 只读接口确认当前 10 个项目，状态接口包含同一项目的 1 条旧 stopped 与 1 条当前 running 记录；未调用任何启动、停止、重启、批量停止、打开地址、删除历史或强释端口接口。内置浏览器重新接管本地标签页被当前安全策略阻止，因此不虚构正式网页视觉验收；Run 的用户体验确认与真实 Tauri 第 10 节清单仍是独立未关闭 Gate。
+
+## 21. 专项跨页真实 Tauri 回归记录（2026-08-03）
+
+用户在真实软件中完成本轮已优化页面的第一轮跨页验收：S1 首页、S2 设置、S3 纯净检测、S4 工时内容、S5 个人笔记、S6 待办事项和 S8 用量统计均通过。S7 双因验证功能可用，但宽窗口账号卡片横向铺满、验证码区与身份区过度分离、展开详情松散，视觉验收未通过。
+
+S7 首轮双列长条方案仍未达到用户给出的 Deploy 卡片参考。复核确认 Twofa 账号与旧 Deploy 项目都属于“图标、标题、副标题、徽标、主体、状态、操作、可展开详情”的结构化实体卡片语义，但项目此前只有通用 `BaseCard` 外壳；旧 Deploy `.project-card` 仍是 `deploy.js + deploy.css` 的 legacy 手写实现，并非可供 Vue 页面复用的公共组件。
+
+按公共能力先行规则新增 `BaseEntityCard`：内部复用 `BaseCard` 和项目按钮，统一 icon/title/subtitle/badge/meta/body/status/actions/details、default/compact、受控详情、焦点与 ARIA 契约；组件预览和 smoke test 先通过后，Twofa 才接入。账号列表现在按宽/中/窄窗口使用 3/2/1 列实体卡片，验证码与倒计时成为卡片主体，周期状态和详情/复制进入稳定底部区域。`BaseDisclosure` 同步修正标题区与附加操作的 flex 收缩契约，避免右侧按钮被裁切。旧 Deploy 页面本轮不改，Phase 6-2 Vue 迁移时直接消费公共卡片。
+
+定向组件 smoke test 12/12 与 Twofa Playwright 12/12 通过；新增 1600×900 E2E 覆盖三列实体卡片、公共组件接入和横向溢出，并保留 900×600、亮暗主题、筛选、详情、复制、编辑/收藏/删除确认、快捷查询和导入覆盖。完整回归通过 `npm run lint`、`npm test`（36 个测试文件 / 191 项测试，另含架构门禁 4 项）、`npm run typecheck`、`npm run build:frontend`、Run + Twofa Playwright 25/25 与 `git diff --check`。S7 仍需用户在真实 Tauri 中复测；Run 的独立体验与真实进程 E2E 仍按既定顺序待执行，因此本记录不是专项最终 Smoke Test 通过结论。
+
+## 22. Twofa 卡片与分组标题视觉收口记录（2026-08-05）
+
+第 21 节的 `BaseEntityCard` 接入解决了长条铺满问题，但用户在真实软件复测后指出卡片本体与分组标题的样式仍不够精致。本轮先用静态 HTML 原型呈现完整页面效果（同一页内切换卡片风格、分组标题风格、明暗主题与宽/中/窄列数），由用户在真实视觉下选定「卡片 C 细线进度 + 分组标题 2 eyebrow」，再按 CA-09 顺序落到公共组件。
+
+诊断出三处具体问题：账号卡片被分隔线切成四段，其中「30 秒周期 · 本机生成」是满宽带边框浅底长条，视觉最重而信息量最低，形成框中框；验证码与倒计时环被 `space-between` 推到两端，中间留出大片空白；分组标题是 11px 灰字加 mono 小数字、箭头贴容器左边，标题与下方卡片没有归属关系。
+
+公共组件先行扩展，页面最后接入：
+
+- `BaseEntityCard` 新增 `statusPlacement`，`footer` 把低信息量状态文案降级为底部说明位，卡片结构从四段收敛到两段；同一状态插槽只渲染一次，底部状态存在时详情与操作收进右侧控制组。
+- `BaseEntityCard` 新增 `bodyAlign`，`stretch` 支持「验证码 + 进度线」这类多行纵向主体自行铺满宽度。
+- `BaseEntityCard` 新增 `headerExtra` 插槽承载标签等头部尾随内容，标签不再参与标题省略号计算。
+- `BaseEntityCard` 去掉 `min-height` 硬编码，卡片高度由内容决定；补 hover 抬升；compact 只压缩纵向节奏，左右内边距与 default 统一为 16px，同一网格里的卡片保持对齐基线。
+- `BaseProgress` 新增 `rail` 轨道对比度契约。1~2px 细线在 `--color-surface-subtle`（4% 透明度）轨道上几乎看不见，会被误读成线断了，`visible` 改用 `--color-border`。
+
+Twofa 页面接入：账号卡片的圆环倒计时改为 `BaseProgress shape="line" rail="visible"`，剩余秒数以文字形式紧跟验证码，卡片内不再有纯装饰圆形；常用卡片保留圆环。头像去掉外边框只留极淡底，尺寸 38→34px，常用卡片头像独立收窄到 30px。分组标题按 eyebrow 处理，数量用 mono 小字，`::after` 延伸一条细线划开分组区间，组间 `space-5` 大于组内 `space-3` 形成「紧内松外」。分组网格改用 `align-items: start`，避免展开单张卡片时把同排未展开的卡片拉高留出空白。
+
+公共组件与页面所有定制均通过公开 props、插槽与根节点 class 完成，页面 CSS 不写公共组件的内部 BEM 类，也没有新增 `.n-*` 或 `:deep()`。
+
+组件 smoke test 新增底部状态与 stretch 主体契约断言，共 13/14 项通过；Twofa Playwright 从 12 项扩到 14 项，新增断言覆盖「状态不在带框面板内」「进度线宽度等于卡片内容宽度」「展开单张卡片不拉伸同排卡片」，并把 `openTwofa` 的倒计时断言改为账号卡片 5 条线形加常用卡片 2 个圆环。
+
+完整自动回归通过：`npm run lint`、`npm test`（36 个测试文件 / 192 项单元与组件测试 + 架构门禁 4 项）、`npm run typecheck`、`npm run build:frontend`、Run + Twofa Playwright 25/25（新增 2 项后为 27 项）。组件架构基线仍为 0，批准例外 0。
+
+本轮视觉验收使用 Playwright 在 1600×950、1280×800、900×600 三个尺寸抓取亮暗主题与展开态截图自查，确认进度线贯通、底部状态无边框、暗色和谐、窄窗口单列无横向溢出；截图为临时产物已删除，未提交仓库。S7 仍需用户在真实 Tauri 中复测确认，Run 的独立体验与真实进程 E2E 仍按既定顺序待执行，本记录不是专项最终 Smoke Test 通过结论。
+
+## 23. Twofa 详情箭头与倒计时动画细节修复（2026-08-05）
+
+用户在真实软件确认第 22 节的卡片与分组标题效果全部通过，同时指出两处细节：详情按钮的箭头在折叠态偏下、展开后才回到居中；进度线按秒闪烁而不是线性推进。两处根因都在公共组件，不在页面。
+
+- 箭头原本用 `›` 文字字符。字形自带基线偏移使图标视觉偏下，且旋转后外接盒随之变化，折叠与展开两个状态无法对齐。改为 12×12 定尺 inline SVG，`flex: 0 0 auto` 固定盒子；实测两个状态的边界盒均为 12×12、与按钮垂直中心偏移 0。
+- 组件库对进度填充使用 `max-width .2s var(--n-bezier)`。倒计时每秒 tick 一次，填充会在 200ms 内急冲 1/30 再静止 800ms，观感即为闪烁。`BaseProgress` 新增 `tickInterval` 公开契约：传入 value 的更新间隔后，填充过渡拉长到整个节拍并改为 `linear`，线形与环形同时适用，并在 `prefers-reduced-motion` 下退化。
+- 该覆盖属于受控第三方适配，按 CA-03 只允许放在公共封装层。组件库的过渡规则是五层选择器，`:deep()` 必须匹配同样深度才能提权；重复类名的写法权重不足，已改为完整层级链。实测线形为 `max-width 1s linear`、环形为 `stroke-dasharray 1s linear`。
+
+Twofa 账号卡片的细线与常用卡片的圆环均传入 `tickInterval=1000`，与 `useTwofa` 里 1 秒的 tick 定时器一致。公共能力已同步共享清单、组件预览与 smoke test；新增断言覆盖 ticking class、CSS 变量注入以及箭头必须是 SVG 元素。
+
+完整自动回归通过：`npm run lint`、`npm test`（36 个测试文件 / 193 项单元与组件测试 + 架构门禁 4 项）、`npm run typecheck`、`npm run build:frontend`、Run + Twofa Playwright 27/27。组件架构基线仍为 0，批准例外 0。第 22 节的四项视觉结论与本节两项细节均已由用户在真实 Tauri 中确认，S7 双因验证视觉验收至此关闭；Run 的独立体验与真实进程 E2E 仍按既定顺序待执行。
