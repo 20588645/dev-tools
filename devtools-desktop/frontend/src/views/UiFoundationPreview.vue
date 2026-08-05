@@ -4,6 +4,7 @@ import { computed, ref } from 'vue'
 import BaseBadge from '@/components/base/BaseBadge.vue'
 import BaseButton from '@/components/base/BaseButton.vue'
 import BaseCard from '@/components/base/BaseCard.vue'
+import BaseEntityCard from '@/components/base/BaseEntityCard.vue'
 import BaseIconButton from '@/components/base/BaseIconButton.vue'
 import BaseProgress from '@/components/base/BaseProgress.vue'
 import BaseSelectableItem from '@/components/base/BaseSelectableItem.vue'
@@ -58,6 +59,8 @@ const switchValue = ref(true)
 const segmentedValue = ref('全部')
 const filterSelected = ref(true)
 const disclosureOpen = ref(true)
+const entityCardOpen = ref(false)
+const entityCardFooterOpen = ref(false)
 const sideNavValue = ref('general')
 
 type PreviewTableRow = BaseDataTableRow & {
@@ -131,12 +134,56 @@ const previewTableRowKey = (row: PreviewTableRow) => row.name
       </PageSection>
 
       <PageSection title="卡片与弹窗">
-        <BaseCard variant="subtle" interactive>
-          <div class="card-preview">
-            <div><strong>可交互卡片</strong><p>所有公共展示组件从语义 Token 读取颜色和间距。</p></div>
-            <BaseButton size="sm" @click="dialogOpen = true">打开弹窗</BaseButton>
-          </div>
-        </BaseCard>
+        <div class="foundation-card-grid">
+          <BaseCard variant="subtle" interactive>
+            <div class="card-preview">
+              <div><strong>可交互卡片</strong><p>所有公共展示组件从语义 Token 读取颜色和间距。</p></div>
+              <BaseButton size="sm" @click="dialogOpen = true">打开弹窗</BaseButton>
+            </div>
+          </BaseCard>
+          <BaseEntityCard
+            v-model="entityCardOpen"
+            aria-label="实体卡片预览"
+            details-label="项目详情"
+          >
+            <template #icon>📦</template>
+            <template #title>personalTools</template>
+            <template #badge><BaseBadge tone="info">多模块</BaseBadge></template>
+            <template #subtitle>Webpack · Node v22.22.12</template>
+            <strong>13 个模块</strong>
+            <template #status>● 已配置 2 台服务器</template>
+            <template #actions><BaseButton size="sm" variant="secondary">执行操作</BaseButton></template>
+            <template #details>结构化实体卡片统一标题、状态、操作和可展开详情。</template>
+          </BaseEntityCard>
+          <BaseEntityCard
+            v-model="entityCardFooterOpen"
+            aria-label="底部状态实体卡片预览"
+            density="compact"
+            status-placement="footer"
+            body-align="stretch"
+            details-label="详情"
+          >
+            <template #icon>🔐</template>
+            <template #title>GitHub</template>
+            <template #headerExtra><BaseBadge>工作</BaseBadge></template>
+            <template #subtitle>user@example.com</template>
+            <div class="entity-card-preview__body">
+              <strong class="entity-card-preview__code">487 432</strong>
+              <BaseProgress
+                :value="62"
+                tone="info"
+                :stroke-width="2"
+                :show-indicator="false"
+                rail="visible"
+                :tick-interval="1000"
+                label="剩余 19 秒"
+              />
+            </div>
+            <template #status>30 秒周期 · 本机生成</template>
+            <template #actions><BaseButton size="sm" variant="secondary">复制</BaseButton></template>
+            <template #details>状态降级到底部说明位，主体多行纵向铺满。</template>
+          </BaseEntityCard>
+        </div>
       </PageSection>
 
       <PageSection title="表单控件">
@@ -265,7 +312,10 @@ const previewTableRowKey = (row: PreviewTableRow) => row.name
 .selectable-preview { max-width: 360px; margin-top: var(--space-4); gap: var(--space-1); }
 .selectable-preview strong { font-size: var(--font-size-sm); }
 .selectable-preview span { color: var(--color-text-muted); font-size: var(--font-size-xs); }
+.foundation-card-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); align-items: start; }
 .card-preview { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); }
+.entity-card-preview__body { width: 100%; min-width: 0; }
+.entity-card-preview__code { display: block; margin-bottom: var(--space-3); color: var(--color-text); font-family: var(--font-family-mono); font-size: 26px; font-variant-numeric: tabular-nums; letter-spacing: .08em; }
 .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
 .choice-stack { display: grid; align-content: start; gap: var(--space-3); }
 .navigation-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
@@ -277,5 +327,5 @@ strong { color: var(--color-text); font-size: var(--font-size-lg); }
 p { margin: var(--space-2) 0 0; color: var(--color-text-muted); font-size: var(--font-size-sm); line-height: var(--line-height-relaxed); }
 .dialog-copy { margin: 0; }
 @media (max-width: 900px) { .foundation-pattern-grid { grid-template-columns: 1fr; } }
-@media (max-width: 720px) { .card-preview { align-items: flex-start; flex-direction: column; } .form-grid { grid-template-columns: 1fr; } }
+@media (max-width: 720px) { .foundation-card-grid { grid-template-columns: 1fr; } .card-preview { align-items: flex-start; flex-direction: column; } .form-grid { grid-template-columns: 1fr; } }
 </style>

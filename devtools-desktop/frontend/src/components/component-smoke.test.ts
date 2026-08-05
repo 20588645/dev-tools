@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest'
 import '@/styles/tokens/index.css'
 import BaseButton from './base/BaseButton.vue'
 import BaseCard from './base/BaseCard.vue'
+import BaseEntityCard from './base/BaseEntityCard.vue'
 import BaseSelectableItem from './base/BaseSelectableItem.vue'
 import BaseDialog from './feedback/BaseDialog.vue'
 import AppToastHost from './feedback/AppToastHost.vue'
@@ -49,6 +50,62 @@ describe('shared UI foundation', () => {
     expect(wrapper.get('button').attributes('aria-pressed')).toBe('true')
     await wrapper.trigger('click')
     expect(wrapper.emitted('click')).toHaveLength(1)
+  })
+
+  it('provides a structured entity card with accessible expandable details', async () => {
+    const wrapper = mount(BaseEntityCard, {
+      props: {
+        modelValue: false,
+        ariaLabel: '账号卡片',
+        detailsLabel: '账号详情',
+        detailsAriaLabel: '展开账号详情',
+      },
+      slots: {
+        icon: 'A',
+        title: 'GitHub',
+        subtitle: 'user@example.com',
+        default: '123 456',
+        status: '30 秒周期',
+        actions: '<button type="button">复制</button>',
+        details: 'SHA1 · 6 位',
+      },
+    })
+
+    expect(wrapper.attributes('aria-label')).toBe('账号卡片')
+    expect(wrapper.text()).toContain('GitHub')
+    expect(wrapper.text()).toContain('30 秒周期')
+    // 默认状态是独立面板，不在底部说明位
+    expect(wrapper.find('.base-entity-card__status').exists()).toBe(true)
+    expect(wrapper.find('.base-entity-card__footer-status').exists()).toBe(false)
+    expect(wrapper.get('.base-entity-card__details-trigger').attributes('aria-expanded')).toBe('false')
+    expect(wrapper.get('.base-entity-card__details-trigger').attributes('aria-label')).toBe('展开账号详情')
+    await wrapper.get('.base-entity-card__details-trigger').trigger('click')
+    expect(wrapper.emitted('update:modelValue')).toContainEqual([true])
+  })
+
+  it('moves entity card status into the footer and stretches the body on request', () => {
+    const wrapper = mount(BaseEntityCard, {
+      props: { statusPlacement: 'footer', bodyAlign: 'stretch' },
+      slots: {
+        icon: 'A',
+        title: 'GitHub',
+        headerExtra: '<span data-test="tag">工作</span>',
+        default: '123 456',
+        status: '30 秒周期',
+        actions: '<button type="button">复制</button>',
+        details: 'SHA1 · 6 位',
+      },
+    })
+
+    // 状态只渲染一次，且落在底部说明位而不是独立面板
+    expect(wrapper.find('.base-entity-card__status').exists()).toBe(false)
+    expect(wrapper.get('.base-entity-card__footer-status').text()).toBe('30 秒周期')
+    expect(wrapper.get('.base-entity-card__body').classes()).toContain('base-entity-card__body--stretch')
+    expect(wrapper.get('.base-entity-card__header-extra').text()).toBe('工作')
+    // 底部状态占位时，详情与操作收在右侧同一控制组里
+    expect(wrapper.find('.base-entity-card__footer-controls .base-entity-card__details-trigger').exists()).toBe(true)
+    // 箭头必须是固定尺寸的 SVG：文字字形会带基线偏移，展开前后位置对不齐
+    expect(wrapper.get('.base-entity-card__details-arrow').element.tagName.toLowerCase()).toBe('svg')
   })
 
   it('keeps page top outside the scrollable body slot', () => {
@@ -120,6 +177,17 @@ describe('shared UI foundation', () => {
     })
     expect(circle.classes()).toContain('base-progress--circle')
     expect(circle.text()).toContain('32s')
+  })
+
+  it('paces progress fills over the tick interval instead of jumping per update', () => {
+    const steady = mount(BaseProgress, { props: { value: 60 } })
+    expect(steady.classes()).not.toContain('base-progress--ticking')
+
+    const ticking = mount(BaseProgress, {
+      props: { value: 60, rail: 'visible', tickInterval: 1000 },
+    })
+    expect(ticking.classes()).toContain('base-progress--ticking')
+    expect(ticking.attributes('style')).toContain('--base-progress-tick: 1000ms')
   })
 
   it('provides project-owned data table, disclosure, and side navigation contracts', async () => {

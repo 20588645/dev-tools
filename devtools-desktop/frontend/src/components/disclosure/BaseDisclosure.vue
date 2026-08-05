@@ -112,8 +112,9 @@ function updateExpanded(names: string | number | Array<string | number> | null) 
 .base-disclosure__trigger {
   display: flex;
   align-items: center;
-  width: 100%;
+  width: auto;
   min-width: 0;
+  flex: 1 1 auto;
   padding: 0;
   border: 0;
   background: transparent;
@@ -135,12 +136,22 @@ function updateExpanded(names: string | number | Array<string | number> | null) 
 
 .base-disclosure__actions {
   display: flex;
+  min-width: max-content;
+  flex: 0 0 auto;
   gap: var(--space-1);
   align-items: center;
 }
 
 .base-disclosure__content {
   min-width: 0;
+}
+
+.base-disclosure.base-disclosure :deep(.n-collapse-item__header-main) {
+  min-width: 0;
+}
+
+.base-disclosure.base-disclosure :deep(.n-collapse-item__header-extra) {
+  flex: 0 0 auto;
 }
 
 .base-disclosure.base-disclosure :deep(.n-collapse-item__content-inner) {
