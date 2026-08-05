@@ -44,6 +44,7 @@ function countdownValue(account: TwofaAccount) {
           :stroke-width="10"
           :value="countdownValue(account)"
           :tone="remainingOf(account) <= 5 ? 'warning' : 'info'"
+          :tick-interval="1000"
           :label="`剩余 ${remainingOf(account)} 秒`"
         >
           <span class="twofa-countdown__value">{{ remainingOf(account) }}</span>

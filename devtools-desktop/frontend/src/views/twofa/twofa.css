@@ -111,6 +111,14 @@
   grid-template-columns: 30px minmax(0, 1fr) auto;
 }
 
+/* 常用卡是紧凑行，头像跟着列宽收窄，不跟随账号卡片的尺寸 */
+.twofa-pinned__card .twofa-avatar {
+  width: 30px;
+  height: 30px;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+}
+
 .twofa-pinned__meta {
   min-width: 0;
 }
@@ -138,76 +146,75 @@
 }
 
 /* ---------- 分组 ---------- */
+/* 组间比组内松：让「标题 + 卡片」成为一个视觉整体 */
 .twofa-groups {
   display: grid;
-  gap: var(--space-3);
+  gap: var(--space-5);
 }
 
+/*
+  分组标题按 eyebrow 处理：弱化标题本身让账号卡片当主角，
+  右侧延伸一条细线把分组区间划开，避免标题和下方卡片没有归属关系。
+*/
 .twofa-group__label {
   display: flex;
   width: 100%;
   align-items: center;
   gap: var(--space-2);
-  color: var(--color-text-muted);
-  font-size: var(--font-size-xs);
 }
 
 .twofa-group__label b {
-  color: var(--color-text);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
+  letter-spacing: .06em;
+  white-space: nowrap;
 }
 
-.twofa-group__label > span:last-child {
+.twofa-group__label > span {
+  flex-shrink: 0;
   color: var(--color-text-subtle);
   font-family: var(--font-family-mono);
   font-size: 10px;
+  font-variant-numeric: tabular-nums;
 }
 
+.twofa-group__label::after {
+  flex: 1 1 auto;
+  height: 1px;
+  background: var(--color-border);
+  content: "";
+}
+
+/*
+  用 start 而不是 stretch：展开的是卡片内联详情，
+  拉伸同排卡片只会在未展开的卡片里留出大片空白。
+*/
 .twofa-group__rows {
   display: grid;
-  gap: 5px;
-}
-
-/* ---------- 账号行 ---------- */
-.twofa-row-shell.base-disclosure {
-  min-width: 0;
-  overflow: hidden;
-  background: var(--color-surface);
-}
-
-.twofa-row-shell.base-disclosure:hover {
-  border-color: var(--color-border-strong);
-}
-
-.twofa-row-shell.is-open {
-  border-color: color-mix(in srgb, var(--color-action) 60%, var(--color-border));
-}
-
-.twofa-row {
-  display: grid;
-  width: 100%;
-  min-width: 0;
-  align-items: center;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--space-3);
-  grid-template-columns: 32px minmax(0, 1fr) auto auto;
+  align-items: start;
+  margin-top: var(--space-3);
 }
 
+/* ---------- 账号实体卡片 ---------- */
+.twofa-row-shell {
+  min-width: 0;
+}
+
+/* 去掉外边框只留极淡底：头像是身份标识，不需要再画一个框 */
 .twofa-avatar {
   display: grid;
-  width: 30px;
-  height: 30px;
+  width: 34px;
+  height: 34px;
   flex-shrink: 0;
   place-items: center;
-  color: var(--color-text-muted);
+  color: var(--color-text);
   background: var(--color-surface-subtle);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  font-size: var(--font-size-xs);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
-}
-
-.twofa-row__meta {
-  min-width: 0;
 }
 
 .twofa-row__title {
@@ -219,9 +226,6 @@
 
 .twofa-row__issuer {
   overflow: hidden;
-  color: var(--color-text);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -242,28 +246,51 @@
   white-space: nowrap;
 }
 
-.twofa-row__account {
-  display: block;
-  overflow: hidden;
-  margin-top: 2px;
-  color: var(--color-text-subtle);
-  font-size: 10px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.twofa-row__countdown {
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
-/* 验证码是行内主信息，字号最大 */
+.twofa-row__code-line {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+/* 验证码是实体卡片的主信息，剩余秒数以文字形式紧跟其后 */
 .twofa-row__code {
+  min-width: 0;
   color: var(--color-text);
   font-family: var(--font-family-mono);
-  font-size: 21px;
+  font-size: 26px;
   font-variant-numeric: tabular-nums;
-  font-weight: var(--font-weight-semibold);
-  letter-spacing: .1em;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: .08em;
+  line-height: 1.05;
   white-space: nowrap;
 }
 
-/* ---------- 倒计时环 ---------- */
+.twofa-row__seconds {
+  flex-shrink: 0;
+  color: var(--color-text-subtle);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.twofa-row__seconds.is-warning {
+  color: var(--color-warning);
+}
+
+/* 账号卡片用线形倒计时 */
+.twofa-row__bar {
+  margin-top: var(--space-3);
+}
+
+/* ---------- 常用卡片的倒计时环 ---------- */
 .twofa-countdown {
   flex-shrink: 0;
 }
@@ -271,7 +298,7 @@
 .twofa-countdown__value {
   color: var(--color-text-subtle);
   font-family: var(--font-family-mono);
-  font-size: 9px;
+  font-size: 10px;
   font-variant-numeric: tabular-nums;
 }
 
@@ -279,21 +306,27 @@
 .twofa-detail {
   display: grid;
   gap: var(--space-3);
-  padding: var(--space-3) 0 13px;
-  border-top: 1px solid var(--color-border);
+  padding-top: var(--space-3);
 }
 
 .twofa-detail__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
-  gap: 11px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
   margin: 0;
+}
+
+.twofa-detail__grid > div {
+  min-width: 0;
+  padding: 9px 10px;
+  border-radius: 8px;
+  background: var(--color-surface-subtle);
 }
 
 .twofa-detail__grid dt {
   margin-bottom: 3px;
   color: var(--color-text-subtle);
-  font-size: 9px;
+  font-size: 10px;
 }
 
 .twofa-detail__grid dd {
@@ -308,7 +341,20 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-end;
   gap: var(--space-2);
+}
+
+@media (max-width: 1280px) {
+  .twofa-group__rows {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 820px) {
+  .twofa-group__rows {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 /* ---------- 弹窗内容 ---------- */
@@ -492,32 +538,8 @@
     letter-spacing: .06em;
   }
 
-  /* 账号行收敛为两行，验证码独占一行，避免横向溢出 */
-  .twofa-row {
-    grid-template-areas:
-      "avatar meta"
-      "code code";
-    grid-template-columns: 28px minmax(0, 1fr);
-    row-gap: 9px;
-  }
-
-  .twofa-row .twofa-avatar {
-    width: 28px;
-    height: 28px;
-    grid-area: avatar;
-  }
-
-  .twofa-row__meta {
-    grid-area: meta;
-  }
-
   .twofa-row__code {
-    font-size: 19px;
-    grid-area: code;
-  }
-
-  .twofa-row .twofa-countdown {
-    display: none;
+    font-size: 23px;
   }
 
   .twofa-detail__grid {
