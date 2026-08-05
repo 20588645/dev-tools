@@ -57,7 +57,12 @@ function onRunningMenuSelect(key: string) {
 </script>
 
 <template>
-  <BaseCard class="run-card" :data-project="project.name">
+  <BaseCard
+    class="run-card"
+    :data-project="project.name"
+    content-layout="column"
+    fill-height
+  >
     <header class="run-card__head">
       <h3 class="run-card__title" :title="project.displayName">
         <span aria-hidden="true">{{ isMulti ? '📦' : '📄' }}</span>
@@ -127,11 +132,8 @@ function onRunningMenuSelect(key: string) {
 </template>
 
 <style scoped>
-.run-card :deep(.n-card__content) {
-  display: flex;
-  flex-direction: column;
+.run-card {
   gap: var(--space-2);
-  height: 100%;
 }
 
 .run-card__head {

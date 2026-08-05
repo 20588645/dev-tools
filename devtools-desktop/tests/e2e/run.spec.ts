@@ -228,6 +228,21 @@ test('keeps running-card actions on one row', async ({ page }) => {
   expect(new Set(tops).size).toBe(1)
 })
 
+test('keeps the running total aligned when an older stopped job is also returned', async ({ page }) => {
+  const mock = await mockRun(page)
+  mock.setStatuses([
+    buildJob({ id: 'run-old', status: 'stopped', stoppedAt: Date.now() - 1_000 }),
+    buildJob({ id: 'run-current', status: 'running' }),
+  ])
+  await page.goto('/?apiPort=13900')
+  await page.locator('.sidebar-item[data-page="run"]').click()
+
+  const runningStat = page.locator('.run-stats__card').filter({ hasText: '运行中' })
+  await expect(runningStat.locator('strong')).toHaveText('1')
+  await expect(page.locator('.run-card__state[data-tone="active"]')).toHaveCount(1)
+  await expect(page.locator('.run-card[data-project="b8seed-portal"] .run-card__state')).toHaveAttribute('data-tone', 'active')
+})
+
 test('warns with full process details before force-releasing a port', async ({ page }) => {
   const mock = await mockRun(page)
   // 启动失败并报端口被外部进程占用 → 进入诊断与强释确认
@@ -291,7 +306,9 @@ test('shows real modules and all three history status tiers', async ({ page }) =
   await page.locator('#page-run .page-toolbar button').last().click()
   await page.getByText('📋 运行历史').click()
 
-  const rows = page.locator('.run-history__table tbody tr')
+  const table = page.getByRole('region', { name: '本地运行历史' })
+  const rows = table.getByRole('row').filter({ has: page.getByRole('cell') })
+  await expect(table).toBeVisible()
   await expect(rows).toHaveCount(3)
   // F1：旧实现读错字段名，模块列恒为「—」
   await expect(rows.filter({ hasText: 'b8seed-portal' })).toContainText('home, admin')
@@ -321,7 +338,10 @@ test('renders groups with collapse and ordering, ungrouped last', async ({ page 
 
   const first = groups.first()
   await expect(first.locator('.run-group__body')).toBeVisible()
-  await first.locator('.run-group__toggle').click()
+  const disclosure = first.locator('button[aria-expanded]')
+  await expect(disclosure).toHaveAttribute('aria-expanded', 'true')
+  await disclosure.click()
+  await expect(disclosure).toHaveAttribute('aria-expanded', 'false')
   await expect(first.locator('.run-group__body')).toBeHidden()
   // 折叠态存 localStorage，纯视图偏好不入库
   const collapsed = await page.evaluate(() => localStorage.getItem('runCollapsedGroups'))

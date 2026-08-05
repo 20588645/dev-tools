@@ -5,20 +5,10 @@
   "exceptions": [],
   "baseline": {
     "third-party-ui-import": {},
-    "naive-internal-selector": {
-      "frontend/src/views/run/RunView.vue": 1,
-      "frontend/src/views/run/components/RunProjectCard.vue": 1
-    },
-    "deep-selector": {
-      "frontend/src/views/run/RunView.vue": 1,
-      "frontend/src/views/run/components/RunProjectCard.vue": 1
-    },
-    "native-control": {
-      "frontend/src/views/run/components/RunGroupSection.vue": 1
-    },
-    "native-table": {
-      "frontend/src/views/run/components/RunHistoryDialog.vue": 1
-    },
+    "naive-internal-selector": {},
+    "deep-selector": {},
+    "native-control": {},
+    "native-table": {},
     "direct-interval": {},
     "view-network-or-ipc": {},
     "document-query": {}

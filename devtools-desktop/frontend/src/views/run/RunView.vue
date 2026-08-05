@@ -245,13 +245,13 @@ onActivated(() => { void page.load({ silent: true }) })
 
     <template v-else>
       <div class="run-stats">
-        <BaseCard class="run-stats__card">
+        <BaseCard class="run-stats__card" content-layout="column">
           <span>可运行项目</span><strong>{{ page.stats.value.total }}</strong>
         </BaseCard>
-        <BaseCard class="run-stats__card">
+        <BaseCard class="run-stats__card" content-layout="column">
           <span>运行中</span><strong>{{ page.stats.value.running }}</strong>
         </BaseCard>
-        <BaseCard class="run-stats__card">
+        <BaseCard class="run-stats__card" content-layout="column">
           <!-- 旧「已保存命令」恒等于项目总数，无信息量；改统计多模块项目数 -->
           <span>多模块项目</span><strong>{{ page.stats.value.multiModule }}</strong>
         </BaseCard>
@@ -361,9 +361,7 @@ onActivated(() => { void page.load({ silent: true }) })
   margin-bottom: var(--space-4);
 }
 
-.run-stats__card :deep(.n-card__content) {
-  display: flex;
-  flex-direction: column;
+.run-stats__card {
   gap: var(--space-1);
 }
 

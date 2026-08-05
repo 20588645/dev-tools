@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { h, ref, watch } from 'vue'
 
 import BaseBadge from '@/components/base/BaseBadge.vue'
 import BaseButton from '@/components/base/BaseButton.vue'
 import BaseIconButton from '@/components/base/BaseIconButton.vue'
+import BaseDataTable from '@/components/data/BaseDataTable.vue'
+import type { BaseDataTableColumn, BaseDataTableRow } from '@/components/data/base-data-table'
 import BaseDialog from '@/components/feedback/BaseDialog.vue'
 import ConfirmDialog from '@/components/feedback/ConfirmDialog.vue'
 import EmptyState from '@/components/feedback/EmptyState.vue'
@@ -29,6 +31,43 @@ const loading = ref(false)
 const error = ref('')
 const pendingDelete = ref<RunHistoryItem | null>(null)
 const confirmClear = ref(false)
+
+type HistoryTableRow = RunHistoryItem & BaseDataTableRow
+
+const columns: BaseDataTableColumn<HistoryTableRow>[] = [
+  {
+    key: 'startedAt', title: '时间', width: 130,
+    render: row => h('span', { class: 'run-history__time' }, formatHistoryTime(row.startedAt)),
+  },
+  {
+    key: 'projectName', title: '项目', minWidth: 150,
+    render: row => h('span', { class: 'run-history__ellipsis', title: row.projectName }, row.projectName),
+  },
+  {
+    key: 'modules', title: '模块', minWidth: 170,
+    render: row => {
+      const modules = row.modules.length > 0 ? row.modules.join(', ') : '—'
+      return h('span', { class: 'run-history__ellipsis', title: modules }, modules)
+    },
+  },
+  {
+    key: 'status', title: '状态', width: 96,
+    render: row => {
+      const status = formatHistoryStatus(row.status)
+      return h(BaseBadge, { tone: status.tone === 'neutral' ? 'neutral' : status.tone }, () => status.label)
+    },
+  },
+  { key: 'duration', title: '运行时长', width: 100, render: row => row.duration || '—' },
+  {
+    key: 'actions', title: '操作', width: 66, align: 'center', fixed: 'right',
+    render: row => h(BaseIconButton, {
+      label: '删除这条记录',
+      variant: 'danger',
+      size: 'sm',
+      onClick: () => { pendingDelete.value = row },
+    }, () => '⌫'),
+  },
+]
 
 async function load() {
   loading.value = true
@@ -88,45 +127,18 @@ async function clearAll() {
     </ErrorState>
     <EmptyState v-else-if="items.length === 0" title="暂无运行历史记录" compact />
 
-    <div v-else class="run-history__scroll">
-      <table class="run-history__table">
-        <thead>
-          <tr>
-            <th scope="col">时间</th>
-            <th scope="col">项目</th>
-            <th scope="col">模块</th>
-            <th scope="col">状态</th>
-            <th scope="col">运行时长</th>
-            <th scope="col"><span class="run-history__sr">操作</span></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="item in items" :key="item.id">
-            <td class="run-history__time">{{ formatHistoryTime(item.startedAt) }}</td>
-            <td class="run-history__ellipsis" :title="item.projectName">{{ item.projectName }}</td>
-            <!-- F1：后端字段是 modules，旧前端读 moduleNames 导致此列恒为「—」 -->
-            <td class="run-history__ellipsis" :title="item.modules.join(', ')">
-              {{ item.modules.length > 0 ? item.modules.join(', ') : '—' }}
-            </td>
-            <td>
-              <!-- F2：三档需要后端不再把 stopped 改写成 success 才有意义 -->
-              <BaseBadge :tone="formatHistoryStatus(item.status).tone === 'neutral' ? 'neutral' : formatHistoryStatus(item.status).tone">
-                {{ formatHistoryStatus(item.status).label }}
-              </BaseBadge>
-            </td>
-            <td>{{ item.duration || '—' }}</td>
-            <td>
-              <BaseIconButton
-                label="删除这条记录"
-                variant="danger"
-                size="sm"
-                @click="pendingDelete = item"
-              >⌫</BaseIconButton>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <!-- F1/F2：字段与三档状态语义保持不变，只把正式业务表格交给公共组件。 -->
+    <BaseDataTable
+      v-else
+      :columns="columns"
+      :rows="items"
+      :row-key="row => row.id"
+      density="compact"
+      bordered
+      :max-height="420"
+      :scroll-x="760"
+      aria-label="本地运行历史"
+    />
 
     <template #footer>
       <BaseButton
@@ -159,40 +171,6 @@ async function clearAll() {
 </template>
 
 <style scoped>
-/* 表格局部横向滚动，不产生弹窗级溢出 */
-.run-history__scroll {
-  max-height: 52vh;
-  overflow: auto;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-}
-
-.run-history__table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--font-size-xs);
-}
-
-.run-history__table th,
-.run-history__table td {
-  padding: var(--space-2) var(--space-3);
-  border-bottom: 1px solid var(--color-border);
-  text-align: left;
-  white-space: nowrap;
-}
-
-.run-history__table th {
-  position: sticky;
-  top: 0;
-  background: var(--color-surface-raised);
-  color: var(--color-text-muted);
-  font-weight: var(--font-weight-semibold);
-}
-
-.run-history__table td { color: var(--color-text-muted); }
-.run-history__table tbody tr:last-child td { border-bottom: 0; }
-.run-history__table tbody tr:hover td { background: var(--color-surface-subtle); }
-
 .run-history__time {
   color: var(--color-text);
   font-family: var(--font-family-mono);
@@ -200,17 +178,10 @@ async function clearAll() {
 
 /* 长项目名/长模块串截断，避免撑宽弹窗（全名见 title 悬浮） */
 .run-history__ellipsis {
+  display: block;
   max-width: 180px;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.run-history__sr {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
   white-space: nowrap;
 }
 </style>

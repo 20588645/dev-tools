@@ -1,35 +1,41 @@
 <script setup lang="ts">
 import BaseIconButton from '@/components/base/BaseIconButton.vue'
 import StatusIndicator from '@/components/base/StatusIndicator.vue'
+import BaseDisclosure from '@/components/disclosure/BaseDisclosure.vue'
 
 import type { RunGroupView } from '../composables/useRunPage'
 
 defineOptions({ name: 'RunGroupSection' })
 
-defineProps<{ group: RunGroupView }>()
+const props = defineProps<{ group: RunGroupView }>()
 
 const emit = defineEmits<{
   toggle: []
   move: [dir: -1 | 1]
   rename: []
 }>()
+
+function onExpandedChange(expanded: boolean) {
+  if (expanded !== !props.group.collapsed) emit('toggle')
+}
 </script>
 
 <template>
-  <section class="run-group">
-    <header class="run-group__head" :class="{ 'is-collapsed': group.collapsed }">
-      <button
-        type="button"
-        class="run-group__toggle"
-        :aria-expanded="!group.collapsed"
-        @click="emit('toggle')"
-      >
-        <!-- 用固定尺寸容器包住再旋转：直接旋转「⌄」字形会因其自身不居中而偏移 -->
-        <span class="run-group__chevron" :class="{ 'is-collapsed': group.collapsed }" aria-hidden="true">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="6 9 12 15 18 9" />
-          </svg>
-        </span>
+  <BaseDisclosure
+    class="run-group"
+    :data-group="group.key"
+    role="region"
+    :aria-label="`${group.label}项目分组`"
+    :model-value="!group.collapsed"
+    variant="card"
+    header-padding="var(--space-2) 0"
+    header-min-height="32px"
+    content-gap="var(--space-3)"
+    content-padding="0 0 var(--space-3)"
+    @update:model-value="onExpandedChange"
+  >
+    <template #header>
+      <div class="run-group__summary">
         <span class="run-group__name" :class="{ 'is-ungrouped': group.isUngrouped }">{{ group.label }}</span>
         <span class="run-group__count">{{ group.projects.length }} 个项目</span>
         <StatusIndicator
@@ -38,8 +44,10 @@ const emit = defineEmits<{
           status="online"
           :label="`运行中 ${group.runningCount}`"
         />
-      </button>
-      <div v-if="!group.isUngrouped" class="run-group__ops">
+      </div>
+    </template>
+    <template v-if="!group.isUngrouped" #actions>
+      <div class="run-group__ops">
         <BaseIconButton label="上移分组" :disabled="group.index <= 0" @click="emit('move', -1)">↑</BaseIconButton>
         <BaseIconButton label="下移分组" :disabled="group.index >= group.total - 1" @click="emit('move', 1)">↓</BaseIconButton>
         <BaseIconButton label="重命名分组" @click="emit('rename')">
@@ -48,58 +56,21 @@ const emit = defineEmits<{
           </svg>
         </BaseIconButton>
       </div>
-    </header>
-    <div v-show="!group.collapsed" class="run-group__body">
+    </template>
+    <div class="run-group__body">
       <slot />
     </div>
-  </section>
+  </BaseDisclosure>
 </template>
 
 <style scoped>
-.run-group {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.run-group__head {
-  display: flex;
-  gap: var(--space-2);
-  align-items: center;
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-surface-raised);
-}
-
-.run-group__toggle {
+.run-group__summary {
   display: flex;
   flex: 1 1 auto;
   gap: var(--space-2);
   align-items: center;
   min-width: 0;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: inherit;
-  cursor: pointer;
-  font: inherit;
-  text-align: left;
 }
-
-.run-group__toggle:focus-visible { outline: var(--component-focus-outline); }
-
-.run-group__chevron {
-  display: grid;
-  flex: none;
-  width: 16px;
-  height: 16px;
-  place-items: center;
-  color: var(--color-text-muted);
-  transition: transform var(--duration-fast) var(--ease-standard);
-}
-
-.run-group__chevron.is-collapsed { transform: rotate(-90deg); }
 
 .run-group__name {
   overflow: hidden;
