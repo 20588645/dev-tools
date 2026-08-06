@@ -9,7 +9,7 @@ import {
 } from '@/services/modules/project-service'
 import { useRunStore } from '@/stores/run'
 
-import { UNGROUPED_KEY, useRunGroups } from './useRunGroups'
+import { UNGROUPED_KEY, useProjectGroups } from '@/composables/use-project-groups'
 
 /** 项目筛选档位，与旧实现四个 chip 一致。 */
 export type RunFilter = 'all' | 'running' | 'multi' | 'single'
@@ -29,7 +29,7 @@ export interface RunGroupView {
 
 export function useRunPage() {
   const store = useRunStore()
-  const groups = useRunGroups()
+  const groups = useProjectGroups({ collapsedKey: 'runCollapsedGroups' })
 
   const projects = shallowRef<Project[]>([])
   const query = ref('')

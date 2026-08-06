@@ -5,15 +5,19 @@ import BaseButton from '@/components/base/BaseButton.vue'
 import BaseDialog from '@/components/feedback/BaseDialog.vue'
 import BaseInput from '@/components/form/BaseInput.vue'
 
-defineOptions({ name: 'RunGroupRenameDialog' })
+defineOptions({ name: 'GroupRenameDialog' })
 
-const props = defineProps<{
+/**
+ * 项目分组重命名。本地运行页与部署面板共用（CA-10）：两页的分组语义同源，
+ * 「改成已存在的名字等于合并」这条提示逻辑也完全一致。
+ */
+const props = withDefaults(defineProps<{
   /** 待重命名的分组名；null 表示弹窗关闭。 */
   groupKey: string | null
   /** 已有分组名，用于提示「会合并到已存在分组」。 */
   existingNames: string[]
-  submitting: boolean
-}>()
+  submitting?: boolean
+}>(), { submitting: false })
 
 const emit = defineEmits<{
   close: []
@@ -63,7 +67,7 @@ function onSubmit() {
       :error="error"
       @keydown.enter="onSubmit"
     />
-    <p v-if="willMerge()" class="rename__merge">
+    <p v-if="willMerge()" class="group-rename__merge">
       「{{ name.trim() }}」已存在，确认后两个分组会合并。
     </p>
 
@@ -75,7 +79,7 @@ function onSubmit() {
 </template>
 
 <style scoped>
-.rename__merge {
+.group-rename__merge {
   margin: var(--space-2) 0 0;
   color: var(--color-warning);
   font-size: var(--font-size-xs);

@@ -12,11 +12,11 @@ import PageToolbar from '@/components/layout/PageToolbar.vue'
 import PageTop from '@/components/layout/PageTop.vue'
 import FilterChip from '@/components/navigation/FilterChip.vue'
 import BaseDropdownMenu, { type DropdownMenuOption } from '@/components/overlay/BaseDropdownMenu.vue'
+import GroupRenameDialog from '@/components/overlay/GroupRenameDialog.vue'
 import { getNodeRuntime, type Project } from '@/services/modules/project-service'
 import { useNotificationStore } from '@/stores/notification'
 
 import RunConfigDialog, { type RunConfigMode, type RunConfigSubmit } from './components/RunConfigDialog.vue'
-import RunGroupRenameDialog from './components/RunGroupRenameDialog.vue'
 import RunGroupSection from './components/RunGroupSection.vue'
 import RunHistoryDialog from './components/RunHistoryDialog.vue'
 import RunProjectCard from './components/RunProjectCard.vue'
@@ -336,7 +336,7 @@ onActivated(() => { void page.load({ silent: true }) })
       @submit="onConfigSubmit"
     />
     <RunHistoryDialog :open="historyOpen" @close="historyOpen = false" />
-    <RunGroupRenameDialog
+    <GroupRenameDialog
       :group-key="renamingGroup"
       :existing-names="page.groupNames.value"
       :submitting="renameSubmitting"

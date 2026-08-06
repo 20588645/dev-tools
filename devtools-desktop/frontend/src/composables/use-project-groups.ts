@@ -4,10 +4,17 @@ import { ref } from 'vue'
  * 项目分组的视图偏好：折叠态与自定义排序。
  *
  * 这两项是**纯视图偏好**，存 localStorage 而非项目实体（分组名本身才存在项目上）。
- * 沿用旧实现的两个键名，保证迁移后用户已有的折叠/排序状态不丢。
+ * 沿用旧实现的键名，保证迁移后用户已有的折叠/排序状态不丢。
+ *
+ * 本地运行页与部署面板共用同一套分组语义，因此提升为共享 composable（CA-10）：
+ *
+ * - **排序键共享**：两页都用 `runGroupOrder`，上移/下移在两页同步生效。
+ * - **折叠态各页独立**：本地运行页 `runCollapsedGroups`、部署面板
+ *   `deployCollapsedGroups`。这是旧实现的刻意设计——两页关注的项目子集不同，
+ *   折叠偏好不该互相干扰。
  */
 
-const COLLAPSED_KEY = 'runCollapsedGroups'
+/** 分组自定义顺序。两页共享，改动会同步反映到另一页。 */
 const ORDER_KEY = 'runGroupOrder'
 
 /** 未分组项目的聚合键，不会与真实分组名冲突。 */
@@ -30,8 +37,14 @@ function writeList(key: string, value: string[]) {
   }
 }
 
-export function useRunGroups() {
-  const collapsed = ref<string[]>(readList(COLLAPSED_KEY))
+export interface ProjectGroupOptions {
+  /** 折叠态存储键。两页各自独立，必须显式指定以免互相覆盖。 */
+  collapsedKey: string
+}
+
+export function useProjectGroups(options: ProjectGroupOptions) {
+  const collapsedKey = options.collapsedKey
+  const collapsed = ref<string[]>(readList(collapsedKey))
   const order = ref<string[]>(readList(ORDER_KEY))
 
   const isCollapsed = (key: string) => collapsed.value.includes(key)
@@ -40,7 +53,7 @@ export function useRunGroups() {
     collapsed.value = isCollapsed(key)
       ? collapsed.value.filter(item => item !== key)
       : [...collapsed.value, key]
-    writeList(COLLAPSED_KEY, collapsed.value)
+    writeList(collapsedKey, collapsed.value)
   }
 
   /** 具名分组按用户自定义顺序排列，未登记的新组按名称补在后。 */
@@ -69,7 +82,7 @@ export function useRunGroups() {
     if (isCollapsed(from)) {
       collapsed.value = collapsed.value.filter(item => item !== from)
       if (!collapsed.value.includes(to)) collapsed.value.push(to)
-      writeList(COLLAPSED_KEY, collapsed.value)
+      writeList(collapsedKey, collapsed.value)
     }
     const index = order.value.indexOf(from)
     if (index !== -1) {
