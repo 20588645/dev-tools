@@ -6,7 +6,7 @@
 > 最近更新：2026-08-06
 > 适用仓库：`devtools-desktop`  
 > 核心原则：保持软件持续可运行，按页面逐步替换，不进行一次性推倒重写。
-> 当前执行指针：Phase 6-1 本地运行 `run` 的 PG0～PG5 与真实 Tauri 手动 E2E 已全部通过；[组件架构合规专项](./vue-migration/component-architecture-compliance.md)已于 2026-08-06 关闭（机器基线 0、批准例外 0，最终 Smoke Test 通过），该文转为长期生效的规则文档。下一步进入 **Phase 6-2 部署面板 `deploy` 的 PG0**；开始前须先处理 Phase 6「部署面板」小节登记的四项跨页耦合。
+> 当前执行指针：**Phase 6-2 部署面板 `deploy` 进行中**，该页按三个子页依次迁移——项目总览已完成（PG0～PG5、真实 Tauri 手动 E2E 与旧实现清理均通过），**下一步是服务器管理子页的 PG0**，之后是部署历史。四项跨页耦合中第 1 项（`.run-group*` 样式孤儿）已随项目总览迁移关闭，其余三项绑在构建/部署任务链路与托盘上，待后两个子页迁完统一收口。[组件架构合规专项](./vue-migration/component-architecture-compliance.md)已于 2026-08-06 关闭（机器基线 0、批准例外 0，最终 Smoke Test 通过），该文转为长期生效的规则文档。
 
 ---
 
@@ -515,7 +515,7 @@ L3 中纯前端且低风险的改动可以与页面 Vue 实现处于同一页面
 | 8 | Phase 5-5 | 双因验证 `twofa` | **PG5 自动清理完成** | 执行清理后简短真实 Tauri 回归 | Secret、倒计时、导入与快捷查询安全专项通过 |
 | 9 | 组件架构合规专项 | 已迁移页面与公共组件 | **基础能力、通知适配与首个消费者 Settings 已完成；其余页面收口中** | 按迁移矩阵顺序继续存量页面收口 | 存量页面收口、架构验收、最终 Tauri Smoke Test 与全站回归通过 |
 | 10 | Phase 6-1 | 本地运行 `run` | **PG0～PG5 已完成** | 已完成 | 体验、进程、轮询、WebSocket、后台状态和真实 Tauri E2E 通过；四项跨页耦合随 Phase 6-2 收敛 |
-| 11 | Phase 6-2 | 部署面板 `deploy` | **当前阶段** | 执行 PG0 现状取证；须先处理四项跨页耦合（见 Phase 6「部署面板」小节） | SSH、构建、部署任务和日志链路通过 |
+| 11 | Phase 6-2 | 部署面板 `deploy` | **当前阶段，按子页推进：项目总览已完成；服务器管理、部署历史待做** | 执行服务器管理子页的 PG0 现状取证 | SSH、构建、部署任务和日志链路通过；三个子页全部迁完且四项跨页耦合收口 |
 | 12 | Phase 6-3 | 文件传输 `filetransfer` | 等待 | 完成 `deploy` 后开始 PG0 | SFTP 会话、队列、重连和 keepalive 通过 |
 | 13 | Phase 7-1 | 文件编辑 `editor` | 等待 | Phase 6 完成后开始 PG0 | CodeMirror 生命周期和未保存保护通过 |
 | 14 | Phase 7-2 | 快捷命令 `terminal` | 等待 | 完成 `editor` 后开始 PG0 | Xterm、PTY、WebGL 降级和多标签恢复通过 |
@@ -1147,7 +1147,9 @@ frontend/src/services/modules/ipcheck-service.ts
 
 #### 部署面板
 
-- [ ] 拆分项目总览、服务器管理、部署历史三个子路由或子页面。
+本页按三个子页依次迁移，每个子页各走一遍 PG0～PG5。**项目总览已完成**（Vue 侧自带搜索、五项筛选、分组卡片与最近构建/部署摘要；忙态读 log-task store，刷新走 `useDeployRealtime`；旧 DOM、`renderProjects`/`deployProjectCardHTML` 与 legacy 分组子系统连同失效样式一并删除）。**服务器管理为下一个子页**，之后是部署历史。
+
+- [ ] 拆分项目总览、服务器管理、部署历史三个子路由或子页面。（项目总览已完成）
 - [ ] 创建项目、服务器和部署任务的类型定义。
 - [ ] 将分组排序、筛选、构建配置和部署配置迁入组件。
 - [ ] 将大量静态弹窗迁为按需 Vue Dialog。
@@ -1158,7 +1160,7 @@ frontend/src/services/modules/ipcheck-service.ts
 
 以下四项都是 Run 迁移留下的跨页耦合，PG5 无法在 Run 侧单独关闭，随本阶段一并收敛：
 
-1. **`.run-group*` 样式孤儿（必须修，用户已确认放到本阶段）**。`src/css/pages/run.css` 随 Run 迁移在 `2f1b93d` 整体删除，其中包含 `.run-group-header` / `-chevron` / `-name` / `-count` / `-move` / `-menu` 六个类的定义；但 `deploy.js` 仍在生成这些类名（约 121～125 行），`deploy.css:899` 的注释仍写着「复用 run.css 全局定义」。当前部署面板的项目分组头是无样式裸元素。本阶段把分组换成公共 `BaseDisclosure panel` 变体即可一并解决，因此不在 legacy 侧补样式。该结论由代码取证确认，未做视觉取证。
+1. ~~**`.run-group*` 样式孤儿**~~ — **已关闭（项目总览子页迁移时解决）**。分组头改用公共 `BaseDisclosure panel` 变体，`deploy.js` 中的 `.run-group*` 生成逻辑与 `deploy.css` 那条「复用 run.css 全局定义」的注释已随旧渲染链路一并删除。
 2. **`legacy/log-viewer-bridge.ts`**。`app.js:1129` 的 `logViewer()` 包装仍驱动构建/部署日志，迁移完成后连同 `app.js` 中的包装函数一并删除。
 3. **`runningProjects` 全局**。托盘菜单 `syncTrayMenu` 与首页卡片仍读它；Vue 侧已在 `stores/run.ts` 做双向同步，迁移后应改为直接消费 store。
 4. **`loadRunStatuses`**。`deploy.js:41` 仍调用，需一并收敛进 Vue store。
@@ -1335,7 +1337,7 @@ frontend/src/services/modules/ipcheck-service.ts
 | 8 | 用量统计 | `views/usage/`、`usage-service.ts`；旧 `usage.js`、`usage.css`、ECharts vendor 已删除 | 高 | 扫描、价格、Canvas 生命周期 | Phase 5-4 | **PG5 自动清理完成** | 清理后简短 Tauri 回归 |
 | 9 | 双因验证 | `views/twofa/`、`twofa-service.ts`；旧 `twofa.js`、`twofa.css` 已删除 | 高 | Secret、timer、导入与快捷查询 | Phase 5-5 | **PG5 自动清理完成** | 清理后简短 Tauri 回归 |
 | 10 | 本地运行 | `views/run/`、`run-service.ts`、`stores/run.ts`；旧 `run.js`、`run.css` 已删除 | 高 | 进程、轮询、WebSocket | Phase 6-1 | **初版阶段性提交，Gate 未关闭** | 合规基础完成后处理体验问题与真实 Tauri E2E |
-| 11 | 部署面板 | `deploy.js`、`deploy.css` | 很高 | 项目、SSH、构建、弹窗 | Phase 6-2 | **当前阶段** | 执行 PG0；须先处理四项跨页耦合 |
+| 11 | 部署面板 | `views/deploy/`（项目总览已迁）；`deploy.js`、`deploy.css` 保留服务器管理、部署历史与各类弹窗 | 很高 | 项目、SSH、构建、弹窗 | Phase 6-2 | **进行中：项目总览 PG5 已完成** | 执行服务器管理子页的 PG0 |
 | 12 | 文件传输 | `filetransfer.js`、`filetransfer.css` | 很高 | SFTP、会话、队列、keepalive | Phase 6-3 | 等待 | `deploy` 提交后开始 PG0 |
 | 13 | 文件编辑 | `editor.js`、`editor.css` | 高 | CodeMirror、未保存状态 | Phase 7-1 | 等待 | Phase 6 完成后开始 PG0 |
 | 14 | 快捷命令 | `terminal.js`、`terminal.css` | 很高 | Xterm、PTY、WebSocket、WebGL | Phase 7-2 | 等待 | `editor` 提交后开始 PG0 |
