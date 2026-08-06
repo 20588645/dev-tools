@@ -320,3 +320,18 @@ Run Playwright 扩到 15 项，新增覆盖三种状态同排等高与卡片内�
 - 顺带修掉端口占用态内容溢出被裁断底部按钮的缺陷，以及路径省略吃掉项目名的问题（最终方案不单独显示路径，改为标题悬浮全名）。
 
 完整回归通过 `npm run lint`、`npm test`（195 项测试 + 架构门禁 4 项）、`npm run typecheck`、`npm run build:frontend`、Run + Twofa Playwright 30/30；Run E2E 由 13 项扩到 17 项。架构基线与批准例外均为 0。本项仍等待用户在真实 Tauri 中确认体验，确认前 Run 的体验 Gate 与专项最终 Smoke Test 均不关闭。
+
+## PG5 清理核查（2026-08-06）
+
+用户已在真实 Tauri 完成第 10 节全部手动 E2E 并确认通过，Run 的功能与体验 Gate 关闭。本节记录 PG5 清理的核查结论。
+
+Run 自身的旧实现已清理干净：`src/js/run.js` 与 `src/css/pages/run.css` 随 `2f1b93d` 删除，`index.html` 中的引用已移除，旧 DOM（`#runProjectGrid`、`#runOverview`、`#runSearchInput`、`#runModal`、`#runHistoryModal`、`#logModal`）均已由 E2E 断言为 0。
+
+四项跨页耦合无法在 Run 侧单独关闭，经用户确认全部随 Phase 6-2 一并收敛，已登记到主计划 Phase 6 的「部署面板」小节：
+
+- `.run-group*` 样式孤儿：`run.css` 删除时带走了六个分组头类的定义，但 `deploy.js` 仍生成这些类名，部署面板分组头当前无样式。用户选择不在 legacy 侧补样式——Phase 6-2 会把分组换成公共 `BaseDisclosure panel` 变体，补 legacy 样式属于白做。
+- `legacy/log-viewer-bridge.ts`：`app.js` 的构建/部署日志链路仍在消费。
+- `runningProjects` 全局：托盘菜单与首页卡片仍读，Vue 侧已做双向同步。
+- `loadRunStatuses`：`deploy.js` 仍在调用。
+
+因此 Run 的 PG5 在「本页范围内」已完成，跨页项作为 Phase 6-2 的准入前提。专项最终全站 Tauri Smoke Test 仍未执行，在其通过前不进入 Phase 6-2。

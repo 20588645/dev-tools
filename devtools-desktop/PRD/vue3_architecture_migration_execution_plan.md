@@ -1,12 +1,12 @@
 # DevTools Desktop Vue 3 架构渐进重构执行计划
 
-> 文档版本：1.46
-> 状态：执行中（Phase 6-1 Run 初版已阶段性提交；当前暂停新页面，执行组件架构合规专项）
+> 文档版本：1.47
+> 状态：执行中（Phase 6-1 Run 功能/视觉与手动 E2E 已通过，PG5 清理待办）
 > 编制日期：2026-07-21  
-> 最近更新：2026-07-31
+> 最近更新：2026-08-06
 > 适用仓库：`devtools-desktop`  
 > 核心原则：保持软件持续可运行，按页面逐步替换，不进行一次性推倒重写。
-> 当前执行指针：Phase 6-1 Run 初版已创建阶段性提交 `2f1b93d`，但体验优化和真实 Tauri E2E 尚未关闭。用户确认先执行[组件架构合规专项](./vue-migration/component-architecture-compliance.md)，完成规则、自动门禁、公共能力补齐和已迁移页面收口后，再完成 Run 验收；此前不得进入 Phase 6-2 Deploy。
+> 当前执行指针：[组件架构合规专项](./vue-migration/component-architecture-compliance.md)的规则、自动门禁、公共能力补齐与九个存量页面收口已全部完成，机器基线与批准例外均为 0。Run 的视觉收口已落地，用户已在真实 Tauri 完成第 10 节手动 E2E 并确认通过，体验 Gate 关闭。剩余：Run 的 PG5 清理（跨页耦合项见下）与专项最终全站 Tauri Smoke Test；两者关闭后才进入 Phase 6-2 Deploy。
 
 ---
 
@@ -514,8 +514,8 @@ L3 中纯前端且低风险的改动可以与页面 Vue 实现处于同一页面
 | 7 | Phase 5-4 | 用量统计 `usage` | **PG5 自动清理完成** | 执行清理后简短真实 Tauri 回归 | ECharts、价格、异常数据和资源销毁通过 |
 | 8 | Phase 5-5 | 双因验证 `twofa` | **PG5 自动清理完成** | 执行清理后简短真实 Tauri 回归 | Secret、倒计时、导入与快捷查询安全专项通过 |
 | 9 | 组件架构合规专项 | 已迁移页面与公共组件 | **基础能力、通知适配与首个消费者 Settings 已完成；其余页面收口中** | 按迁移矩阵顺序继续存量页面收口 | 存量页面收口、架构验收、最终 Tauri Smoke Test 与全站回归通过 |
-| 10 | Phase 6-1 | 本地运行 `run` | **初版阶段性提交，Gate 未关闭** | 合规基础完成后处理体验问题 | 体验、进程、轮询、WebSocket、后台状态和真实 Tauri E2E 通过 |
-| 11 | Phase 6-2 | 部署面板 `deploy` | 等待 | 合规专项和 Run Gate 全部关闭后开始 PG0 | SSH、构建、部署任务和日志链路通过 |
+| 10 | Phase 6-1 | 本地运行 `run` | **PG0～PG4 与手动 E2E 已通过，PG5 待办** | 执行 PG5 清理（跨页耦合项随 Phase 6-2 一并收敛） | 体验、进程、轮询、WebSocket、后台状态和真实 Tauri E2E 已通过 |
+| 11 | Phase 6-2 | 部署面板 `deploy` | 等待 | Run PG5 与专项 Smoke Test 关闭后开始 PG0；需先修 `.run-group*` 样式孤儿（见 §6-2 已知项） | SSH、构建、部署任务和日志链路通过 |
 | 12 | Phase 6-3 | 文件传输 `filetransfer` | 等待 | 完成 `deploy` 后开始 PG0 | SFTP 会话、队列、重连和 keepalive 通过 |
 | 13 | Phase 7-1 | 文件编辑 `editor` | 等待 | Phase 6 完成后开始 PG0 | CodeMirror 生命周期和未保存保护通过 |
 | 14 | Phase 7-2 | 快捷命令 `terminal` | 等待 | 完成 `editor` 后开始 PG0 | Xterm、PTY、WebGL 降级和多标签恢复通过 |
@@ -1154,6 +1154,15 @@ frontend/src/services/modules/ipcheck-service.ts
 - [ ] 部署日志和本地运行日志复用公共 Log Viewer。
 - [ ] 与 `run` 共用项目 store，避免重复拉取和重复状态源。
 
+##### Phase 6-2 开始前必须先处理的已知项（2026-08-06 记录）
+
+以下四项都是 Run 迁移留下的跨页耦合，PG5 无法在 Run 侧单独关闭，随本阶段一并收敛：
+
+1. **`.run-group*` 样式孤儿（必须修，用户已确认放到本阶段）**。`src/css/pages/run.css` 随 Run 迁移在 `2f1b93d` 整体删除，其中包含 `.run-group-header` / `-chevron` / `-name` / `-count` / `-move` / `-menu` 六个类的定义；但 `deploy.js` 仍在生成这些类名（约 121～125 行），`deploy.css:899` 的注释仍写着「复用 run.css 全局定义」。当前部署面板的项目分组头是无样式裸元素。本阶段把分组换成公共 `BaseDisclosure panel` 变体即可一并解决，因此不在 legacy 侧补样式。该结论由代码取证确认，未做视觉取证。
+2. **`legacy/log-viewer-bridge.ts`**。`app.js:1129` 的 `logViewer()` 包装仍驱动构建/部署日志，迁移完成后连同 `app.js` 中的包装函数一并删除。
+3. **`runningProjects` 全局**。托盘菜单 `syncTrayMenu` 与首页卡片仍读它；Vue 侧已在 `stores/run.ts` 做双向同步，迁移后应改为直接消费 store。
+4. **`loadRunStatuses`**。`deploy.js:41` 仍调用，需一并收敛进 Vue store。
+
 #### 文件传输
 
 - [ ] 为每个 SFTP 会话建立明确的 session model。
@@ -1326,7 +1335,7 @@ frontend/src/services/modules/ipcheck-service.ts
 | 8 | 用量统计 | `views/usage/`、`usage-service.ts`；旧 `usage.js`、`usage.css`、ECharts vendor 已删除 | 高 | 扫描、价格、Canvas 生命周期 | Phase 5-4 | **PG5 自动清理完成** | 清理后简短 Tauri 回归 |
 | 9 | 双因验证 | `views/twofa/`、`twofa-service.ts`；旧 `twofa.js`、`twofa.css` 已删除 | 高 | Secret、timer、导入与快捷查询 | Phase 5-5 | **PG5 自动清理完成** | 清理后简短 Tauri 回归 |
 | 10 | 本地运行 | `views/run/`、`run-service.ts`、`stores/run.ts`；旧 `run.js`、`run.css` 已删除 | 高 | 进程、轮询、WebSocket | Phase 6-1 | **初版阶段性提交，Gate 未关闭** | 合规基础完成后处理体验问题与真实 Tauri E2E |
-| 11 | 部署面板 | `deploy.js`、`deploy.css` | 很高 | 项目、SSH、构建、弹窗 | Phase 6-2 | 等待 | 合规专项与 Run Gate 全部关闭后开始 PG0 |
+| 11 | 部署面板 | `deploy.js`、`deploy.css` | 很高 | 项目、SSH、构建、弹窗 | Phase 6-2 | 等待 | Run PG5 与专项 Smoke Test 关闭后开始 PG0 |
 | 12 | 文件传输 | `filetransfer.js`、`filetransfer.css` | 很高 | SFTP、会话、队列、keepalive | Phase 6-3 | 等待 | `deploy` 提交后开始 PG0 |
 | 13 | 文件编辑 | `editor.js`、`editor.css` | 高 | CodeMirror、未保存状态 | Phase 7-1 | 等待 | Phase 6 完成后开始 PG0 |
 | 14 | 快捷命令 | `terminal.js`、`terminal.css` | 很高 | Xterm、PTY、WebSocket、WebGL | Phase 7-2 | 等待 | `editor` 提交后开始 PG0 |
