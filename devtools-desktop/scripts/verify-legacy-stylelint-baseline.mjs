@@ -8,8 +8,7 @@ const maximumDuplicateSelectorErrors = new Map([
   ['src/css/components.css', 8],
   ['src/css/layout.css', 4],
   ['src/css/overrides.css', 4],
-  ['src/css/pages/deploy.css', 6],
-  ['src/css/pages/run.css', 1],
+  ['src/css/pages/deploy.css', 2],
   ['src/css/legacy-runtime.css', 5],
 ])
 

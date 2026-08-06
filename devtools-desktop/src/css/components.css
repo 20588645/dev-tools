@@ -68,15 +68,6 @@
 
 .search-bar svg { color: var(--text-muted); flex-shrink: 0; width: 14px; height: 14px; }
 
-/* Card Top */
-.card-badge {
-  font-size: 10px;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 10px;
-  letter-spacing: 0.02em;
-}
-
 .badge-multi {
   background: var(--accent-subtle);
   color: var(--accent);
@@ -135,10 +126,7 @@
   color: var(--primary) !important;
 }
 
-.card-badge,
-.badge-tool,
-.module-tag,
-.module-more {
+.module-tag {
   border-radius: 5px !important;
   background: var(--bg-input) !important;
   border: 1px solid var(--border) !important;
@@ -278,7 +266,6 @@ select:focus,
   line-height: 1;
 }
 
-body[data-theme="light"] .project-card,
 body[data-theme="light"] .stat-card,
 body[data-theme="light"] .home-activity-card,
 body[data-theme="light"] .home-quick-card,
@@ -305,7 +292,6 @@ select,
   border-radius: 5px !important;
 }
 
-body[data-theme="light"] .project-card,
 body[data-theme="light"] .stat-card,
 body[data-theme="light"] .home-activity-card,
 body[data-theme="light"] .server-list,
@@ -314,7 +300,6 @@ body[data-theme="light"] .modal {
   box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 8px 22px rgba(16, 24, 40, 0.045) !important;
 }
 
-body[data-theme="dark"] .project-card,
 body[data-theme="dark"] .stat-card,
 body[data-theme="dark"] .home-activity-card,
 body[data-theme="dark"] .server-list,
@@ -576,8 +561,7 @@ body[data-theme="dark"] .modal {
 
 /* --- 7. 统一卡片内边距 --- */
 .todo-card,
-.cmd-card,
-.run-project-card {
+.cmd-card {
   padding: 14px 16px !important;
 }
 

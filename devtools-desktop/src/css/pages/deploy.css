@@ -7,7 +7,6 @@
 }
 
 /* 让 page-sticky-header 之后的内容独立滚动 */
-#page-deploy .sub-page .project-grid,
 #page-deploy .sub-page .server-list,
 #page-deploy .sub-page .history-table {
   flex: 1;
@@ -30,41 +29,6 @@
 
 .sub-page.active { display: block; }
 
-/* --- Project Grid --- */
-/* --- Project Card --- */
-.project-card { /* 保留：与穿插规则存在层叠依赖 */
-  border: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  box-shadow: var(--shadow-sm);
-}
-
-.project-card::before { display: none; }
-
-.project-card.card-busy { border-color: var(--warning); }
-
-.badge-tool {
-  font-size: 10px;
-  padding: 1px 6px;
-  border-radius: var(--radius-xs);
-  background: var(--bg-input);
-  color: var(--text-muted);
-  border: 1px solid var(--border);
-}
-
-/* Card Meta */
-.card-meta span {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-/* Card Modules */
-.card-modules { /* 保留：与穿插规则存在层叠依赖 */
-  flex-wrap: wrap;
-}
-
 .module-tag {
   font-size: 10px;
   padding: 2px 6px;
@@ -73,35 +37,6 @@
   color: var(--text-muted);
   border: 1px solid var(--border);
 }
-
-.module-more {
-  font-size: 10px;
-  color: var(--accent);
-  padding: 2px 6px;
-}
-
-/* Card Status */
-.card-status { /* 保留：与穿插规则存在层叠依赖 */
-  font-size: 11px;
-}
-
-.status-configured { color: var(--success); }
-
-.status-unconfigured { color: var(--text-muted); }
-
-/* Card Last Deploy */
-.card-last-deploy { /* 保留：与穿插规则存在层叠依赖 */
-  font-size: 11px;
-  color: var(--text-muted);
-  border: 1px solid var(--border);
-}
-
-.card-last-deploy.success { color: var(--success); background: var(--success-subtle); border-color: color-mix(in srgb, var(--success) 15%, transparent); }
-
-/* Card Action Buttons：已迁到统一 .btn 组件（button.css）。
-   颜色由 .btn--primary/--warning/--danger 提供；卡片内定高/紧凑见文件末尾 .card-actions .btn 段。 */
-
-.card-busy::before { display: none; }
 
 /* --- History Table --- */
 
@@ -300,9 +235,6 @@
   background: var(--primary-light) !important;
   border-color: color-mix(in srgb, var(--primary) 35%, transparent) !important;
 }
-.project-card > div:last-child {
-  align-items: center;
-}
 
 .module-item {
   display: flex;
@@ -387,13 +319,6 @@
   font-size: 12px;
 }
 
-/* font-size 权威值由 overrides.css 同选择器接管（同值），此处去掉 important 标记、留普通声明，零回归；勿再加回否则重启覆盖战争 */
-.card-meta,
-.card-status,
-.card-last-deploy {
-  font-size: 10px;
-}
-
 .server-head {
   /* background 实际由 overrides.css .server-head 规则接管（本就没显示过），此处去掉 important 标记，零回归；勿再加回 */
   background: var(--bg-input);
@@ -412,39 +337,6 @@
   display: flex;
   align-items: center;
   padding: 0 12px !important;
-}
-
-/* ========== Local Run Feature ========== */
-#page-deploy .project-card .card-actions {
-  flex: 0 0 auto;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  margin-top: auto;
-  padding-top: 2px;
-}
-
-/* 卡片操作区按钮：迁到 .btn 后统一定高/紧凑（替代旧 btn-deploy-card/btn-quick/btn-icon 散落规则） */
-#page-deploy .project-card .card-actions .btn {
-  height: 32px;
-  min-height: 32px;
-  border-radius: 7px;
-  font-size: 11px;
-}
-
-#page-deploy .project-card .card-actions .btn:not(.btn--icon) {
-  flex: 1 1 82px;
-  min-width: 74px;
-  padding: 0 8px;
-}
-
-#page-deploy .project-card .card-actions .btn--icon {
-  flex: 0 0 34px;
-  width: 34px;
-  min-width: 34px;
-  max-width: 34px;
-  padding: 0;
 }
 
 /* ========== Server List Without Synthetic Status ========== */
@@ -500,31 +392,6 @@
   font-size: 12px !important;
 }
 
-#page-deploy .project-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
-  align-items: stretch;
-}
-
-#page-deploy .project-card {
-  height: 230px;
-  min-height: 230px;
-  max-height: 230px;
-  padding: 14px;
-  gap: 7px;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  overflow: hidden;
-}
-
-#page-deploy .card-top {
-  flex: 0 0 auto;
-  min-height: 24px;
-  margin-bottom: 0;
-  gap: 10px;
-}
-
 #page-deploy .card-name {
   min-width: 0;
   flex: 1 1 auto;
@@ -535,78 +402,15 @@
   font-weight: 680;
 }
 
-#page-deploy .card-badge {
-  flex: 0 0 auto;
-}
-
-#page-deploy .card-meta {
-  flex: 0 0 auto;
-  min-height: 22px;
-  margin-bottom: 0;
-  overflow: hidden;
-}
-
-#page-deploy .card-meta span {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-#page-deploy .card-modules {
-  flex: 0 0 34px;
-  max-height: 34px;
-  margin-bottom: 0;
-  overflow: hidden;
-  align-content: flex-start;
-}
-
-#page-deploy .card-status {
-  flex: 0 0 18px;
-  margin-bottom: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-#page-deploy .card-last-deploy {
-  flex: 0 0 auto;
-  height: 28px;
-  min-height: 28px;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  background: var(--bg-input);
-}
-
-#page-deploy .project-card > div:last-child {
-  flex: 0 0 auto;
-  margin-top: auto;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding-top: 2px;
-}
-
-@media (max-width: 1280px) {
-#page-deploy .project-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-}
 
 @media (max-width: 820px) {
-#page-deploy .header-actions {
+  #page-deploy .header-actions {
     align-items: stretch;
     flex-direction: column;
   }
 
 #page-deploy .search-bar {
     width: 100%;
-  }
-
-#page-deploy .project-grid {
-    grid-template-columns: 1fr;
   }
 
 }
@@ -636,7 +440,6 @@
   flex: 0 0 auto !important;
 }
 
-#page-deploy .project-grid,
 #page-deploy .server-list,
 #page-deploy .history-table {
   flex: 1 1 auto !important;
@@ -796,48 +599,6 @@
   color: var(--primary);
 }
 
-.card-top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: 0;
-}
-
-.card-meta {
-  display: flex;
-  color: var(--text-secondary);
-  flex-direction: row;
-  gap: 4px 7px;
-  font-size: 9.5px;
-  margin-bottom: 4px;
-  flex-wrap: wrap;
-}
-
-.card-modules {
-  display: flex;
-  gap: 3px;
-  margin-bottom: 4px;
-}
-
-.card-modules .module-tag:nth-of-type(n+4) {
-  display: none;
-}
-
-.card-status {
-  margin-bottom: 4px;
-  line-height: 1.25;
-}
-
-.card-last-deploy {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  border-radius: 6px;
-  margin-bottom: 6px;
-  padding: 3px 6px;
-  line-height: 15px;
-}
-
 .server-name { font-size: 11px; font-weight: 680; color: var(--text-primary); }
 
 .server-check-item {
@@ -879,58 +640,4 @@
   white-space: nowrap !important;
 }
 
-/* 4. 部署面板：外层固定头/滚动已迁标准 has-fixed-header（index.html .page-fixed-header
-   + layout.css .page.has-fixed-header.active）；子页两级布局见上方 #page-deploy .sub-page 段。
-   原 #page-deploy.active / > .page-header-bar / > .sub-page 等重复 !important 块已删除。 */
 
-/* 项目卡片悬浮：仅描边变化提示可点，去掉抬升+阴影（用户反感装饰性抬升、克制优先） */
-.project-card:hover {
-  border-color: var(--border-strong) !important;
-}
-
-.project-grid {
-  display: grid;
-  padding-right: 3px;
-  align-content: start;
-  align-items: start;
-  gap: 12px;
-}
-
-/* —— 项目分组分区（复刻本地运行页）：外层 .project-grid 转块级堆叠、仍是唯一滚动容器；卡片网格下沉到各组 body（.run-group* 头部样式复用 run.css 全局定义） —— */
-#page-deploy .project-grid.is-grouped {
-  display: block;
-}
-
-.deploy-group-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
-  align-items: start;
-  padding-bottom: 4px;
-}
-
-@media (max-width: 1280px) {
-  .deploy-group-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 820px) {
-  .deploy-group-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.project-card {
-  background: var(--bg-card);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  cursor: default;
-  position: relative;
-  min-height: 142px;
-  gap: 5px;
-  height: auto;
-  justify-content: flex-start;
-  transition: border-color 0.2s;
-  padding: 14px 16px;
-}

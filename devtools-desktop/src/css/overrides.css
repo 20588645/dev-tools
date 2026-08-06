@@ -1,11 +1,9 @@
 /* ===== overrides：依赖全局加载顺序的晚期覆盖规则（拆分冲突分析自动归集）（批次5 拆分自 style.css，规则保持原始相对顺序） ===== */
 
-.card-last-deploy.failed { color: var(--danger); background: var(--danger-subtle); border-color: rgba(255,69,58,0.15); }
 
 .stat-card,
 .home-activity-card,
 .home-quick-card,
-.project-card,
 .server-list,
 .history-table {
   background: var(--bg-card) !important;
@@ -94,12 +92,7 @@ input[type="number"] {
   padding: 1px 5px;
 }
 
-.project-card { /* 保留：与穿插规则存在层叠依赖 */
-  border-radius: 7px !important;
-}
-
 .stat-card,
-.project-card,
 .home-activity-card,
 .server-list,
 .history-table,
@@ -203,16 +196,6 @@ select {
   font-weight: 650 !important;
 }
 
-.run-card-meta span {
-  padding: 3px 7px;
-  border: 1px solid var(--border);
-  border-radius: 5px;
-  background: var(--bg-input);
-  color: var(--text-secondary);
-  font-size: 10.5px;
-  font-weight: 650;
-}
-
 .run-card-command code {
   min-height: 32px;
   display: flex;
@@ -258,7 +241,6 @@ select {
 .stat-card,
 .home-activity-card,
 .home-quick-card,
-.project-card,
 .server-list,
 .history-table,
 .modal {
@@ -347,23 +329,16 @@ textarea:not([class^="n-"]):not([class*=" n-"]),
   font-size: 11px !important;
 }
 
-.module-tag,
-.module-more {
+.module-tag {
   /* line-height 去 important：本选择器唯一设定，去后靠源序仍生效，0 回归（B1 安全最小）。padding 保留 important——与上方 .module-tag 标签组 important 竞争，去则被覆为 2px 6px */
   padding: 1px 5px !important;
   line-height: 15px;
 }
 
-.card-meta,
-.card-status,
-.card-last-deploy,
 .server-host,
 .history-row { font-size: 10px !important; color: var(--text-muted) !important; }
 
-.card-badge,
-.badge-tool,
 .module-tag,
-.module-more,
 .type-pill {
   border-radius: 5px !important;
   background: var(--bg-input) !important;
@@ -480,7 +455,6 @@ textarea:not([class^="n-"]):not([class*=" n-"]),
 
 /* --- 3. 统一卡片圆角为 8px --- */
 .home-section-card,
-.project-card,
 .server-card,
 .server-list,
 .history-table,
@@ -488,7 +462,6 @@ textarea:not([class^="n-"]):not([class*=" n-"]),
 .todo-column-header,
 .cmd-card,
 .cmd-output-section,
-.run-project-card,
 .run-stat-card,
 .stat-card {
   border-radius: 8px !important;
