@@ -2,7 +2,6 @@
 import { computed, onActivated, onMounted, ref } from 'vue'
 
 import BaseButton from '@/components/base/BaseButton.vue'
-import BaseCard from '@/components/base/BaseCard.vue'
 import EmptyState from '@/components/feedback/EmptyState.vue'
 import ErrorState from '@/components/feedback/ErrorState.vue'
 import LoadingState from '@/components/feedback/LoadingState.vue'
@@ -244,18 +243,22 @@ onActivated(() => { void page.load({ silent: true }) })
     </ErrorState>
 
     <template v-else>
-      <div class="run-stats">
-        <BaseCard class="run-stats__card" content-layout="column">
-          <span>可运行项目</span><strong>{{ page.stats.value.total }}</strong>
-        </BaseCard>
-        <BaseCard class="run-stats__card" content-layout="column">
-          <span>运行中</span><strong>{{ page.stats.value.running }}</strong>
-        </BaseCard>
-        <BaseCard class="run-stats__card" content-layout="column">
+      <!--
+        三个数字不值一整行大卡：概览收成一行摘要条，
+        把纵向空间让给真正的内容。项目数量在分组标题里也仍然可见。
+      -->
+      <dl class="run-stats">
+        <div class="run-stats__item">
+          <dt>可运行项目</dt><dd>{{ page.stats.value.total }}</dd>
+        </div>
+        <div class="run-stats__item">
+          <dt>运行中</dt><dd>{{ page.stats.value.running }}</dd>
+        </div>
+        <div class="run-stats__item">
           <!-- 旧「已保存命令」恒等于项目总数，无信息量；改统计多模块项目数 -->
-          <span>多模块项目</span><strong>{{ page.stats.value.multiModule }}</strong>
-        </BaseCard>
-      </div>
+          <dt>多模块项目</dt><dd>{{ page.stats.value.multiModule }}</dd>
+        </div>
+      </dl>
 
       <EmptyState
         v-if="page.projects.value.length === 0"
@@ -355,40 +358,58 @@ onActivated(() => { void page.load({ silent: true }) })
 }
 
 .run-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: var(--space-3);
-  margin-bottom: var(--space-4);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3);
+  padding: 0 2px;
 }
 
-.run-stats__card {
-  gap: var(--space-1);
+.run-stats__item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
 }
 
-.run-stats__card span {
-  color: var(--color-text-muted);
+/* 竖线分隔比标点更规整，末项不加 */
+.run-stats__item:not(:last-child)::after {
+  width: 1px;
+  height: 10px;
+  margin-left: var(--space-3);
+  background: var(--color-border-strong);
+  content: "";
+  opacity: .7;
+}
+
+.run-stats__item dt {
+  color: var(--color-text-subtle);
   font-size: var(--font-size-xs);
 }
 
-.run-stats__card strong {
+.run-stats__item dd {
+  margin: 0;
   color: var(--color-text);
-  font-size: var(--font-size-2xl);
-  font-weight: var(--font-weight-bold);
-  line-height: var(--line-height-tight);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-sm);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--font-weight-semibold);
 }
 
 /* 自适应列宽，避免固定列宽在少量项目时留大片空白（P6） */
 .run-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  align-items: stretch;
   gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
 }
 
 .run-grid > :only-child { max-width: 420px; }
 
+/* 组间比组内松，让「标题 + 卡片」成为一个视觉整体 */
 .run-groups {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-5);
 }
 </style>

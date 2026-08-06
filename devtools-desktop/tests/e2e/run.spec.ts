@@ -168,13 +168,13 @@ test('mounts one Vue run page without the retired DOM or scripts', async ({ page
 
 test('shows the multi-module count instead of the meaningless saved-command stat', async ({ page }) => {
   await openRun(page)
-  const stats = page.locator('.run-stats__card')
+  const stats = page.locator('.run-stats__item')
   await expect(stats).toHaveCount(3)
   await expect(stats.nth(0)).toContainText('可运行项目')
   await expect(stats.nth(1)).toContainText('运行中')
   // 旧「已保存命令」恒等于项目总数，无信息量
   await expect(stats.nth(2)).toContainText('多模块项目')
-  await expect(stats.nth(2).locator('strong')).toHaveText('1')
+  await expect(stats.nth(2).locator('dd')).toHaveText('1')
 })
 
 test('filters by keyword and by project kind', async ({ page }) => {
@@ -205,7 +205,7 @@ test('keeps the toolbar on one row when a service is running', async ({ page }) 
   mock.setStatuses([buildJob()])
   await page.reload()
   await page.locator('.sidebar-item[data-page="run"]').click()
-  await expect(page.locator('.run-card__state[data-tone="active"]')).toHaveCount(1)
+  await expect(page.locator('.run-card .base-entity-card__state--active')).toHaveCount(1)
 
   const toolbarHeight = await page.locator('#page-run .page-toolbar').evaluate(el => el.getBoundingClientRect().height)
   expect(toolbarHeight).toBeLessThan(60)
@@ -220,12 +220,16 @@ test('keeps running-card actions on one row', async ({ page }) => {
   await page.locator('.sidebar-item[data-page="run"]').click()
 
   const card = page.locator('.run-card[data-project="b8seed-portal"]')
-  await expect(card.locator('.run-card__state[data-tone="active"]')).toBeVisible()
-  // P2：旧实现四个按钮会换行，「打开地址」掉到第二行
-  const tops = await card.locator('.run-card__actions button').evaluateAll(
-    buttons => buttons.map(b => Math.round(b.getBoundingClientRect().top)),
+  await expect(card.locator('.base-entity-card__state--active')).toBeVisible()
+  // P2：旧实现四个按钮会换行，「打开地址」掉到第二行。
+  // 比较垂直中心而不是 top：图标按钮与 sm 按钮高度不同，top 本就有几像素差。
+  const centers = await card.locator('.base-entity-card__actions button').evaluateAll(
+    buttons => buttons.map((b) => {
+      const rect = b.getBoundingClientRect()
+      return Math.round(rect.top + rect.height / 2)
+    }),
   )
-  expect(new Set(tops).size).toBe(1)
+  expect(new Set(centers).size).toBe(1)
 })
 
 test('keeps the running total aligned when an older stopped job is also returned', async ({ page }) => {
@@ -237,10 +241,10 @@ test('keeps the running total aligned when an older stopped job is also returned
   await page.goto('/?apiPort=13900')
   await page.locator('.sidebar-item[data-page="run"]').click()
 
-  const runningStat = page.locator('.run-stats__card').filter({ hasText: '运行中' })
-  await expect(runningStat.locator('strong')).toHaveText('1')
-  await expect(page.locator('.run-card__state[data-tone="active"]')).toHaveCount(1)
-  await expect(page.locator('.run-card[data-project="b8seed-portal"] .run-card__state')).toHaveAttribute('data-tone', 'active')
+  const runningStat = page.locator('.run-stats__item').filter({ hasText: '运行中' })
+  await expect(runningStat.locator('dd')).toHaveText('1')
+  await expect(page.locator('.run-card .base-entity-card__state--active')).toHaveCount(1)
+  await expect(page.locator('.run-card[data-project="b8seed-portal"] .base-entity-card__state')).toHaveClass(/base-entity-card__state--active/)
 })
 
 test('warns with full process details before force-releasing a port', async ({ page }) => {
@@ -257,7 +261,7 @@ test('warns with full process details before force-releasing a port', async ({ p
   await page.locator('.sidebar-item[data-page="run"]').click()
 
   const card = page.locator('.run-card[data-project="b8seed-blog"]')
-  await card.getByRole('button', { name: '▶ 启动运行' }).click()
+  await card.getByRole('button', { name: '启动运行' }).click()
 
   const dialog = page.getByRole('dialog')
   await expect(dialog).toBeVisible()
@@ -276,7 +280,7 @@ test('warns with full process details before force-releasing a port', async ({ p
 
 test('requires picking a module before a multi-module project can start', async ({ page }) => {
   const mock = await openRun(page)
-  await page.locator('.run-card[data-project="b8seed-portal"]').getByRole('button', { name: '▶ 启动运行' }).click()
+  await page.locator('.run-card[data-project="b8seed-portal"]').getByRole('button', { name: '启动运行' }).click()
 
   const dialog = page.getByRole('dialog')
   await expect(dialog).toBeVisible()
@@ -295,7 +299,7 @@ test('requires picking a module before a multi-module project can start', async 
 test('forces the configured port instead of silently inferring one', async ({ page }) => {
   const mock = await openRun(page)
   // F3：旧实现填了端口也不生效，PORT 仍取推断值
-  await page.locator('.run-card[data-project="b8seed-blog"]').getByRole('button', { name: '▶ 启动运行' }).click()
+  await page.locator('.run-card[data-project="b8seed-blog"]').getByRole('button', { name: '启动运行' }).click()
   await expect.poll(() => mock.writes.find(w => w.path === '/api/run/start')).toBeTruthy()
   const payload = mock.writes.find(w => w.path === '/api/run/start')?.body as { port?: string }
   expect(payload.port).toBe('8090')
@@ -363,7 +367,7 @@ test('shows the log viewer on top of the run page, not trapped in the home host'
   await page.locator('.sidebar-item[data-page="run"]').click()
 
   const card = page.locator('.run-card[data-project="b8seed-portal"]')
-  await expect(card.locator('.run-card__state[data-tone="active"]')).toBeVisible()
+  await expect(card.locator('.base-entity-card__state--active')).toBeVisible()
   await card.getByRole('button', { name: '更多操作' }).click()
   await page.getByText('查看日志', { exact: true }).click()
 
@@ -406,4 +410,91 @@ test('renders both themes at 900 by 600 without overflow', async ({ page }) => {
   await page.evaluate(() => document.body.setAttribute('data-theme', 'light'))
   await expectNoPageOverflow(page)
   await page.evaluate(() => document.body.setAttribute('data-theme', 'dark'))
+})
+
+test('keeps every project card the same height regardless of run state', async ({ page }) => {
+  const mock = await mockRun(page)
+  // 同一分组内同时出现运行中、启动中与空闲三种状态
+  mock.setStatuses([
+    buildJob({ id: 'run-a', projectName: 'b8seed-portal', status: 'running' }),
+    buildJob({ id: 'run-b', projectName: 'b8seed-blog', status: 'starting', pid: null, url: '', port: 0 }),
+  ])
+  await page.setViewportSize({ width: 1600, height: 900 })
+  await page.goto('/?apiPort=13900')
+  await page.locator('.sidebar-item[data-page="run"]').click()
+  await expect(page.locator('.run-card')).toHaveCount(3)
+
+  const heights = await page.locator('.run-card').evaluateAll(
+    cards => cards.map(card => Math.round(card.getBoundingClientRect().height)),
+  )
+  expect(new Set(heights).size).toBe(1)
+
+  // 三种状态都渲染主行与细节行，行数一致才是等高的根因
+  await expect(page.locator('.base-entity-card__state-line')).toHaveCount(3)
+  await expect(page.locator('.base-entity-card__state-detail')).toHaveCount(3)
+})
+
+test('drops the boxed command and status panels from project cards', async ({ page }) => {
+  await openRun(page)
+  const card = page.locator('.run-card[data-project="b8seed-portal"]')
+
+  // 状态贴在主体末尾，不再是带边框的独立面板
+  await expect(card.locator('.base-entity-card__status')).toHaveCount(0)
+  await expect(card.locator('.base-entity-card__body .base-entity-card__state')).toHaveCount(1)
+
+  /*
+    卡片内部不应再出现「满宽带边框的展示型容器」——旧实现的命令框和状态框就是，
+    它们和卡片自身的边界叠成框中框。判定加上宽度条件：
+    工具版本徽标、类型徽标这类内联小标签有边框是排版手段，不算嵌套容器。
+  */
+  const boxed = await card.evaluate((el) => {
+    const cardWidth = el.getBoundingClientRect().width
+    return [...el.querySelectorAll('*')]
+      .filter(node => !node.closest('button') && node.tagName !== 'BUTTON')
+      .filter((node) => {
+        const style = getComputedStyle(node)
+        const framed = style.borderTopStyle === 'solid'
+          && Number.parseFloat(style.borderTopWidth) > 0
+          && Number.parseFloat(style.borderBottomWidth) > 0
+          && Number.parseFloat(style.borderLeftWidth) > 0
+        // 只有接近卡片宽度的容器才构成框中框
+        return framed && node.getBoundingClientRect().width > cardWidth * 0.6
+      })
+      .map(node => node.className)
+  })
+  expect(boxed).toEqual([])
+
+  // 图标用 SVG 而非 emoji，跨系统渲染一致
+  await expect(card.locator('.run-card__icon svg')).toHaveCount(1)
+})
+
+test('wraps each group and its cards in one shared panel boundary', async ({ page }) => {
+  const grouped = buildProjects()
+  grouped[0].groupName = '业务前台'
+  grouped[1].groupName = '业务前台'
+  await mockRun(page, grouped)
+  await page.setViewportSize({ width: 1280, height: 800 })
+  await page.goto('/?apiPort=13900')
+  await page.locator('.sidebar-item[data-page="run"]').click()
+  const group = page.locator('#vue-run-host .run-group').first()
+  await expect(group.locator('.run-card')).toHaveCount(2)
+
+  // 分组用公共折叠组件的 panel 分区容器，而不是裸标题
+  await expect(group).toHaveClass(/base-disclosure--panel/)
+
+  // 标题与卡片网格同属一个容器，卡片不会脱出面板边界
+  const nested = await group.evaluate((el) => {
+    const body = el.querySelector('.run-group__body')!
+    const card = body.querySelector('.run-card')!
+    const groupRect = el.getBoundingClientRect()
+    const cardRect = card.getBoundingClientRect()
+    return {
+      cardInsidePanel: cardRect.left >= groupRect.left && cardRect.right <= groupRect.right,
+      // 卡片圆角必须比容器小一档，嵌套关系才成立
+      groupRadius: Number.parseFloat(getComputedStyle(el).borderTopLeftRadius),
+      cardRadius: Number.parseFloat(getComputedStyle(card).borderTopLeftRadius),
+    }
+  })
+  expect(nested.cardInsidePanel).toBe(true)
+  expect(nested.cardRadius).toBeLessThan(nested.groupRadius)
 })
