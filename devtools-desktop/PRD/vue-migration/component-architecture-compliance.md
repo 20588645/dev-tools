@@ -391,3 +391,50 @@ Run 页面接入：项目卡改由 `BaseEntityCard` 承载，工具与版本合�
 完整自动回归通过：`npm run lint`、`npm test`（36 个测试文件 / 195 项单元与组件测试 + 架构门禁 4 项）、`npm run typecheck`、`npm run build:frontend`、Run + Twofa Playwright 30/30。Run E2E 从 13 项扩到 17 项，新增覆盖卡片等高、状态两行、无满宽框中框、SVG 图标、分组面板共享边界与圆角嵌套关系。组件架构基线仍为 0，批准例外 0。
 
 视觉自查使用 Playwright 在 1600×1000 与 900×600 抓取亮暗主题截图，确认分组容器分层、按钮弹性宽度、卡片等高与窄窗口无横向溢出；截图为临时产物已删除，未提交仓库。Run 的真实 Tauri 体验确认与专项最终 Smoke Test 仍是未关闭 Gate。
+
+## 25. 专项最终 Tauri Smoke Test 清单（2026-08-06）
+
+这是专项关闭前最后一个 Gate，必须由用户在真实 Tauri 中执行，自动化不代劳。清单按「本轮公共组件改动的实际影响面」编排，不是全站平铺——影响面已通过代码取证与实测确认，结论如下。
+
+### 25.1 影响面取证结论
+
+| 改动 | 消费页面 | 是否改变既有页面行为 |
+| --- | --- | --- |
+| `BaseCard` 补 `borderRadius` 主题覆盖 | ipcheck、notes、notebook、todo、usage | **否**。实测改动前后卡片圆角均为 8px：组件库默认值与 `--component-card-radius` 解析结果一致（legacy `base.css` 把 `--radius-lg` 覆盖为 8px），这一行只是让 token 真正接管，视觉零变化 |
+| `BaseDisclosure` 新增 `panel` | settings、todo、twofa、run | **否**。仅新增 variant 分支，`default` / `card` / `plain` 的 `dividerColor` 与样式未改 |
+| `BaseProgress` 的 `rail` / `tickInterval` | ipcheck、settings、twofa、usage | **否**。两者默认值分别为 `subtle` 与 `undefined`；ipcheck 与 settings 均不传这两个 prop，走默认路径 |
+| `BaseEntityCard` 的 `body--stretch` 新增 `flex-direction: column` 与 `gap` | twofa、run | **否**。Twofa 主体只有单个子元素，`gap` 不产生间距；`padding-bottom: 0` 由 `:not(:has(.base-entity-card__state))` 保留，Twofa 无 body 状态区故命中该分支。Twofa Playwright 14/14 通过 |
+| `BaseEntityCard` 的 `actions` 包裹层与 `actionsLayout` | twofa、run | **否**。`compact` 为默认值，Twofa 未传该 prop |
+
+因此本轮改动的**新增视觉只落在 Run 与 Twofa 两页**，其余页面属于回归确认范围而非重点验证范围。
+
+### 25.2 重点验证（本轮直接改动）
+
+Run 与 Twofa 已分别完成独立验收，此处只复验「两页共用同一套公共组件后是否互相干扰」：
+
+- [ ] Run 与 Twofa 连续切换多次，两页卡片形态、圆角、等高与状态色各自保持正确，不出现一页的样式泄漏到另一页。
+- [ ] Run 分组折叠后切到 Twofa 再切回，折叠态与分组顺序仍被正确记住。
+- [ ] Twofa 倒计时进度线与 Run 项目卡同屏存在过后，两处进度动画均无闪烁或停滞。
+
+### 25.3 回归确认（公共组件间接影响）
+
+每页只需确认「没有明显破相」，无需逐功能重测：
+
+- [ ] S1 应用首页：卡片布局与运行中项目展示正常。
+- [ ] S2 系统设置：分类导航、实验功能折叠（`BaseDisclosure card`）、更新进度条正常。
+- [ ] S3 纯净检测：结果卡片、风险详情内的共享度进度条正常。
+- [ ] S4 工时内容：周列表与日报卡片正常。
+- [ ] S5 个人笔记：列表卡与编辑器卡填充与滚动正常。
+- [ ] S6 待办事项：三状态分组折叠、任务行选择、主从卡片正常。
+- [ ] S8 用量统计：总览卡、五类数据表格、活力环与趋势图正常。
+
+### 25.4 跨页与全局
+
+- [ ] 亮色与暗色主题各过一遍上述页面，无对比度失效或色相异常。
+- [ ] 1665×1184 与 900×600 两档尺寸下无横向溢出、无内容截断。
+- [ ] 托盘菜单在有本地服务运行时正确显示项目列表（验证 `runningProjects` 双向同步未被破坏）。
+- [ ] 部署面板可正常打开、构建与部署日志弹窗正常（验证 `log-viewer-bridge` 未被破坏）。**已知项**：部署面板项目分组头当前无样式，属第 24 节登记的 `.run-group*` 样式孤儿，由 Phase 6-2 修复，本次不视为缺陷。
+
+### 25.5 通过条件
+
+25.2 全部通过、25.3 与 25.4 无新增缺陷时，专项关闭并允许进入 Phase 6-2。若发现缺陷，按所属页面回到对应 PG2/PG3 处理，不在 Smoke Test 阶段直接改设计。
