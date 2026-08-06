@@ -1,0 +1,102 @@
+#vue-deploy-dashboard-host {
+  width: 100%;
+  min-width: 0;
+}
+
+.deploy-dashboard {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  gap: var(--space-3);
+}
+
+/* ---------- 工具栏 ---------- */
+.deploy-dashboard__toolbar {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.deploy-dashboard__search {
+  width: 240px;
+  min-width: 0;
+}
+
+.deploy-dashboard__filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+/* ---------- 概览摘要条 ---------- */
+/*
+  三个数字不值一整行大卡：收成一行摘要条，把纵向空间让给项目卡片。
+  与本地运行页保持同一形态。
+*/
+.deploy-dashboard__stats {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 0;
+  padding: 0 2px;
+  gap: var(--space-2);
+}
+
+.deploy-dashboard__stat {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.deploy-dashboard__stat:not(:last-child)::after {
+  width: 1px;
+  height: 10px;
+  margin-left: var(--space-3);
+  background: var(--color-border-strong);
+  content: "";
+  opacity: .7;
+}
+
+.deploy-dashboard__stat dt {
+  color: var(--color-text-subtle);
+  font-size: var(--font-size-xs);
+}
+
+.deploy-dashboard__stat dd {
+  margin: 0;
+  color: var(--color-text);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-sm);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--font-weight-semibold);
+}
+
+/* ---------- 分组与网格 ---------- */
+/* 组间比组内松，让「标题 + 卡片」成为一个视觉整体 */
+.deploy-dashboard__groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/*
+  平铺布局（没有任何项目带分组名时）：auto-fit 折叠空轨道，
+  少量项目时不留大片空白。
+*/
+.deploy-dashboard__grid {
+  display: grid;
+  align-items: stretch;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.deploy-dashboard__grid > :only-child { max-width: 420px; }
+
+@media (max-width: 1000px) {
+  .deploy-dashboard__search {
+    width: 100%;
+  }
+}

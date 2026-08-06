@@ -19,6 +19,7 @@ const SettingsView = defineAsyncComponent(() => import('@/views/settings/Setting
 const TodoView = defineAsyncComponent(() => import('@/views/todo/TodoView.vue'))
 const TwofaView = defineAsyncComponent(() => import('@/views/twofa/TwofaView.vue'))
 const UsageView = defineAsyncComponent(() => import('@/views/usage/UsageView.vue'))
+const DeployDashboardView = defineAsyncComponent(() => import('@/views/deploy/DeployDashboardView.vue'))
 const app = useAppStore()
 const logTask = useLogTaskStore()
 const todoReminderService = createTodoReminderService()
@@ -47,6 +48,10 @@ usageTarget?.setAttribute('data-vue-owner', 'usage')
 const runTarget = document.querySelector('#vue-run-host')
 const hasRunTarget = Boolean(runTarget)
 runTarget?.setAttribute('data-vue-owner', 'run')
+/* 部署面板按子页逐个迁移，项目总览先接管，服务器管理与部署历史仍在 legacy 侧。 */
+const deployDashboardTarget = document.querySelector('#vue-deploy-dashboard-host')
+const hasDeployDashboardTarget = Boolean(deployDashboardTarget)
+deployDashboardTarget?.setAttribute('data-vue-owner', 'deploy-dashboard')
 let themeObserver: MutationObserver | null = null
 let stopPageActivation: (() => void) | null = null
 let stopLogViewerBridge: (() => void) | null = null
@@ -136,6 +141,11 @@ onBeforeUnmount(() => {
     <Teleport v-if="hasRunTarget" to="#vue-run-host">
       <KeepAlive>
         <RunView v-if="activePage === 'run'" />
+      </KeepAlive>
+    </Teleport>
+    <Teleport v-if="hasDeployDashboardTarget" to="#vue-deploy-dashboard-host">
+      <KeepAlive>
+        <DeployDashboardView v-if="activePage === 'deploy'" />
       </KeepAlive>
     </Teleport>
     <!-- LogViewer 内部用 BaseDialog（NModal），自带 teleport 到 body -->
