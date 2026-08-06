@@ -8,6 +8,31 @@
   --component-control-radius: var(--radius-md);
   --component-card-padding: var(--space-4);
   --component-card-radius: var(--radius-lg);
+  /* 实体卡片表面高光：材质受光而非装饰色，只改明度不引入色相 */
+  --component-entity-card-sheen: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--color-surface-raised) 55%, transparent),
+    transparent
+  );
+  --component-entity-card-panel: var(--color-surface-subtle);
+  /* 实体卡片受光边缘：1px 内高光，让卡片有厚度而不是贴纸 */
+  --component-entity-card-edge: inset 0 1px 0 color-mix(in srgb, var(--color-surface-raised) 70%, transparent);
+  /* 图标容器：微渐变模拟受光面 */
+  --component-entity-card-icon-face: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--color-surface-subtle) 160%, transparent),
+    var(--color-surface-subtle)
+  );
+  /* 分区容器：面板底与标题条，只用明度差分层，不引入色相 */
+  --component-disclosure-panel-radius: 14px;
+  /* 面板内嵌卡片收一档，嵌套关系才成立 */
+  --component-disclosure-panel-item-radius: 10px;
+  --component-disclosure-panel-face: color-mix(in srgb, var(--color-surface) 45%, transparent);
+  --component-disclosure-panel-head: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--color-surface) 72%, transparent),
+    color-mix(in srgb, var(--color-surface) 24%, transparent)
+  );
   --component-dialog-width: 520px;
   --component-focus-outline: 0 0 0 2px color-mix(in srgb, var(--color-focus-ring) 16%, transparent);
   --component-control-surface: color-mix(in srgb, var(--color-surface) 76%, var(--color-surface-raised));

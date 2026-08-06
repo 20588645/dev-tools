@@ -108,6 +108,52 @@ describe('shared UI foundation', () => {
     expect(wrapper.get('.base-entity-card__details-arrow').element.tagName.toLowerCase()).toBe('svg')
   })
 
+  it('exposes a panel disclosure that shares one boundary with its content', () => {
+    const wrapper = mount(BaseDisclosure, {
+      props: { modelValue: true, title: '茅台项目', variant: 'panel', contentPadding: 'var(--space-3)' },
+      slots: { default: '<div data-test="grid">卡片网格</div>' },
+    })
+
+    expect(wrapper.classes()).toContain('base-disclosure--panel')
+    // 标题与内容同属一个容器，内容不会脱出面板边界
+    expect(wrapper.get('[data-test="grid"]').element.closest('.base-disclosure')).toBe(wrapper.element)
+  })
+
+  it('keeps entity card height independent of status through the two-line state contract', () => {
+    const mountCard = (tone: 'neutral' | 'active' | 'warning', line: string, detail: string) => mount(BaseEntityCard, {
+      props: { statusPlacement: 'body', statusTone: tone, surface: 'sheen', fillHeight: true },
+      slots: {
+        icon: '▦',
+        title: 'b8seed 门户',
+        subtitle: 'Webpack · Node v12.22.12',
+        default: '<code>npm run dev</code>',
+        status: line,
+        statusDetail: detail,
+        actions: '<button type="button">启动</button>',
+      },
+    })
+
+    const running = mountCard('active', '运行中 · localhost:8080', 'PID 4242')
+    const idle = mountCard('neutral', '尚未运行', '启动时可选择模块与命令')
+    const alert = mountCard('warning', '端口 5180 被占用', 'node · PID 99999')
+
+    // 状态贴在主体末尾，而不是独立面板或底部说明位
+    for (const card of [running, idle, alert]) {
+      expect(card.find('.base-entity-card__status').exists()).toBe(false)
+      expect(card.find('.base-entity-card__footer-status').exists()).toBe(false)
+      expect(card.find('.base-entity-card__body .base-entity-card__state').exists()).toBe(true)
+      // 三种状态都渲染主行与细节行，行数一致才能保证卡片等高
+      expect(card.get('.base-entity-card__state-line').text()).not.toBe('')
+      expect(card.get('.base-entity-card__state-detail').text()).not.toBe('')
+      expect(card.classes()).toContain('base-entity-card--sheen')
+      expect(card.classes()).toContain('base-entity-card--fill-height')
+    }
+
+    expect(running.get('.base-entity-card__state').classes()).toContain('base-entity-card__state--active')
+    expect(alert.get('.base-entity-card__state').classes()).toContain('base-entity-card__state--warning')
+    expect(running.get('.base-entity-card__subtitle').text()).toBe('Webpack · Node v12.22.12')
+  })
+
   it('keeps page top outside the scrollable body slot', () => {
     const wrapper = mount(PageFrame, {
       slots: {

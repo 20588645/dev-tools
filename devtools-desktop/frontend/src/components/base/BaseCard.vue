@@ -34,6 +34,7 @@ const contentStyle = computed<CSSProperties>(() => ({
 // Keep the embedded surface on the project's semantic surface token instead,
 // so subtle cards remain calm in both light and dark themes.
 const cardThemeOverrides = {
+  borderRadius: 'var(--component-card-radius)',
   color: 'var(--color-surface)',
   colorEmbedded: 'var(--color-surface-subtle)',
   colorEmbeddedModal: 'var(--color-surface-subtle)',

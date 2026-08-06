@@ -59,6 +59,7 @@ const switchValue = ref(true)
 const segmentedValue = ref('全部')
 const filterSelected = ref(true)
 const disclosureOpen = ref(true)
+const panelDisclosureOpen = ref(true)
 const entityCardOpen = ref(false)
 const entityCardFooterOpen = ref(false)
 const sideNavValue = ref('general')
@@ -156,6 +157,24 @@ const previewTableRowKey = (row: PreviewTableRow) => row.name
             <template #details>结构化实体卡片统一标题、状态、操作和可展开详情。</template>
           </BaseEntityCard>
           <BaseEntityCard
+            surface="sheen"
+            status-placement="body"
+            status-tone="active"
+            aria-label="等高实体卡片预览"
+            density="compact"
+          >
+            <template #icon>
+              <span class="entity-card-preview__icon">▦</span>
+            </template>
+            <template #title>b8seed 门户</template>
+            <template #subtitle>Webpack · Node v12.22.12</template>
+            <template #headerExtra><BaseBadge>3 模块</BaseBadge></template>
+            <div class="entity-card-preview__cmd"><code>npm run dev</code></div>
+            <template #status>运行中 · localhost:8080</template>
+            <template #statusDetail>PID 4242 · 已运行 1h 2m</template>
+            <template #actions><BaseButton size="sm" variant="secondary">打开地址</BaseButton></template>
+          </BaseEntityCard>
+          <BaseEntityCard
             v-model="entityCardFooterOpen"
             aria-label="底部状态实体卡片预览"
             density="compact"
@@ -228,6 +247,19 @@ const previewTableRowKey = (row: PreviewTableRow) => row.name
           </BaseCard>
           <BaseDisclosure v-model="disclosureOpen" title="高级设置" variant="card" content-gap="var(--space-2)">
             折叠内容由公共组件统一管理键盘、箭头与展开状态。
+          </BaseDisclosure>
+          <BaseDisclosure
+            v-model="panelDisclosureOpen"
+            title="项目分组"
+            variant="panel"
+            header-padding="var(--space-2) 0"
+            content-gap="0"
+            content-padding="var(--space-3)"
+          >
+            <template #actions>
+              <BaseIconButton label="重命名分组">✎</BaseIconButton>
+            </template>
+            panel 分区容器：标题条与内容共享一个外框，适合承载卡片网格。
           </BaseDisclosure>
           <BaseCard content-padding="var(--space-2)">
             <BaseSideNav
@@ -315,6 +347,9 @@ const previewTableRowKey = (row: PreviewTableRow) => row.name
 .foundation-card-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); align-items: start; }
 .card-preview { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); }
 .entity-card-preview__body { width: 100%; min-width: 0; }
+.entity-card-preview__icon { color: var(--color-text-muted); font-size: 15px; }
+.entity-card-preview__cmd { min-width: 0; padding: 7px 10px; border-radius: var(--radius-sm); background: var(--component-entity-card-panel); box-shadow: inset 2px 0 0 var(--color-border-strong); }
+.entity-card-preview__cmd code { display: block; overflow: hidden; color: var(--color-text-muted); font-family: var(--font-family-mono); font-size: var(--font-size-xs); text-overflow: ellipsis; white-space: nowrap; }
 .entity-card-preview__code { display: block; margin-bottom: var(--space-3); color: var(--color-text); font-family: var(--font-family-mono); font-size: 26px; font-variant-numeric: tabular-nums; letter-spacing: .08em; }
 .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
 .choice-stack { display: grid; align-content: start; gap: var(--space-3); }
