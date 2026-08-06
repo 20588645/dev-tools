@@ -1,6 +1,6 @@
 # 组件架构合规专项
 
-> 状态：规则与自动门禁、公共组件能力、通知适配层及全部九个已迁移页面的组件架构自动收口已完成，机器基线与批准例外均为 0；Run 的用户体验确认、真实 Tauri E2E 与专项最终 Tauri Smoke Test 尚未完成。在这些 Gate 关闭前，不进入 Phase 6-2 Deploy
+> 状态：**已关闭（2026-08-06）**。规则与自动门禁、公共组件能力、通知适配层及全部九个已迁移页面的组件架构收口均已完成，机器基线与批准例外均为 0；Run 的用户体验确认、真实 Tauri 手动 E2E 与第 25 节专项最终 Tauri Smoke Test 已由用户全部确认通过。本文自此转为**长期生效的规则文档**：第 2 节所有权边界与第 7 节页面架构验收清单继续约束所有后续迁移页面，Phase 6-2 Deploy 开始前须先处理第 24 节登记的四项跨页耦合
 >
 > 生效范围：`frontend/src/views/**` 及所有后续迁移业务页面。公共组件、适配层和第三方宿主的职责边界以本文为唯一专项入口；原执行计划中的一致规则继续有效，发生歧义时先暂停实现并更新本文。
 
@@ -438,3 +438,18 @@ Run 与 Twofa 已分别完成独立验收，此处只复验「两页共用同一
 ### 25.5 通过条件
 
 25.2 全部通过、25.3 与 25.4 无新增缺陷时，专项关闭并允许进入 Phase 6-2。若发现缺陷，按所属页面回到对应 PG2/PG3 处理，不在 Smoke Test 阶段直接改设计。
+
+## 26. 专项关闭记录（2026-08-06）
+
+用户已在真实 Tauri 完成第 25 节全部清单并确认通过：25.2 三项重点验证（Run 与 Twofa 共用公共组件无互相干扰）全部通过，25.3 七页回归确认与 25.4 跨页全局项均无新增缺陷。部署面板项目分组头无样式按既定判断计为已知项，不视为本专项缺陷。
+
+专项自 2026-07-31 启动，最终结果：
+
+- 机器债务基线由 68 项降至 0，批准例外始终为 0。
+- 九个已迁移页面（home、ipcheck、notes、notebook、settings、todo、usage、twofa、run）全部完成组件架构收口。
+- 建立 `npm run lint:architecture` 自动门禁并纳入总 `npm run lint`，按「规则 + 文件 + 数量」比较基线，新增违规、跨文件转移和已修复未下调基线都会失败。
+- 公共能力沉淀：`BaseDataTable`、`BaseEntityCard`、`BaseSideNav`、`BaseSelectableItem`、通知适配层，以及 `BaseDisclosure`、`BaseProgress`、`BaseCard`、`BaseInput`、`BaseTextarea`、`BaseCheckbox`、`FilterChip`、`useInterval` 的契约扩展。
+
+本文转为长期生效的规则文档，不再作为阶段性专项推进。后续每个迁移页面在 PG4 完成前必须逐项确认第 7 节清单；`npm run lint:architecture` 保持零基线，任何新增违规都必须在合并前修掉，不得再新增递减基线。
+
+遗留事项已全部登记在册，不在本文继续跟踪：Run 的四项跨页耦合（`.run-group*` 样式孤儿、`log-viewer-bridge`、`runningProjects` 全局、`loadRunStatuses`）见主执行计划 Phase 6「部署面板」小节，作为 Phase 6-2 的准入前提。
