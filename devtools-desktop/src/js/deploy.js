@@ -1,25 +1,5 @@
 // ========== Module: Deploy (部署面板) ==========
 
-// —— 项目分组的视图偏好（折叠态/自定义排序存 localStorage）——
-// 原定义在 js/run.js；本地运行页迁到 Vue 后该文件不再加载，部署面板仍用同一套
-// 分组顺序，故在此保留。键名与 Vue 侧 useRunGroups 保持一致，两边共享同一偏好。
-const RUN_UNGROUPED = '__ungrouped__';
-
-function getRunGroupOrder() {
-  try { return JSON.parse(localStorage.getItem('runGroupOrder') || '[]'); } catch (e) { return []; }
-}
-
-function setRunGroupOrder(order) {
-  localStorage.setItem('runGroupOrder', JSON.stringify(order));
-}
-
-// 具名分组按自定义顺序优先，未在顺序里的新组按名称补在后
-function orderedRunGroups(namedKeys) {
-  const saved = getRunGroupOrder().filter(k => namedKeys.includes(k));
-  const rest = namedKeys.filter(k => !saved.includes(k)).sort((a, b) => a.localeCompare(b, 'zh'));
-  return [...saved, ...rest];
-}
-
 // ========== Node Versions ==========
 async function loadNodeVersions() {
   try {
@@ -39,7 +19,6 @@ async function loadProjects() {
   try {
     projects = await API.get('/api/projects');
     await loadRunStatuses();
-    renderProjects();
     requestHomeRefreshIfVisible();
     syncTrayMenu();
   } catch (e) {
@@ -60,216 +39,12 @@ async function loadProjects() {
   }
 }
 
-function renderProjects() {
-  const searchEl = document.getElementById('searchInput');
-  const search = searchEl ? searchEl.value.toLowerCase() : '';
-  let filtered = projects.filter(p => !search || p.name.toLowerCase().includes(search) || (p.displayName && p.displayName.toLowerCase().includes(search)));
-
-  if (currentFilter === 'multi') filtered = filtered.filter(p => p.type === 'multi-module');
-  else if (currentFilter === 'single') filtered = filtered.filter(p => p.type === 'single');
-  else if (currentFilter === 'configured') filtered = filtered.filter(p => getProjectDefaultServerIds(p).length > 0);
-  else if (currentFilter === 'unconfigured') filtered = filtered.filter(p => getProjectDefaultServerIds(p).length === 0);
-
-  const grid = document.getElementById('projectGrid');
-  if (!grid) return;
-  if (filtered.length === 0) {
-    grid.classList.remove('is-grouped');
-    grid.innerHTML = '<div class="deploy-empty-state deploy-empty-state--grid">暂无项目，点击右上角「+ 添加项目」开始</div>';
-    return;
-  }
-
-  // 复刻本地运行页：项目带 groupName 才分组（分组名与自定义顺序复用本地运行页的 groupName / runGroupOrder，折叠态本页独立），否则维持平铺
-  const hasGroups = projects.some(p => (p.groupName || '').trim());
-  if (!hasGroups) {
-    grid.classList.remove('is-grouped');
-    grid.innerHTML = filtered.map(deployProjectCardHTML).join('');
-    loadLastDeployInfos(filtered);
-    return;
-  }
-
-  const groups = new Map();
-  for (const p of filtered) {
-    const key = (p.groupName || '').trim() || RUN_UNGROUPED;
-    if (!groups.has(key)) groups.set(key, []);
-    groups.get(key).push(p);
-  }
-  // 仅渲染过滤后仍有项目的具名分组；当前可见项里无任何具名分组 → 退回平铺，避免只剩一个「未分组」头
-  const allNamed = orderedRunGroups([...new Set(projects.map(p => (p.groupName || '').trim()).filter(Boolean))]);
-  const namedKeys = allNamed.filter(k => groups.has(k));
-  if (namedKeys.length === 0) {
-    grid.classList.remove('is-grouped');
-    grid.innerHTML = filtered.map(deployProjectCardHTML).join('');
-    loadLastDeployInfos(filtered);
-    return;
-  }
-  const orderedKeys = groups.has(RUN_UNGROUPED) ? [...namedKeys, RUN_UNGROUPED] : namedKeys;
-
-  grid.classList.add('is-grouped');
-  grid.innerHTML = orderedKeys.map(key => {
-    const items = groups.get(key);
-    const isUngrouped = key === RUN_UNGROUPED;
-    const collapsed = isDeployGroupCollapsed(key);
-    const keyEsc = escapeOnclickArg(key);
-    // 排序/重命名作用于共享的 groupName / runGroupOrder，故会同步反映到本地运行页（与用户预期一致）
-    const gi = isUngrouped ? -1 : allNamed.indexOf(key);
-    const moveHtml = isUngrouped ? ''
-      : `<button class="btn btn--icon btn--sm run-group-move" title="上移" ${gi <= 0 ? 'disabled' : ''} onclick="moveDeployGroup('${keyEsc}', -1, event)">↑</button>`
-      + `<button class="btn btn--icon btn--sm run-group-move" title="下移" ${gi >= allNamed.length - 1 ? 'disabled' : ''} onclick="moveDeployGroup('${keyEsc}', 1, event)">↓</button>`;
-    const menuHtml = isUngrouped ? ''
-      : `<button class="btn btn--icon btn--sm run-group-menu" title="重命名分组" onclick="renameDeployGroup('${keyEsc}', event)">✎</button>`;
-    return `
-      <div class="run-group">
-        <div class="run-group-header${collapsed ? ' is-collapsed' : ''}" onclick="toggleDeployGroup('${keyEsc}', this)">
-          <span class="run-group-chevron">${collapsed ? '▸' : '▾'}</span>
-          <span class="run-group-name${isUngrouped ? ' is-ungrouped' : ''}">${escapeHtml(isUngrouped ? '未分组' : key)}</span>
-          <span class="run-group-count">${items.length} 个项目</span>
-          ${moveHtml}
-          ${menuHtml}
-        </div>
-        <div class="deploy-group-grid"${collapsed ? ' style="display:none"' : ''}>${items.map(deployProjectCardHTML).join('')}</div>
-      </div>`;
-  }).join('');
-
-  loadLastDeployInfos(filtered);
-}
-
-// 单张部署项目卡片（平铺与分组视图共用）
-function deployProjectCardHTML(p) {
-  const isMulti = p.type === 'multi-module';
-  const moduleCount = (p.modules || []).length;
-  const nodeLabel = p.nodeVersion ? `<span class="badge-tool">${p.nodeVersion}</span>` : '';
-  const isBusy = busyProjects.has(p.name);
-  const disabledAttr = isBusy ? 'disabled' : '';
-  const last = lastDeployCache[p.name];
-  let lastDeployHtml = '<div class="card-last-deploy">○ 暂无构建/部署记录</div>';
-  if (last) {
-    const icon = last.status === 'success' ? '✅' : '❌';
-    const ago = timeAgo(last.timestamp);
-    const mods = (last.modules || []).map(escapeHtml).join(', ');
-    const typeLabel = last.type === 'deploy' ? '部署' : '构建';
-    const info = last.type === 'deploy' ? `${typeLabel} → ${escapeHtml(last.serverName)} · ${mods}` : `${typeLabel} · ${mods}`;
-    lastDeployHtml = `<div class="card-last-deploy ${last.status}">${icon} ${ago} · ${info} · ${escapeHtml(last.duration)}</div>`;
-  }
-  const pnEsc = escapeOnclickArg(p.name);
-  return `
-    <div class="project-card ${isBusy ? 'card-busy' : ''}" data-project="${escapeAttr(p.name)}" onclick="openDeployModal('${pnEsc}')">
-      <div class="card-top">
-        <div class="card-name">${isMulti ? '📦' : '📄'} ${escapeHtml(p.displayName || p.name)}</div>
-        <span class="card-badge ${isMulti ? 'badge-multi' : 'badge-single'}">${isMulti ? '多模块' : '单体'}</span>
-      </div>
-      <div class="card-meta">
-        <span><span class="badge-tool">${escapeHtml(p.tool)}</span> ${nodeLabel} ${isMulti ? moduleCount + ' 个模块' : ''}</span>
-        <span>构建: ${escapeHtml(p.buildCommand || 'npm run build')}</span>
-      </div>
-      ${isMulti ? `<div class="card-modules">${(p.modules || []).slice(0, 5).map(m => `<span class="module-tag">${escapeHtml(m.name)}</span>`).join('')}${moduleCount > 5 ? `<span class="module-more">+${moduleCount - 5}</span>` : ''}</div>` : ''}
-      <div class="card-status ${getProjectDefaultServerIds(p).length > 0 ? 'status-configured' : 'status-unconfigured'}">
-        ${getProjectDefaultServerIds(p).length > 0 ? `● 已配置 ${getProjectDefaultServerIds(p).length} 台服务器` : '○ 未配置服务器'}
-      </div>
-      ${lastDeployHtml}
-      <div class="card-actions">
-        ${isBusy ? `
-        <button class="btn btn--warning" style="flex:1" onclick="event.stopPropagation();reopenLogModal()">⏳ 查看进度...</button>
-        ` : `
-        <button class="btn" onclick="event.stopPropagation();openBuildModal('${pnEsc}')" ${disabledAttr}>🔨 构建</button>
-        <button class="btn btn--primary" onclick="event.stopPropagation();openDeployModal('${pnEsc}')" ${disabledAttr}>🚀 部署</button>
-        <button class="btn btn--icon" onclick="event.stopPropagation();openProjectConfig('${pnEsc}')" title="默认配置">⚙</button>
-        <button class="btn btn--icon btn--danger" onclick="event.stopPropagation();removeProject('${pnEsc}')" title="移除项目">🗑</button>
-        `}
-      </div>
-    </div>`;
-}
-
-// —— 部署页项目分组：折叠态存 localStorage（独立于本地运行页）；分组名与自定义顺序复用本地运行页的 groupName / runGroupOrder ——
-function isDeployGroupCollapsed(key) {
-  try { return JSON.parse(localStorage.getItem('deployCollapsedGroups') || '[]').includes(key); } catch (e) { return false; }
-}
-
-function setDeployGroupCollapsed(key, collapsed) {
-  let arr = [];
-  try { arr = JSON.parse(localStorage.getItem('deployCollapsedGroups') || '[]'); } catch (e) { arr = []; }
-  const i = arr.indexOf(key);
-  if (collapsed && i === -1) arr.push(key);
-  else if (!collapsed && i !== -1) arr.splice(i, 1);
-  localStorage.setItem('deployCollapsedGroups', JSON.stringify(arr));
-}
-
-function toggleDeployGroup(key, headerEl) {
-  const collapsed = !isDeployGroupCollapsed(key);
-  setDeployGroupCollapsed(key, collapsed);
-  headerEl.classList.toggle('is-collapsed', collapsed);
-  const chevron = headerEl.querySelector('.run-group-chevron');
-  if (chevron) chevron.textContent = collapsed ? '▸' : '▾';
-  const body = headerEl.nextElementSibling;
-  if (body) body.style.display = collapsed ? 'none' : '';
-}
-
-// 上移/下移分组：复用共享的 runGroupOrder（与本地运行页同源，故同步生效），仅本页重渲
-function moveDeployGroup(key, dir, event) {
-  if (event) event.stopPropagation();   // 别冒泡触发分区头折叠
-  const order = orderedRunGroups([...new Set(projects.map(p => (p.groupName || '').trim()).filter(Boolean))]);
-  const i = order.indexOf(key);
-  const j = i + dir;
-  if (i < 0 || j < 0 || j >= order.length) return;
-  [order[i], order[j]] = [order[j], order[i]];
-  setRunGroupOrder(order);
-  renderProjects();
-}
-
-// 重命名分组：改的是项目的 groupName（与本地运行页同源），故两页同步；折叠态/排序条目一并迁移
-async function renameDeployGroup(key, event) {
-  if (event) event.stopPropagation();   // 别冒泡触发分区头折叠
-  const input = await showPrompt('重命名分组', { defaultValue: key, confirmText: '保存', placeholder: '分组名称' });
-  if (input === null) return;
-  const name = input.trim();
-  if (!name || name === key) return;
-  const affected = projects.filter(p => (p.groupName || '').trim() === key);
-  try {
-    for (const p of affected) {
-      await API.put(`/api/projects/${p.name}`, { groupName: name });
-      p.groupName = name;
-    }
-    if (isDeployGroupCollapsed(key)) { setDeployGroupCollapsed(key, false); setDeployGroupCollapsed(name, true); }
-    const order = getRunGroupOrder();
-    const oi = order.indexOf(key);
-    if (oi !== -1) {
-      if (order.includes(name)) order.splice(oi, 1);
-      else order[oi] = name;
-      setRunGroupOrder(order);
-    }
-    showToast('分组已重命名', `${key} → ${name}`);
-    renderProjects();
-  } catch (e) {
-    showAlert('重命名失败: ' + e.message, { icon: '❌' });
-  }
-}
-
-// 加载项目最近部署信息（批量异步，不阻塞渲染）
-async function loadLastDeployInfos(projectList) {
-  const promises = projectList.map(async (p) => {
-    try {
-      const data = await API.get(`/api/deploy/last/${p.name}`);
-      if (data) {
-        lastDeployCache[p.name] = data;
-      }
-    } catch (e) { /* ignore */ }
-  });
-  await Promise.all(promises);
-  // 数据加载完毕后更新卡片上的部署状态
-  document.querySelectorAll('.project-card[data-project]').forEach(card => {
-    const pName = card.dataset.project;
-    const last = lastDeployCache[pName];
-    const el = card.querySelector('.card-last-deploy');
-    if (last && el) {
-      const icon = last.status === 'success' ? '✅' : '❌';
-      const ago = timeAgo(last.timestamp);
-      const mods = (last.modules || []).join(', ');
-      const typeLabel = last.type === 'deploy' ? '部署' : '构建';
-      const info = last.type === 'deploy' ? `${typeLabel} → ${last.serverName} · ${mods}` : `${typeLabel} · ${mods}`;
-      el.className = `card-last-deploy ${last.status}`;
-      el.textContent = `${icon} ${ago} · ${info} · ${last.duration}`;
-    }
-  });
-}
+/*
+  项目总览（搜索/筛选/分组卡片）整体由 Vue 接管，见
+  `views/deploy/DeployDashboardView.vue`。分组的折叠态与排序偏好改由
+  `composables/use-project-groups.ts` 读写，键名不变，故用户已有偏好沿用。
+  本文件只保留服务器管理、部署历史与各类弹窗的 legacy 逻辑。
+*/
 
 async function removeProject(name) {
   if (!await showConfirm(`确定移除项目「${name}」？（仅从面板中移除，不会删除源码）`, { icon: '🗑️', danger: true, confirmText: '移除' })) return;
@@ -352,7 +127,6 @@ async function saveProjectConfig(ev) {
         p.displayName = displayName;
       }
       closeModal('projectConfigModal');
-      renderProjects();
       showToast('✅ 配置已保存', `${name} 的默认配置已更新`);
     } catch (e) {
       showAlert('保存失败: ' + e.message, { icon: '❌' });
@@ -832,7 +606,6 @@ async function startBuildOnly(ev) {
       appendLog('请求失败: ' + e.message, 'error');
       // 请求未发出，后端不会回 WS 完成事件解锁，必须本地解锁，否则卡片永久卡在 ⏳ 需重启
       clearBusy(projectName);
-      renderProjects();
       activeTask = null;
       updateLogModalCloseBtn();
     }
@@ -886,7 +659,6 @@ async function startDeploy(ev) {
       appendLog('请求失败: ' + e.message, 'error');
       // 请求未发出，后端不会回 WS 完成事件解锁，必须本地解锁，否则卡片永久卡在 ⏳ 需重启
       clearBusy(projectName);
-      renderProjects();
       activeTask = null;
       updateLogModalCloseBtn();
     }

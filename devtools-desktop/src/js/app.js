@@ -6,13 +6,11 @@ let servers = [];
 let nodeVersions = [];
 let currentNodeVersion = '';
 let currentProject = null;
-let currentFilter = 'all';
 let currentRunFilter = 'all';
 let currentDeployId = null;
 let availableProjects = [];
 let checkedAvailableProjects = new Set();
 let busyProjects = new Set();       // 防重复部署锁
-let lastDeployCache = {};            // 项目最近部署记录缓存
 let runningProjects = {};            // projectName -> 本地运行任务
 let currentRunId = null;             // 当前日志弹窗展示的本地运行任务
 let runModalProjectName = '';
@@ -781,9 +779,8 @@ function setupWSHandlers() {
   // WS 重连后全量对账：断线期间的 run-status 推送会全部丢失，重连后从后端拉一次
   // 真实运行态，纠正可能失真的卡片/统计（首连也会触发，loadRunStatuses 幂等故安全）
   WS.on('open', () => {
-    // 本地运行页的对账已由 Vue useRunRealtime 负责；这里只刷新部署侧项目卡片
+    // 本地运行页与部署面板的对账都已由 Vue 侧负责；这里只补首页与托盘
     loadRunStatuses().then(() => {
-      renderProjects();
       requestHomeRefreshIfVisible();
       syncTrayMenu();
     });
@@ -810,8 +807,7 @@ function setupWSHandlers() {
       clearNotifiedCompileErrors(data.id);
     }
 
-    // 日志弹窗与本地运行页的状态由 Vue 侧（log-task store / useRunRealtime）驱动
-    renderProjects();
+    // 日志弹窗、本地运行页与部署面板的状态由 Vue 侧（log-task store / useRunRealtime / useDeployRealtime）驱动
     requestHomeRefreshIfVisible();
     syncTrayMenu();
   });
@@ -964,20 +960,6 @@ function setupNavigation() {
     });
   }
 
-  document.querySelectorAll('#sub-dashboard .chip').forEach(chip => {
-    chip.addEventListener('click', () => {
-      document.querySelectorAll('#sub-dashboard .chip').forEach(c => c.classList.remove('active'));
-      chip.classList.add('active');
-      currentFilter = chip.dataset.filter;
-      renderProjects();
-    });
-  });
-
-  let _searchTimer = null;
-  document.getElementById('searchInput').addEventListener('input', () => {
-    clearTimeout(_searchTimer);
-    _searchTimer = setTimeout(renderProjects, 150);
-  });
   emitLegacyPageActivation('home', 'legacy');
 }
 
@@ -1032,25 +1014,12 @@ function switchSubTab(sub, btn) {
 }
 
 // ========== Shared Utilities ==========
-function timeAgo(ts) {
-  const diff = Date.now() - new Date(ts).getTime();
-  const m = Math.floor(diff / 60000);
-  if (m < 1) return '刚刚';
-  if (m < 60) return `${m}分钟前`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}小时前`;
-  const d = Math.floor(h / 24);
-  return `${d}天前`;
-}
-
 function setBusy(projectName) {
   busyProjects.add(projectName);
-  renderProjects();
 }
 
 function clearBusy(projectName) {
   busyProjects.delete(projectName);
-  delete lastDeployCache[projectName];
 }
 
 // escapeHtml 的权威定义在下方日志区（含引号转义与空值兜底）；此处曾有旧版重复定义，已清理

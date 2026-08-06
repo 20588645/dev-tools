@@ -78,26 +78,10 @@
     </div>
   </div>
 
-  <!-- 项目总览 -->
+  <!-- 项目总览：已整体迁到 Vue，搜索/筛选/分组均由宿主内部实现 -->
   <div class="sub-page active" id="sub-dashboard">
-    <div class="page-sticky-header">
-      <div class="page-header">
-        <div class="header-actions">
-          <div class="search-bar">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-            <input type="text" placeholder="搜索项目..." id="searchInput" autocomplete="off">
-          </div>
-        </div>
-      </div>
-      <div class="filter-chips">
-        <button class="chip active" data-filter="all">全部</button>
-        <button class="chip" data-filter="multi">多模块</button>
-        <button class="chip" data-filter="single">单体项目</button>
-        <button class="chip" data-filter="configured">已配置</button>
-        <button class="chip" data-filter="unconfigured">未配置</button>
-      </div>
-    </div>
-    <div class="project-grid" id="projectGrid"></div>
+    <!-- Vue 项目总览宿主。三个子页逐个迁移，服务器管理与部署历史仍在 legacy 侧。 -->
+    <div id="vue-deploy-dashboard-host"></div>
   </div>
 
   <!-- 服务器管理 -->
