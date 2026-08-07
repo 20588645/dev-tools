@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   buildServerPayload,
   isMaskedPassword,
+  normalizeFileZillaSource,
   normalizeHistoryItem,
   normalizeServer,
   type ServerInput,
@@ -88,5 +89,40 @@ describe('normalizeHistoryItem', () => {
     expect(normalizeHistoryItem({ type: 'deploy' }).type).toBe('deploy')
     expect(normalizeHistoryItem({ type: 'build-only' }).type).toBe('build-only')
     expect(normalizeHistoryItem({ type: '' }).type).toBe('build-only')
+  })
+})
+
+describe('normalizeFileZillaSource', () => {
+  // 后端 GET /api/servers/filezilla 与 POST /filezilla/parse 都回 { path, servers }，
+  // 不是裸数组；曾按数组解析导致列表恒为空。
+  it('从 { path, servers } 包裹结构取值', () => {
+    const source = normalizeFileZillaSource({
+      path: '/Users/x/.config/filezilla/sitemanager.xml',
+      servers: [{ name: '生产A', host: '10.0.0.1', port: 2222, username: 'deploy', exists: true }],
+    })
+    expect(source.path).toBe('/Users/x/.config/filezilla/sitemanager.xml')
+    expect(source.servers).toHaveLength(1)
+    expect(source.servers[0]).toEqual({
+      name: '生产A', host: '10.0.0.1', port: 2222, username: 'deploy', exists: true,
+    })
+  })
+
+  it('裸数组或空响应不抛错，回空列表', () => {
+    expect(normalizeFileZillaSource([]).servers).toEqual([])
+    expect(normalizeFileZillaSource(undefined).servers).toEqual([])
+    expect(normalizeFileZillaSource({ servers: '不是数组' }).servers).toEqual([])
+    expect(normalizeFileZillaSource(undefined).path).toBe('')
+  })
+
+  it('exists 只认布尔真，缺失按未导入处理', () => {
+    const { servers } = normalizeFileZillaSource({
+      servers: [{ name: 'a' }, { name: 'b', exists: false }, { name: 'c', exists: 'true' }],
+    })
+    expect(servers.map(s => s.exists)).toEqual([false, false, false])
+  })
+
+  it('缺 port 回落 22', () => {
+    const { servers } = normalizeFileZillaSource({ servers: [{ name: 'a' }] })
+    expect(servers[0].port).toBe(22)
   })
 })

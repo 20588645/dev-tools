@@ -190,6 +190,14 @@ export interface FileZillaServer {
   host: string
   port: number
   username: string
+  /** host + port 已存在于本地服务器列表，决定弹窗的「已导入 / 将删除」三态。 */
+  exists: boolean
+}
+
+export interface FileZillaSource {
+  /** 后端定位到的配置文件路径；手动上传 XML 时为空。 */
+  path: string
+  servers: FileZillaServer[]
 }
 
 function normalizeFileZillaServer(value: unknown): FileZillaServer {
@@ -199,19 +207,28 @@ function normalizeFileZillaServer(value: unknown): FileZillaServer {
     host: text(row.host),
     port: num(row.port, 22),
     username: text(row.username),
+    exists: row.exists === true,
   }
 }
 
-/** 读取本机 FileZilla 站点管理器。 */
-export async function getFileZillaServers(signal?: AbortSignal): Promise<FileZillaServer[]> {
-  const rows = await apiClient.request<unknown[]>('/api/servers/filezilla', { signal, timeout: DEPLOY_TIMEOUT })
-  return (rows ?? []).map(normalizeFileZillaServer)
+export function normalizeFileZillaSource(value: unknown): FileZillaSource {
+  const row = record(value)
+  return {
+    path: text(row.path),
+    servers: Array.isArray(row.servers) ? row.servers.map(normalizeFileZillaServer) : [],
+  }
+}
+
+/** 读取本机 FileZilla 站点管理器。未找到配置文件时后端回 404。 */
+export async function getFileZillaServers(signal?: AbortSignal): Promise<FileZillaSource> {
+  const row = await apiClient.request<unknown>('/api/servers/filezilla', { signal, timeout: DEPLOY_TIMEOUT })
+  return normalizeFileZillaSource(row)
 }
 
 /** 解析用户手动选择的 FileZilla XML。 */
-export async function parseFileZillaXml(xml: string): Promise<FileZillaServer[]> {
-  const rows = await apiClient.post<unknown[]>('/api/servers/filezilla/parse', { xml }, DEPLOY_TIMEOUT)
-  return (rows ?? []).map(normalizeFileZillaServer)
+export async function parseFileZillaXml(xmlContent: string): Promise<FileZillaServer[]> {
+  const row = await apiClient.post<unknown>('/api/servers/filezilla/parse', { xmlContent }, DEPLOY_TIMEOUT)
+  return normalizeFileZillaSource(row).servers
 }
 
 export interface FileZillaImportResult {
