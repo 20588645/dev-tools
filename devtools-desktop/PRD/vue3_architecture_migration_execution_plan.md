@@ -6,7 +6,7 @@
 > 最近更新：2026-08-06
 > 适用仓库：`devtools-desktop`  
 > 核心原则：保持软件持续可运行，按页面逐步替换，不进行一次性推倒重写。
-> 当前执行指针：**Phase 6-2 部署面板 `deploy` 进行中**，该页按三个子页依次迁移——项目总览已完成（PG0～PG5、真实 Tauri 手动 E2E 与旧实现清理均通过），**下一步是服务器管理子页的 PG0**，之后是部署历史。四项跨页耦合中第 1 项（`.run-group*` 样式孤儿）已随项目总览迁移关闭，其余三项绑在构建/部署任务链路与托盘上，待后两个子页迁完统一收口。[组件架构合规专项](./vue-migration/component-architecture-compliance.md)已于 2026-08-06 关闭（机器基线 0、批准例外 0，最终 Smoke Test 通过），该文转为长期生效的规则文档。
+> 当前执行指针：**Phase 6-2 部署面板 `deploy` 进行中**，该页按三个子页依次迁移——项目总览已完成（PG0～PG5、真实 Tauri 手动 E2E 与旧实现清理均通过），服务器管理子页 **PG0～PG5 已全部完成**（含 D6/D7 两项新发现缺陷、S1～S3 三项 Service 契约修正，以及首轮 Tauri 验收发现的 WS 全局未导出与任务归属两处缺陷；旧 CSS 已清理、清理后回归通过），**下一步是部署历史子页的 PG0**。四项跨页耦合中第 1 项（`.run-group*` 样式孤儿）已随项目总览迁移关闭，其余三项绑在构建/部署任务链路与托盘上，待后两个子页迁完统一收口。[组件架构合规专项](./vue-migration/component-architecture-compliance.md)已于 2026-08-06 关闭（机器基线 0、批准例外 0，最终 Smoke Test 通过），该文转为长期生效的规则文档。
 
 ---
 
@@ -515,7 +515,7 @@ L3 中纯前端且低风险的改动可以与页面 Vue 实现处于同一页面
 | 8 | Phase 5-5 | 双因验证 `twofa` | **PG5 自动清理完成** | 执行清理后简短真实 Tauri 回归 | Secret、倒计时、导入与快捷查询安全专项通过 |
 | 9 | 组件架构合规专项 | 已迁移页面与公共组件 | **基础能力、通知适配与首个消费者 Settings 已完成；其余页面收口中** | 按迁移矩阵顺序继续存量页面收口 | 存量页面收口、架构验收、最终 Tauri Smoke Test 与全站回归通过 |
 | 10 | Phase 6-1 | 本地运行 `run` | **PG0～PG5 已完成** | 已完成 | 体验、进程、轮询、WebSocket、后台状态和真实 Tauri E2E 通过；四项跨页耦合随 Phase 6-2 收敛 |
-| 11 | Phase 6-2 | 部署面板 `deploy` | **当前阶段，按子页推进：项目总览已完成；服务器管理、部署历史待做** | 执行服务器管理子页的 PG0 现状取证 | SSH、构建、部署任务和日志链路通过；三个子页全部迁完且四项跨页耦合收口 |
+| 11 | Phase 6-2 | 部署面板 `deploy` | **当前阶段，按子页推进：项目总览、服务器管理均已完成（PG0～PG5）；部署历史待做** | 执行部署历史子页的 PG0 现状取证 | SSH、构建、部署任务和日志链路通过；三个子页全部迁完且四项跨页耦合收口 |
 | 12 | Phase 6-3 | 文件传输 `filetransfer` | 等待 | 完成 `deploy` 后开始 PG0 | SFTP 会话、队列、重连和 keepalive 通过 |
 | 13 | Phase 7-1 | 文件编辑 `editor` | 等待 | Phase 6 完成后开始 PG0 | CodeMirror 生命周期和未保存保护通过 |
 | 14 | Phase 7-2 | 快捷命令 `terminal` | 等待 | 完成 `editor` 后开始 PG0 | Xterm、PTY、WebGL 降级和多标签恢复通过 |
@@ -1147,9 +1147,9 @@ frontend/src/services/modules/ipcheck-service.ts
 
 #### 部署面板
 
-本页按三个子页依次迁移，每个子页各走一遍 PG0～PG5。**项目总览已完成**（Vue 侧自带搜索、五项筛选、分组卡片与最近构建/部署摘要；忙态读 log-task store，刷新走 `useDeployRealtime`；旧 DOM、`renderProjects`/`deployProjectCardHTML` 与 legacy 分组子系统连同失效样式一并删除）。**服务器管理为下一个子页**，之后是部署历史。
+本页按三个子页依次迁移，每个子页各走一遍 PG0～PG5。**项目总览已完成**（Vue 侧自带搜索、五项筛选、分组卡片与最近构建/部署摘要；忙态读 log-task store，刷新走 `useDeployRealtime`；旧 DOM、`renderProjects`/`deployProjectCardHTML` 与 legacy 分组子系统连同失效样式一并删除）。**服务器管理子页已完成**（`BaseDataTable` 六列表格 + 服务器表单与 FileZilla 导入两个 Vue 弹窗；修掉 PG0 新发现的 D6「FileZilla 弹窗打不开」与 D7「伪选择下拉」、Service 层三处 filezilla 契约缺陷，以及首轮 Tauri 验收暴露的两处缺陷——`websocket.js` 顶层 `const WS` 未挂 `window` 导致 Vue 侧 WS 订阅一直空转、连接测试未 `task.begin()` 致消息被归属判据拒收；旧 DOM、渲染链路、两个 legacy 弹窗与四个 CSS 文件里的 `.server-*`/`.tag-*` 孤儿选择器均已删除，`loadServers` 仅保留取数供构建/部署弹窗使用）。**下一个子页是部署历史。**
 
-- [ ] 拆分项目总览、服务器管理、部署历史三个子路由或子页面。（项目总览已完成）
+- [ ] 拆分项目总览、服务器管理、部署历史三个子路由或子页面。（项目总览、服务器管理已完成）
 - [ ] 创建项目、服务器和部署任务的类型定义。
 - [ ] 将分组排序、筛选、构建配置和部署配置迁入组件。
 - [ ] 将大量静态弹窗迁为按需 Vue Dialog。
@@ -1337,7 +1337,7 @@ frontend/src/services/modules/ipcheck-service.ts
 | 8 | 用量统计 | `views/usage/`、`usage-service.ts`；旧 `usage.js`、`usage.css`、ECharts vendor 已删除 | 高 | 扫描、价格、Canvas 生命周期 | Phase 5-4 | **PG5 自动清理完成** | 清理后简短 Tauri 回归 |
 | 9 | 双因验证 | `views/twofa/`、`twofa-service.ts`；旧 `twofa.js`、`twofa.css` 已删除 | 高 | Secret、timer、导入与快捷查询 | Phase 5-5 | **PG5 自动清理完成** | 清理后简短 Tauri 回归 |
 | 10 | 本地运行 | `views/run/`、`run-service.ts`、`stores/run.ts`；旧 `run.js`、`run.css` 已删除 | 高 | 进程、轮询、WebSocket | Phase 6-1 | **初版阶段性提交，Gate 未关闭** | 合规基础完成后处理体验问题与真实 Tauri E2E |
-| 11 | 部署面板 | `views/deploy/`（项目总览已迁）；`deploy.js`、`deploy.css` 保留服务器管理、部署历史与各类弹窗 | 很高 | 项目、SSH、构建、弹窗 | Phase 6-2 | **进行中：项目总览 PG5 已完成** | 执行服务器管理子页的 PG0 |
+| 11 | 部署面板 | `views/deploy/`（项目总览、服务器管理已迁）；`deploy.js`、`deploy.css` 保留部署历史与各类弹窗 | 很高 | 项目、SSH、构建、弹窗 | Phase 6-2 | **进行中：项目总览、服务器管理 PG5 均已完成** | 执行部署历史子页的 PG0 |
 | 12 | 文件传输 | `filetransfer.js`、`filetransfer.css` | 很高 | SFTP、会话、队列、keepalive | Phase 6-3 | 等待 | `deploy` 提交后开始 PG0 |
 | 13 | 文件编辑 | `editor.js`、`editor.css` | 高 | CodeMirror、未保存状态 | Phase 7-1 | 等待 | Phase 6 完成后开始 PG0 |
 | 14 | 快捷命令 | `terminal.js`、`terminal.css` | 很高 | Xterm、PTY、WebSocket、WebGL | Phase 7-2 | 等待 | `editor` 提交后开始 PG0 |

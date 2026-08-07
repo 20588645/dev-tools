@@ -1,6 +1,6 @@
 # 部署面板页面迁移决策
 
-> 状态：**PG3 已通过（2026-08-06，用户确认采纳推荐方向）**，PG4 实现进行中
+> 状态：**PG3 已通过（2026-08-06，用户确认采纳推荐方向）**，PG4 实现进行中——项目总览子页已闭环；服务器管理子页 PG4 自动验证完成，待用户真实 Tauri 手动 E2E 后进 PG5
 > 关联评估：[assessment.md](./assessment.md)
 > 产出日期：2026-08-06
 
@@ -109,3 +109,100 @@ PG1 与共享清单对照后，本页所需能力**几乎全部已有**，预计
 3. **不做 PG3 原型**：L1 的视觉解法全部复用本地运行页已验证的实现（`BaseEntityCard` 等高卡片、`BaseDisclosure panel` 分组容器、`auto-fit` 网格、描边 SVG 图标），无新设计需要评审，直接进 PG4。
 
 第 2.2 节的 D3、O1、O3、O4 与第 2.3 节的不处理项均维持原判，本轮不实施。若实现中出现新的布局或交互想法，按门禁规则暂停实现并回到 PG2/PG3，不在代码中静默扩大范围。
+
+## 7. 服务器管理子页 PG2/PG3 补充（2026-08-07）
+
+整页 PG0 曾判定「服务器管理子页未发现问题」，本子页补充取证（assessment 第 3.3 节）推翻了这一条：发现 D6、D7 两项页面级缺陷与 S1～S3 三项 Service 层契约缺陷。因超出原 PG3 覆盖范围，已单独提交用户确认，结论如下。
+
+| 编号 | 问题 | 确认方向 |
+| --- | --- | --- |
+| D6 | FileZilla 弹窗因 `escapeHtml(s.port)` 抛异常而完全打不开 | **随 Vue 迁移一并解决**，不单独改 legacy。Vue 模板插值不经过 `escapeHtml`，缺陷在新实现中自然不存在；`escapeHtml` 是全局函数，为本页单独加 `String()` 兜底会扩大影响面，不做 |
+| D7 | 认证方式下拉只有 `password` 一个选项 | **改为静态文本「密码」**，不渲染下拉。提交时 `authType` 仍固定传 `password`，后端契约不变 |
+| S1 | `parseFileZillaXml` 发 `{ xml }`，后端读 `xmlContent` | PG4 修正字段名 |
+| S2 | 两个 filezilla 读取端点返回 `{ path, servers }`，service 按裸数组解析 | PG4 修正解析结构，`GET /filezilla` 的 `path` 一并取出供弹窗副标题使用 |
+| S3 | `FileZillaServer` 类型缺 `exists`，三态语义依赖它 | PG4 补字段，并为三个 filezilla 函数补单测（当前零覆盖） |
+
+维持不变的判断：
+
+- 本子页**不做视觉重设计**（原 2.3 节结论），表格、列宽、窄窗口列隐藏、长文本截断、空态与失败态取证均正常，等价迁移即可。
+- 不做 PG3 原型：D7 是控件降级、D6 是缺陷消除，均无新设计需要评审。
+- 「将删除」文案与后端 import 不执行删除的语义不对齐属既有问题，本轮不改（assessment 5.5）。
+
+## 8. 服务器管理子页 PG4 实现结果（2026-08-07）
+
+### 8.1 落地结构
+
+| 文件 | 职责 |
+| --- | --- |
+| `views/deploy/DeployServersView.vue` | 子页宿主：`BaseDataTable` 六列表格、三态、增删改与连接测试编排 |
+| `views/deploy/components/ServerFormDialog.vue` | 服务器表单弹窗（纯受控，props in / emits out） |
+| `views/deploy/components/FileZillaImportDialog.vue` | FileZilla 导入弹窗 |
+| `views/deploy/components/ServerRowActions.vue` | 行内三个操作的描边 SVG 图标组 |
+| `views/deploy/composables/useDeployServers.ts` | 列表取数与删除 |
+| `views/deploy/composables/useServerForm.ts` | 表单态、发布目录 tag 规则、掩码契约 |
+| `views/deploy/composables/useFileZillaImport.ts` | 导入弹窗态与三态判定 |
+| `views/deploy/deploy-servers.css` | 子页样式，`!important` 与硬编码颜色均为 0 |
+
+D7 已落地为静态文本「密码」，提交固定 `authType: 'password'`。D6 随 Vue 实现自然消除——模板插值不经过 `escapeHtml`，实测弹窗正常打开。
+
+### 8.2 契约保持情况
+
+- **密码掩码**：编辑态密码框留空（掩码值不回填），空值不进提交体，单测覆盖 4 条。
+- **发布目录 tag**：自动补首尾 `/`、重复给 1.2s 提示、空草稿 Backspace 弹出末项、双击就地编辑，全部保留并有单测。
+- **`servers` 共享**：本子页增删改后回写 legacy 全局，构建/部署与项目配置弹窗仍读得到（E2E 已验 `window.servers.length === 3`）。
+- **文档级 keydown 监听已消除**：改为元素级 `@keydown`，不再留全局监听。
+- **子页激活**：新增 `devtools:legacy-subtab-activated` 桥接事件，`switchSubTab` 不再直接调 `loadServers`，Vue 侧按激活子页挂载。
+
+### 8.3 架构合规调整
+
+组件架构门禁是零基线，实现中触发两处 `native-control` 后已改正，非豁免：
+
+- 发布目录 tag 的删除按钮 → 复用 `FilterChip` 的 `removable`。
+- FileZilla 的 `<input type="file">` → 原生文件选择无公共组件等价物，改为按需创建游离元素触发系统选择框，模板内不留原生控件。
+
+### 8.4 自动验证结果
+
+`npm run lint`（含 CSS 基线、Token、架构门禁）全通过；`build:frontend` 通过；`test:unit` 262 项通过（新增 20 项：`useServerForm` 14、`useFileZillaImport` 6，另 `deploy-service` 补 4 项 filezilla 归一化）；子页 E2E 9 项通过，覆盖 1665×1184 与 900×600 × 亮暗、表单默认值与 tag 规则、编辑态密码为空、**D6 弹窗打开回归**、空态与失败态、legacy 弹窗共享数据，且断言全程零控制台错误（仅过滤既有 `defineSimpleMode` 噪声）。
+
+### 8.5 首轮 Tauri 验收发现并修复（2026-08-07）
+
+用户真机验收报「连接测试弹窗看不到任何输出」，但同一批服务器在部署弹窗里显示「全部连通 / 460ms」——连接是通的，只是日志没进弹窗。查出两层原因，都已修复：
+
+**T1 Vue 侧取不到 legacy WS 全局（潜伏缺陷，影响面大于本子页）。** `src/js/websocket.js` 顶层用 `const WS = {...}`，在传统脚本里只创建**脚本作用域绑定，不会成为 `window` 属性**。而 Vue 侧是模块作用域、看不到裸标识符，`useDeployRealtime` / `useRunRealtime` 里的 `globalThis.WS` 恒为 `undefined`，于是 `ws.on(...)` 从未执行过——两个 composable 的 WS 订阅**一直是空转**。
+
+浏览器实测佐证：`typeof window.WS === 'undefined'` 而 `eval('WS')` 得到 `object`。
+
+本地运行页此前没暴露，是因为 `app.js` 里还留着 `run-log` / `run-status` 处理器兜底；部署面板的构建/部署也走 legacy 发起路径，故同样被掩盖。修复：在 `websocket.js` 末尾显式 `window.WS = WS`，并加注释说明迁移期两侧共用一条连接、WS 全量迁入 Vue 后可删。修复后实测 `run-status` / `run-log` 各 2 个处理器（legacy 一份 + Vue 一份，职责互补不重复），本地运行页 28 张卡片正常、零控制台错误。
+
+**T2 连接测试未登记任务，消息被归属判据拒收。** WS 消息的归属判据是 `deploy-task` store 的 `active`（`acceptsMessage`）。原实现只开了 LogViewer、把 id 写在 `log-task` store 上，没有 `task.begin()`，导致 `active` 为 null、消息全部被拒。修复：`onTest` 先 `task.begin(server.name)` 再发请求，成功后 `task.attachTaskId(id)`，失败走 `task.abandon()` 本地解锁（否则卡片永久 busy）。
+
+**T3 顺带消除一个并发隐患。** `useDeployRealtime` 原本每个调用方各注册一次 WS 处理器，而旧 `WS.on` 不去重；两个子页同时挂载会让同一条日志被追加多次。改为模块级单次注册 + 每调用方独立的完成回调集合；处理器注册后常驻（与迁移前 `app.js:setupWSHandlers` 全程常驻一致，也是弹窗最小化后后台任务仍能弹回提示的前提）。原「卸载时摘掉全部监听」的单测已按新契约改写为三条：多子页共用一份订阅不重复处理、卸载后处理器常驻仍能收到状态、卸载只摘自己的完成回调。
+
+补充验证：单测 267 项通过（新增连接测试归属 3 条 + 实时链路 3 条）；子页 E2E 10 项通过，新增一条断言日志确实流入弹窗并校验处理器数量恒为 2。
+
+### 8.6 PG5 清理结果（2026-08-07，用户 Tauri 验收通过后执行）
+
+**清理范围比预估多一个文件。** 预估的 36 处集中在 `deploy.css` / `components.css` / `overrides.css`，实际检索发现 `legacy-runtime.css` 还有 6 处 `.tag-input-*` / `.tag-list` 规则（该文件此前未纳入统计）。四个文件全部清理后，仓库范围内 `.server-*` 与 `.path-tag` / `.tag-*` 选择器归零。
+
+处理方式按选择器归属分两类：
+
+- **独占规则**整块删除：`.server-card`、`.server-host`、`.server-list`、`.server-head`、`.server-header-fixed`、`.server-name`、`.server-actions`、`.path-tag` 及其子规则、`#page-deploy .server-row` 列宽定义等。
+- **混合选择器组**只摘孤儿：`.history-row` / `.history-table` / `.stat-card` / `.modal` 等仍在用的选择器保持原位与原顺序，仅移除同组内的 `.server-*`。共 11 组。
+
+同时把 `ServerRowActions.vue` 的根类名从全局 `.server-actions` 改为 `.deploy-servers__actions`：清理前 legacy 的 `.server-actions`（含 `display: inline-flex !important`）仍在泄漏到这个 Vue 组件上，改名后彻底解耦，也符合 BEM 约定。
+
+`deploy.css` 由 643 行降至约 520 行，四个文件合计减少约 3.4 KB。
+
+**Stylelint 基线调整（+2）。** 删除混合组里的选择器后，`overrides.css` 的 `.history-table` / `.history-row` 与 `deploy.css` 的 `.history-row` 从「带额外选择器的规则组」收缩成同名规则，被 Stylelint 判为重复（`overrides` 4→6、`deploy` 2→3，总计 26→28）。这与基线脚本注释里已记录的现象同源。
+
+**选择不合并而是登记数量**，理由是这些重复项属顺序敏感的 `!important` 层叠：实测 `.history-table` 的 `border-radius` 由 6 条同权规则按源序决出最终值 8px，合并会改变层叠结果，属「零视觉收益 + 中高风险」，与既有 `modal.css` 不单独做的判断一致。等部署历史子页迁完，这批规则会整体消失。
+
+**清理后回归**：`lint`（基线 28 项、Token、架构门禁）/ `build:frontend` / `test:unit` 267 项全通过；专项 E2E 5 项通过——部署历史子页亮暗主题下表头与数据行列宽完全一致（`94px 412.812px 78px 336.375px 305.797px 88px 72px`，对齐未破）、`border-radius` 仍为 8px、窄窗口「服务器」列仍正确隐藏、服务器子页不受影响、首页/本地运行/待办/笔记/设置/用量六页均正常渲染。
+
+回归中出现的 `/api/notes/<date>` 404 与 `defineSimpleMode` 报错已在 HEAD 上对照确认同样存在（测试库无当天笔记的正常空数据分支 + CodeMirror 既有噪声），与本次清理无关。
+
+### 8.7 仍留在 legacy 侧的部分
+
+- `loadServers` 只保留取数，供构建/部署弹窗与项目默认配置弹窗读 `servers` 全局；等第 6 步弹窗迁完一并删除。
+- `window.WS = WS` 是迁移期两侧共用一条连接的桥接，WS 全量迁入 Vue 后删除。
+- `devtools:legacy-subtab-activated` 事件与 `switchSubTab`：三个子页全部迁完后一并收敛。
