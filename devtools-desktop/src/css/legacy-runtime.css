@@ -58,19 +58,6 @@
 
 .form-group input:focus, .form-group select:focus { border-color: var(--primary); }
 
-/* Tag 输入 */
-.tag-input-container { /* 保留：与穿插规则存在层叠依赖 */
-  border: 1px solid var(--border);
-}
-
-.tag-input-container:focus-within { border-color: var(--primary); }
-
-.tag-list { display: flex; flex-direction: column; gap: 5px; margin-bottom: 4px; }
-
-.tag-list:empty { margin-bottom: 0; }
-
-.tag-input-field { background: transparent; border: none; outline: none; color: var(--text-primary); font-size: 13px; width: 100%; padding: 4px 2px; }
-
 /* Git Log 预览 */
 .git-log-section { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
 
@@ -364,15 +351,6 @@ body[data-theme="dark"] .modal-overlay {
 
 .form-group {
   margin-bottom: 9px !important;
-}
-
-.tag-input-container {
-  background: var(--bg-input);
-  cursor: text;
-  transition: border-color 0.15s;
-  padding: 6px !important;
-  border-radius: 6px !important;
-  min-height: 34px !important;
 }
 
 /* ========== Project Intro Modal ========== */

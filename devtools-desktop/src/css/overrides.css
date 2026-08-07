@@ -4,7 +4,6 @@
 .stat-card,
 .home-activity-card,
 .home-quick-card,
-.server-list,
 .history-table {
   background: var(--bg-card) !important;
   border: 1px solid var(--border) !important;
@@ -94,7 +93,6 @@ input[type="number"] {
 
 .stat-card,
 .home-activity-card,
-.server-list,
 .history-table,
 .history-stats {
   border: 1px solid var(--border-color) !important;
@@ -187,7 +185,6 @@ select {
   border: 1px solid var(--border-color) !important;
 }
 
-.server-head,
 .history-header,
 .ha-table thead th {
   background: color-mix(in srgb, var(--bg-card) 72%, var(--bg-input)) !important;
@@ -241,7 +238,6 @@ select {
 .stat-card,
 .home-activity-card,
 .home-quick-card,
-.server-list,
 .history-table,
 .modal {
   background: var(--bg-card) !important;
@@ -260,8 +256,7 @@ select {
 
 .ha-table th,
 .history-row.header,
-.history-row.history-header,
-.server-head {
+.history-row.history-header {
   background: color-mix(in srgb, var(--bg-input) 88%, var(--bg-card) 12%) !important;
   color: var(--text-muted) !important;
   font-size: 10px !important;
@@ -335,7 +330,6 @@ textarea:not([class^="n-"]):not([class*=" n-"]),
   line-height: 15px;
 }
 
-.server-host,
 .history-row { font-size: 10px !important; color: var(--text-muted) !important; }
 
 .module-tag,
@@ -347,21 +341,6 @@ textarea:not([class^="n-"]):not([class*=" n-"]),
   font-size: 9.5px !important;
 }
 
-.server-row {
-  /* B3a：本块各声明均为 .server-row 元素级唯一 setter（deploy 仅设 border/border-bottom，列宽权威在 #page-deploy .server-row；components 只管子级 .server-row > div），overrides 末位加载靠源序即生效，故全去 important，0 回归。原 7 列 grid 被 #page-deploy 6 列(id)压制、属死规则，已删 */
-  display: grid;
-  align-items: center;
-  gap: 10px;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-  color: var(--text-secondary);
-  min-height: 40px;
-  padding: 0 11px;
-  font-size: 10.5px;
-}
-
-.server-list,
 .history-table {
   border-radius: 7px !important;
   overflow: hidden !important;
@@ -455,8 +434,6 @@ textarea:not([class^="n-"]):not([class*=" n-"]),
 
 /* --- 3. 统一卡片圆角为 8px --- */
 .home-section-card,
-.server-card,
-.server-list,
 .history-table,
 .todo-card,
 .todo-column-header,

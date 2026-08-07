@@ -7,7 +7,6 @@
 }
 
 /* 让 page-sticky-header 之后的内容独立滚动 */
-#page-deploy .sub-page .server-list,
 #page-deploy .sub-page .history-table {
   flex: 1;
   overflow-y: auto;
@@ -144,12 +143,6 @@
 
 .conn-fail { color: var(--danger); background: var(--danger-subtle); }
 
-.path-tag .tag-badge { font-size: 10px; color: var(--primary); font-weight: 600; }
-
-.path-tag .tag-remove { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 14px; padding: 0 2px; border-radius: 3px; }
-
-.path-tag .tag-remove:hover { color: var(--danger); background: var(--danger-subtle); }
-
 .git-log-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 13px; color: var(--text-secondary); }
 
 .git-log-branch { background: var(--primary-light); color: var(--primary); padding: 2px 8px; border-radius: 8px; font-size: 11px; font-weight: 600; }
@@ -177,34 +170,6 @@
   gap: 6px;
 }
 
-.server-row { /* 保留：与穿插规则存在层叠依赖 */
-  border: 0 !important;
-}
-
-.server-card {
-  border: 1px solid var(--border);
-  background: var(--bg-card);
-  border-radius: var(--radius-md);
-  padding: 14px 18px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  transition: border-color 0.12s;
-  position: relative;
-}
-
-.server-card:hover {
-  border-color: var(--border-strong);
-  background: var(--bg-hover) !important;
-}
-
-.server-host {
-  margin-top: 2px;
-  font-size: 11px;
-  color: var(--text-secondary);
-  font-family: var(--font-mono);
-}
-
 .browser-item.selected {
   background: color-mix(in srgb, var(--accent) 10%, transparent) !important;
 }
@@ -220,20 +185,6 @@
   background: var(--primary-light) !important;
   border-color: color-mix(in srgb, var(--primary) 42%, transparent) !important;
   color: var(--primary) !important;
-}
-
-.path-tag {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  border: 1px solid color-mix(in srgb, var(--primary) 20%, transparent);
-  border-radius: 6px;
-  padding: 5px 8px 5px 10px;
-  font-size: 12px;
-  font-family: var(--font-mono);
-  color: var(--text-primary);
-  background: var(--primary-light) !important;
-  border-color: color-mix(in srgb, var(--primary) 35%, transparent) !important;
 }
 
 .module-item {
@@ -257,29 +208,6 @@
   white-space: nowrap;
 }
 
-.server-list {
-  flex-direction: column;
-  gap: 8px;
-  display: block !important;
-  overflow: hidden auto !important;
-  padding: 0 !important;
-  min-height: 320px;
-}
-
-.server-row > div {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.server-actions {
-  gap: 4px;
-  justify-content: flex-end;
-  display: inline-flex !important;
-  align-items: center;
-}
-
 .history-table {
   border: 1px solid var(--border);
   border-top: none;
@@ -296,15 +224,7 @@
   border-bottom: none;
 }
 
-/* 服务器列表固定表头（批次6A，与历史表同策略）：表头移出滚动容器、flex 静态置顶；
-   服务器列表本身无外框，故此容器也不出边框，仅靠 .server-head 底色成头部条 */
-.server-header-fixed {
-  flex: 0 0 auto;
-}
-
 @media (max-width: 1080px) {
-.server-row > div:nth-child(4) { display: none; }
-
 .history-row .h-server { display: none; }
 
 }
@@ -319,15 +239,6 @@
   font-size: 12px;
 }
 
-.server-head {
-  /* background 实际由 overrides.css .server-head 规则接管（本就没显示过），此处去掉 important 标记，零回归；勿再加回 */
-  background: var(--bg-input);
-  color: var(--text-muted);
-  font-weight: 650;
-  min-height: 32px;
-}
-
-.server-row,
 .history-row {
   border-bottom: 1px solid var(--border-color) !important;
 }
@@ -337,16 +248,6 @@
   display: flex;
   align-items: center;
   padding: 0 12px !important;
-}
-
-/* ========== Server List Without Synthetic Status ========== */
-#page-deploy .server-row {
-  /* B3a：overrides 的 .server-row 7 列死规则已删，本条成列宽唯一 setter，靠 id 特异性即生效，去 important，0 回归 */
-  grid-template-columns: minmax(130px, 1.1fr) minmax(130px, 1fr) 72px 54px minmax(180px, 1.35fr) 100px;
-}
-
-#page-deploy .server-actions {
-  justify-content: flex-end;
 }
 
 /* ========== Deploy Page: Search & Project Card Layout Polish ========== */
@@ -440,7 +341,6 @@
   flex: 0 0 auto !important;
 }
 
-#page-deploy .server-list,
 #page-deploy .history-table {
   flex: 1 1 auto !important;
   min-height: 0 !important;
@@ -495,7 +395,7 @@
 /* 历史表头：批次5B 已移出滚动容器到 #historyHeader，flex 静态置顶（禁用 sticky，铁律禁用——
    WKWebView 子滚动容器惯性滚动会抖）；此处只定义表头行视觉，列宽与数据行共用上面的 grid */
 .history-row.history-header {
-  /* B3b：color/font-weight/background/border-bottom 已删——color(text-muted)/font-weight(650) 与 overrides 表头组(.ha-table th,.history-row.history-header,…)同值；background(本条 bg-card84% 被 overrides bg-input88% 同特异性后置压制、本就死)；border-bottom 由 .server-row,.history-row 同值(--border-color)接管。min-height 保留 important——需压制 overrides .history-row 的 34px important（去则表头变 34px） */
+  /* B3b：color/font-weight/background/border-bottom 已删——color(text-muted)/font-weight(650) 与 overrides 表头组(.ha-table th,.history-row.history-header,…)同值；background(本条 bg-card84% 被 overrides bg-input88% 同特异性后置压制、本就死)；border-bottom 由 .history-row 同值(--border-color)接管。min-height 保留 important——需压制 overrides .history-row 的 34px important（去则表头变 34px） */
   min-height: 32px !important;
 }
 
@@ -598,8 +498,6 @@
 #sub-history .h-actions .btn--icon:not(.btn--danger):hover {
   color: var(--primary);
 }
-
-.server-name { font-size: 11px; font-weight: 680; color: var(--text-primary); }
 
 .server-check-item {
   border-radius: var(--radius-sm);
