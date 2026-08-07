@@ -1,0 +1,26 @@
+#vue-deploy-servers-host {
+  width: 100%;
+  min-width: 0;
+}
+
+.deploy-servers {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  gap: var(--space-3);
+}
+
+.deploy-servers__toolbar {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.deploy-servers__mono {
+  color: var(--color-text-muted);
+  font-family: var(--font-family-mono);
+}
+
+/* 行内操作按钮的排布在 ServerRowActions.vue 内，这里不重复定义 */

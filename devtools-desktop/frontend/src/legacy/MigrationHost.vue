@@ -2,7 +2,7 @@
 import { defineAsyncComponent, onBeforeUnmount, onMounted, ref } from 'vue'
 
 import LogViewer from '@/components/logviewer/LogViewer.vue'
-import { onLegacyPageActivation, type LegacyPageId } from '@/legacy/legacy-bridge'
+import { onLegacyPageActivation, onLegacySubTabActivation, type LegacyPageId } from '@/legacy/legacy-bridge'
 import { installLogViewerBridge } from '@/legacy/log-viewer-bridge'
 import { createTodoReminderService } from '@/services/todo-reminder-service'
 import { normalizeThemeMode, useAppStore, type Theme } from '@/stores/app'
@@ -20,6 +20,7 @@ const TodoView = defineAsyncComponent(() => import('@/views/todo/TodoView.vue'))
 const TwofaView = defineAsyncComponent(() => import('@/views/twofa/TwofaView.vue'))
 const UsageView = defineAsyncComponent(() => import('@/views/usage/UsageView.vue'))
 const DeployDashboardView = defineAsyncComponent(() => import('@/views/deploy/DeployDashboardView.vue'))
+const DeployServersView = defineAsyncComponent(() => import('@/views/deploy/DeployServersView.vue'))
 const app = useAppStore()
 const logTask = useLogTaskStore()
 const todoReminderService = createTodoReminderService()
@@ -48,12 +49,20 @@ usageTarget?.setAttribute('data-vue-owner', 'usage')
 const runTarget = document.querySelector('#vue-run-host')
 const hasRunTarget = Boolean(runTarget)
 runTarget?.setAttribute('data-vue-owner', 'run')
-/* 部署面板按子页逐个迁移，项目总览先接管，服务器管理与部署历史仍在 legacy 侧。 */
+/* 部署面板按子页逐个迁移，项目总览与服务器管理已接管，部署历史仍在 legacy 侧。 */
 const deployDashboardTarget = document.querySelector('#vue-deploy-dashboard-host')
 const hasDeployDashboardTarget = Boolean(deployDashboardTarget)
 deployDashboardTarget?.setAttribute('data-vue-owner', 'deploy-dashboard')
+const deployServersTarget = document.querySelector('#vue-deploy-servers-host')
+const hasDeployServersTarget = Boolean(deployServersTarget)
+deployServersTarget?.setAttribute('data-vue-owner', 'deploy-servers')
+/** 部署面板当前子页；只有激活的子页才挂载，避免未显示的子页发请求。 */
+const activeDeploySub = ref(
+  document.querySelector('#page-deploy .seg__item.is-active')?.getAttribute('data-sub') ?? 'dashboard',
+)
 let themeObserver: MutationObserver | null = null
 let stopPageActivation: (() => void) | null = null
+let stopSubTabActivation: (() => void) | null = null
 let stopLogViewerBridge: (() => void) | null = null
 
 /**
@@ -83,6 +92,9 @@ onMounted(() => {
   stopPageActivation = onLegacyPageActivation(({ pageId }) => {
     activePage.value = pageId
   })
+  stopSubTabActivation = onLegacySubTabActivation((sub) => {
+    if (sub) activeDeploySub.value = sub
+  })
   themeObserver = new MutationObserver(syncLegacyTheme)
   themeObserver.observe(document.body, {
     attributes: true,
@@ -94,6 +106,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   stopPageActivation?.()
+  stopSubTabActivation?.()
   themeObserver?.disconnect()
   todoReminderService.stop()
   stopLogViewerBridge?.()
@@ -145,7 +158,12 @@ onBeforeUnmount(() => {
     </Teleport>
     <Teleport v-if="hasDeployDashboardTarget" to="#vue-deploy-dashboard-host">
       <KeepAlive>
-        <DeployDashboardView v-if="activePage === 'deploy'" />
+        <DeployDashboardView v-if="activePage === 'deploy' && activeDeploySub === 'dashboard'" />
+      </KeepAlive>
+    </Teleport>
+    <Teleport v-if="hasDeployServersTarget" to="#vue-deploy-servers-host">
+      <KeepAlive>
+        <DeployServersView v-if="activePage === 'deploy' && activeDeploySub === 'servers'" />
       </KeepAlive>
     </Teleport>
     <!-- LogViewer 内部用 BaseDialog（NModal），自带 teleport 到 body -->

@@ -22,6 +22,7 @@ export interface LegacyPageActivationDetail {
 }
 
 export const LEGACY_PAGE_ACTIVATED_EVENT = 'devtools:legacy-page-activated'
+export const LEGACY_SUBTAB_ACTIVATED_EVENT = 'devtools:legacy-subtab-activated'
 export const LEGACY_PAGE_REQUESTED_EVENT = 'devtools:legacy-page-requested'
 export const HOME_REFRESH_REQUESTED_EVENT = 'devtools:home-refresh-requested'
 export const MENU_ORDER_CHANGED_EVENT = 'devtools:menu-order-changed'
@@ -66,6 +67,16 @@ export function onLegacyPageActivation(listener: (detail: LegacyPageActivationDe
   const handler = (event: Event) => listener((event as CustomEvent<LegacyPageActivationDetail>).detail)
   window.addEventListener(LEGACY_PAGE_ACTIVATED_EVENT, handler)
   return () => window.removeEventListener(LEGACY_PAGE_ACTIVATED_EVENT, handler)
+}
+
+/**
+ * 部署面板的子页切换。部署面板按子页逐个迁移，Vue 侧需要知道当前是哪个子页
+ * 才能只挂载已迁移的那个；三个子页全部迁完后这套桥接随 `switchSubTab` 一起删。
+ */
+export function onLegacySubTabActivation(listener: (sub: string) => void) {
+  const handler = (event: Event) => listener(String((event as CustomEvent<{ sub: string }>).detail?.sub ?? ''))
+  window.addEventListener(LEGACY_SUBTAB_ACTIVATED_EVENT, handler)
+  return () => window.removeEventListener(LEGACY_SUBTAB_ACTIVATED_EVENT, handler)
 }
 
 export function requestHomeRefresh(reason: HomeRefreshRequestDetail['reason'] = 'manual') {

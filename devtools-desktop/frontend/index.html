@@ -84,18 +84,9 @@
     <div id="vue-deploy-dashboard-host"></div>
   </div>
 
-  <!-- 服务器管理 -->
+  <!-- 服务器管理：已整体迁到 Vue，工具栏/表格/弹窗均由宿主内部实现 -->
   <div class="sub-page" id="sub-servers">
-    <div class="page-sticky-header">
-      <div class="page-header">
-        <div class="header-actions">
-          <button class="btn" onclick="showFileZillaImport()">📂 从 FileZilla 导入</button>
-          <button class="btn btn--primary" onclick="showServerForm()">+ 添加服务器</button>
-        </div>
-      </div>
-    </div>
-    <div id="serverHeader" class="server-header-fixed"></div>
-    <div class="server-list" id="serverList"></div>
+    <div id="vue-deploy-servers-host"></div>
   </div>
 
   <!-- 部署历史 -->
