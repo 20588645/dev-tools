@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useDeployTaskStore } from '@/stores/deploy-task'
 import { useLogTaskStore } from '@/stores/log-task'
 
-import { useDeployRealtime } from './useDeployRealtime'
+import { resetDeployRealtimeForTest, useDeployRealtime } from './useDeployRealtime'
 
 /** 用假的旧全局 WS 驱动，避免测试依赖真实连接。 */
 function installFakeWs() {
@@ -46,20 +46,64 @@ const DEPLOY_STEPS = ['预检', '拉取代码', '构建中', '上传中', '完�
 describe('useDeployRealtime', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
+    resetDeployRealtimeForTest()
   })
 
-  it('卸载时摘掉全部监听，避免多次进入页面后重复处理', () => {
+  it('多个子页共用一份订阅，不会重复处理同一条消息', () => {
     const ws = installFakeWs()
-    const wrapper = mountRealtime()
+    // 项目总览与服务器管理都要用这条链路
+    mountRealtime()
+    mountRealtime()
 
     expect(ws.count('log')).toBe(1)
     expect(ws.count('progress')).toBe(1)
     expect(ws.count('status')).toBe(1)
 
+    const task = useDeployTaskStore()
+    const log = useLogTaskStore()
+    log.open({ kind: 'deploy', id: 'd1', projectName: 'p', title: '部署进度', subtitle: '' }, { steps: DEPLOY_STEPS })
+    task.begin('p')
+    task.attachTaskId('d1')
+    ws.emit('log', { id: 'd1', text: '只该出现一次', type: 'info' })
+
+    expect(log.lines.filter(line => line.text === '只该出现一次')).toHaveLength(1)
+  })
+
+  it('卸载后 WS 处理器常驻，后台完成的任务仍能收到状态', () => {
+    const ws = installFakeWs()
+    const wrapper = mountRealtime()
     wrapper.unmount()
-    expect(ws.count('log')).toBe(0)
-    expect(ws.count('progress')).toBe(0)
-    expect(ws.count('status')).toBe(0)
+
+    // 与迁移前 app.js 全程常驻一致：弹窗最小化/切页后任务完成仍要能弹回
+    expect(ws.count('status')).toBe(1)
+
+    const task = useDeployTaskStore()
+    const log = useLogTaskStore()
+    log.open({ kind: 'deploy', id: 'test-1', projectName: 's', title: '连接测试', subtitle: '' }, { steps: ['连接中', 'SFTP', '完成'] })
+    task.begin('s')
+    task.attachTaskId('test-1')
+    ws.emit('status', { id: 'test-1', phase: 'done', status: 'success', duration: 88 })
+
+    expect(log.resultText).toBe('连接测试通过 88ms')
+  })
+
+  it('卸载只摘自己的完成回调，不影响仍挂载的子页', () => {
+    const ws = installFakeWs()
+    const goneCalls: string[] = []
+    const stayCalls: string[] = []
+    const gone = mountRealtime(d => goneCalls.push(d.projectName))
+    mountRealtime(d => stayCalls.push(d.projectName))
+    gone.unmount()
+
+    const task = useDeployTaskStore()
+    const log = useLogTaskStore()
+    log.open({ kind: 'deploy', id: 'd2', projectName: 'p', title: '部署进度', subtitle: '' }, { steps: DEPLOY_STEPS })
+    task.begin('p')
+    task.attachTaskId('d2')
+    ws.emit('status', { id: 'd2', phase: 'done', status: 'success', type: 'deploy', duration: '1s', projectName: 'p' })
+
+    expect(goneCalls).toEqual([])
+    expect(stayCalls).toEqual(['p'])
   })
 
   it('任务 id 未回填时也接受日志，并补写 id', () => {

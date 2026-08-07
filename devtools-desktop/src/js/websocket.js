@@ -87,3 +87,11 @@ const WS = {
     this.handlers[type] = this.handlers[type].filter(fn => fn !== handler);
   }
 };
+
+/*
+  显式挂到 window。顶层 `const` 在传统脚本里只创建脚本作用域绑定，不会成为
+  window 属性，因此 Vue 侧（模块作用域，看不到裸标识符 WS）通过
+  `globalThis.WS` 取值时恒为 undefined——已迁页面的 WS 订阅会静默失效。
+  迁移期两侧共用这一条连接，故在此显式导出；WS 全量迁入 Vue 后可删。
+*/
+window.WS = WS;

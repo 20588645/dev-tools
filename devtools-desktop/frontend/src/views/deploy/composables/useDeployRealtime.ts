@@ -64,6 +64,30 @@ export interface DeployRealtimeOptions {
   onFinished?: (detail: { projectName: string, success: boolean, type: string }) => void
 }
 
+type FinishedListener = NonNullable<DeployRealtimeOptions['onFinished']>
+
+/**
+ * WS 处理器只注册一次，与调用方数量无关。
+ *
+ * 两个原因：① 部署面板的多个子页都要用这条链路，逐个注册会让同一条日志被
+ * 追加多次（旧 `WS.on` 不去重）；② 弹窗最小化后任务在后台完成仍需弹回并提示，
+ * 因此注册后不再摘除——KeepAlive 下子页 deactivate 不触发 unmount，
+ * 这与迁移前 `app.js:setupWSHandlers` 全程常驻的语义一致。
+ */
+let installed = false
+const finishedListeners = new Set<FinishedListener>()
+
+/**
+ * 仅供测试重置模块级订阅状态。
+ *
+ * 运行时不需要——处理器一旦装上就该常驻；但测试里每个用例都换一个假 WS，
+ * 不重置会让后续用例跳过注册，从而静默失去覆盖。
+ */
+export function resetDeployRealtimeForTest() {
+  installed = false
+  finishedListeners.clear()
+}
+
 export function useDeployRealtime(options: DeployRealtimeOptions = {}) {
   const task = useDeployTaskStore()
   const log = useLogTaskStore()
@@ -137,23 +161,25 @@ export function useDeployRealtime(options: DeployRealtimeOptions = {}) {
     }
 
     task.finish(projectName || undefined)
-    options.onFinished?.({ projectName, success, type: taskType })
+    for (const listener of finishedListeners) {
+      listener({ projectName, success, type: taskType })
+    }
   }
 
   onMounted(() => {
+    if (options.onFinished) finishedListeners.add(options.onFinished)
+    if (installed) return
     const ws = legacyWs()
     if (!ws) return
     ws.on('log', handleLog)
     ws.on('progress', handleProgress)
     ws.on('status', handleStatus)
+    installed = true
   })
 
   onBeforeUnmount(() => {
-    const ws = legacyWs()
-    if (!ws) return
-    ws.off('log', handleLog)
-    ws.off('progress', handleProgress)
-    ws.off('status', handleStatus)
+    // 只摘自己的完成回调；WS 处理器常驻，见上方说明
+    if (options.onFinished) finishedListeners.delete(options.onFinished)
   })
 
   return { stepIndexOf }
