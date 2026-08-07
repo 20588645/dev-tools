@@ -1007,10 +1007,11 @@ function switchSubTab(sub, btn) {
   const subPage = document.getElementById('sub-' + sub);
   subPage.classList.add('active');
   subPage.scrollTop = 0;
-  const scrollTarget = subPage.querySelector('.project-grid, .server-list, .history-table');
+  const scrollTarget = subPage.querySelector('.project-grid, .history-table');
   if (scrollTarget) scrollTarget.scrollTop = 0;
-  if (sub === 'servers') loadServers();
   if (sub === 'history') loadHistory();
+  // 服务器管理已迁到 Vue，由宿主监听本事件自行加载
+  window.dispatchEvent(new CustomEvent('devtools:legacy-subtab-activated', { detail: { sub } }));
 }
 
 // ========== Shared Utilities ==========

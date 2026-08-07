@@ -618,40 +618,6 @@
   </div>
 </div>
 
-<!-- 服务器表单弹窗 -->
-<div class="modal-overlay" id="serverFormModal">
-  <div class="modal modal-sm">
-    <div class="modal-header">
-      <h2 id="serverFormTitle">添加服务器</h2>
-      <button class="modal-close" onclick="closeModal('serverFormModal')">✕</button>
-    </div>
-    <div class="modal-body">
-      <input type="hidden" id="sf_id">
-      <div class="form-group"><label>服务器名称</label><input type="text" id="sf_name" placeholder="如：生产-茅台物流"></div>
-      <div class="form-group"><label>Host</label><input type="text" id="sf_host" placeholder="192.168.1.100"></div>
-      <div class="form-row">
-        <div class="form-group"><label>端口</label><input type="number" id="sf_port" value="22"></div>
-        <div class="form-group"><label>用户名</label><input type="text" id="sf_username" value="root"></div>
-      </div>
-      <div class="form-group"><label>认证方式</label>
-        <select id="sf_authType"><option value="password">密码</option></select>
-      </div>
-      <div class="form-group"><label>密码</label><input type="password" id="sf_password" placeholder="••••••••"></div>
-      <div class="form-group"><label>默认打开目录 <span style="font-weight:normal;color:var(--text-muted);font-size:11px">（连接后默认展示的远程目录）</span></label><input type="text" id="sf_remotePath" placeholder="/"></div>
-      <div class="form-group">
-        <label>发布目录 <span style="font-weight:normal;color:var(--text-muted);font-size:11px">（第一条为默认发布目录）</span></label>
-        <div class="tag-input-container" id="sf_deployPaths" onclick="document.getElementById('sf_newPathInput').focus()">
-          <div class="tag-list" id="sf_tagList"></div>
-          <input type="text" id="sf_newPathInput" class="tag-input-field" placeholder="输入路径后按 Enter 添加">
-        </div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn" onclick="closeModal('serverFormModal')">取消</button>
-      <button class="btn btn--primary" onclick="saveServer(event)">保存</button>
-    </div>
-  </div>
-</div>
 <!-- 项目默认配置弹窗 -->
 <div class="modal-overlay" id="projectConfigModal">
   <div class="modal" style="max-width:480px">
@@ -759,40 +725,6 @@
     </div>
   </div>
 </div>
-
-<!-- FileZilla 导入弹窗 -->
-<div class="modal-overlay" id="filezillaModal">
-  <div class="modal">
-    <div class="modal-header">
-      <div>
-        <h2>📂 从 FileZilla 导入服务器</h2>
-        <p class="modal-subtitle" id="fzPath"></p>
-      </div>
-      <button class="modal-close" onclick="closeModal('filezillaModal')">✕</button>
-    </div>
-    <div class="modal-body">
-      <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
-        <input type="file" id="fzFileInput" accept=".xml" style="display:none" onchange="loadFzFromFile(this)">
-        <button class="btn" onclick="document.getElementById('fzFileInput').click()">📁 选择 XML 文件</button>
-        <span id="fzFileName" style="color:var(--text-secondary);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
-      </div>
-      <p style="color:var(--text-secondary);font-size:13px;margin-bottom:12px">仅显示 SFTP 协议的服务器，FTP 已自动过滤</p>
-      <div class="module-toolbar">
-        <div class="module-actions">
-          <button class="btn btn--text" onclick="toggleAllFz(true)">全选</button>
-          <button class="btn btn--text" onclick="toggleAllFz(false)">全不选</button>
-          <span class="selected-count" id="fzSelectedCount">已选 0 个</span>
-        </div>
-      </div>
-      <div class="module-grid" id="fzServerGrid" style="max-height:360px"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn" onclick="closeModal('filezillaModal')">取消</button>
-      <button class="btn btn--primary" onclick="importFileZillaServers()">同步服务器</button>
-    </div>
-  </div>
-</div>
-
 
 <!-- 自动整理弹窗 -->
 <div class="modal-overlay" id="cleanupModal">
