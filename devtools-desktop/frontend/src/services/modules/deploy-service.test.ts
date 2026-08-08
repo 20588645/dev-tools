@@ -5,6 +5,8 @@ import {
   isMaskedPassword,
   normalizeFileZillaSource,
   normalizeHistoryItem,
+  normalizeHistoryLog,
+  normalizeTimestamp,
   normalizeServer,
   type ServerInput,
 } from './deploy-service'
@@ -124,5 +126,64 @@ describe('normalizeFileZillaSource', () => {
   it('缺 port 回落 22', () => {
     const { servers } = normalizeFileZillaSource({ servers: [{ name: 'a' }] })
     expect(servers[0].port).toBe(22)
+  })
+})
+
+describe('normalizeHistoryLog', () => {
+  // 后端 GET /api/history/:id 把日志放在 logs 字段；曾误读 lines / log，
+  // 两个字段都不存在，导致「查看日志」恒为空。
+  it('从 logs 字段取日志行', () => {
+    const lines = normalizeHistoryLog({
+      id: 'h1',
+      logs: [
+        { time: 1786096800000, type: 'info', text: '开始部署' },
+        { time: 1786096801000, type: 'success', text: '完成' },
+      ],
+    })
+    expect(lines).toHaveLength(2)
+    expect(lines[0]).toEqual({ time: 1786096800000, type: 'info', text: '开始部署' })
+  })
+
+  it('旧字段名不再被误认（lines / log 都不是契约字段）', () => {
+    expect(normalizeHistoryLog({ lines: [{ text: 'x' }] })).toEqual([])
+    expect(normalizeHistoryLog({ log: [{ text: 'x' }] })).toEqual([])
+  })
+
+  it('缺字段或非数组时回空，不抛错', () => {
+    expect(normalizeHistoryLog({})).toEqual([])
+    expect(normalizeHistoryLog(undefined)).toEqual([])
+    expect(normalizeHistoryLog({ logs: '不是数组' })).toEqual([])
+  })
+
+  it('缺 type 回落 info，缺 time 回落 0', () => {
+    const [line] = normalizeHistoryLog({ logs: [{ text: '裸行' }] })
+    expect(line).toEqual({ time: 0, type: 'info', text: '裸行' })
+  })
+})
+
+describe('normalizeTimestamp', () => {
+  // 后端历史与 last-deploy 的 timestamp 是 ISO 字符串，曾用 num() 解析
+  // 直接落 0，导致时间列恒显示「—」。
+  it('解析 ISO 字符串', () => {
+    expect(normalizeTimestamp('2026-06-28T16:42:00.000Z')).toBe(Date.parse('2026-06-28T16:42:00.000Z'))
+  })
+
+  it('数字原样通过', () => {
+    expect(normalizeTimestamp(1786096800000)).toBe(1786096800000)
+  })
+
+  it('非法值回落 0，交由格式化层显示占位', () => {
+    expect(normalizeTimestamp(undefined)).toBe(0)
+    expect(normalizeTimestamp('')).toBe(0)
+    expect(normalizeTimestamp('不是时间')).toBe(0)
+    expect(normalizeTimestamp(Number.NaN)).toBe(0)
+  })
+})
+
+describe('normalizeHistoryItem 的时间戳', () => {
+  it('ISO 字符串能解析出可格式化的毫秒数', () => {
+    const item = normalizeHistoryItem({ id: 'h', timestamp: '2026-06-28T16:42:00.000Z' })
+    expect(item.timestamp).toBeGreaterThan(0)
+    expect(new Date(item.timestamp).getUTCFullYear()).toBe(2026)
   })
 })

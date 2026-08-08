@@ -24,6 +24,22 @@ const stringList = (value: unknown): string[] => (
   Array.isArray(value) ? value.map(text).filter(Boolean) : []
 )
 
+/**
+ * 时间戳归一成毫秒数。
+ *
+ * 后端历史与 last-deploy 的 `timestamp` 存的是 **ISO 字符串**
+ * （如 `2026-06-28T16:42:00.000Z`），git-log 则可能给数字。此前一律用 `num()`
+ * 解析，字符串拿不到数字直接落 0，导致时间列恒显示「—」。
+ */
+export function normalizeTimestamp(value: unknown): number {
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+  if (typeof value === 'string' && value) {
+    const parsed = Date.parse(value)
+    if (!Number.isNaN(parsed)) return parsed
+  }
+  return 0
+}
+
 /* ==================== 服务器 ==================== */
 
 export type ServerAuthType = 'password' | 'privateKey'
@@ -304,7 +320,7 @@ function normalizeLastDeploy(value: unknown): LastDeployInfo | null {
     modules: stringList(row.modules),
     serverName: text(row.serverName),
     duration: text(row.duration),
-    timestamp: num(row.timestamp),
+    timestamp: normalizeTimestamp(row.timestamp),
   }
 }
 
@@ -344,7 +360,7 @@ export function normalizeHistoryItem(value: unknown): HistoryItem {
     nodeVersion: text(row.nodeVersion),
     remotePath: text(row.remotePath),
     duration: text(row.duration),
-    timestamp: num(row.timestamp),
+    timestamp: normalizeTimestamp(row.timestamp),
   }
 }
 
@@ -359,14 +375,27 @@ export interface HistoryLogLine {
   text: string
 }
 
-/** 单条历史的完整日志，供「查看日志」回看。 */
-export async function getHistoryLog(id: string, signal?: AbortSignal): Promise<HistoryLogLine[]> {
-  const row = record(await apiClient.request<unknown>(`/api/history/${encodeURIComponent(id)}`, { signal, timeout: DEPLOY_TIMEOUT }))
-  const lines = Array.isArray(row.lines) ? row.lines : Array.isArray(row.log) ? row.log : []
+/**
+ * 从 `GET /api/history/:id` 的响应里取出日志行。
+ *
+ * 后端把日志放在 `logs` 字段（`history.js` 读物理日志文件后逐行解析成
+ * `{ time, type, text }`）。此前这里读的是 `lines` / `log`，两个字段都不存在，
+ * 结果恒为空数组——「查看日志」永远看不到内容。
+ */
+export function normalizeHistoryLog(value: unknown): HistoryLogLine[] {
+  const row = record(value)
+  const lines = Array.isArray(row.logs) ? row.logs : []
   return lines.map((entry) => {
     const line = record(entry)
     return { time: num(line.time), type: text(line.type) || 'info', text: text(line.text) }
   })
+}
+
+/** 单条历史的完整日志，供「查看日志」回看。 */
+export async function getHistoryLog(id: string, signal?: AbortSignal): Promise<HistoryLogLine[]> {
+  return normalizeHistoryLog(
+    await apiClient.request<unknown>(`/api/history/${encodeURIComponent(id)}`, { signal, timeout: DEPLOY_TIMEOUT }),
+  )
 }
 
 export async function deleteHistoryItem(id: string): Promise<void> {
@@ -484,7 +513,7 @@ export async function getGitLog(projectName: string, signal?: AbortSignal): Prom
       hash: text(row.hash),
       message: text(row.message),
       author: text(row.author),
-      timestamp: num(row.timestamp),
+      timestamp: normalizeTimestamp(row.timestamp),
     }
   })
 }
