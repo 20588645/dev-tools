@@ -3,8 +3,7 @@
 
 .stat-card,
 .home-activity-card,
-.home-quick-card,
-.history-table {
+.home-quick-card {
   background: var(--bg-card) !important;
   border: 1px solid var(--border) !important;
   border-radius: 8px !important;
@@ -92,9 +91,7 @@ input[type="number"] {
 }
 
 .stat-card,
-.home-activity-card,
-.history-table,
-.history-stats {
+.home-activity-card {
   border: 1px solid var(--border-color) !important;
   background: var(--bg-card) !important;
   border-radius: var(--mac-radius) !important;
@@ -173,8 +170,6 @@ select {
   background-repeat: no-repeat !important;
 }
 
-.module-tag,
-.history-modules .module-tag,
 .tag,
 .chip {
   min-height: 18px !important;
@@ -185,7 +180,6 @@ select {
   border: 1px solid var(--border-color) !important;
 }
 
-.history-header,
 .ha-table thead th {
   background: color-mix(in srgb, var(--bg-card) 72%, var(--bg-input)) !important;
   color: var(--text-muted) !important;
@@ -227,18 +221,11 @@ select {
 
 }
 
-.history-table {
-  background: var(--bg-card) !important;
-  border-radius: 7px !important;
-  display: block !important;
-}
 
-/* B3b：原 .history-row 的 color:text-secondary（带 important）已删——被下方 .history-row 混合组的 color:text-muted（同样 important）同特异性后置压制、本就是死规则，0 回归 */
 
 .stat-card,
 .home-activity-card,
 .home-quick-card,
-.history-table,
 .modal {
   background: var(--bg-card) !important;
   border: 1px solid var(--border) !important;
@@ -254,9 +241,7 @@ select {
   color: var(--text-primary) !important;
 }
 
-.ha-table th,
-.history-row.header,
-.history-row.history-header {
+.ha-table th {
   background: color-mix(in srgb, var(--bg-input) 88%, var(--bg-card) 12%) !important;
   color: var(--text-muted) !important;
   font-size: 10px !important;
@@ -324,49 +309,11 @@ textarea:not([class^="n-"]):not([class*=" n-"]),
   font-size: 11px !important;
 }
 
-.module-tag {
-  /* line-height 去 important：本选择器唯一设定，去后靠源序仍生效，0 回归（B1 安全最小）。padding 保留 important——与上方 .module-tag 标签组 important 竞争，去则被覆为 2px 6px */
-  padding: 1px 5px !important;
-  line-height: 15px;
-}
 
-.history-row { font-size: 10px !important; color: var(--text-muted) !important; }
 
-.module-tag,
-.type-pill {
-  border-radius: 5px !important;
-  background: var(--bg-input) !important;
-  border: 1px solid var(--border) !important;
-  color: var(--text-secondary) !important;
-  font-size: 9.5px !important;
-}
 
-.history-table {
-  border-radius: 7px !important;
-  overflow: hidden !important;
-  min-height: 0 !important;
-  flex: none !important;
-  height: auto !important;
-}
 
-.history-row {
-  /* B3b：height/padding/min-height 为 .history-row 唯一 setter，去 important 靠源序仍生效，0 回归。 */
-  transition: background 0.1s;
-  height: auto;
-  padding: 0 10px;
-  font-size: 10.5px !important;
-  min-height: 34px;
-}
 
-.history-stats {
-  /* font-size/min-height 去 important：本选择器唯一设定（#sub-history 高特异性 important 始终接管，源序仍生效），0 回归（B1 安全最小）。border/border-radius/background 保留——与上方 .stat-card 卡片组 important 同选择器竞争且值不同，去则变值 */
-  color: var(--text-secondary);
-  font-size: 10px;
-  min-height: 40px;
-  border: 1px solid var(--border) !important;
-  border-radius: 8px !important;
-  background: var(--bg-card) !important;
-}
 
 .modal {
   display: flex;
@@ -434,7 +381,6 @@ textarea:not([class^="n-"]):not([class*=" n-"]),
 
 /* --- 3. 统一卡片圆角为 8px --- */
 .home-section-card,
-.history-table,
 .todo-card,
 .todo-column-header,
 .cmd-card,

@@ -6,12 +6,6 @@
   padding-bottom: 14px;
 }
 
-/* 让 page-sticky-header 之后的内容独立滚动 */
-#page-deploy .sub-page .history-table {
-  flex: 1;
-  overflow-y: auto;
-}
-
 /* ---------- Spinner ---------- */
 .spinner {
   display: inline-block;
@@ -28,62 +22,18 @@
 
 .sub-page.active { display: block; }
 
-.module-tag {
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: var(--radius-xs);
-  background: var(--bg-input);
-  color: var(--text-muted);
-  border: 1px solid var(--border);
-}
 
-/* --- History Table --- */
 
-.history-row { /* 保留：与穿插规则存在层叠依赖 */
-  border-bottom: 1px solid var(--border);
-}
 
-.history-row:last-child { border-bottom: none; }
 
-.history-row:hover:not(.header) { background: var(--bg-card-hover); }
 
-.history-row.header {
-  background: var(--bg-input);
-  font-weight: 600;
-  color: var(--text-muted);
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  height: 34px;
-}
 
-.history-row.row-selected { background: var(--accent-subtle); }
 
-.history-row .h-cell.h-check { display: flex; align-items: center; justify-content: center; }
 
-.history-row .h-cell.h-time { color: var(--text-muted); }
 
-.history-row .h-cell.h-server { color: var(--text-secondary); }
 
-/* History Stats */
-/* --- History Toolbar / Segmented Control --- */
-/* iOS Checkbox */
-.ios-check {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 16px;
-  height: 16px;
-  border-radius: var(--radius-xs);
-  border: 1.5px solid var(--border-strong);
-  background: transparent;
-  cursor: pointer;
-  position: relative;
-  transition: all 0.15s;
-}
 
-.ios-check:checked { background: var(--accent); border-color: var(--accent); }
 
-.ios-check:checked::after { content: '✓'; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); color: var(--text-on-primary); font-size: 10px; font-weight: 700; }
 
 .module-item:hover { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 6%, transparent); }
 
@@ -116,7 +66,6 @@
 }
 
 /* 历史统计数字用等宽字体（数值 font-mono 约定；计数为小整数，万/亿分级不适用） */
-.deploy-stat-num { font-family: var(--font-mono); }
 
 .module-divider { grid-column: 1/-1; display: flex; align-items: center; gap: 8px; padding: 4px 0; color: var(--text-muted); font-size: 11px; }
 
@@ -164,11 +113,6 @@
   flex-wrap: wrap;
 }
 
-.filter-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
 
 .browser-item.selected {
   background: color-mix(in srgb, var(--accent) 10%, transparent) !important;
@@ -208,27 +152,6 @@
   white-space: nowrap;
 }
 
-.history-table {
-  border: 1px solid var(--border);
-  border-top: none;
-  overflow: hidden auto !important;
-  min-height: 320px;
-}
-
-/* 固定表头容器：批次5B 把列表头移出滚动容器，flex 静态置顶（禁用 sticky，铁律）；
-   与 .history-table 共用 .history-row grid 列宽保证对齐，表体 #historyTable 独立滚动。
-   边框：本容器出顶边+两侧，表体出两侧+底边，拼成一个连续表框（表头行自带底分隔线） */
-.history-header-fixed {
-  flex: 0 0 auto;
-  border: 1px solid var(--border);
-  border-bottom: none;
-}
-
-@media (max-width: 1080px) {
-.history-row .h-server { display: none; }
-
-}
-
 .card-name {
   font-weight: 600;
   display: flex;
@@ -239,16 +162,7 @@
   font-size: 12px;
 }
 
-.history-row {
-  border-bottom: 1px solid var(--border-color) !important;
-}
 
-.history-stats {
-  margin-bottom: 10px !important;
-  display: flex;
-  align-items: center;
-  padding: 0 12px !important;
-}
 
 /* ========== Deploy Page: Search & Project Card Layout Polish ========== */
 #page-deploy .header-actions {
@@ -341,13 +255,6 @@
   flex: 0 0 auto !important;
 }
 
-#page-deploy .history-table {
-  flex: 1 1 auto !important;
-  min-height: 0 !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  overscroll-behavior: contain;
-}
 
 #sub-history .page-sticky-header {
   display: grid;
@@ -358,146 +265,27 @@
   gap: 7px !important;
 }
 
-#sub-history .filter-chips {
-  margin-bottom: 0 !important;
-  gap: 6px !important;
-}
 
 #sub-history .chip {
   min-height: 24px !important;
   padding: 0 9px !important;
 }
 
-#sub-history .history-stats {
-  min-height: 30px !important;
-  margin: 0 !important;
-  padding: 0 12px !important;
-  display: flex !important;
-  align-items: center !important;
-  background: var(--bg-card) !important;
-}
 
-.history-row,
-.history-row.history-header {
-  display: grid;
-  grid-template-columns: 94px minmax(170px, 1.35fr) 78px minmax(150px, 1.1fr) minmax(130px, 1fr) 88px 72px;
-  align-items: center;
-  column-gap: 10px;
-}
 
-/* 批次6B：批量选择模式多出 ☑ 勾选列时，给 grid 头部补一条 32px 轨道，避免第 8 个
-   cell 撑破 7 列模板换行错位；表头与数据行同步加 .with-check 保持列对齐 */
-.history-row.with-check,
-.history-row.history-header.with-check {
-  grid-template-columns: 32px 94px minmax(170px, 1.35fr) 78px minmax(150px, 1.1fr) minmax(130px, 1fr) 88px 72px;
-}
 
-/* 历史表头：批次5B 已移出滚动容器到 #historyHeader，flex 静态置顶（禁用 sticky，铁律禁用——
-   WKWebView 子滚动容器惯性滚动会抖）；此处只定义表头行视觉，列宽与数据行共用上面的 grid */
-.history-row.history-header {
-  /* B3b：color/font-weight/background/border-bottom 已删——color(text-muted)/font-weight(650) 与 overrides 表头组(.ha-table th,.history-row.history-header,…)同值；background(本条 bg-card84% 被 overrides bg-input88% 同特异性后置压制、本就死)；border-bottom 由 .history-row 同值(--border-color)接管。min-height 保留 important——需压制 overrides .history-row 的 34px important（去则表头变 34px） */
-  min-height: 32px !important;
-}
 
-.history-row:not(.history-header):hover {
-  background: color-mix(in srgb, var(--primary) 4%, transparent) !important;
-}
 
-.history-row .h-cell {
-  /* B3b：width/overflow/text-overflow/white-space/min-width 为本选择器(0,2,0)唯一 setter，去 important 靠特异性即生效，0 回归。font-size 删除——由 components.css 同选择器同值(10px) important 接管 */
-  padding: 0 6px;
-  width: auto;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
-}
 
-.history-row .h-project {
-  color: var(--text-primary) !important;
-  font-weight: 650 !important;
-}
 
-.history-row .h-actions {
-  justify-content: flex-end !important;
-  display: inline-flex !important;
-  gap: 4px !important;
-}
 
-.history-modules {
-  gap: 3px;
-  flex-wrap: nowrap !important;
-  overflow: hidden;
-  display: inline-flex !important;
-  max-width: 100%;
-}
 
-.history-modules .module-tag {
-  flex: 0 1 auto;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 128px !important;
-}
 
-.type-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  min-height: 18px;
-  padding: 0 7px;
-  border-radius: 4px;
-  border: 1px solid var(--border-color);
-  background: var(--bg-input);
-  color: var(--text-secondary);
-}
 
-.type-pill::before {
-  content: '';
-  width: 5px;
-  height: 5px;
-  border-radius: 999px;
-  background: var(--text-muted);
-}
 
-.type-pill.deploy::before {
-  background: var(--primary);
-}
 
-.type-pill.build::before {
-  background: var(--warning);
-}
 
-.h-status {
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 5px !important;
-  font-weight: 650 !important;
-}
 
-.status-dot-mini {
-  width: 6px;
-  height: 6px;
-  border-radius: 999px;
-  background: currentColor;
-  flex: none;
-}
-
-.h-status.status-success {
-  color: var(--success) !important;
-}
-
-.h-status.status-fail {
-  color: var(--danger) !important;
-}
-
-#sub-history .h-actions .btn--icon {
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
-#sub-history .h-actions .btn--icon:not(.btn--danger):hover {
-  color: var(--primary);
-}
 
 .server-check-item {
   border-radius: var(--radius-sm);

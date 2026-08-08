@@ -94,8 +94,7 @@
   color: var(--text-muted);
 }
 
-.ha-table th,
-.history-row.header {
+.ha-table th {
   background: color-mix(in srgb, var(--bg-input) 88%, var(--bg-card) 12%) !important;
   color: var(--text-muted) !important;
   font-size: 10px !important;
@@ -104,8 +103,7 @@
   letter-spacing: 0 !important;
 }
 
-.ha-table tr:hover td,
-.history-row:hover:not(.header) { background: var(--bg-hover) !important; }
+.ha-table tr:hover td { background: var(--bg-hover) !important; }
 
 .chip {
   font-weight: 500;
@@ -126,14 +124,6 @@
   color: var(--primary) !important;
 }
 
-.module-tag {
-  border-radius: 5px !important;
-  background: var(--bg-input) !important;
-  border: 1px solid var(--border) !important;
-  color: var(--text-secondary) !important;
-  font-size: 10px !important;
-  line-height: 1.35;
-}
 
 .btn-primary:hover { background: var(--primary-hover) !important; }
 
@@ -267,8 +257,7 @@ select:focus,
 
 body[data-theme="light"] .stat-card,
 body[data-theme="light"] .home-activity-card,
-body[data-theme="light"] .home-quick-card,
-body[data-theme="light"] .history-table {
+body[data-theme="light"] .home-quick-card {
   box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 10px 26px rgba(16, 24, 40, 0.045) !important;
 }
 
@@ -292,14 +281,12 @@ select,
 
 body[data-theme="light"] .stat-card,
 body[data-theme="light"] .home-activity-card,
-body[data-theme="light"] .history-table,
 body[data-theme="light"] .modal {
   box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 8px 22px rgba(16, 24, 40, 0.045) !important;
 }
 
 body[data-theme="dark"] .stat-card,
 body[data-theme="dark"] .home-activity-card,
-body[data-theme="dark"] .history-table,
 body[data-theme="dark"] .modal {
   box-shadow: 0 1px 0 rgba(255,255,255,0.025), 0 14px 38px rgba(0,0,0,0.24) !important;
 }
@@ -330,7 +317,6 @@ body[data-theme="dark"] .modal {
   gap: 6px !important;
 }
 
-.history-row .h-cell,
 .ha-table td,
 .ha-table th {
   font-size: 10px !important;
