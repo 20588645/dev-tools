@@ -1,0 +1,104 @@
+#vue-deploy-history-host {
+  width: 100%;
+  min-width: 0;
+}
+
+.deploy-history {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  gap: var(--space-3);
+}
+
+/* ---------- 工具栏与筛选 ---------- */
+.deploy-history__toolbar,
+.deploy-history__filters {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.deploy-history__filter-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.deploy-history__filter-sep {
+  width: 1px;
+  height: 18px;
+  align-self: center;
+  background: var(--color-border);
+}
+
+/* ---------- 概览摘要条 ---------- */
+/* 与项目总览子页同形态：一行摘要，不占整卡 */
+.deploy-history__stats {
+  display: flex;
+  margin: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.deploy-history__stat {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.deploy-history__stat dt {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+}
+
+.deploy-history__stat dd {
+  margin: 0;
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--font-weight-semibold);
+}
+
+/* ---------- 表格单元 ---------- */
+.deploy-history__time,
+.deploy-history__server {
+  color: var(--color-text-muted);
+  font-family: var(--font-family-mono);
+}
+
+.deploy-history__muted { color: var(--color-text-subtle); }
+
+/*
+  模块标签只列前 3 个 + N（修 H1）。旧实现是 nowrap + 可收缩子项，
+  模块一多就把每个标签压到只剩一个字符，既读不出名字也看不出总数。
+*/
+.deploy-history__mods {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.deploy-history__mod {
+  overflow: hidden;
+  max-width: 96px;
+  flex: 0 0 auto;
+  padding: 1px var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.deploy-history__mods-more {
+  flex: 0 0 auto;
+  color: var(--color-text-subtle);
+  font-size: var(--font-size-xs);
+  font-variant-numeric: tabular-nums;
+}

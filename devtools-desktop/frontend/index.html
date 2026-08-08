@@ -90,28 +90,9 @@
   </div>
 
   <!-- 部署历史 -->
+  <!-- 部署历史：已整体迁到 Vue，工具栏/筛选/表格/弹窗均由宿主内部实现 -->
   <div class="sub-page" id="sub-history">
-    <div class="page-sticky-header">
-      <div class="page-header">
-        <div class="header-actions">
-          <button class="btn" id="btnToggleSelect" onclick="toggleBatchSelect()">☑ 选择</button>
-          <button class="btn btn--danger" id="btnBatchDelete" onclick="batchDeleteHistory()" style="display:none">🗑 删除 <span id="batchCount" style="font-weight:700">0</span></button>
-          <button class="btn" onclick="showCleanupDialog()">🧹 整理</button>
-        </div>
-      </div>
-      <div class="filter-chips" style="margin-bottom:16px">
-        <button class="chip active" data-seg="segType" data-value="all" onclick="setChipFilter(this,'segType')">全部</button>
-        <button class="chip" data-seg="segType" data-value="deploy" onclick="setChipFilter(this,'segType')">🚀 部署</button>
-        <button class="chip" data-seg="segType" data-value="build-only" onclick="setChipFilter(this,'segType')">🔨 构建</button>
-        <span style="width:1px;height:20px;background:var(--border);margin:0 4px;align-self:center"></span>
-        <button class="chip active" data-seg="segStatus" data-value="all" onclick="setChipFilter(this,'segStatus')">全部</button>
-        <button class="chip" data-seg="segStatus" data-value="success" onclick="setChipFilter(this,'segStatus')">✅ 成功</button>
-        <button class="chip" data-seg="segStatus" data-value="fail" onclick="setChipFilter(this,'segStatus')">❌ 失败</button>
-      </div>
-      <div id="historyStats" class="history-stats"></div>
-    </div>
-    <div id="historyHeader" class="history-header-fixed"></div>
-    <div class="history-table" id="historyTable"></div>
+    <div id="vue-deploy-history-host"></div>
   </div>
 </section>
 

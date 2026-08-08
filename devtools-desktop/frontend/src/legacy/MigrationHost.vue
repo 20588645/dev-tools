@@ -21,6 +21,7 @@ const TwofaView = defineAsyncComponent(() => import('@/views/twofa/TwofaView.vue
 const UsageView = defineAsyncComponent(() => import('@/views/usage/UsageView.vue'))
 const DeployDashboardView = defineAsyncComponent(() => import('@/views/deploy/DeployDashboardView.vue'))
 const DeployServersView = defineAsyncComponent(() => import('@/views/deploy/DeployServersView.vue'))
+const DeployHistoryView = defineAsyncComponent(() => import('@/views/deploy/DeployHistoryView.vue'))
 const app = useAppStore()
 const logTask = useLogTaskStore()
 const todoReminderService = createTodoReminderService()
@@ -49,13 +50,16 @@ usageTarget?.setAttribute('data-vue-owner', 'usage')
 const runTarget = document.querySelector('#vue-run-host')
 const hasRunTarget = Boolean(runTarget)
 runTarget?.setAttribute('data-vue-owner', 'run')
-/* 部署面板按子页逐个迁移，项目总览与服务器管理已接管，部署历史仍在 legacy 侧。 */
+/* 部署面板三个子页均已迁到 Vue。 */
 const deployDashboardTarget = document.querySelector('#vue-deploy-dashboard-host')
 const hasDeployDashboardTarget = Boolean(deployDashboardTarget)
 deployDashboardTarget?.setAttribute('data-vue-owner', 'deploy-dashboard')
 const deployServersTarget = document.querySelector('#vue-deploy-servers-host')
 const hasDeployServersTarget = Boolean(deployServersTarget)
 deployServersTarget?.setAttribute('data-vue-owner', 'deploy-servers')
+const deployHistoryTarget = document.querySelector('#vue-deploy-history-host')
+const hasDeployHistoryTarget = Boolean(deployHistoryTarget)
+deployHistoryTarget?.setAttribute('data-vue-owner', 'deploy-history')
 /** 部署面板当前子页；只有激活的子页才挂载，避免未显示的子页发请求。 */
 const activeDeploySub = ref(
   document.querySelector('#page-deploy .seg__item.is-active')?.getAttribute('data-sub') ?? 'dashboard',
@@ -164,6 +168,11 @@ onBeforeUnmount(() => {
     <Teleport v-if="hasDeployServersTarget" to="#vue-deploy-servers-host">
       <KeepAlive>
         <DeployServersView v-if="activePage === 'deploy' && activeDeploySub === 'servers'" />
+      </KeepAlive>
+    </Teleport>
+    <Teleport v-if="hasDeployHistoryTarget" to="#vue-deploy-history-host">
+      <KeepAlive>
+        <DeployHistoryView v-if="activePage === 'deploy' && activeDeploySub === 'history'" />
       </KeepAlive>
     </Teleport>
     <!-- LogViewer 内部用 BaseDialog（NModal），自带 teleport 到 body -->
