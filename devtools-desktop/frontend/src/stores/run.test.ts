@@ -20,7 +20,13 @@ vi.mock('@/services/modules/run-service', async () => {
   }
 })
 
+vi.mock('@/services/tauri-client', () => ({
+  tauriClient: { available: true, updateTrayMenu: vi.fn().mockResolvedValue(undefined) },
+}))
+
 const service = await import('@/services/modules/run-service')
+const { tauriClient } = await import('@/services/tauri-client')
+const updateTrayMenu = vi.mocked(tauriClient.updateTrayMenu)
 const getRunStatuses = vi.mocked(service.getRunStatuses)
 const getPortOwner = vi.mocked(service.getPortOwner)
 const restartRun = vi.mocked(service.restartRun)
@@ -156,5 +162,48 @@ describe('useRunStore.trackJob', () => {
     const store = useRunStore()
     store.trackJob(job({ status: 'error' }))
     expect(store.jobOf('demo')).toBeNull()
+  })
+})
+
+describe('托盘菜单同步（跨页耦合收口）', () => {
+  /*
+    原先托盘由 app.js 的 syncTrayMenu 读旧全局 runningProjects 驱动，
+    现在改由本 store 直接经 Tauri IPC 更新。
+  */
+  it('对账后按活跃任务刷新托盘', async () => {
+    getRunStatuses.mockResolvedValue([
+      job({ id: 'a', projectName: 'p-run', status: 'running' }),
+      job({ id: 'b', projectName: 'p-stopped', status: 'stopped' }),
+    ])
+    const store = useRunStore()
+    await store.reconcile()
+
+    expect(updateTrayMenu).toHaveBeenCalled()
+    const projects = updateTrayMenu.mock.calls.at(-1)?.[0]
+    expect(projects).toEqual([{ name: 'p-run', status: 'running' }])
+  })
+
+  it('编译报错的任务在托盘上报 error 状态', async () => {
+    getRunStatuses.mockResolvedValue([
+      job({ id: 'a', projectName: 'p-bad', status: 'running', compileStatus: 'error' }),
+    ])
+    const store = useRunStore()
+    await store.reconcile()
+    expect(updateTrayMenu.mock.calls.at(-1)?.[0]).toEqual([{ name: 'p-bad', status: 'error' }])
+  })
+
+  it('WS 推送停止后托盘随之移除该项目', () => {
+    const store = useRunStore()
+    store.applyJob(job({ id: 'a', projectName: 'p', status: 'running' }))
+    expect(updateTrayMenu.mock.calls.at(-1)?.[0]).toEqual([{ name: 'p', status: 'running' }])
+
+    store.applyJob(job({ id: 'a', projectName: 'p', status: 'stopped' }))
+    expect(updateTrayMenu.mock.calls.at(-1)?.[0]).toEqual([])
+  })
+
+  it('托盘名用 projectName——后端不返回 displayName，旧实现那个分支是死代码', () => {
+    const store = useRunStore()
+    store.applyJob(job({ id: 'a', projectName: '同仁堂物流', status: 'starting' }))
+    expect(updateTrayMenu.mock.calls.at(-1)?.[0]).toEqual([{ name: '同仁堂物流', status: 'starting' }])
   })
 })

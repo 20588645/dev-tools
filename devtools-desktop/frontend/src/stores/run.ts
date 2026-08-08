@@ -1,5 +1,7 @@
 import { defineStore } from 'pinia'
 
+import { requestHomeRefresh } from '@/legacy/legacy-bridge'
+import { tauriClient } from '@/services/tauri-client'
 import {
   batchStopRun,
   getPortOwner,
@@ -45,9 +47,6 @@ export const useRunStore = defineStore('run', {
     reconciling: false,
   }),
 
-  /* 迁移期：托盘菜单与首页仍读旧全局 `runningProjects`（`app.js`），
-     因此每次状态变更后把它同步一份过去。deploy 页迁移时一并收敛。 */
-
   getters: {
     runningProjectNames: (state) => Object.keys(state.activeJobs),
     runningCount: (state) => Object.keys(state.activeJobs).length,
@@ -58,23 +57,29 @@ export const useRunStore = defineStore('run', {
 
   actions: {
     /**
-     * 把活跃任务同步到旧全局 `runningProjects`，并触发托盘菜单与首页刷新。
+     * 状态变更后的对外广播：刷新系统托盘菜单 + 通知首页重取。
      *
-     * 迁移期的桥：托盘菜单（`syncTrayMenu`）和首页卡片仍读旧全局。不同步会导致
-     * 服务起停后托盘菜单不更新——那是真实回归，不是可以推后的细节。
+     * 托盘由本 store 直接经 Tauri IPC 更新（原先绕 `app.js` 的 `syncTrayMenu` 读
+     * 旧全局 `runningProjects`，该链路已删除）。首页仍走 legacy 事件桥，等首页
+     * 改为直接消费本 store 后可一并去掉。
+     *
+     * 不广播会导致服务起停后托盘菜单不更新——那是真实回归，不是可以推后的细节。
      */
-    syncLegacyGlobals() {
-      const legacy = globalThis as {
-        runningProjects?: Record<string, unknown>
-        syncTrayMenu?: () => void
-        requestHomeRefreshIfVisible?: (reason?: string) => void
-      }
-      if (legacy.runningProjects && typeof legacy.runningProjects === 'object') {
-        for (const key of Object.keys(legacy.runningProjects)) delete legacy.runningProjects[key]
-        Object.assign(legacy.runningProjects, this.activeJobs)
-      }
-      legacy.syncTrayMenu?.()
-      legacy.requestHomeRefreshIfVisible?.('runtime-change')
+    syncRuntimeConsumers() {
+      /*
+        托盘只需要名称与状态两项。旧实现取 `job.displayName || job.projectName`，
+        但后端 `/api/run/status` 并不返回 displayName，那个分支是死代码——
+        实际显示的一直是 projectName，此处保持同一行为。
+       */
+      const projects = Object.values(this.activeJobs)
+        .filter(job => ACTIVE_STATUSES.includes(job.status))
+        .map(job => ({
+          name: job.projectName || '未知项目',
+          status: job.compileStatus === 'error' ? 'error' : job.status,
+        }))
+      // 托盘不可用（浏览器开发模式）或 IPC 失败都不该影响页面状态
+      if (tauriClient.available) void tauriClient.updateTrayMenu(projects).catch(() => {})
+      requestHomeRefresh('runtime-change')
     },
 
     /**
@@ -97,7 +102,7 @@ export const useRunStore = defineStore('run', {
           if (next[name]) delete this.portAlerts[name]
         }
         this.lastReconciledAt = Date.now()
-        this.syncLegacyGlobals()
+        this.syncRuntimeConsumers()
         return true
       } catch {
         return false
@@ -119,7 +124,7 @@ export const useRunStore = defineStore('run', {
       } else {
         delete this.activeJobs[job.projectName]
       }
-      this.syncLegacyGlobals()
+      this.syncRuntimeConsumers()
       return { job, active }
     },
 
@@ -128,7 +133,7 @@ export const useRunStore = defineStore('run', {
       if (ACTIVE_STATUSES.includes(job.status)) {
         this.activeJobs[job.projectName] = job
         delete this.portAlerts[job.projectName]
-        this.syncLegacyGlobals()
+        this.syncRuntimeConsumers()
       }
     },
 
@@ -181,7 +186,7 @@ export const useRunStore = defineStore('run', {
       const job = await restartRun(jobId)
       // stopping 不属于 ACTIVE_STATUSES，trackJob 会忽略；这里显式覆盖以保留卡片
       this.activeJobs[projectName] = job
-      this.syncLegacyGlobals()
+      this.syncRuntimeConsumers()
       return job
     },
 

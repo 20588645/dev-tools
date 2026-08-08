@@ -6,7 +6,7 @@
 > 最近更新：2026-08-06
 > 适用仓库：`devtools-desktop`  
 > 核心原则：保持软件持续可运行，按页面逐步替换，不进行一次性推倒重写。
-> 当前执行指针：**Phase 6-2 部署面板 `deploy` 进行中**，该页按三个子页依次迁移——项目总览已完成（PG0～PG5、真实 Tauri 手动 E2E 与旧实现清理均通过），服务器管理子页 **PG0～PG5 已全部完成**。部署历史子页 **PG0～PG5 自动验证完成**（含 H1～H4 四项页面缺陷、H5 日志字段契约、H6 测试模式误读写正式库日志、H7 时间戳被当数字解析致时间恒显示占位共七项修复；legacy History 整段已退役，`deploy.js` 降至 865 行），旧 CSS 已清理（12 类 74 处 `.history-*` 选择器，`deploy.css` 541→329 行；该文件因仍承载构建/部署弹窗样式而不能整体删除，与此前预判不同）。**下一步是该子页的真实 Tauri 手动 E2E，通过后收口四项跨页耦合。**四项跨页耦合中第 1 项（`.run-group*` 样式孤儿）已随项目总览迁移关闭，其余三项绑在构建/部署任务链路与托盘上，待后两个子页迁完统一收口。[组件架构合规专项](./vue-migration/component-architecture-compliance.md)已于 2026-08-06 关闭（机器基线 0、批准例外 0，最终 Smoke Test 通过），该文转为长期生效的规则文档。
+> 当前执行指针：**Phase 6-2 部署面板 `deploy` 进行中**，该页按三个子页依次迁移——项目总览已完成（PG0～PG5、真实 Tauri 手动 E2E 与旧实现清理均通过），服务器管理子页 **PG0～PG5 已全部完成**。部署历史子页 **PG0～PG5 自动验证完成**（含 H1～H4 四项页面缺陷、H5 日志字段契约、H6 测试模式误读写正式库日志、H7 时间戳被当数字解析致时间恒显示占位共七项修复；legacy History 整段已退役，`deploy.js` 降至 865 行），旧 CSS 已清理（12 类 74 处 `.history-*` 选择器，`deploy.css` 541→329 行；该文件因仍承载构建/部署弹窗样式而不能整体删除，与此前预判不同），真实 Tauri 手动 E2E 已通过。**四项跨页耦合已收口三项**：第 1 项（`.run-group*` 样式孤儿）随项目总览关闭，第 3、4 项（`runningProjects` / `loadRunStatuses`）于 2026-08-08 关闭——托盘改由 run store 直接经 IPC 驱动，并新增应用级 `run-runtime-service` 承担启动与 WS 重连对账（不依赖页面挂载，否则不进本地运行页时托盘为空）。**第 2 项（`log-viewer-bridge`）本阶段收不了**：`logViewer()` 的 21 处调用全在驱动尚未迁移的构建/部署任务链路，已转为第 6 步的前置。**下一步是 Phase 6-2 剩余的构建/部署弹窗（第 6 步）。**[组件架构合规专项](./vue-migration/component-architecture-compliance.md)已于 2026-08-06 关闭（机器基线 0、批准例外 0，最终 Smoke Test 通过），该文转为长期生效的规则文档。
 
 ---
 
@@ -514,8 +514,8 @@ L3 中纯前端且低风险的改动可以与页面 Vue 实现处于同一页面
 | 7 | Phase 5-4 | 用量统计 `usage` | **PG5 自动清理完成** | 执行清理后简短真实 Tauri 回归 | ECharts、价格、异常数据和资源销毁通过 |
 | 8 | Phase 5-5 | 双因验证 `twofa` | **PG5 自动清理完成** | 执行清理后简短真实 Tauri 回归 | Secret、倒计时、导入与快捷查询安全专项通过 |
 | 9 | 组件架构合规专项 | 已迁移页面与公共组件 | **基础能力、通知适配与首个消费者 Settings 已完成；其余页面收口中** | 按迁移矩阵顺序继续存量页面收口 | 存量页面收口、架构验收、最终 Tauri Smoke Test 与全站回归通过 |
-| 10 | Phase 6-1 | 本地运行 `run` | **PG0～PG5 已完成** | 已完成 | 体验、进程、轮询、WebSocket、后台状态和真实 Tauri E2E 通过；四项跨页耦合随 Phase 6-2 收敛 |
-| 11 | Phase 6-2 | 部署面板 `deploy` | **当前阶段：三个子页均已完成 PG0～PG5（含 CSS 清理），部署历史待 Tauri 验收** | 部署历史子页真实 Tauri 手动 E2E，通过后收口四项跨页耦合 | SSH、构建、部署任务和日志链路通过；三个子页全部迁完且四项跨页耦合收口 |
+| 10 | Phase 6-1 | 本地运行 `run` | **PG0～PG5 已完成** | 已完成 | 体验、进程、轮询、WebSocket、后台状态和真实 Tauri E2E 通过；四项跨页耦合已收口三项，余第 2 项转第 6 步前置 |
+| 11 | Phase 6-2 | 部署面板 `deploy` | **当前阶段：三个子页 PG0～PG5 与 Tauri 验收均已完成，跨页耦合已收口三项** | 迁移构建/部署弹窗（第 6 步），同时关闭第 2 项耦合 `log-viewer-bridge` | SSH、构建、部署任务和日志链路通过；三个子页全部迁完且四项跨页耦合收口 |
 | 12 | Phase 6-3 | 文件传输 `filetransfer` | 等待 | 完成 `deploy` 后开始 PG0 | SFTP 会话、队列、重连和 keepalive 通过 |
 | 13 | Phase 7-1 | 文件编辑 `editor` | 等待 | Phase 6 完成后开始 PG0 | CodeMirror 生命周期和未保存保护通过 |
 | 14 | Phase 7-2 | 快捷命令 `terminal` | 等待 | 完成 `editor` 后开始 PG0 | Xterm、PTY、WebGL 降级和多标签恢复通过 |
@@ -1163,9 +1163,15 @@ frontend/src/services/modules/ipcheck-service.ts
 以下四项都是 Run 迁移留下的跨页耦合，PG5 无法在 Run 侧单独关闭，随本阶段一并收敛：
 
 1. ~~**`.run-group*` 样式孤儿**~~ — **已关闭（项目总览子页迁移时解决）**。分组头改用公共 `BaseDisclosure panel` 变体，`deploy.js` 中的 `.run-group*` 生成逻辑与 `deploy.css` 那条「复用 run.css 全局定义」的注释已随旧渲染链路一并删除。
-2. **`legacy/log-viewer-bridge.ts`**。`app.js:1129` 的 `logViewer()` 包装仍驱动构建/部署日志，迁移完成后连同 `app.js` 中的包装函数一并删除。
-3. **`runningProjects` 全局**。托盘菜单 `syncTrayMenu` 与首页卡片仍读它；Vue 侧已在 `stores/run.ts` 做双向同步，迁移后应改为直接消费 store。
-4. **`loadRunStatuses`**。`deploy.js:41` 仍调用，需一并收敛进 Vue store。
+2. **`legacy/log-viewer-bridge.ts`** — **本阶段收不了，转为第 6 步（构建/部署弹窗）的前置**。`logViewer()` 在 `app.js` 有 21 处调用，全部驱动构建/部署任务链路，而该链路本身尚未迁移；硬删会让构建部署日志全断。等第 6 步弹窗迁完后，连同 `app.js` 的包装函数一并删除。
+3. ~~**`runningProjects` 全局**~~ — **已关闭（2026-08-08）**。托盘改由 `stores/run.ts` 的 `syncRuntimeConsumers` 直接经 Tauri IPC 更新，不再绕 `app.js` 读全局；`runningProjects`、`syncTrayMenu` 与 `requestHomeRefreshIfVisible` 均已删除。首页仍走 `HOME_REFRESH_REQUESTED_EVENT` 事件桥（其自身带 `active` 守卫，与旧的可见性检查等价）。
+4. ~~**`loadRunStatuses`**~~ — **已关闭（2026-08-08）**。新增应用级 `services/run-runtime-service.ts`，在 `MigrationHost` 挂载时启动：启动即对账一次、并监听 WS `open` 与 `run-status`。
+
+   **这里有个不能省的约束**：`run store` 的 `reconcile` 原先只由 RunView 的 `useRunPage` / `useRunRealtime` 触发，而托盘是**启动即可见**的。若直接删掉 legacy 兜底而不补应用级对账，用户不进本地运行页时托盘就是空的、WS 断线重连后也不会自我纠正——那是真实回归。因此对账必须挂在随应用常驻的位置，与页面挂载解耦。
+
+   `deploy.js` 的 `loadProjects` 随之化简为只取 `projects`（仍供构建/部署弹窗消费），其运行态对账、托盘刷新与三个已迁子页的失败态渲染均已移除。
+
+   另新增只读桥 `window.__runActiveJob`：`app.js` 的编译报错通知在延时回调里要校验「这条报错是否仍是该项目当前任务的最新一条」，原先读 `runningProjects`，全局删除后改由该桥回答。等桌面通知逻辑迁入 Vue 后一并删除。
 
 #### 文件传输
 
@@ -1339,7 +1345,7 @@ frontend/src/services/modules/ipcheck-service.ts
 | 8 | 用量统计 | `views/usage/`、`usage-service.ts`；旧 `usage.js`、`usage.css`、ECharts vendor 已删除 | 高 | 扫描、价格、Canvas 生命周期 | Phase 5-4 | **PG5 自动清理完成** | 清理后简短 Tauri 回归 |
 | 9 | 双因验证 | `views/twofa/`、`twofa-service.ts`；旧 `twofa.js`、`twofa.css` 已删除 | 高 | Secret、timer、导入与快捷查询 | Phase 5-5 | **PG5 自动清理完成** | 清理后简短 Tauri 回归 |
 | 10 | 本地运行 | `views/run/`、`run-service.ts`、`stores/run.ts`；旧 `run.js`、`run.css` 已删除 | 高 | 进程、轮询、WebSocket | Phase 6-1 | **初版阶段性提交，Gate 未关闭** | 合规基础完成后处理体验问题与真实 Tauri E2E |
-| 11 | 部署面板 | `views/deploy/`（三个子页均已迁）；`deploy.js`(865 行) 与 `deploy.css`(329 行) 仅保留构建/部署等弹窗，随第 6 步弹窗迁移收尾 | 很高 | 项目、SSH、构建、弹窗 | Phase 6-2 | **进行中：三子页 PG5 均已完成（含 CSS 清理）** | 部署历史子页 Tauri 手动 E2E |
+| 11 | 部署面板 | `views/deploy/`（三个子页均已迁）；`deploy.js` 与 `deploy.css`(329 行) 仅保留构建/部署等弹窗，随第 6 步弹窗迁移收尾 | 很高 | 项目、SSH、构建、弹窗 | Phase 6-2 | **进行中：三子页与 Tauri 验收均已完成，耦合收口三项** | 迁移构建/部署弹窗（第 6 步） |
 | 12 | 文件传输 | `filetransfer.js`、`filetransfer.css` | 很高 | SFTP、会话、队列、keepalive | Phase 6-3 | 等待 | `deploy` 提交后开始 PG0 |
 | 13 | 文件编辑 | `editor.js`、`editor.css` | 高 | CodeMirror、未保存状态 | Phase 7-1 | 等待 | Phase 6 完成后开始 PG0 |
 | 14 | 快捷命令 | `terminal.js`、`terminal.css` | 很高 | Xterm、PTY、WebSocket、WebGL | Phase 7-2 | 等待 | `editor` 提交后开始 PG0 |

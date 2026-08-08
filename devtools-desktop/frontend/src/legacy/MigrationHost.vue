@@ -4,6 +4,7 @@ import { defineAsyncComponent, onBeforeUnmount, onMounted, ref } from 'vue'
 import LogViewer from '@/components/logviewer/LogViewer.vue'
 import { onLegacyPageActivation, onLegacySubTabActivation, type LegacyPageId } from '@/legacy/legacy-bridge'
 import { installLogViewerBridge } from '@/legacy/log-viewer-bridge'
+import { createRunRuntimeService } from '@/services/run-runtime-service'
 import { createTodoReminderService } from '@/services/todo-reminder-service'
 import { normalizeThemeMode, useAppStore, type Theme } from '@/stores/app'
 import { useLogTaskStore } from '@/stores/log-task'
@@ -25,6 +26,8 @@ const DeployHistoryView = defineAsyncComponent(() => import('@/views/deploy/Depl
 const app = useAppStore()
 const logTask = useLogTaskStore()
 const todoReminderService = createTodoReminderService()
+/* 运行态对账与托盘刷新：必须随应用常驻，不能等本地运行页挂载，见服务内说明。 */
+const runRuntimeService = createRunRuntimeService()
 const activePage = ref<LegacyPageId>(
   (document.querySelector('.page.active')?.id.replace(/^page-/, '') as LegacyPageId | undefined) ?? 'home',
 )
@@ -105,6 +108,7 @@ onMounted(() => {
     attributeFilter: ['data-theme', 'data-theme-mode'],
   })
   todoReminderService.start()
+  runRuntimeService.start()
   stopLogViewerBridge = installLogViewerBridge()
 })
 
@@ -113,6 +117,7 @@ onBeforeUnmount(() => {
   stopSubTabActivation?.()
   themeObserver?.disconnect()
   todoReminderService.stop()
+  runRuntimeService.stop()
   stopLogViewerBridge?.()
 })
 </script>
