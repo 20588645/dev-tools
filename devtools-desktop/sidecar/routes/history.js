@@ -7,6 +7,11 @@ const db = require('../services/database');
 const fs = require('fs');
 const path = require('path');
 
+// 物理日志目录必须跟随测试沙箱切换，与 database.js / backup.js 同一判据。
+// 此前硬编码 '../data/logs'，测试模式会读写并删除正式库的日志文件。
+const IS_TEST = process.env.DEVTOOLS_TEST === '1' || process.argv.includes('--test');
+const LOGS_DIR = path.join(__dirname, '..', IS_TEST ? 'data-test' : 'data', 'logs');
+
 // GET /api/history — 历史列表（不含 logs）
 router.get('/', (req, res) => {
   try {
@@ -25,7 +30,7 @@ router.get('/:id', (req, res) => {
     record.modules = JSON.parse(record.modules || '[]');
 
     // 从本地物理日志文件异步或防阻塞读取详细日志
-    const logFile = path.join(__dirname, `../data/logs/${req.params.id}.log`);
+    const logFile = path.join(LOGS_DIR, `${req.params.id}.log`);
     try {
       if (fs.existsSync(logFile)) {
         const fileContent = fs.readFileSync(logFile, 'utf8');
@@ -53,7 +58,7 @@ function deletePhysicalLogs(ids) {
   const idList = Array.isArray(ids) ? ids : [ids];
   for (const id of idList) {
     if (!id) continue;
-    const logFile = path.join(__dirname, `../data/logs/${id}.log`);
+    const logFile = path.join(LOGS_DIR, `${id}.log`);
     fs.unlink(logFile, () => {});
   }
 }

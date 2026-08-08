@@ -11,7 +11,10 @@ const { decrypt } = require('../services/crypto');
 const { Client } = require('ssh2');
 const db = require('../services/database');
 
-const LOGS_DIR = path.join(__dirname, '../data/logs');
+// 日志目录跟随测试沙箱切换，与 database.js / backup.js / history.js 同一判据。
+// 此前硬编码 '../data/logs'，测试模式会把日志写进正式库目录。
+const IS_TEST = process.env.DEVTOOLS_TEST === '1' || process.argv.includes('--test');
+const LOGS_DIR = path.join(__dirname, '..', IS_TEST ? 'data-test' : 'data', 'logs');
 if (!fs.existsSync(LOGS_DIR)) {
   fs.mkdirSync(LOGS_DIR, { recursive: true });
 }
