@@ -11,7 +11,6 @@ let currentDeployId = null;
 let availableProjects = [];
 let checkedAvailableProjects = new Set();
 let busyProjects = new Set();       // 防重复部署锁
-let runningProjects = {};            // projectName -> 本地运行任务
 let currentRunId = null;             // 当前日志弹窗展示的本地运行任务
 let runModalProjectName = '';
 let runModalMode = 'start';
@@ -25,7 +24,6 @@ let APP_VERSION = '0.1.93';
 // ========== Vue Migration Bridge ==========
 const LEGACY_PAGE_ACTIVATED_EVENT = 'devtools:legacy-page-activated';
 const LEGACY_PAGE_REQUESTED_EVENT = 'devtools:legacy-page-requested';
-const HOME_REFRESH_REQUESTED_EVENT = 'devtools:home-refresh-requested';
 const MENU_ORDER_CHANGED_EVENT = 'devtools:menu-order-changed';
 const EXPERIMENTAL_SETTING_CHANGED_EVENT = 'devtools:experimental-setting-changed';
 const SIDECAR_RESTARTED_EVENT = 'devtools:sidecar-restarted';
@@ -147,43 +145,6 @@ function setupVueNavigationBridge() {
     const seconds = Number(event.detail?.seconds);
     if (Number.isFinite(seconds)) connTimeoutSec = Math.min(Math.max(seconds, 5), 300);
   });
-}
-
-function requestHomeRefreshIfVisible(reason = 'runtime-change') {
-  const page = document.getElementById('page-home');
-  if (!page?.classList.contains('active')) return;
-  window.dispatchEvent(new CustomEvent(HOME_REFRESH_REQUESTED_EVENT, {
-    detail: { reason },
-  }));
-}
-
-// 运行态兜底加载：托盘菜单与首页卡片仍读 runningProjects（本地运行页自身已由
-// Vue run store 驱动）。原定义在 js/run.js，该文件随本地运行页迁移不再加载。
-async function loadRunStatuses() {
-  try {
-    const list = await API.get('/api/run/status');
-    runningProjects = {};
-    (list || []).forEach(job => {
-      if (['starting', 'running'].includes(job.status)) {
-        runningProjects[job.projectName] = job;
-      }
-    });
-  } catch (e) {
-    runningProjects = {};
-  }
-}
-
-// ========== 托盘菜单同步 ==========
-function syncTrayMenu() {
-  const invoke = (typeof getTauriInvoke === 'function') ? getTauriInvoke() : null;
-  if (!invoke) return;
-  const running = Object.values(runningProjects || {})
-    .filter(job => ['starting', 'running'].includes(job.status))
-    .map(job => ({
-      name: job.displayName || job.projectName || job.name || '未知项目',
-      status: job.compileStatus === 'error' ? 'error' : job.status,
-    }));
-  invoke('update_tray_menu', { projects: running }).catch(() => {});
 }
 
 // ========== 桌面通知 ==========
@@ -776,23 +737,12 @@ function setupWSHandlers() {
     window.dispatchEvent(new CustomEvent(UPGRADE_PROGRESS_EVENT, { detail: data }));
   });
 
-  // WS 重连后全量对账：断线期间的 run-status 推送会全部丢失，重连后从后端拉一次
-  // 真实运行态，纠正可能失真的卡片/统计（首连也会触发，loadRunStatuses 幂等故安全）
-  WS.on('open', () => {
-    // 本地运行页与部署面板的对账都已由 Vue 侧负责；这里只补首页与托盘
-    loadRunStatuses().then(() => {
-      requestHomeRefreshIfVisible();
-      syncTrayMenu();
-    });
-  });
-
+  /*
+    只保留桌面通知与去重记账。运行态、托盘菜单与首页刷新已由 Vue 的
+    run store + run-runtime-service 承担（后者随应用常驻，不依赖页面挂载）。
+   */
   WS.on('run-status', async (data) => {
     const isActive = ['starting', 'running'].includes(data.status);
-    if (isActive) {
-      runningProjects[data.projectName] = data;
-    } else {
-      delete runningProjects[data.projectName];
-    }
 
     if (data.status === 'running' && !notifiedRunIds.has(data.id)) {
       notifiedRunIds.add(data.id);
@@ -807,9 +757,6 @@ function setupWSHandlers() {
       clearNotifiedCompileErrors(data.id);
     }
 
-    // 日志弹窗、本地运行页与部署面板的状态由 Vue 侧（log-task store / useRunRealtime / useDeployRealtime）驱动
-    requestHomeRefreshIfVisible();
-    syncTrayMenu();
   });
 }
 
@@ -843,7 +790,7 @@ function handleRunCompileErrorNotification(data) {
 
   pendingRunCompileErrorTimers[errorKey] = setTimeout(() => {
     delete pendingRunCompileErrorTimers[errorKey];
-    const latest = runningProjects[data.projectName];
+    const latest = window.__runActiveJob?.(data.projectName);
     if (!latest || latest.id !== data.id || latest.compileStatus !== 'error' || latest.compileErrorSeq !== data.compileErrorSeq) return;
 
     notifiedRunCompileErrors.add(errorKey);

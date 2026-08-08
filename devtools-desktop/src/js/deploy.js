@@ -15,27 +15,16 @@ async function loadNodeVersions() {
 }
 
 // ========== Dashboard ==========
+/*
+  只保留取数：`projects` 仍是构建/部署弹窗与项目默认配置弹窗的数据源，等第 6 步
+  弹窗迁完可一并删除。运行态对账、托盘菜单与首页刷新已由 Vue 的 run store +
+  run-runtime-service 承担；三个子页的失败态也各自由 Vue 侧渲染。
+*/
 async function loadProjects() {
   try {
     projects = await API.get('/api/projects');
-    await loadRunStatuses();
-    requestHomeRefreshIfVisible();
-    syncTrayMenu();
   } catch (e) {
     console.error('加载项目失败:', e);
-    // 首屏失败（尚无数据）：清屏给失败态 + 重试入口；后台刷新失败：保留旧数据，仅 toast
-    if (!projects || projects.length === 0) {
-      const fail = (id) => {
-        const el = document.getElementById(id);
-        if (el) renderState(el, { kind: 'error', icon: '⚠️', title: '加载项目失败', desc: e.message, actionHTML: '<button class="btn" onclick="loadProjects()">重试</button>', block: true });
-      };
-      fail('runProjectGrid');
-      fail('projectGrid');
-      const runOverview = document.getElementById('runOverview');
-      if (runOverview) runOverview.innerHTML = '';
-    } else {
-      showToast('刷新项目失败：' + e.message);
-    }
   }
 }
 
