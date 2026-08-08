@@ -235,3 +235,109 @@ CSS：`.server-row` / `.server-head` / `.server-card` / `.server-name` / `.serve
 HTML：`frontend/index.html:88-99` 子页容器（含工具栏两按钮 + `#serverHeader` + `#serverList`）、`631-663` 服务器表单弹窗、`773-803` FileZilla 弹窗，静态内联 `onclick` 共 12 个（另有 `renderServers` / `renderPathTags` / `renderFzServers` 动态生成的 6 个）。
 
 注意本子页工具栏用的是 `page-sticky-header` + `page-header`，与全局约定的 `.page-fixed-header` 吸附组件不是同一个类名，PG4 接 `PageTop` 公共组件时要按共享清单核对，不要照搬 legacy 类名。
+
+## 6. 部署历史子页 PG0 运行态取证（2026-08-07）
+
+测试库（`13900` + `data-test`）4 条记录（3 成功 / 1 失败，3 deploy / 1 build-only）。覆盖 1665×1184、1280×800、900×600 三档尺寸 × 亮暗主题，以及筛选、批量选择、清理弹窗、日志回放、空态、失败态与极端数据。
+
+| 观测项 | 结果 |
+| --- | --- |
+| 表头/数据行列宽 | 三档尺寸下两容器 grid 完全一致（如 1665：`94/412.8/78/336.4/305.8/88/72`），对齐无破 |
+| 行高 | 表头 32px、数据行 34px，各尺寸稳定 |
+| 横向溢出 | 三档均无 `document` 级溢出 |
+| 窄窗口降级 | 900 宽下隐藏「服务器」列，表头与数据行同步隐藏 |
+| 统计条 | `共 4 条记录 · ✅ 3 成功 · ❌ 1 失败`，筛选后追加「当前筛选 N 条」 |
+| 类型/状态筛选 | 单选与叠加均正确；无匹配时给「暂无匹配的部署记录」且表头清空 |
+| 批量选择 | 开启后列宽整体右移一列（多 32px 复选列）、表头同步加 `with-check`；计数、行高亮 `row-selected`、删除键禁用/解禁、取消后复原均正常 |
+| 清理弹窗 | 默认保留 30 天 / 每项目 5 条，文案完整 |
+| 日志回放 | 正常展示历史日志、100% 进度与「部署完成！耗时 1m 23s」，关闭键为「关闭」而非「最小化」（`running: false` 生效） |
+| 空态 | `暂无匹配的部署记录`，表头清空，统计条归零 |
+| 失败态 | `⚠️ 加载历史失败 + 重试`，表头清空；已有数据时仅 toast 保留旧表 |
+
+### 6.1 已确认缺陷
+
+**H1（中）窄窗口下模块标签被压成不可辨识的碎片。** `deploy.css:427` 的 `.history-modules` 是 `flex-wrap: nowrap` + `overflow: hidden`，子项 `.module-tag` 为 `flex: 0 1 auto`（可收缩）。模块数一多，各标签被等比压缩：实测 7 个模块在 1665 宽下各约 44px（文字 ellipsis 但可读首词），在 900 宽下**全部压到 17px，只剩一个字符**（截图 `m.` `m.` …），既读不出模块名也看不出总数。
+
+注意 `scrollWidth == clientWidth`，所以容器层面并未溢出——是子项被压缩而非被裁切，靠溢出检测发现不了。本地运行页与项目总览子页已统一为「前 3 个 + `+N`」，本页未同步（对应整页 decision 的 O4，此前判为不处理，但那是基于 1665 宽的观察）。
+
+**H2（中）极端长文本下操作列被挤出可视区。** 单条记录含超长项目名 + 三个服务器 + 7 模块时，900 宽下 `.history-row` 出现 `scrollWidth > clientWidth`（行内溢出），操作列的两个按钮被推出行外不可点击。服务器管理子页同尺寸同类数据实测 `rowOverflow: false`，故这是本页独有。
+
+**H3（低）操作按钮用字符而非图标且缺无障碍名。** `deploy.js:907-908` 用 `⌗`（查看日志）与 `⌫`（删除）两个字符，语义不直观；实测两个按钮**只有 `title`、没有 `aria-label`**，屏幕阅读器读不出用途。项目总览与服务器管理子页已统一为描边 SVG + `aria-label`。
+
+**H4（低）批量选择的复选框在未勾选态几乎不可见。** `.ios-check` 未选中时为 `background: transparent` + `1.5px var(--border-strong)` 细边框，在浅色表格底上对比度过低（取证截图中需放大才能确认存在）。功能无碍，属可发现性问题。
+
+### 6.2 未发现问题的部分
+
+- 三档尺寸的表头/数据行列宽对齐、行高、窄窗口列隐藏均正常。
+- 筛选、批量选择、清理弹窗、日志回放、空态、失败态六条链路功能均正确。
+- 日志回放全程无控制台错误（仅既有 `defineSimpleMode` 噪声）。
+
+### 6.3 状态值命名差异（迁移必须注意，非缺陷）
+
+后端一律写 `status: 'fail'`（`sidecar/routes/deploy.js` 六处），legacy 前端筛选 chip 的 `data-value` 也用 `fail`，二者一致。
+
+但 `deploy-service.ts` 的 `normalizeHistoryItem` / `getLastDeploy` 把非 `success` 一律折叠为内部值 `'error'`（`DeployRecordStatus = 'success' | 'error'`）。折叠方向安全（`'fail'` 会正确落入失败态），但**迁移时筛选必须按内部 `'error'` 比对，照搬 legacy 的 `'fail'` 会导致失败筛选永远为空**。
+
+## 7. 部署历史子页 PG1 代码研究（2026-08-07）
+
+### 7.1 子页结构与 DOM 契约
+
+DOM 四块（`frontend/index.html:93-115`）：工具栏三个按钮（选择 / 批量删除 / 整理）、类型与状态两组 `.chip` 筛选、统计条 `#historyStats`、固定表头 `#historyHeader` 与独立滚动表体 `#historyTable`。与服务器管理子页同构——**表头与数据行分属两个容器但共用 `.history-row` grid 列宽**，列宽权威在 `deploy.css` 的 `.history-row` 与 `.history-row.with-check`（批量态多一列 32px 复选框）。
+
+`deploy.css:306` 在 `max-width: 1080px` 隐藏 `.h-server`，因两容器共用列定义故同步生效，迁移后需保留。
+
+静态内联 `onclick` 共 12 个（子页 9 + 清理弹窗 3），另有 `renderHistory` 动态生成的 3 个（复选框 onchange、查看日志、删除）。
+
+### 7.2 状态与生命周期
+
+模块级状态四个，全部只服务本子页，**不与其它子页共享**（对比服务器子页的 `servers` 是跨子页共享的）：
+
+| 变量 | 职责 |
+| --- | --- |
+| `historyData` | 列表数据，`loadHistory` 写入 |
+| `batchSelectMode` | 批量选择模式开关 |
+| `selectedHistoryIds: Set` | 已选记录 id |
+| `chipFilters` | `{ segType, segStatus }` 两组筛选值 |
+
+因此可整体收进子页局部 composable，无需进 store。
+
+**每次交互都全量重渲**：`setChipFilter` / `toggleHistorySelect` / `toggleBatchSelect` / 删除后都调 `renderHistory()` 重建整张表。其中 `toggleHistorySelect` 每勾选一次就重渲全表——Vue 侧改成响应式后天然消除。
+
+`switchSubTab` 每次切到本子页都调 `loadHistory()` 全量重取（无 silent 刷新概念）。
+
+### 7.3 已有 Service 层覆盖情况
+
+`deploy-service.ts` 已建好全部 5 个端点：`getHistory` / `getHistoryLog` / `deleteHistoryItem` / `deleteHistoryItems` / `cleanupHistory`，`normalizeHistoryItem` 亦已就位。PG4 **不需要新建 service**，但需先修下面两处缺陷。
+
+### 7.4 新发现缺陷（Service 层与后端）
+
+**H5（高）`getHistoryLog` 恒返回空数组。** `deploy-service.ts:363` 读 `row.lines`，回退读 `row.log`；而后端 `sidecar/routes/history.js:44` 写的字段是 **`record.logs`**。两个候选字段都不存在，`lines` 恒为 `[]`。
+
+实证（测试库 `b8seed-h1` 造一条含 2 行的日志文件）：后端返回 `logs` 2 条、`logs[0] = {time, type, text}` 结构正确，而 `lines` / `log` 字段均不存在——`getHistoryLog` 必然返回空数组。与服务器子页的 S2 同类（都是响应字段名与后端不符），同样因 Vue 侧尚无消费方而未暴露；`deploy-service.test.ts` 对 `getHistoryLog` 亦零覆盖。
+
+**H6（中）测试模式下历史日志读写落到正式库目录。** `history.js:28` 与 `:56` 把日志路径硬编码为 `path.join(__dirname, '../data/logs/...')`，而 `sidecar/index.js:120` 已按 `IS_TEST` 把 `dataDir` 切到 `data-test`。实测测试库（`13900`）下把日志写进 `data-test/logs/` 读不到，写进 `data/logs/` 才读到——即**测试模式在读写正式库的日志文件**，`deletePhysicalLogs` 同理会删正式库日志。
+
+这是测试隔离的破口（违反「13900 测试隔离」纪律），且删除操作会真实影响正式数据。属后端缺陷，不在本子页迁移范围内，建议单列一个修复项。
+
+### 7.5 副作用与破坏性操作
+
+| 操作 | 副作用 | 迁移注意 |
+| --- | --- | --- |
+| `deleteSingleHistory` | `showConfirm(danger)` → `DELETE /:id` → 后端连带物理删日志文件 | 前端本地过滤 `historyData` 而非重新拉取，需保持 |
+| `batchDeleteHistory` | 二次确认「不可撤销」→ `DELETE /` 带 `ids` → 连带删物理日志 | 不可撤销，确认文案需保留条数 |
+| `executeCleanup` | `POST /cleanup` 按「保留天数 + 每项目条数」批量删记录与物理日志 | 后端已对入参做 clamp（1～3650 / 1～1000），前端 `parseInt \|\| 30` 的兜底可保留 |
+| `viewLog` | 写 `currentDeployId` 并开 LogViewer 回放 | `running: false` 让关闭键是「关闭」而非「最小化」，必须保留；迁移后 `currentDeployId` 改由 deploy-task store 承载 |
+
+三个删除动作都会**物理删除日志文件、不可恢复**，PG4 与 PG5 的删除验证不得在正式库上执行。
+
+### 7.6 对 legacy 全局的依赖
+
+`API` 5 次、`showAlert` 4、`showToast` 4、`escapeHtml` 3、`escapeOnclickArg` 3、`logViewer` 3、`showConfirm` 2，以及 `openLogViewer` / `renderState` / `withButtonBusy` / `currentDeployId` / `closeModal` 各 1。迁移方向与前两个子页一致（Service / `useNotificationStore` / `ConfirmDialog` / 公共 LogViewer / Vue 插值自带转义）。
+
+### 7.7 legacy 待删清单（PG5 用）
+
+JS：`loadHistory` / `setChipFilter` / `getSegValue` / `renderHistory` / `toggleBatchSelect` / `toggleHistorySelect` / `updateBatchCount` / `deleteSingleHistory` / `batchDeleteHistory` / `showCleanupDialog` / `executeCleanup` / `viewLog` 共 12 个函数，及 `historyData` / `batchSelectMode` / `selectedHistoryIds` / `chipFilters` 四个模块变量。
+
+CSS：`.history-row`（含 `.with-check` / `.history-header` / `.row-selected`）、`.history-table`、`.history-header-fixed`、`.history-stats`、`.h-cell` 系列（`h-time` / `h-project` / `h-type` / `h-modules` / `h-server` / `h-status` / `h-actions` / `h-check`）、`.history-modules`、`.module-tag`、`.type-pill`、`.status-dot-mini`、`.deploy-stat-num`、`.ios-check`、`.deploy-empty-state`。分布在 `deploy.css`、`components.css`、`overrides.css`、`legacy-runtime.css`——**本子页是 deploy 页最后一个，这批删完 `deploy.css` 应可整体删除**，届时 Stylelint 重复选择器基线里 `deploy.css` 与 `overrides.css` 的登记项应一并归零（见 decision 8.6 的预判）。
+
+HTML：`frontend/index.html:93-115` 子页容器、清理弹窗 `#cleanupModal`。

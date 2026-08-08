@@ -206,3 +206,76 @@ D7 已落地为静态文本「密码」，提交固定 `authType: 'password'`。
 - `loadServers` 只保留取数，供构建/部署弹窗与项目默认配置弹窗读 `servers` 全局；等第 6 步弹窗迁完一并删除。
 - `window.WS = WS` 是迁移期两侧共用一条连接的桥接，WS 全量迁入 Vue 后删除。
 - `devtools:legacy-subtab-activated` 事件与 `switchSubTab`：三个子页全部迁完后一并收敛。
+
+## 9. 部署历史子页 PG2/PG3（2026-08-07）
+
+整页 PG3 曾把「部署历史子页的视觉」判为不处理（第 2.3 节），本子页 PG0 补充取证发现四项页面级缺陷与两项后端/Service 缺陷，超出原结论覆盖，已单独提交用户确认。
+
+| 编号 | 问题 | 确认方向 |
+| --- | --- | --- |
+| H1 | 窄窗口下模块标签被等比压到 17px，只剩一个字符 | **修**：改「前 3 个 + `+N`」，与本地运行页、项目总览子页统一（即整页 O4，此前基于 1665 宽判为不处理，取证推翻） |
+| H2 | 极端长文本下 `.history-row` 行内溢出，操作列被挤出可视区 | **修**：操作列固定宽度、不参与收缩 |
+| H3 | 操作按钮用 `⌗` / `⌫` 字符，且只有 `title` 无 `aria-label` | **修**：改描边 SVG + `aria-label`，与已迁两个子页统一 |
+| H4 | 批量复选框未勾选态为透明底 + 细边框，对比度过低 | **修**：改用公共 `BaseCheckbox`，对比度由组件保证 |
+| H5 | `getHistoryLog` 读 `row.lines` / `row.log`，后端实际返回 `logs`，恒返回空数组 | **修**：PG4 修正字段名并补单测（当前零覆盖） |
+| H6 | `history.js` 日志路径硬编码 `../data/logs/`，测试模式在读写与删除正式库日志 | **本轮一并修**：改为按 `IS_TEST` 解析，与 `index.js:120` 一致 |
+
+维持不变的判断：
+
+- 表格信息架构、七列布局、筛选与批量选择的交互逻辑均不重设计，等价迁移。
+- 三个删除动作（单条 / 批量 / 整理）都会物理删除日志文件且不可恢复，PG4 与 PG5 的删除验证只在测试库执行——H6 修好正是这条纪律成立的前提。
+- 后端 `status: 'fail'` 与 service 内部 `'error'` 的命名差异不动，但筛选实现必须按内部值比对（见 assessment 6.3）。
+
+不做 PG3 原型：H1～H4 均为已有解法的复用或控件替换，无新设计需要评审。
+
+## 10. 部署历史子页 PG4/PG5 实现结果（2026-08-07）
+
+### 10.1 落地结构
+
+| 文件 | 职责 |
+| --- | --- |
+| `views/deploy/DeployHistoryView.vue` | 子页宿主：七列 `BaseDataTable`、筛选、批量选择、统计条与三个弹窗编排 |
+| `views/deploy/components/HistoryCleanupDialog.vue` | 自动整理弹窗（纯受控） |
+| `views/deploy/components/HistoryRowActions.vue` | 行内两个操作的描边 SVG 图标组 |
+| `views/deploy/composables/useDeployHistory.ts` | 列表取数、筛选、批量选择、删除与整理 |
+| `views/deploy/deploy-history.css` | 子页样式，`!important` 与硬编码颜色均为 0 |
+
+四项页面级缺陷全部落地：H1 模块列改「前 3 个 + `+N`」；H2 操作列 `width: 96` + `fixed: 'right'` 不参与收缩；H3 改描边 SVG + `aria-label`；H4 复选框改公共 `BaseCheckbox`。
+
+### 10.2 实现中新发现的缺陷（H7）
+
+**H7（高）历史时间列恒显示「—」，且项目总览的「最近部署」摘要恒显示「未知时间」。** 后端历史与 last-deploy 的 `timestamp` 存的是 **ISO 字符串**（`2026-06-28T16:42:00.000Z`），而 `deploy-service.ts` 三处都用 `num()` 归一——字符串拿不到数字直接落 0，`formatDeployTime` / `formatDeployAgo` 因此走占位分支。
+
+这是项目总览子页阶段建 service 时埋下的：legacy 侧直接 `new Date(h.timestamp)` 所以一直正常（PG0 取证截图里是 `06/28 16:42`），Vue 侧则在**项目总览子页上线后就一直显示「未知时间」**——影响面不止本子页。
+
+修复：新增并导出 `normalizeTimestamp`（数字原样通过、ISO 字符串走 `Date.parse`、非法值回落 0），替换 `normalizeHistoryItem` / `getLastDeploy` / `getGitLog` 三处。实测修复后历史时间列显示 `06/29 00:42` 等，项目总览摘要显示「39 天前 / 40 天前」。
+
+### 10.3 契约与后端修复
+
+- **H5**：`getHistoryLog` 改读 `logs`（原读 `lines` / `log` 两个不存在的字段，恒返回空数组）。归一逻辑抽成导出的 `normalizeHistoryLog` 并补 4 条单测。
+- **H6**：`history.js` 与 `deploy.js` 的日志目录改为按 `IS_TEST` 解析（与 `database.js` / `backup.js` 同一判据），原先硬编码 `../data/logs` 导致测试模式读写并**删除正式库**日志。实测修复后测试模式只读写 `data-test/logs`，删除记录时正式库的对照文件完好无损——修复前这一步会真删正式库日志。
+- **筛选状态值**：按 service 内部 `'error'` 比对（后端存 `'fail'`，`normalizeHistoryItem` 折叠为 `'error'`），单测专门锁定这条，避免照搬 legacy 的 `'fail'` 导致失败筛选恒空。
+
+### 10.4 PG5 legacy 退役
+
+`deploy.js` 删除 History 整段（4 个模块变量 + 12 个函数），由 1077 行降至 **865 行**；`index.html` 删除子页 DOM 与清理弹窗；`switchSubTab` 三个子页均归 Vue 后简化为只派发激活事件，不再直接取数或复位滚动。仓库内 `historyData` / `renderHistory` / `viewLog` / `cleanupModal` 等残留归零。
+
+### 10.5 自动验证结果
+
+`lint`（CSS 基线 28 项、Token、架构门禁）全通过；`build:frontend` 通过；`test:unit` **284 项**通过（新增 13 项：`useDeployHistory` 9、`normalizeHistoryLog` 4，另 `normalizeTimestamp` 与历史时间戳各补测）；子页 E2E 11 项通过——两档尺寸 × 亮暗、筛选（含失败筛选与空匹配）、H1 模块折叠（7 个 → 3 个 86/81/96px + `+4`，修复前 900 宽下全为 17px）、H2 操作列可见、H3 图标与无障碍名、H4 复选框替换与全选、H5 日志真实回放、清理弹窗、空态与失败态，全程零控制台错误。
+
+### 10.6 待用户 Tauri 手动 E2E
+
+三个删除动作（单条 / 批量 / 整理）都会**物理删除日志文件且不可恢复**，自动验证只在测试库执行、未触碰正式数据。需用户在真机验：单条删除、批量删除、自动整理、日志回放，以及本地运行页与项目总览的「最近部署」时间显示（H7 影响面）。
+
+### 10.7 PG5 CSS 清理结果（2026-08-07）
+
+**`deploy.css` 不能整体删除**——此前预判「本子页迁完即可整体删」不成立。该文件里仍有构建/部署弹窗、远程目录浏览与 Git Log 预览在用的类（`.module-item`、`.server-check-item`、`.browser-item`、`.git-log-*`、`.conn-*`、`.spinner`、`.deploy-empty-state` 等），它们归属第 6 步「构建/部署弹窗」，不在本子页范围内。
+
+按类逐个核实消费方后，删除已归零的 12 类共 **74 处选择器**（`.history-row` 及其 `.with-check` / `.history-header` / `.row-selected` / `.h-cell` 系列、`.history-table`、`.history-header-fixed`、`.history-stats`、`.history-modules`、`.module-tag`、`.type-pill`、`.status-dot-mini`、`.ios-check`、`.deploy-stat-num`、`.h-status`、`.filter-chips`），分布在 `deploy.css`(47) / `overrides.css`(20) / `components.css`(7)。处理方式与前两个子页一致：独占规则整块删，混合组只摘孤儿选择器（`.ha-table`、`.stat-card`、`.modal`、`.chip`、`.tag` 等仍在用的保持原位与原顺序）。
+
+`deploy.css` 由 541 行降至 **329 行**，三个文件合计减少约 7.2 KB。
+
+**Stylelint 基线回落并收紧（28 → 25）。** 服务器管理子页迁移时 `overrides.css` 与 `deploy.css` 曾各 +1（混合组收缩成同名规则），本轮整批 `.history-*` 删除后两者都回到原值：`overrides` 6→4、`deploy` 3→2。同时发现 `legacy-runtime.css` 登记 5 而实测 4，一并收紧，避免留虚设余量。
+
+**清理后回归**：`lint`（基线 25、Token、架构门禁）/ `build:frontend` 全通过；专项 E2E 5 项通过——三个子页 × 亮暗主题均正常挂载无横向溢出；**legacy 构建弹窗的 `.module-item` 仍有 solid 边框与 6px 圆角**（被删规则的邻居类未受影响，截图确认模块卡片、复选框、收藏星标、Node 下拉全部完好）；首页/本地运行/待办/笔记/设置/用量/双因验证/纯净检测八页均正常渲染；历史表时间列与模块标签显示正常。
