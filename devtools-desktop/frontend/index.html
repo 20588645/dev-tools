@@ -707,32 +707,6 @@
   </div>
 </div>
 
-<!-- 自动整理弹窗 -->
-<div class="modal-overlay" id="cleanupModal">
-  <div class="modal" style="max-width:440px">
-    <div class="modal-header">
-      <h3>🧹 自动整理历史记录</h3>
-      <span class="modal-close" onclick="closeModal('cleanupModal')">&times;</span>
-    </div>
-    <div class="modal-body" style="padding:20px">
-      <div class="form-group">
-        <label class="form-label">保留最近天数</label>
-        <input type="text" inputmode="numeric" id="cleanupKeepDays" class="form-input" value="30">
-        <div style="font-size:12px;color:var(--text-muted);margin-top:4px">超出此范围的失败记录将被清除</div>
-      </div>
-      <div class="form-group" style="margin-top:16px">
-        <label class="form-label">每个项目保留成功记录数</label>
-        <input type="text" inputmode="numeric" id="cleanupKeepPerProject" class="form-input" value="5">
-        <div style="font-size:12px;color:var(--text-muted);margin-top:4px">每个项目最多保留此数量的成功记录（无论时间）</div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn" onclick="closeModal('cleanupModal')">取消</button>
-      <button class="btn btn--warning" onclick="executeCleanup()">🧹 执行整理</button>
-    </div>
-  </div>
-</div>
-
 <!-- 2FA 账号弹窗 -->
 <!-- 2FA 批量导入弹窗 -->
 <!-- 自定义系统弹窗 (替代 confirm / alert) -->

@@ -1007,10 +1007,7 @@ function switchSubTab(sub, btn) {
   const subPage = document.getElementById('sub-' + sub);
   subPage.classList.add('active');
   subPage.scrollTop = 0;
-  const scrollTarget = subPage.querySelector('.project-grid, .history-table');
-  if (scrollTarget) scrollTarget.scrollTop = 0;
-  if (sub === 'history') loadHistory();
-  // 服务器管理已迁到 Vue，由宿主监听本事件自行加载
+  // 三个子页均已迁到 Vue，取数与滚动复位都由各自宿主监听本事件自行处理
   window.dispatchEvent(new CustomEvent('devtools:legacy-subtab-activated', { detail: { sub } }));
 }
 
