@@ -9,16 +9,18 @@ import LoadingState from '@/components/feedback/LoadingState.vue'
 import BaseInput from '@/components/form/BaseInput.vue'
 import FilterChip from '@/components/navigation/FilterChip.vue'
 import GroupRenameDialog from '@/components/overlay/GroupRenameDialog.vue'
-import { removeProject as removeProjectRequest } from '@/services/modules/deploy-service'
-import type { Project } from '@/services/modules/project-service'
+import { getServers, removeProject as removeProjectRequest, type DeployServer } from '@/services/modules/deploy-service'
+import { getNodeRuntime, type Project } from '@/services/modules/project-service'
 import { useDeployTaskStore } from '@/stores/deploy-task'
 import { useLogTaskStore } from '@/stores/log-task'
 import { useNotificationStore } from '@/stores/notification'
 
 import DeployGroupSection from './components/DeployGroupSection.vue'
 import DeployProjectCard from './components/DeployProjectCard.vue'
+import ProjectConfigDialog from './components/ProjectConfigDialog.vue'
 import { useDeployDashboard, type DeployFilter } from './composables/useDeployDashboard'
 import { useDeployRealtime } from './composables/useDeployRealtime'
+import { useProjectConfig } from './composables/useProjectConfig'
 import './deploy-dashboard.css'
 
 defineOptions({ name: 'DeployDashboardView' })
@@ -28,8 +30,14 @@ const task = useDeployTaskStore()
 const log = useLogTaskStore()
 const notify = useNotificationStore()
 
+const config = useProjectConfig()
+
 const renamingGroup = ref<string | null>(null)
 const pendingRemove = ref<Project | null>(null)
+/** 配置弹窗要选目标服务器与 Node 版本，两者都不属于项目列表，单独取。 */
+const servers = ref<DeployServer[]>([])
+const nodeVersions = ref<string[]>([])
+const currentNodeVersion = ref('')
 
 const FILTERS: Array<{ key: DeployFilter, label: string }> = [
   { key: 'all', label: '全部' },
@@ -68,6 +76,30 @@ async function onConfirmRemove() {
   }
 }
 
+/**
+ * 配置弹窗的辅助数据。失败不阻塞页面：弹窗里会给「暂无服务器」空态，
+ * Node 下拉退化成只有「系统默认」——与 legacy 取数失败时的表现一致。
+ */
+async function loadConfigOptions() {
+  const [serverList, runtime] = await Promise.all([
+    getServers().catch(() => [] as DeployServer[]),
+    getNodeRuntime().catch(() => ({ versions: [] as string[], current: '' })),
+  ])
+  servers.value = serverList
+  nodeVersions.value = runtime.versions
+  currentNodeVersion.value = runtime.current
+}
+
+async function onSubmitConfig() {
+  const name = await config.submit()
+  if (!name) {
+    if (config.error.value) notify.push(`保存失败：${config.error.value}`, 'error')
+    return
+  }
+  notify.push(`${name} 的默认配置已更新`, 'success')
+  await page.load({ silent: true })
+}
+
 async function onRenameGroup(name: string) {
   const from = renamingGroup.value
   if (!from) return
@@ -80,13 +112,20 @@ async function onRenameGroup(name: string) {
   }
 }
 
-onMounted(() => { void page.load() })
+onMounted(() => {
+  void page.load()
+  void loadConfigOptions()
+})
 
 /**
  * 组件被 KeepAlive 缓存，重新进入子页时不会再走 onMounted。
  * 在别处（如本地运行页）改过分组后回到本页仍需拿到新数据。
  */
-onActivated(() => { void page.load({ silent: true }) })
+onActivated(() => {
+  void page.load({ silent: true })
+  // 服务器可能在服务器管理子页被增删，回到本页需重新取
+  void loadConfigOptions()
+})
 </script>
 
 <template>
@@ -160,7 +199,7 @@ onActivated(() => { void page.load({ silent: true }) })
             :busy="task.isBusy(project.name)"
             @build="callLegacy('openBuildModal', project.name)"
             @deploy="callLegacy('openDeployModal', project.name)"
-            @configure="callLegacy('openProjectConfig', project.name)"
+            @configure="config.openFor(project)"
             @progress="log.reopen()"
             @remove="askRemove(project)"
           />
@@ -176,7 +215,7 @@ onActivated(() => { void page.load({ silent: true }) })
           :busy="task.isBusy(project.name)"
           @build="callLegacy('openBuildModal', project.name)"
           @deploy="callLegacy('openDeployModal', project.name)"
-          @configure="callLegacy('openProjectConfig', project.name)"
+          @configure="config.openFor(project)"
           @progress="log.reopen()"
           @remove="askRemove(project)"
         />
@@ -197,6 +236,19 @@ onActivated(() => { void page.load({ silent: true }) })
       :existing-names="page.groupNames.value"
       @close="renamingGroup = null"
       @submit="onRenameGroup"
+    />
+    <ProjectConfigDialog
+      :project="config.project.value"
+      :state="config.state.value"
+      :servers="servers"
+      :node-versions="nodeVersions"
+      :current-node-version="currentNodeVersion"
+      :saving="config.saving.value"
+      :error="config.error.value"
+      @close="config.close()"
+      @update:state="config.patch($event)"
+      @toggle-server="config.toggleServer($event)"
+      @submit="onSubmitConfig"
     />
   </div>
 </template>

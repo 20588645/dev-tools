@@ -45,82 +45,24 @@ async function removeProject(name) {
   }
 }
 
-// ========== Project Config Modal (默认配置) ==========
-let configProjectName = '';
-let configCheckedServers = new Set();
+/*
+  项目默认配置弹窗已迁到 Vue：`views/deploy/components/ProjectConfigDialog.vue` +
+  `composables/useProjectConfig.ts`，由项目总览子页的卡片直接打开。
+  原 `configProjectName` / `configCheckedServers` 两个模块级变量随之退役——它们
+  是「关掉弹窗再开另一个项目仍残留上次勾选」的来源，Vue 侧状态随组件私有化。
+*/
 
+/**
+ * 默认目标服务器：数组字段优先，为空时回落到单值字段。
+ *
+ * 仍留在 legacy 侧供部署弹窗（第 4 批）使用；Vue 侧的等价实现是
+ * `project-service.ts` 的 `projectDefaultServerIds`。
+ */
 function getProjectDefaultServerIds(project) {
   if (Array.isArray(project.defaultServerIds) && project.defaultServerIds.length > 0) {
     return project.defaultServerIds;
   }
   return project.defaultServerId ? [project.defaultServerId] : [];
-}
-
-function openProjectConfig(name) {
-  const project = projects.find(p => p.name === name);
-  if (!project) return;
-  configProjectName = name;
-  configCheckedServers.clear();
-
-  document.getElementById('configProjectName').textContent = `项目: ${name}`;
-  document.getElementById('configDisplayName').value = project.displayName || '';
-
-  const nodeSelect = document.getElementById('configNodeVersion');
-  nodeSelect.innerHTML = `<option value="">系统默认 (${escapeHtml(currentNodeVersion)})</option>`
-    + nodeVersions.map(v => `<option value="${escapeAttr(v)}" ${v === (project.nodeVersion || '') ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('');
-
-  const defaultIds = getProjectDefaultServerIds(project);
-  const listEl = document.getElementById('configServerList');
-  if (!servers.length) {
-    listEl.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:6px 0">暂无服务器</div>';
-  } else {
-    listEl.innerHTML = servers.map(s => {
-      const checked = defaultIds.includes(s.id);
-      if (checked) configCheckedServers.add(s.id);
-      return `<div class="server-check-item ${checked ? 'checked' : ''}" data-sid="${escapeAttr(s.id)}" onclick="toggleConfigServer('${escapeOnclickArg(s.id)}', this)">
-        <span class="srv-check">${checked ? '✓' : ''}</span>
-        <span>${escapeHtml(s.name)} (${escapeHtml(s.host)})</span>
-      </div>`;
-    }).join('');
-  }
-
-  document.getElementById('projectConfigModal').classList.add('active');
-}
-
-function toggleConfigServer(sid, el) {
-  if (configCheckedServers.has(sid)) {
-    configCheckedServers.delete(sid);
-    el.classList.remove('checked');
-    el.querySelector('.srv-check').textContent = '';
-  } else {
-    configCheckedServers.add(sid);
-    el.classList.add('checked');
-    el.querySelector('.srv-check').textContent = '✓';
-  }
-}
-
-async function saveProjectConfig(ev) {
-  const nodeVersion = document.getElementById('configNodeVersion').value;
-  const displayName = document.getElementById('configDisplayName').value.trim();
-  const defaultServerIds = [...configCheckedServers];
-  const defaultServerId = defaultServerIds[0] || '';
-  const name = configProjectName;
-  await withButtonBusy(ev && ev.currentTarget, '保存中…', async () => {
-    try {
-      await API.put(`/api/projects/${name}`, { nodeVersion, defaultServerId, defaultServerIds, displayName });
-      const p = projects.find(p => p.name === name);
-      if (p) {
-        p.nodeVersion = nodeVersion;
-        p.defaultServerId = defaultServerId;
-        p.defaultServerIds = defaultServerIds;
-        p.displayName = displayName;
-      }
-      closeModal('projectConfigModal');
-      showToast('✅ 配置已保存', `${name} 的默认配置已更新`);
-    } catch (e) {
-      showAlert('保存失败: ' + e.message, { icon: '❌' });
-    }
-  });
 }
 
 // ========== Add Project Modal ==========

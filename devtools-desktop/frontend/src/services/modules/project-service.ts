@@ -57,7 +57,7 @@ export function projectDefaultServerIds(project: Pick<Project, 'defaultServerIds
   return project.defaultServerId ? [project.defaultServerId] : []
 }
 
-/** 本地运行页可写的项目字段。其余字段（部署相关）不在本页范围内。 */
+/** 本地运行页可写的项目字段。 */
 export interface RunConfigPatch {
   runCommand: string
   runPort: string
@@ -67,6 +67,21 @@ export interface RunConfigPatch {
   nodeVersion: string
   groupName: string
 }
+
+/**
+ * 部署面板「项目默认配置」可写的字段。
+ *
+ * `defaultServerId` 与 `defaultServerIds` 必须同时写：后端保留单值字段兼容旧数据，
+ * 只写数组会让旧读取路径拿到空值（见 `projectDefaultServerIds` 的说明）。
+ */
+export interface DeployConfigPatch {
+  displayName: string
+  nodeVersion: string
+  defaultServerId: string
+  defaultServerIds: string[]
+}
+
+export type ProjectPatch = Partial<RunConfigPatch & DeployConfigPatch>
 
 export interface NodeRuntime {
   versions: string[]
@@ -125,7 +140,7 @@ export async function getProjects(signal?: AbortSignal): Promise<Project[]> {
 }
 
 /** 局部更新项目。后端按传入字段合并，未传的字段保持原值。 */
-export async function updateProject(name: string, patch: Partial<RunConfigPatch>): Promise<void> {
+export async function updateProject(name: string, patch: ProjectPatch): Promise<void> {
   await apiClient.put(`/api/projects/${encodeURIComponent(name)}`, patch, PROJECT_TIMEOUT)
 }
 

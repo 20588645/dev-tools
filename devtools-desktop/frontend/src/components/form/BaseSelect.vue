@@ -29,6 +29,18 @@ const generatedId = useId()
 const selectId = computed(() => props.id ?? `base-select-${generatedId}`)
 const messageId = computed(() => `${selectId.value}-message`)
 const naiveOptions = computed<NaiveSelectOption[]>(() => props.options as unknown as NaiveSelectOption[])
+
+/**
+ * 空串是合法取值时不能退化成「未选择」。
+ *
+ * 原实现一律 `modelValue || null`，于是 `{ value: '', label: '系统默认' }` 这类
+ * 选项永远显示成 placeholder（「请选择」），用户看不到自己实际选中的是什么。
+ * 只有当选项里确实没有空串项时，空的 modelValue 才表示未选择。
+ */
+const hasEmptyOption = computed(() => props.options.some(option => option.value === ''))
+const selectedValue = computed<string | null>(() => (
+  props.modelValue === '' && !hasEmptyOption.value ? null : props.modelValue
+))
 const overlayTarget = ref<HTMLElement | undefined>()
 const selectThemeOverrides = {
   peers: {
@@ -73,7 +85,7 @@ onMounted(() => {
     </label>
     <NSelect
       :id="selectId"
-      :value="modelValue || null"
+      :value="selectedValue"
       :options="naiveOptions"
       :placeholder="placeholder"
       size="small"

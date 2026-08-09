@@ -279,3 +279,22 @@ D7 已落地为静态文本「密码」，提交固定 `authType: 'password'`。
 **Stylelint 基线回落并收紧（28 → 25）。** 服务器管理子页迁移时 `overrides.css` 与 `deploy.css` 曾各 +1（混合组收缩成同名规则），本轮整批 `.history-*` 删除后两者都回到原值：`overrides` 6→4、`deploy` 3→2。同时发现 `legacy-runtime.css` 登记 5 而实测 4，一并收紧，避免留虚设余量。
 
 **清理后回归**：`lint`（基线 25、Token、架构门禁）/ `build:frontend` 全通过；专项 E2E 5 项通过——三个子页 × 亮暗主题均正常挂载无横向溢出；**legacy 构建弹窗的 `.module-item` 仍有 solid 边框与 6px 圆角**（被删规则的邻居类未受影响，截图确认模块卡片、复选框、收藏星标、Node 下拉全部完好）；首页/本地运行/待办/笔记/设置/用量/双因验证/纯净检测八页均正常渲染；历史表时间列与模块标签显示正常。
+
+## 11. 构建/部署弹窗（第 6 步）PG3 用户确认（2026-08-09）
+
+**优化等级：L2。** 视觉与交互按已迁子页的既定规范统一（M1 弹窗宽度与滚动、M2 描边 SVG、M5 复用 `RunConfigDialog` 的模块多选结构、M6 `BaseSegmented`），组件与状态结构重写（M3 控件替换、M7 抽 `RemoteBrowserPanel`）。不改信息架构、不动任务语义与后端契约。
+
+**不做 PG3 原型**（用户确认）：M1/M2/M5/M6 均为复用已上线子页的现成解法，无新设计需要评审；M3/M7 是代码结构调整，无视觉产出。
+
+**L3 已排除**：唯一涉及任务语义的 M4 已于 2026-08-09 单独修完（assessment 第 10 节），本步不再触碰运行态链路。
+
+**分四批推进**（用户确认）。本步状态密度为全页最高，六组局部状态需随组件私有化，一次性约 800 行改动风险过大：
+
+| 批次 | 范围 | 理由 |
+| --- | --- | --- |
+| 1 | `projectConfigModal` | 最简单、无任务语义，先立住弹窗组件的落地范式 |
+| 2 | `addProjectModal` | 12 处内联事件最集中，含双模式切换（M6） |
+| 3 | `remoteBrowserModal` + 抽 `RemoteBrowserPanel`（M7） | 与第 2 批的手动浏览共用，紧随其后 |
+| 4 | `buildModal` / `deployModal` | 含发起流程、M1 与 M5；`deploy.js` / `deploy.css` / `log-viewer-bridge` 在此批归零 |
+
+每批单独验收后再进下一批。`deploy.js` 与 `deploy.css` 的整体删除、第 2 项跨页耦合 `log-viewer-bridge` 的关闭都落在第 4 批。

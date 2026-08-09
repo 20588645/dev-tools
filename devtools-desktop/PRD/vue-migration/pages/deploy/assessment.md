@@ -497,3 +497,98 @@ E2E 5 项在测试库（13900）通过：构建发起后卡片亮忙态且 legac
 ### 10.6 待用户 Tauri 手动 E2E
 
 自动化没有真实跑过一次构建/部署，需在真机验：从项目总览卡片发起构建、发起部署（含多服务器），确认卡片忙态、日志实时进弹窗、进度条步骤推进、完成提示与桌面通知、最小化后台完成再弹回；构建中刷新页面确认任务恢复；以及待办提醒的桌面通知（M4-b 影响面）。
+
+## 11. 构建/部署弹窗（第 6 步）PG2 优化建议（2026-08-09）
+
+范围：`buildModal`、`deployModal`、`projectConfigModal`、`addProjectModal`、`remoteBrowserModal` 五个弹窗（`projectIntroModal` 属全局介绍，`edBrowserModal` 属文件编辑页，均不在本步）。对应 `deploy.js` 剩余 **49 个函数 / 851 行**。
+
+### 11.1 保留（等价迁移，不重设计）
+
+- **五个弹窗的信息架构与职责划分**：构建只选模块 + Node 版本；部署再加服务器多选与发布目录；配置弹窗管别名/默认 Node/默认服务器；添加项目分「自动扫描 / 手动浏览」双模式；远程浏览是部署弹窗的子流程。
+- **两套 localStorage 偏好不合并**（延续 4.5 与 9.3 节判断）：`fav_<project>` / `last_<project>` 属弹窗内的模块收藏与上次选择，后端 `favoriteRunModules` 属本地运行页，字段独立。
+- **三种空态文案的区分**（PG0 已确认正确）：无扫描结果 / 搜索无匹配 / 全部已添加，各给不同文案，迁移时逐条搬。
+- **破坏性操作的既有契约**：多服务器部署的二次确认、失败必须本地解锁、Node 版本变更即时落库且失败静默（decision 第 1 节的有意设计）、连接测试的按钮级防连点。
+- **模块网格布局**：900 宽下最小项宽 181px，未出现历史子页 H1 那种被压成单字符的情况，无需改成「前 3 个 + `+N`」。
+
+### 11.2 优化
+
+| 编号 | 项 | 建议 | 依据 |
+| --- | --- | --- | --- |
+| M1 | 900 宽下部署弹窗几乎占满视口、底部「发布目录」被按钮栏压住且无滚动提示 | 改用 `BaseDialog` 的 `width="min(720px, 94vw)"` + `bodyMaxHeight`，内容区自身滚动、头尾吸附 | `RunConfigDialog` 已是此解法，非新设计 |
+| M2 | 24 处 emoji（`🔨 开始构建`、`🚀 构建并部署`、`📂 浏览`、`⚙ 项目默认配置`、`🔗 测试连接` 等） | 统一为描边 SVG，与三个已迁子页一致（D5 / H3 同源） | 已迁子页的既定做法 |
+| M3 | 35 处内联事件、4 个原生 `select`、4 个原生 `input` | 全部替换为 `BaseSelect` / `BaseInput` / `BaseCheckbox` / `BaseButton`；`addProjectModal` 的 12 处最集中 | 组件架构门禁对新增 Vue 代码零容忍（`native-control`） |
+| M5 | 模块多选区自建 `.module-item` 网格 + 收藏星标 + 搜索 + 全选/全不选 | 复用 `RunConfigDialog` 已验证的「`FilterChip` 快捷区 + `BaseCheckbox` 选择区 + `BaseInput` 搜索」结构 | 同一交互问题，避免两份实现 |
+| M6 | 添加项目的双模式用 `.seg` 手写切换 | 改用公共 `BaseSegmented` | 与部署面板子页切换同源 |
+| M7 | 远程目录浏览与添加项目的手动浏览共用 `.browser-list` / `.browser-breadcrumb`，但各自一份 JS | 抽成一个私有组件 `RemoteBrowserPanel`，两处共用 | 两处交互与 DOM 结构本就相同 |
+
+### 11.3 删除
+
+- `deploy.js` 整个文件：第 6 步是 deploy 页最后一块，49 个函数中 `loadServers` / `loadProjects` 也随弹窗迁完退役。
+- `app.js` 侧剩余的 `currentProject`（30 处引用）、`showLogModal`、`openLogViewer`、`appendLog`、`logViewer()` 包装 —— **即第 2 项跨页耦合 `log-viewer-bridge.ts` 关闭点**。
+- `deploy.css` 剩余 329 行（`.module-item`、`.server-check-item`、`.browser-item`、`.git-log-*`、`.conn-*`、`.spinner`、`.deploy-empty-state`）应可整体删除。
+- `index.html` 五个弹窗的 DOM。
+- 三个 escape 系列在弹窗里的 39 处调用：Vue 插值自带转义，大部分自然消失。
+
+### 11.4 不新增
+
+本步不引入新功能。Git Log 预览区（`.git-log-*`）保持原样迁移，不扩展成提交列表或 diff 视图。
+
+### 11.5 L 级建议
+
+建议 **L2**：视觉与交互按已迁子页的既定规范统一（M1、M2、M5、M6），组件与状态结构重写（M3、M7），但不改信息架构、不动任务语义与后端契约。
+
+不建议 L3：唯一涉及任务语义的 M4 已在 2026-08-09 单独修完（第 10 节），本步不再触碰运行态链路。
+
+不做 PG3 原型：M1、M2、M5、M6 全部是复用已上线子页的现成解法（`BaseDialog` 的宽度与滚动策略、描边 SVG 图标、`RunConfigDialog` 的模块多选结构、`BaseSegmented`），没有需要评审的新设计。M3、M7 是代码结构调整，无视觉产出。
+
+### 11.6 风险
+
+- **弹窗数量与状态密度是本页最高的一块**：`modalState` 双 context、`currentProject`、`checkedServers`、`currentAddMode`、`checkedBrowseProjects`、`browserCurrentDir` 六组局部状态需随组件私有化，漏一处会表现为「切换弹窗后残留上次选择」。
+- **发起流程已接 store**（第 10 节），迁移时改为直接调 store 而非经 `window.__deployTask` 桥，桥随本步删除；顺序不能变（先 `begin` 再发请求）。
+- **`quickTestServers` 建真实 SSH**，自动化不得在真实数据上触发。
+- 建议按弹窗分批：先 `projectConfigModal`（最简单、无任务语义）→ `addProjectModal` → `remoteBrowserModal` + `RemoteBrowserPanel` → `buildModal` / `deployModal`（含发起流程与 M1）。每批单独验收，避免一次性 800 行改动。
+
+## 12. 第 6 步第 1 批：项目默认配置弹窗（2026-08-09）
+
+### 12.1 落地结构
+
+| 文件 | 职责 |
+| --- | --- |
+| `views/deploy/components/ProjectConfigDialog.vue` | 纯受控弹窗：`BaseDialog` + `BaseInput` / `BaseSelect` / `BaseCheckbox` / `FormField` |
+| `views/deploy/composables/useProjectConfig.ts` | 开合、回填、服务器勾选与提交 |
+| `services/modules/project-service.ts` | 新增 `DeployConfigPatch` / `ProjectPatch`，`updateProject` 的入参从只覆盖运行字段扩到含部署字段 |
+
+M1（弹窗宽度与滚动）：`width="min(520px, 94vw)"` + `bodyMaxHeight="min(560px, 70vh)"`，服务器列表区再单独限高 200px 自滚——服务器数量不可预期，不能靠弹窗整体高度兜。
+M2：`⚙` 与 `💾` 两处 emoji 去除，标题与按钮改纯文案（此弹窗无需图标）。
+M3：3 处内联事件、1 个原生 `select`、1 个原生 `input` 全部替换为 Base* 组件。
+
+### 12.2 状态私有化修掉的隐患
+
+legacy 的 `configCheckedServers` 是模块级 `Set`，关闭弹窗不清空——换项目再打开会带上前一个项目的勾选。Vue 侧状态随 composable 私有化，单测与 E2E 各锁一条。
+
+`displayName` 的回填需还原空串语义：后端存空串表示「回落到文件夹名」，而 `normalizeProject` 会把空值填成 `name`。若直接回填，用户一保存就把文件夹名写死成别名了。
+
+### 12.3 发现并修复的公共组件缺陷（B1）
+
+**B1（中）`BaseSelect` 无法显示 value 为空串的合法选项。** 原实现 `:value="modelValue || null"` 把空串折成 `null`，NSelect 于是回落到 placeholder。`{ value: '', label: '系统默认 (18.19.1)' }` 这类选项永远显示成「请选择」，用户看不到实际选中的是什么。
+
+**影响面不止本批**：本地运行页的 `RunConfigDialog` 用同一模式，实测其 Node 版本下拉在项目未设版本时同样显示「请选择」——该页已上线，属既有缺陷。修复改为「选项里确实没有空串项时，空值才表示未选择」，并补 3 条组件级单测。
+
+### 12.4 legacy 退役
+
+`deploy.js`：删除 `openProjectConfig` / `toggleConfigServer` / `saveProjectConfig` 三个函数与 `configProjectName` / `configCheckedServers` 两个模块级变量。`getProjectDefaultServerIds` 保留——部署弹窗（第 4 批）仍在用。
+`index.html`：删除 `#projectConfigModal` 整块 DOM。
+
+CSS 暂不动：`.server-check-list` / `.server-check-item` 仍被部署弹窗与添加项目弹窗使用，留到第 4 批统一清理。
+
+### 12.5 验证结果
+
+`lint`（CSS 基线 25、Token、架构门禁）/ `build:frontend` 全通过；`test:unit` **324 项**通过（新增 14：`useProjectConfig` 11、`BaseSelect` 3）。
+
+E2E 8 项在测试库通过：旧 DOM 与三个全局函数确认为 `undefined`、两台服务器回填、无服务器项目不勾任何一台、换项目重开不残留、保存落库且单值与数组字段一起写、别名留空回落文件夹名、保存失败保留输入并给原因、两档尺寸 × 亮暗主题下弹窗完整落在视口内且底部按钮可见。
+
+全量回归 71 项：`--workers=1` 下 69 通过，仅 2 项 notes 失败（已在 HEAD 上对照确认同样存在，与本批无关）。默认并行度下另有 3 项本批用例因 Vite dev server 争用报 502，串行后消失，非产品缺陷。
+
+### 12.6 待用户 Tauri 手动 E2E
+
+需在真机验：打开项目默认配置弹窗、改别名与 Node 版本、勾选/取消默认服务器并保存，确认卡片摘要与部署弹窗的默认选中都跟上；以及**本地运行页的配置弹窗 Node 版本下拉**（B1 影响面，修复前显示「请选择」）。

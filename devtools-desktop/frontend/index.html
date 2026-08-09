@@ -599,37 +599,7 @@
   </div>
 </div>
 
-<!-- 项目默认配置弹窗 -->
-<div class="modal-overlay" id="projectConfigModal">
-  <div class="modal" style="max-width:480px">
-    <div class="modal-header">
-      <h2>⚙ 项目默认配置</h2>
-      <button class="modal-close" onclick="closeModal('projectConfigModal')">✕</button>
-    </div>
-    <div class="modal-body" style="padding:20px">
-      <p id="configProjectName" style="color:var(--text-secondary);font-size:13px;margin-bottom:20px"></p>
-      <div class="form-group">
-        <label class="form-label">项目别名</label>
-        <input type="text" id="configDisplayName" class="form-input" placeholder="留空则显示文件夹名">
-        <div style="font-size:12px;color:var(--text-muted);margin-top:4px">自定义显示名称，方便快速识别项目</div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">默认 Node 版本</label>
-        <select id="configNodeVersion" class="form-input"></select>
-        <div style="font-size:12px;color:var(--text-muted);margin-top:4px">部署/构建弹窗将自动选中此版本</div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">默认目标服务器</label>
-        <div id="configServerList" class="server-check-list"></div>
-        <div style="font-size:12px;color:var(--text-muted);margin-top:4px">部署弹窗将自动选中这些服务器（可多选）</div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn" onclick="closeModal('projectConfigModal')">取消</button>
-      <button class="btn btn--primary" onclick="saveProjectConfig(event)">💾 保存配置</button>
-    </div>
-  </div>
-</div>
+<!-- 项目默认配置弹窗已迁到 Vue：views/deploy/components/ProjectConfigDialog.vue -->
 
 <!-- 添加项目弹窗 -->
 <div class="modal-overlay" id="addProjectModal">
