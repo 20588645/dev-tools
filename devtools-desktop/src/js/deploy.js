@@ -578,8 +578,9 @@ async function startBuildOnly(ev) {
   const modules = [...state.checkedModules];
   // 锁按钮防连点重复发起构建（弹窗关闭前的连点窗口）
   await withButtonBusy(ev && ev.currentTarget, '', async () => {
-    setBusy(projectName);
-    activeTask = { id: null, projectName, isRunning: true };
+    // 必须先登记再发请求：卡片忙态与 WS 消息归属都以 deploy-task store 的 active
+    // 为判据，不登记会让卡片整个构建期不显示「查看进度」、WS 消息被全部拒收
+    window.__deployTask?.begin(projectName);
     closeModal('buildModal');
     showLogModal(true);
     try {
@@ -588,15 +589,13 @@ async function startBuildOnly(ev) {
         modules,
         nodeVersion: selectedNodeVersion,
       });
-      currentDeployId = data.id;
-      if (activeTask) activeTask.id = data.id;
-      updateLogModalCloseBtn();
+      window.__deployTask?.attachTaskId(data.id);
+      window.__logViewer?.attachTaskId(data.id);
     } catch (e) {
       appendLog('请求失败: ' + e.message, 'error');
       // 请求未发出，后端不会回 WS 完成事件解锁，必须本地解锁，否则卡片永久卡在 ⏳ 需重启
-      clearBusy(projectName);
-      activeTask = null;
-      updateLogModalCloseBtn();
+      window.__deployTask?.abandon(projectName);
+      window.__logViewer?.setRunning(false);
     }
   });
 }
@@ -628,8 +627,8 @@ async function startDeploy(ev) {
   const remotePath = document.getElementById('remotePath').value;
   // 锁按钮防连点重复发起部署（多服务器确认后到弹窗关闭前的连点窗口）
   await withButtonBusy(ev && ev.currentTarget, '', async () => {
-    setBusy(projectName);
-    activeTask = { id: null, projectName, isRunning: true };
+    // 同 startBuildOnly：先登记 store 再发请求，见那里的说明
+    window.__deployTask?.begin(projectName);
     closeModal('deployModal');
     showLogModal(false);
     try {
@@ -641,15 +640,13 @@ async function startDeploy(ev) {
         remotePath,
         nodeVersion: selectedNodeVersion,
       });
-      currentDeployId = data.id;
-      if (activeTask) activeTask.id = data.id;
-      updateLogModalCloseBtn();
+      window.__deployTask?.attachTaskId(data.id);
+      window.__logViewer?.attachTaskId(data.id);
     } catch (e) {
       appendLog('请求失败: ' + e.message, 'error');
       // 请求未发出，后端不会回 WS 完成事件解锁，必须本地解锁，否则卡片永久卡在 ⏳ 需重启
-      clearBusy(projectName);
-      activeTask = null;
-      updateLogModalCloseBtn();
+      window.__deployTask?.abandon(projectName);
+      window.__logViewer?.setRunning(false);
     }
   });
 }
@@ -849,6 +846,6 @@ function showLogModal(buildOnly) {
     projectName: currentProject.name,
     steps: buildOnly ? ['拉取代码', '构建中'] : ['预检', '拉取代码', '构建中', '上传中', '完成'],
   });
+  // openLogViewer 默认 running: true，无需再单独同步「关闭/最小化」文案
   logViewer()?.setProgress({ percent: 0, indeterminate: false, label: '0%' });
-  updateLogModalCloseBtn();
 }

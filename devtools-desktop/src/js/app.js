@@ -7,10 +7,8 @@ let nodeVersions = [];
 let currentNodeVersion = '';
 let currentProject = null;
 let currentRunFilter = 'all';
-let currentDeployId = null;
 let availableProjects = [];
 let checkedAvailableProjects = new Set();
-let busyProjects = new Set();       // 防重复部署锁
 let currentRunId = null;             // 当前日志弹窗展示的本地运行任务
 let runModalProjectName = '';
 let runModalMode = 'start';
@@ -270,7 +268,6 @@ function handlePendingNotificationAction() {
   }
 }
 
-let activeTask = null;               // 当前正在执行的任务 { id, projectName, isRunning }
 let activeSysDialogClose = null;     // 当前系统弹窗的关闭回调
 
 // ========== Custom System Dialog (替代 confirm / alert) ==========
@@ -358,7 +355,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupNotificationActionHandlers();
   requestNotificationPermission();
   await Promise.all([loadProjects(), loadServers(), loadNodeVersions()]);
-  checkActiveJob();
+  // 活跃任务恢复由 Vue 的 deploy-realtime-service 在自身启动时完成
   updateToolbarDate();
 });
 
@@ -654,79 +651,12 @@ function updateToolbarDate() {
 
 // ========== WebSocket Handlers ==========
 function setupWSHandlers() {
-  WS.on('log', (data) => {
-    if (!currentDeployId && activeTask && activeTask.taskKind !== 'run') {
-      appendLog(data.text, data.type);
-      return;
-    }
-    if (data.id !== currentDeployId) return;
-    appendLog(data.text, data.type);
-  });
-
-  WS.on('progress', (data) => {
-    if (data.id !== currentDeployId && !(activeTask && !currentDeployId)) return;
-    const pct = data.percent || 0;
-    logViewer()?.setProgress({ percent: pct, label: pct + '%' });
-  });
-
-  WS.on('status', (data) => {
-    if (data.id !== currentDeployId) {
-      if (!(activeTask && !currentDeployId)) return;
-      currentDeployId = data.id;
-      if (activeTask) activeTask.id = data.id;
-    }
-
-    if (data.id.startsWith('test-') && data.phase === 'done') {
-      const ok = data.status === 'success';
-      logViewer()?.finishAllSteps();
-      logViewer()?.setProgress({ percent: 100, indeterminate: false, label: '', tone: ok ? 'success' : 'danger' });
-      logViewer()?.setResult({
-        icon: ok ? '✅' : '❌',
-        text: ok ? `连接测试通过 ${data.duration}ms` : `连接失败: ${data.error || '未知错误'}`,
-      });
-      logViewer()?.setRunning(false);
-      if (activeTask) activeTask.isRunning = false;
-      return;
-    }
-
-    const stepCount = getProgressStepCount();
-    if (data.phase === 'preflight') {
-      setStepActive(0);
-    } else if (data.phase === 'pulling') {
-      if (stepCount <= 2) { setStepActive(0); }
-      else { setStepDone(0); setStepActive(1); }
-    } else if (data.phase === 'building') {
-      if (stepCount <= 2) { setStepDone(0); setStepActive(1); }
-      else { setStepDone(0); setStepDone(1); setStepActive(2); }
-    } else if (data.phase === 'uploading') {
-      if (stepCount > 3) { setStepDone(0); setStepDone(1); setStepDone(2); setStepActive(3); }
-    } else if (data.phase === 'done') {
-      const ok = data.status === 'success';
-      logViewer()?.finishAllSteps();
-      logViewer()?.setProgress({ percent: 100, indeterminate: false, label: '100%', tone: ok ? 'success' : 'danger' });
-      if (ok) {
-        const doneLabel = data.type === 'build-only' ? '构建完成' : '部署完成';
-        logViewer()?.setResult({ icon: '✅', text: `${doneLabel}！耗时 ${data.duration}` });
-      } else {
-        logViewer()?.setResult({ icon: '❌', text: data.type === 'build-only' ? '构建失败' : '部署失败' });
-      }
-      if (activeTask) activeTask.isRunning = false;
-      updateLogModalCloseBtn();
-      // 任务在后台完成（弹窗已最小化）时重新弹出并提示
-      if (!logViewer()?.isVisible()) {
-        logViewer()?.reopen();
-        showToast(ok ? '✅ 任务完成' : '❌ 任务失败', data.projectName);
-      }
-      if (data.projectName) clearBusy(data.projectName);
-      const typeText = data.type === 'build-only' ? '构建' : '部署';
-      const statusText = data.status === 'success' ? '成功' : '失败';
-      const notifyBody = data.status === 'success'
-        ? `${data.projectName} ${typeText}完成，耗时 ${data.duration}`
-        : `${data.projectName} ${typeText}失败`;
-      sendDesktopNotification(`${typeText}${statusText}`, notifyBody, data.status === 'success', { target: 'log' });
-      loadProjects();
-    }
-  });
+  /*
+    构建 / 部署的 log、progress、status 三条链路已由 Vue 的
+    `services/deploy-realtime-service.ts` 全量承担（随应用常驻，含刷新恢复与
+    WS 重连对账）。这里不能保留并行处理器——两侧会同时写同一个 log store，
+    表现为每行日志追加两次、完成时弹两次提示。
+   */
 
   WS.on('run-log', (data) => {
     if (data.id !== currentRunId) return;
@@ -959,13 +889,8 @@ function switchSubTab(sub, btn) {
 }
 
 // ========== Shared Utilities ==========
-function setBusy(projectName) {
-  busyProjects.add(projectName);
-}
-
-function clearBusy(projectName) {
-  busyProjects.delete(projectName);
-}
+// 防重复部署锁（原 busyProjects / setBusy / clearBusy）已归 Vue 的 deploy-task
+// store：卡片忙态、WS 消息归属与失败解锁都由它单点维护，见 stores/deploy-task.ts。
 
 // escapeHtml 的权威定义在下方日志区（含引号转义与空值兜底）；此处曾有旧版重复定义，已清理
 function escapeAttr(str) {
@@ -1044,26 +969,13 @@ function logViewer() {
   return window.__logViewer || null;
 }
 
-// 步骤总数由打开时传入的 steps 决定，改为在本地缓存，替代原先从 DOM 数节点。
-let logViewerStepCount = 0;
-
 function openLogViewer({ kind, id = null, title, subtitle = '', projectName = '', steps = [], running = true }) {
-  logViewerStepCount = steps.length;
   logViewer()?.open({ kind, id, title, subtitle, projectName, steps, running });
 }
 
-function setStepActive(idx) {
-  logViewer()?.activateStep(idx);
-}
-
-function setStepDone(idx) {
-  // 旧语义：把第 idx 步标完成。等价于推进到下一步（前序自动置 done）。
-  logViewer()?.activateStep(idx + 1);
-}
-
-function getProgressStepCount() {
-  return logViewerStepCount;
-}
+// 步骤推进（原 setStepActive / setStepDone / getProgressStepCount 与
+// logViewerStepCount 缓存）已归 deploy-realtime-service 的 stepIndexOf——phase 到
+// 步骤索引的映射与步骤总数都在那里，legacy 侧不再有消费方。
 
 // 行分类、ANSI 着色、源码链接与智能滚动均已由 LogViewer 组件承担
 // （frontend/src/components/logviewer/log-format.ts）。这里只做转发。
@@ -1092,46 +1004,23 @@ async function openFileInEditorByPath(filepath, line, projectName = '') {
   }
 }
 
-async function openFileInEditor(e, el) {
-  e.preventDefault();
-  const filepath = decodeURIComponent(el.dataset.path);
-  const projectName = (typeof activeTask !== 'undefined' && activeTask) ? (activeTask.projectName || '') : '';
-  await openFileInEditorByPath(filepath, el.dataset.line || '1', projectName);
-}
-
-window.openFileInEditor = openFileInEditor;
 window.openFileInEditorByPath = openFileInEditorByPath;
 
+// Vue 侧的 todo-reminder-service 与 deploy-realtime-service 都要发桌面通知，而本
+// 函数的权限申请、Tauri/Web 双通道与「点通知回到日志」记账尚未迁入 Vue。顶层
+// function 在传统脚本里不会成为 window 属性，须显式挂载（同 WS 的处理方式）。
+window.sendDesktopNotification = sendDesktopNotification;
+
 // ========== Modal Utils ==========
-// 日志弹窗已由 Vue LogViewer 承担，不再有 #logModal 这个 DOM；其开关走 store。
-// 组件自身的关闭按钮走 requestClose（running 时发 minimize 事件），这里只服务
-// 旧代码里可能残留的命令式调用，语义与之保持一致：进行中只收起、不丢任务态。
+// `logModal` 分支已删除：日志弹窗的关闭/最小化由 Vue LogViewer 自身的
+// requestClose 处理（running 时发 minimize 事件，MigrationHost 接住并给 Toast），
+// legacy 侧已无命令式调用。这里只剩普通弹窗的 DOM 开关。
 function closeModal(id) {
-  if (id === 'logModal') {
-    if (activeTask && activeTask.isRunning) {
-      logViewer()?.minimize();
-      const isRun = activeTask.taskKind === 'run';
-      showToast(
-        isRun ? '▶ 本地服务仍在运行' : '📌 任务仍在后台运行',
-        isRun ? '点击此处可查看运行日志' : '点击此处可查看进度',
-        { clickable: true, persistent: true },
-      );
-      return;
-    }
-    logViewer()?.close();
-    activeTask = null;
-    return;
-  }
   document.getElementById(id)?.classList.remove('active');
 }
 
 function reopenLogModal() {
   logViewer()?.reopen();
-}
-
-// 「关闭/最小化」文案与标题现由 LogViewer 依据 running 自行切换，这里只同步任务态。
-function updateLogModalCloseBtn() {
-  logViewer()?.setRunning(!!(activeTask && activeTask.isRunning));
 }
 
 // ========== Toast ==========
@@ -1176,58 +1065,9 @@ function showToast(title, message, options = {}) {
   }
 }
 
-// ========== 刷新后活跃任务恢复 ==========
-let _checkActiveJobRunning = false;
-async function checkActiveJob() {
-  if (_checkActiveJobRunning) return;
-  if (activeTask && activeTask.isRunning && currentDeployId) return;
-  _checkActiveJobRunning = true;
-  try {
-    const job = await API.get('/api/deploy/active');
-    if (!job) return;
-
-    if (Date.now() - job.startTime > 5 * 60 * 1000) {
-      console.log('[checkActiveJob] 任务已超时，跳过恢复:', job.projectName);
-      return;
-    }
-
-    currentDeployId = job.id;
-    activeTask = { id: job.id, projectName: job.projectName, isRunning: true };
-    setBusy(job.projectName);
-
-    const isBuildOnly = job.type === 'build';
-    const typeLabel = isBuildOnly ? '构建' : '部署';
-    const steps = isBuildOnly
-      ? ['拉取代码', '构建中']
-      : ['预检', '拉取代码', '构建中', '上传中', '完成'];
-    openLogViewer({
-      kind: 'deploy',
-      id: job.id,
-      title: `${typeLabel}进度`,
-      subtitle: `${job.projectName} · ${job.modules.join(', ')}`,
-      projectName: job.projectName,
-      steps,
-    });
-    logViewer()?.setProgress({ percent: 0, label: '0%' });
-
-    const phaseMap = job.type === 'build-only'
-      ? { pulling: 0, building: 1 }
-      : { preflight: 0, pulling: 1, building: 2, uploading: 3 };
-    setStepActive(phaseMap[job.phase] ?? 0);
-
-    if (job.logs && job.logs.length > 0) {
-      logViewer()?.replaceLines(job.logs.map(log => ({ text: log.text, type: log.type })));
-    }
-    updateLogModalCloseBtn();
-
-    const elapsed = Math.round((Date.now() - job.startTime) / 1000);
-    showToast(`🔄 恢复${typeLabel}任务`, `${job.projectName} 已运行 ${elapsed}s`, { clickable: true });
-  } catch (e) {
-    console.warn('[checkActiveJob]', e.message);
-  } finally {
-    _checkActiveJobRunning = false;
-  }
-}
+// 刷新后的活跃任务恢复（原 checkActiveJob）已归 Vue 的 deploy-realtime-service：
+// 它在启动与 WS 重连时各对账一次，且恢复后任务态直接落在 deploy-task store，
+// 卡片忙态与后续 WS 消息归属都能跟上。
 
 // ========== 自动更新及全局状态管理 ==========
 // 自动更新提示已被彻底清空，仅保留设置页面中的一键覆盖重新打包升级能力

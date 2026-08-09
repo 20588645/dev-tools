@@ -3,12 +3,23 @@ import { defineComponent } from 'vue'
 import { mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import {
+  createDeployRealtimeService,
+  resetDeployFinishedListenersForTest,
+  type DeployFinishedDetail,
+} from '@/services/deploy-realtime-service'
 import { useDeployTaskStore } from '@/stores/deploy-task'
 import { useLogTaskStore } from '@/stores/log-task'
 
-import { resetDeployRealtimeForTest, useDeployRealtime } from './useDeployRealtime'
+import { useDeployRealtime } from './useDeployRealtime'
 
-/** 用假的旧全局 WS 驱动，避免测试依赖真实连接。 */
+vi.mock('@/services/modules/deploy-service', async () => {
+  const actual = await vi.importActual<typeof import('@/services/modules/deploy-service')>(
+    '@/services/modules/deploy-service',
+  )
+  return { ...actual, getActiveJob: vi.fn().mockResolvedValue(null) }
+})
+
 function installFakeWs() {
   const handlers = new Map<string, Set<(payload: unknown) => void>>()
   const ws = {
@@ -30,7 +41,7 @@ function installFakeWs() {
   return ws
 }
 
-function mountRealtime(onFinished?: (detail: { projectName: string, success: boolean, type: string }) => void) {
+function mountRealtime(onFinished?: (detail: DeployFinishedDetail) => void) {
   const host = defineComponent({
     setup() {
       useDeployRealtime({ onFinished })
@@ -40,41 +51,71 @@ function mountRealtime(onFinished?: (detail: { projectName: string, success: boo
   return mount(host)
 }
 
-const BUILD_STEPS = ['拉取代码', '构建中']
-const DEPLOY_STEPS = ['预检', '拉取代码', '构建中', '上传中', '完成']
+/** 触发一次成功完成的 done 状态，驱动订阅回调。 */
+function emitDone(ws: ReturnType<typeof installFakeWs>, projectName = 'p') {
+  const task = useDeployTaskStore()
+  const log = useLogTaskStore()
+  log.open({ kind: 'deploy', id: 'd1', projectName, title: '部署进度', subtitle: '' }, { steps: ['预检', '完成'] })
+  task.begin(projectName)
+  task.attachTaskId('d1')
+  ws.emit('status', { id: 'd1', phase: 'done', status: 'success', projectName, type: 'deploy', duration: '1s' })
+}
 
 describe('useDeployRealtime', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
-    resetDeployRealtimeForTest()
+    resetDeployFinishedListenersForTest()
+    delete (globalThis as { WS?: unknown }).WS
   })
 
-  it('多个子页共用一份订阅，不会重复处理同一条消息', () => {
+  /*
+    WS 处理器已归常驻的 deploy-realtime-service：任务可在任何页面发起并完成，
+    刷新恢复更是发生在任何子页挂载之前。composable 挂载多少次都不该新增订阅，
+    否则同一条日志会被追加多次。
+   */
+  it('挂载不注册 WS 处理器，订阅只属于常驻服务', () => {
     const ws = installFakeWs()
-    // 项目总览与服务器管理都要用这条链路
+    createDeployRealtimeService().start()
     mountRealtime()
     mountRealtime()
 
     expect(ws.count('log')).toBe(1)
     expect(ws.count('progress')).toBe(1)
     expect(ws.count('status')).toBe(1)
-
-    const task = useDeployTaskStore()
-    const log = useLogTaskStore()
-    log.open({ kind: 'deploy', id: 'd1', projectName: 'p', title: '部署进度', subtitle: '' }, { steps: DEPLOY_STEPS })
-    task.begin('p')
-    task.attachTaskId('d1')
-    ws.emit('log', { id: 'd1', text: '只该出现一次', type: 'info' })
-
-    expect(log.lines.filter(line => line.text === '只该出现一次')).toHaveLength(1)
   })
 
-  it('卸载后 WS 处理器常驻，后台完成的任务仍能收到状态', () => {
+  it('完成时把回调转给订阅方', () => {
     const ws = installFakeWs()
+    createDeployRealtimeService().start()
+    const calls: string[] = []
+    mountRealtime(detail => calls.push(detail.projectName))
+
+    emitDone(ws)
+
+    expect(calls).toEqual(['p'])
+  })
+
+  it('卸载后只摘自己的回调，不影响仍挂载的子页', () => {
+    const ws = installFakeWs()
+    createDeployRealtimeService().start()
+    const goneCalls: string[] = []
+    const stayCalls: string[] = []
+    const gone = mountRealtime(detail => goneCalls.push(detail.projectName))
+    mountRealtime(detail => stayCalls.push(detail.projectName))
+    gone.unmount()
+
+    emitDone(ws)
+
+    expect(goneCalls).toEqual([])
+    expect(stayCalls).toEqual(['p'])
+  })
+
+  it('卸载不影响服务本身的订阅，后台完成仍能收到状态', () => {
+    const ws = installFakeWs()
+    createDeployRealtimeService().start()
     const wrapper = mountRealtime()
     wrapper.unmount()
 
-    // 与迁移前 app.js 全程常驻一致：弹窗最小化/切页后任务完成仍要能弹回
     expect(ws.count('status')).toBe(1)
 
     const task = useDeployTaskStore()
@@ -85,146 +126,5 @@ describe('useDeployRealtime', () => {
     ws.emit('status', { id: 'test-1', phase: 'done', status: 'success', duration: 88 })
 
     expect(log.resultText).toBe('连接测试通过 88ms')
-  })
-
-  it('卸载只摘自己的完成回调，不影响仍挂载的子页', () => {
-    const ws = installFakeWs()
-    const goneCalls: string[] = []
-    const stayCalls: string[] = []
-    const gone = mountRealtime(d => goneCalls.push(d.projectName))
-    mountRealtime(d => stayCalls.push(d.projectName))
-    gone.unmount()
-
-    const task = useDeployTaskStore()
-    const log = useLogTaskStore()
-    log.open({ kind: 'deploy', id: 'd2', projectName: 'p', title: '部署进度', subtitle: '' }, { steps: DEPLOY_STEPS })
-    task.begin('p')
-    task.attachTaskId('d2')
-    ws.emit('status', { id: 'd2', phase: 'done', status: 'success', type: 'deploy', duration: '1s', projectName: 'p' })
-
-    expect(goneCalls).toEqual([])
-    expect(stayCalls).toEqual(['p'])
-  })
-
-  it('任务 id 未回填时也接受日志，并补写 id', () => {
-    const ws = installFakeWs()
-    mountRealtime()
-    const task = useDeployTaskStore()
-    const log = useLogTaskStore()
-    log.open({ kind: 'deploy', id: null, projectName: 'p', title: '部署进度', subtitle: '' }, { steps: DEPLOY_STEPS })
-    task.begin('p')
-
-    ws.emit('log', { id: 'deploy-1', text: '开始拉取', type: 'info' })
-
-    expect(log.lines.at(-1)?.text).toBe('开始拉取')
-    expect(task.taskId).toBe('deploy-1')
-  })
-
-  it('忽略不属于当前任务的推送', () => {
-    const ws = installFakeWs()
-    mountRealtime()
-    const task = useDeployTaskStore()
-    const log = useLogTaskStore()
-    log.open({ kind: 'deploy', id: null, projectName: 'p', title: '部署进度', subtitle: '' }, { steps: DEPLOY_STEPS })
-    task.begin('p')
-    task.attachTaskId('deploy-1')
-
-    ws.emit('log', { id: 'deploy-2', text: '别的任务', type: 'info' })
-
-    expect(log.lines.some(line => line.text === '别的任务')).toBe(false)
-  })
-
-  describe('phase 到步骤的映射', () => {
-    const cases: Array<{ steps: string[], phase: string, expected: number }> = [
-      // 部署 5 步
-      { steps: DEPLOY_STEPS, phase: 'preflight', expected: 0 },
-      { steps: DEPLOY_STEPS, phase: 'pulling', expected: 1 },
-      { steps: DEPLOY_STEPS, phase: 'building', expected: 2 },
-      { steps: DEPLOY_STEPS, phase: 'uploading', expected: 3 },
-      // 构建 2 步：没有预检与上传，pulling/building 各前移一位
-      { steps: BUILD_STEPS, phase: 'pulling', expected: 0 },
-      { steps: BUILD_STEPS, phase: 'building', expected: 1 },
-    ]
-
-    for (const { steps, phase, expected } of cases) {
-      it(`${steps.length} 步集的 ${phase} 激活第 ${expected} 步`, () => {
-        const ws = installFakeWs()
-        mountRealtime()
-        const task = useDeployTaskStore()
-        const log = useLogTaskStore()
-        log.open({ kind: 'deploy', id: null, projectName: 'p', title: '进度', subtitle: '' }, { steps })
-        task.begin('p')
-        task.attachTaskId('t-1')
-
-        ws.emit('status', { id: 't-1', phase, projectName: 'p' })
-
-        expect(log.steps[expected].state).toBe('active')
-      })
-    }
-
-    it('构建 2 步集收到 uploading 时不越界', () => {
-      const ws = installFakeWs()
-      mountRealtime()
-      const task = useDeployTaskStore()
-      const log = useLogTaskStore()
-      log.open({ kind: 'deploy', id: null, projectName: 'p', title: '进度', subtitle: '' }, { steps: BUILD_STEPS })
-      task.begin('p')
-      task.attachTaskId('t-1')
-
-      const before = log.steps.map(step => step.state)
-      ws.emit('status', { id: 't-1', phase: 'uploading', projectName: 'p' })
-
-      // 该 phase 在 2 步集里没有对应步骤，应原样忽略而不是越界或误推进
-      expect(log.steps.map(step => step.state)).toEqual(before)
-    })
-  })
-
-  it('done 收尾：标记完成、解锁并回调', () => {
-    const ws = installFakeWs()
-    const onFinished = vi.fn()
-    mountRealtime(onFinished)
-    const task = useDeployTaskStore()
-    const log = useLogTaskStore()
-    log.open({ kind: 'deploy', id: null, projectName: 'p', title: '进度', subtitle: '' }, { steps: DEPLOY_STEPS })
-    task.begin('p')
-    task.attachTaskId('t-1')
-
-    ws.emit('status', { id: 't-1', phase: 'done', status: 'success', projectName: 'p', type: 'deploy', duration: '42s' })
-
-    expect(log.steps.every(step => step.state === 'done')).toBe(true)
-    expect(log.percent).toBe(100)
-    expect(log.running).toBe(false)
-    expect(task.isBusy('p')).toBe(false)
-    expect(onFinished).toHaveBeenCalledWith({ projectName: 'p', success: true, type: 'deploy' })
-  })
-
-  it('失败 done 给出失败结果且同样解锁', () => {
-    const ws = installFakeWs()
-    mountRealtime()
-    const task = useDeployTaskStore()
-    const log = useLogTaskStore()
-    log.open({ kind: 'deploy', id: null, projectName: 'p', title: '进度', subtitle: '' }, { steps: BUILD_STEPS })
-    task.begin('p')
-    task.attachTaskId('t-1')
-
-    ws.emit('status', { id: 't-1', phase: 'done', status: 'error', projectName: 'p', type: 'build-only' })
-
-    expect(log.resultText).toBe('构建失败')
-    expect(task.isBusy('p')).toBe(false)
-  })
-
-  it('连接测试走独立文案，不套用构建/部署结果', () => {
-    const ws = installFakeWs()
-    mountRealtime()
-    const task = useDeployTaskStore()
-    const log = useLogTaskStore()
-    log.open({ kind: 'deploy', id: null, projectName: '同仁堂生产', title: '连接测试', subtitle: '' }, { steps: ['连接中', 'SFTP', '完成'] })
-    task.begin('同仁堂生产')
-    task.attachTaskId('test-9')
-
-    ws.emit('status', { id: 'test-9', phase: 'done', status: 'success', duration: 120 })
-
-    expect(log.resultText).toBe('连接测试通过 120ms')
-    expect(log.running).toBe(false)
   })
 })

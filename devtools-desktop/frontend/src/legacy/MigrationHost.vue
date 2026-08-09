@@ -3,7 +3,9 @@ import { defineAsyncComponent, onBeforeUnmount, onMounted, ref } from 'vue'
 
 import LogViewer from '@/components/logviewer/LogViewer.vue'
 import { onLegacyPageActivation, onLegacySubTabActivation, type LegacyPageId } from '@/legacy/legacy-bridge'
+import { installDeployTaskBridge } from '@/legacy/deploy-task-bridge'
 import { installLogViewerBridge } from '@/legacy/log-viewer-bridge'
+import { createDeployRealtimeService } from '@/services/deploy-realtime-service'
 import { createRunRuntimeService } from '@/services/run-runtime-service'
 import { createTodoReminderService } from '@/services/todo-reminder-service'
 import { normalizeThemeMode, useAppStore, type Theme } from '@/stores/app'
@@ -28,6 +30,8 @@ const logTask = useLogTaskStore()
 const todoReminderService = createTodoReminderService()
 /* 运行态对账与托盘刷新：必须随应用常驻，不能等本地运行页挂载，见服务内说明。 */
 const runRuntimeService = createRunRuntimeService()
+/* 构建/部署实时链路与刷新恢复：同理常驻，任务可在任何页面发起与完成。 */
+const deployRealtimeService = createDeployRealtimeService()
 const activePage = ref<LegacyPageId>(
   (document.querySelector('.page.active')?.id.replace(/^page-/, '') as LegacyPageId | undefined) ?? 'home',
 )
@@ -71,6 +75,7 @@ let themeObserver: MutationObserver | null = null
 let stopPageActivation: (() => void) | null = null
 let stopSubTabActivation: (() => void) | null = null
 let stopLogViewerBridge: (() => void) | null = null
+let stopDeployTaskBridge: (() => void) | null = null
 
 /**
  * 旧脚本里日志链路的两个副作用：最小化时给出可点击回来的 Toast、点击日志中的
@@ -109,7 +114,13 @@ onMounted(() => {
   })
   todoReminderService.start()
   runRuntimeService.start()
+  /*
+    两个桥必须先装：deploy 服务启动时就会尝试恢复活跃任务，而恢复流程会经
+    LogViewer 回放日志——桥没装上时 legacy 侧的弹窗调用也会落空。
+   */
   stopLogViewerBridge = installLogViewerBridge()
+  stopDeployTaskBridge = installDeployTaskBridge()
+  deployRealtimeService.start()
 })
 
 onBeforeUnmount(() => {
@@ -118,7 +129,9 @@ onBeforeUnmount(() => {
   themeObserver?.disconnect()
   todoReminderService.stop()
   runRuntimeService.stop()
+  deployRealtimeService.stop()
   stopLogViewerBridge?.()
+  stopDeployTaskBridge?.()
 })
 </script>
 

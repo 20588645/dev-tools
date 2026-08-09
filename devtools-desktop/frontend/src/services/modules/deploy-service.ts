@@ -299,6 +299,52 @@ export async function startDeploy(input: StartDeployInput): Promise<{ id: string
   return { id: text(row.id) }
 }
 
+/** 后端 `activeJobs` 里的任务类型，与历史记录的 `build-only` 命名不同。 */
+export type ActiveJobType = 'build' | 'deploy'
+
+export interface ActiveJob {
+  id: string
+  projectName: string
+  type: ActiveJobType
+  /** 任务当前阶段，用于恢复时把进度条推到正确的一步。 */
+  phase: string
+  startTime: number
+  modules: string[]
+  serverName: string
+  /** 后端累积的全量日志，供刷新后回放。 */
+  logs: Array<{ text: string, type: string }>
+}
+
+/**
+ * 刷新/重连后的活跃任务恢复。无活跃任务时返回 null。
+ *
+ * 后端只维护单任务，`activeJobs` 为空或任务已超过 10 分钟时直接回 null。
+ * 注意 `type` 是 `'build' | 'deploy'`——与历史记录里的 `'build-only'` 不同名，
+ * 混用会让构建任务套上部署的 5 步进度集（legacy `checkActiveJob` 原有此错）。
+ */
+export async function getActiveJob(signal?: AbortSignal): Promise<ActiveJob | null> {
+  const value = await apiClient.request<unknown>('/api/deploy/active', { signal, timeout: DEPLOY_TIMEOUT })
+  if (!value || typeof value !== 'object') return null
+  const row = record(value)
+  const id = text(row.id)
+  if (!id) return null
+  return {
+    id,
+    projectName: text(row.projectName),
+    type: text(row.type) === 'deploy' ? 'deploy' : 'build',
+    phase: text(row.phase),
+    startTime: num(row.startTime),
+    modules: stringList(row.modules),
+    serverName: text(row.serverName),
+    logs: Array.isArray(row.logs)
+      ? row.logs.map(entry => {
+        const line = record(entry)
+        return { text: text(line.text), type: text(line.type) || 'info' }
+      })
+      : [],
+  }
+}
+
 export type DeployRecordType = 'build-only' | 'deploy'
 export type DeployRecordStatus = 'success' | 'error'
 

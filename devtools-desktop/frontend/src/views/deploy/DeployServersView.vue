@@ -16,7 +16,6 @@ import { useNotificationStore } from '@/stores/notification'
 import FileZillaImportDialog from './components/FileZillaImportDialog.vue'
 import ServerFormDialog from './components/ServerFormDialog.vue'
 import ServerRowActions from './components/ServerRowActions.vue'
-import { useDeployRealtime } from './composables/useDeployRealtime'
 import { useDeployServers } from './composables/useDeployServers'
 import { useFileZillaImport } from './composables/useFileZillaImport'
 import { useServerForm } from './composables/useServerForm'
@@ -31,8 +30,10 @@ const task = useDeployTaskStore()
 const log = useLogTaskStore()
 const notify = useNotificationStore()
 
-/** 订阅 WS 日志/进度/状态；连接测试的 `test-` 完成分支也在其中处理。 */
-useDeployRealtime()
+/*
+  WS 日志/进度/状态（含连接测试的 `test-` 完成分支）由常驻的
+  `deploy-realtime-service` 处理，本子页无需订阅——它只发起连接测试并读 store。
+*/
 
 const pendingRemove = ref<DeployServer | null>(null)
 

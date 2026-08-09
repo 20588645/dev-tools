@@ -341,3 +341,159 @@ JS：`loadHistory` / `setChipFilter` / `getSegValue` / `renderHistory` / `toggle
 CSS：`.history-row`（含 `.with-check` / `.history-header` / `.row-selected`）、`.history-table`、`.history-header-fixed`、`.history-stats`、`.h-cell` 系列（`h-time` / `h-project` / `h-type` / `h-modules` / `h-server` / `h-status` / `h-actions` / `h-check`）、`.history-modules`、`.module-tag`、`.type-pill`、`.status-dot-mini`、`.deploy-stat-num`、`.ios-check`、`.deploy-empty-state`。分布在 `deploy.css`、`components.css`、`overrides.css`、`legacy-runtime.css`——**本子页是 deploy 页最后一个，这批删完 `deploy.css` 应可整体删除**，届时 Stylelint 重复选择器基线里 `deploy.css` 与 `overrides.css` 的登记项应一并归零（见 decision 8.6 的预判）。
 
 HTML：`frontend/index.html:93-115` 子页容器、清理弹窗 `#cleanupModal`。
+
+## 8. 构建/部署弹窗（第 6 步）PG0 运行态取证（2026-08-08）
+
+测试库（`13900`）：3 个项目、3 台服务器、`b8seed-portal` 含 6 个模块、扫描目录下 27 个可用项目。覆盖 1665×1184 与 900×600 × 亮暗主题。**只读取证**——未点「开始构建」「构建并部署」，未删项目。
+
+本步范围是 deploy 页最后一块：`deploy.js` 剩余 **48 个函数 / 854 行**，六个弹窗（`edBrowserModal` 属文件编辑页，不在本步）。
+
+| 弹窗 | 尺寸(默认) | 原生控件 | 内联事件 | 取证结论 |
+| --- | --- | --- | ---: | --- |
+| `buildModal` | 780×410 | 1 select + 1 input | 7 | 模块 6 个、Node 版本 8 项，标题/副标题正确 |
+| `deployModal` | 780×550 | 2 select + 1 input | 9 | 模块 6、服务器 3、发布目录 2 项 |
+| `projectConfigModal` | 500×462 | 1 select + 1 input | 3 | 服务器 3、Node 8、别名回填正确 |
+| `addProjectModal` | 720×631 | 2 input | 12 | 自动扫描 27 项；手动浏览目录/项目区分正确 |
+| `remoteBrowserModal` | — | 0 | 3 | 远程目录浏览，依赖 SSH 未在取证中触发 |
+| `projectIntroModal` | — | 0 | 2 | 全局介绍弹窗，非本页专属 |
+
+三档尺寸下均无 `document` 级横向溢出；亮暗主题一致；全程零控制台错误（仅既有 `defineSimpleMode` 与测试库空数据 404 噪声）。
+
+### 8.1 已确认缺陷
+
+**M1（中）900 宽下部署弹窗几乎占满视口且底部内容被截断。** 弹窗宽度固定 780px，在 900 宽窗口只余 60px 边距；高度实测 492px 而视口 600px，`modal-body` 出现滚动（`bodyScrolls: true`）——「发布目录」一行被底部按钮栏压住，需滚动才能看到，但**没有任何可滚动提示**。默认尺寸（1665×1184）下高 550px 完整展示，不复现。
+
+对比已迁子页的 `BaseDialog` 用 `var(--component-dialog-width)` + `bodyMaxHeight` 由内容区自身滚动并保留头尾吸附，是现成解法。
+
+**M2（低）弹窗区仍有 24 处 emoji。** `🚀 构建并部署`、`🔨 开始构建`、`📂 浏览`、`⚙ 项目默认配置`、`🔗 测试连接` 等。三个已迁子页均已统一为描边 SVG（D5 / H3 同源问题），本步是最后一处。
+
+**M3（低）六个弹窗共 36 处内联事件与 4 个原生 select / 5 个原生 input。** 组件架构门禁对**新增** Vue 代码是零容忍（`native-control`），迁移时须全部替换为 `BaseSelect` / `BaseInput` / `BaseCheckbox`。`addProjectModal` 的 12 处最集中。
+
+### 8.2 未发现问题的部分
+
+- 三种空态文案**已正确区分**，非共用一句误导文案：无扫描结果给「未在扫描目录下发现前端项目，可切到『手动浏览』选择」、搜索无匹配给「没有匹配的项目」、全部已添加给「所有项目已添加」。
+- 无服务器时部署弹窗给「请先添加服务器」，不是空白。
+- 手动浏览的目录/项目区分、空目录标灰、「前端项目」标记均正确。
+- 模块网格在 900 宽下最小项宽 181px，未出现历史子页 H1 那种被压成单字符的情况。
+
+### 8.3 取证方法上的两处修正（供后续参考）
+
+- `getByRole('button', { name: '部署' })` 会**先匹配到侧边栏的「部署面板」**（第 3 个才是卡片按钮），导致弹窗未打开却无报错。须限定 `[data-test="deploy-dashboard"] button` + `hasText: /^部署$/`。
+- 添加项目弹窗的真实容器是 `#availableProjectGrid`、条目类是 `.module-item`（不是 `#availableList .available-item`）；手动浏览是 `#addBrowseBreadcrumb` / `#addBrowseList`。选择器写错会得到「0 项」的假空态结论。
+
+## 9. 构建/部署弹窗（第 6 步）PG1 代码研究（2026-08-08）
+
+### 9.1 最重要的发现：当前版本已存在忙态双写缺陷
+
+**M4（高）从弹窗发起构建/部署时，项目卡片不显示忙态。**
+
+`deploy.js` 的 `startBuildOnly` / `startDeploy` 只维护 legacy 三件套（`setBusy` + `activeTask` + `currentDeployId`），**从不调用 `deploy-task` store 的 `begin()`**；而项目总览子页的卡片忙态读的是 store（`DeployDashboardView.vue:160,176` 的 `task.isBusy(project.name)`）。
+
+实测（拦截 `/api/deploy/build` 只观察前端状态流转）：
+
+| 观测项 | 结果 |
+| --- | --- |
+| legacy `activeTask` | `{id: 'build-probe-1', projectName: 'b8seed-portal', isRunning: true}` ✅ |
+| legacy `busyProjects.size` | `1` ✅ |
+| 卡片是否显示「查看进度」 | **`false`** ❌ |
+| LogViewer 是否打开 | `true` ✅ |
+
+即：日志弹窗正常、legacy 状态正常，但**卡片忙态从项目总览子页迁移后就一直不亮**。这与服务器管理子页首轮验收发现的 T2 同源（都是「legacy 发起任务、未登记 store、导致 store 侧消费方失效」），只是那次症状是日志不进弹窗，这次是忙态不显示。
+
+`useDeployRealtime` 的 `acceptsMessage` 在 `active` 为 null 时一律拒收，因此 WS 的 `progress` / `status` 也进不了 store——卡片在整个构建期间都不会有忙态，直到用户手动刷新页面。
+
+### 9.2 状态归属：store 已完整覆盖，legacy 仍在并行维护
+
+`deploy-task` store 已具备全部所需语义：`begin` / `attachTaskId` / `adoptTaskId` / `finish` / `abandon` / `setBusy` / `clearBusy` / `reset`。`app.js` 侧的 `activeTask`(15+6 处引用)、`currentDeployId`(9+2)、`busyProjects`(3) 与之**语义重复**，是迁移未完成留下的并行状态。
+
+`logViewerStepCount`（`app.js:1048`，3 处）服务 phase → 步骤索引映射，Vue 侧已由 `useDeployRealtime.stepIndexOf` 承担同一职责。
+
+`currentProject`（`deploy.js` 30 处）是弹窗操作的目标项目，本步迁移后应收进弹窗组件自身的 props/state。
+
+### 9.3 弹窗状态与偏好
+
+`modalState`（`deploy.js:286`）只有 `build` / `deploy` 两个 context，各持 `checkedModules: Set` 与 `moduleFilter`；`activeCtx` 记录当前哪个弹窗在用。`initModalState(ctx, name)` 是共同入口。
+
+localStorage 偏好两套，**迁移时不可合并**（延续 4.5 节的判断）：
+- `fav_<project>` / `last_<project>` — 弹窗内的模块收藏与上次选择
+- 后端 `favoriteRunModules` — 本地运行页的收藏，独立字段
+
+其余局部状态：`configProjectName` / `configCheckedServers`（项目配置弹窗）、`currentAddMode` / `checkedBrowseProjects`（添加项目）、`checkedServers`（部署弹窗服务器多选）、`browserCurrentDir`（远程浏览）。均只服务单个弹窗，可随组件私有化。
+
+### 9.4 对 legacy 全局的依赖（迁移须逐项替换）
+
+`currentProject` 30、`escapeHtml` 19、`API` 15、`showAlert` 12、`escapeAttr` 10、`escapeOnclickArg` 10、`withButtonBusy` 7、`activeTask` 6、`closeModal` 5、`updateLogModalCloseBtn` 5、`showLogModal` 3、`showToast`/`showConfirm`/`appendLog`/`setBusy`/`clearBusy`/`currentDeployId` 各 2、`openLogViewer`/`logViewer` 各 1。
+
+迁移方向与前三个子页一致（Service / `useNotificationStore` / `ConfirmDialog` / 公共 LogViewer / Vue 插值自带转义 / `deploy-task` store）。**三个 escape 系列共 39 处调用在 Vue 插值下大部分自然消失**——这也是本步能显著减少代码量的原因。
+
+### 9.5 Service 层覆盖情况
+
+`deploy-service.ts` 已建好本步所需端点：`startBuild` / `startDeploy` / `getLastDeploy` / `browseRemoteDir` / `quickTestServer` / `getGitLog` / `getAvailableProjects` / `browseProjects` / `addProjects` / `removeProject`，`project-service` 提供 `updateProject`。**无需新建 service**，但 `getGitLog` 的 `timestamp` 已在上一轮随 `normalizeTimestamp` 修复。
+
+### 9.6 破坏性操作与必须保留的契约
+
+| 操作 | 风险 | 迁移注意 |
+| --- | --- | --- |
+| `startDeploy` | 真实部署到生产服务器 | 多服务器需二次确认；失败必须 `clearBusy` + 重置任务态，否则卡片永久卡死 |
+| `startBuildOnly` | 真实构建 | 同上 |
+| `removeProject` | 移除项目（不删文件） | 已由项目总览子页的 Vue 实现承担，本步不重复 |
+| Node 版本变更 | 即时 `PUT /api/projects/:name` 落库、失败静默 | 见 decision 第 1 节，属有意设计 |
+| `quickTestServers` | 建真实 SSH 连接 | 自动化不得在真实数据上触发 |
+
+**WS 与 HTTP 竞态**：`activeTask.id` 为 null 的窗口必须显式建模，store 的 `adoptTaskId` 已实现，迁移时改用它而非重新发明。
+
+### 9.7 legacy 待删清单（PG5 用）
+
+JS：`deploy.js` 剩余 48 个函数中，除 `loadServers`（服务器子页保留的取数）与 `loadProjects`（本步迁完可删）外全部退役——本步是 deploy 页最后一块，**`deploy.js` 应可整体删除**。`app.js` 侧同步删除 `activeTask` / `currentDeployId` / `busyProjects` / `currentProject` / `logViewerStepCount` / `setBusy` / `clearBusy` / `showLogModal` / `updateLogModalCloseBtn` / `openLogViewer` / `appendLog` 与 `logViewer()` 包装（**即第 2 项跨页耦合 `log-viewer-bridge.ts`**）。
+
+CSS：`deploy.css` 剩余 329 行（`.module-item`、`.server-check-item`、`.browser-item`、`.git-log-*`、`.conn-*`、`.spinner`、`.deploy-empty-state` 等）在本步迁完后应可整体删除，与 `deploy.js` 一并归零。
+
+HTML：六个弹窗中的五个（`projectIntroModal` 属全局介绍，非本页专属，保留）。
+
+## 10. M4 独立修复：部署运行态 legacy 全局退役（2026-08-09）
+
+M4 是**当前版本就存在的缺陷**（9.1 节取证），不该等第 6 步弹窗迁完才修，故从本步拆出单独落地。
+
+### 10.1 为什么不能只加一层桥
+
+最初只把 `deploy.js` 的发起流程接到 `deploy-task` store（`window.__deployTask` 桥）。但那样一来 `store.active` 变为非空，`acceptsMessage` 开始收货，而 `app.js` 的 `log` / `progress` / `status` 三个处理器仍常驻——两侧会**同时写同一个 log store**：每行日志追加两次、完成时弹两次提示。桥装上之前 `active` 恒为 null，Vue 侧全被拒收，所以这个双写是引入桥才出现的。
+
+因此修 M4 必须连带退役 legacy 侧的整条部署运行态链路。
+
+### 10.2 落地结构
+
+| 文件 | 变化 |
+| --- | --- |
+| `services/deploy-realtime-service.ts`（新增 269 行） | 常驻的 log/progress/status 处理器 + 刷新恢复 + WS 重连对账；`stepIndexOf` 与完成回调订阅表移入 |
+| `legacy/deploy-task-bridge.ts`（新增 46 行） | `window.__deployTask` = store 的 `begin` / `attachTaskId` / `abandon` |
+| `services/modules/deploy-service.ts` | 新增 `getActiveJob`，归一 `/api/deploy/active` |
+| `composables/useDeployRealtime.ts` | 175 → 30 行，只剩「挂完成回调、卸载时摘掉」 |
+| `MigrationHost.vue` | 启动 `deployRealtimeService`；两个桥先装（恢复流程会经 LogViewer 回放） |
+| `app.js` | 1233 → 1073 行 |
+| `deploy.js` | 发起流程只调桥，不再维护 legacy 三件套 |
+
+服务必须常驻而非留在 composable 里，有三个理由：构建/部署从项目总览发起而弹窗仍在 legacy 侧，任务可在任何页面发起与完成；`checkActiveJob` 的恢复时机在任何子页挂载之前；与 legacy 处理器并存就会双写。
+
+### 10.3 app.js 退役清单
+
+删除：`activeTask`、`currentDeployId`、`busyProjects` 三个全局；`setBusy` / `clearBusy`；`log` / `progress` / `status` 三个 WS 处理器；`checkActiveJob` 整段；`setStepActive` / `setStepDone` / `getProgressStepCount` 与 `logViewerStepCount`；`updateLogModalCloseBtn`；`closeModal` 的 `logModal` 分支（已无调用方，关闭/最小化由 LogViewer 自身的 requestClose 处理）；孤儿 `openFileInEditor`（内联 onclick 的产出点早已随各页迁移消失，`openFileInEditorByPath` 保留给 MigrationHost）。
+
+`websocket.js` 的 `onopen` 不再直调 `checkActiveJob`——恢复改由订阅 `'open'` 的 Vue 服务承担。
+
+### 10.4 顺带修掉的两个既有缺陷
+
+**M4-a：`checkActiveJob` 的构建任务恢复用错步骤集。** 后端 `activeJobs` 的 `type` 是 `'build' | 'deploy'`，而 legacy 判的是 `job.type === 'build-only'`——恒为 false，于是构建任务（2 步）套上部署的 5 步 phaseMap，`building` 会推进到越界的第 2 步。新实现统一走 `stepIndexOf` 的 compact 分支，单测与 E2E 各锁一条。
+
+**M4-b：`window.sendDesktopNotification` 从未暴露。** 顶层 `function` 在传统脚本里不成为 window 属性，因此 `todo-reminder-service` 的桌面提醒桥一直拿到 undefined，**待办提醒的桌面通知实际是静默失效的**。本次显式挂载（同 `window.WS` 的处理方式），部署完成通知与待办提醒一并恢复。
+
+### 10.5 验证结果
+
+`lint`（CSS 基线 25、Token、架构门禁）/ `build:frontend` / `test:architecture` 全通过；`test:unit` **310 项**通过（新增 26：`deploy-realtime-service` 22、`useDeployRealtime` 4 项改写为只测订阅转发）。
+
+E2E 5 项在测试库（13900）通过：构建发起后卡片亮忙态且 legacy 三个全局确认为 `undefined`、WS 日志与进度**只追加一次**（双写回归的守卫）、完成后解锁并回落操作按钮、500 时本地解锁不卡死、多服务器部署的二次确认与 5 步进度集、刷新恢复登记 store 并回放日志且构建任务用 2 步集。全量回归 68 项中 66 通过——2 项 notes 失败已在 HEAD 上对照确认同样存在，与本次改动无关。
+
+未触发真实构建与部署：全部用 `page.route` 拦截发起端点，只观察前端状态流转。
+
+### 10.6 待用户 Tauri 手动 E2E
+
+自动化没有真实跑过一次构建/部署，需在真机验：从项目总览卡片发起构建、发起部署（含多服务器），确认卡片忙态、日志实时进弹窗、进度条步骤推进、完成提示与桌面通知、最小化后台完成再弹回；构建中刷新页面确认任务恢复；以及待办提醒的桌面通知（M4-b 影响面）。

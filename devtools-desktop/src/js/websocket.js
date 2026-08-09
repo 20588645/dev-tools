@@ -34,8 +34,9 @@ const WS = {
     this.socket.onopen = () => {
       console.log('[WS] 已连接');
       this.reconnectAttempts = 0; // 连接成功，重置计数
-      if (typeof checkActiveJob === 'function') checkActiveJob();
-      
+
+      // 重连后的活跃任务恢复由订阅 'open' 的 Vue 服务处理（deploy-realtime-service
+      // 与 run-runtime-service），此处不再直接调用 legacy 的 checkActiveJob。
       // Dispatch open event to handlers
       const fns = this.handlers['open'] || [];
       fns.forEach(fn => {
