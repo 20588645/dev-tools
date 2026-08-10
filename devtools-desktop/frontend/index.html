@@ -601,52 +601,12 @@
 
 <!-- 项目默认配置弹窗已迁到 Vue：views/deploy/components/ProjectConfigDialog.vue -->
 
-<!-- 添加项目弹窗 -->
-<div class="modal-overlay" id="addProjectModal">
-  <div class="modal" style="max-width:720px">
-    <div class="modal-header">
-      <h2>添加项目</h2>
-      <button class="modal-close" onclick="closeModal('addProjectModal')">✕</button>
-    </div>
-    <div class="modal-body">
-      <!-- 模式切换：自动扫描 / 手动浏览 -->
-      <div class="seg" style="margin-bottom:16px">
-        <button class="seg__item is-active" onclick="switchAddMode('scan',this)">📂 自动扫描</button>
-        <button class="seg__item" onclick="switchAddMode('browse',this)">🔍 手动浏览</button>
-      </div>
+<!--
+  添加项目弹窗已迁到 Vue：views/deploy/components/AddProjectDialog.vue。
+  弹窗随 MigrationHost 常驻，页头按钮的 showAddProject() 由
+  legacy/add-project-bridge.ts 装到 window 上转发。
+-->
 
-      <!-- 自动扫描面板 -->
-      <div id="addPanelScan">
-        <p style="color:var(--text-secondary);font-size:13px;margin-bottom:12px">从 <code style="color:var(--accent)">/Users/ldy/project/</code> 下选择要管理的项目：</p>
-        <div class="module-toolbar">
-          <div class="module-search">
-            <input type="text" placeholder="搜索项目..." id="availableProjectSearch" oninput="filterAvailableProjects()">
-          </div>
-          <div class="module-actions">
-            <button class="btn btn--text" onclick="toggleAllAvailable(true)">全选</button>
-            <button class="btn btn--text" onclick="toggleAllAvailable(false)">全不选</button>
-            <span class="selected-count" id="selectedProjectCount">已选 0 个</span>
-          </div>
-        </div>
-        <div class="module-grid" id="availableProjectGrid" style="max-height:360px"></div>
-      </div>
-
-      <!-- 手动浏览面板 -->
-      <div id="addPanelBrowse" style="display:none">
-        <p style="color:var(--text-secondary);font-size:13px;margin-bottom:12px">浏览目录，选择嵌套的项目文件夹：</p>
-        <div class="browser-breadcrumb" id="addBrowseBreadcrumb"></div>
-        <div class="browser-list" id="addBrowseList" style="max-height:380px"></div>
-        <div style="margin-top:12px;display:flex;align-items:center;gap:12px">
-          <span class="selected-count" id="browseSelectedCount">已选 0 个</span>
-        </div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn" onclick="closeModal('addProjectModal')">取消</button>
-      <button class="btn btn--primary" id="addProjectSubmitBtn" onclick="addSelectedProjects(event)">添加选中项目</button>
-    </div>
-  </div>
-</div>
 
 <!-- 文件编辑器 - 打开文件浏览器 -->
 <div class="modal-overlay" id="edBrowserModal">

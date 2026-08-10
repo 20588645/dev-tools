@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onActivated, onMounted, ref } from 'vue'
+import { computed, onActivated, onBeforeUnmount, onMounted, ref } from 'vue'
 
 import BaseButton from '@/components/base/BaseButton.vue'
 import EmptyState from '@/components/feedback/EmptyState.vue'
@@ -13,6 +13,7 @@ import PageTop from '@/components/layout/PageTop.vue'
 import FilterChip from '@/components/navigation/FilterChip.vue'
 import BaseDropdownMenu, { type DropdownMenuOption } from '@/components/overlay/BaseDropdownMenu.vue'
 import GroupRenameDialog from '@/components/overlay/GroupRenameDialog.vue'
+import { onProjectsChanged, requestAddProject } from '@/legacy/add-project-bridge'
 import { getNodeRuntime, type Project } from '@/services/modules/project-service'
 import { useNotificationStore } from '@/stores/notification'
 
@@ -130,12 +131,10 @@ const overflowOptions = computed<DropdownMenuOption[]>(() => {
   return options
 })
 
-/**
- * 需要弹窗承载的动作向上抛（启动配置、运行历史、分组重命名、添加项目在第 4 步接入）；
- * 其余直接由 useRunActions 执行。
+/*
+  「添加项目」与部署面板共用同一个弹窗（迁移前两页页头都是 onclick="showAddProject()"）。
+  弹窗随 MigrationHost 常驻，故直接发请求事件，不必向上抛给挂载方。
  */
-/** 「添加项目」仍属部署面板的项目管理范畴，交回旧实现处理。 */
-const emit = defineEmits<{ 'add-project': [] }>()
 
 function onOverflowSelect(key: string) {
   if (key === 'history') historyOpen.value = true
@@ -177,8 +176,12 @@ function resolveIntent(projectName: string) {
   }
 }
 
+/** 添加项目弹窗不是本页的子组件（随应用常驻），添加完成后靠事件通知刷新。 */
+let stopProjectsChanged: (() => void) | null = null
+
 onMounted(async () => {
   void page.load()
+  stopProjectsChanged = onProjectsChanged(() => { void page.load({ silent: true }) })
   try {
     const runtime = await getNodeRuntime()
     nodeVersions.value = runtime.versions
@@ -187,6 +190,10 @@ onMounted(async () => {
     // 拿不到版本列表时仍可用「系统默认」，不阻塞页面
     nodeVersions.value = []
   }
+})
+
+onBeforeUnmount(() => {
+  stopProjectsChanged?.()
 })
 
 /**
@@ -208,7 +215,7 @@ onActivated(() => { void page.load({ silent: true }) })
             </svg>
           </template>
           <template #actions>
-            <BaseButton variant="primary" @click="emit('add-project')">+ 添加项目</BaseButton>
+            <BaseButton variant="primary" @click="requestAddProject()">+ 添加项目</BaseButton>
           </template>
         </PageHeader>
         <PageToolbar>
@@ -266,7 +273,7 @@ onActivated(() => { void page.load({ silent: true }) })
         description="点击右上角「+ 添加项目」开始"
       >
         <template #actions>
-          <BaseButton variant="primary" @click="emit('add-project')">+ 添加项目</BaseButton>
+          <BaseButton variant="primary" @click="requestAddProject()">+ 添加项目</BaseButton>
         </template>
       </EmptyState>
       <EmptyState v-else-if="page.filtered.value.length === 0" title="没有匹配的项目" compact />

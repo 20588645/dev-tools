@@ -95,11 +95,18 @@ function pickFile() {
             @click="emit('toggle', server.name)"
           >
             <span class="fz-import__item">
-              <BaseCheckbox
-                :model-value="checked.has(server.name)"
-                :label="server.name"
-                @update:model-value="emit('toggle', server.name)"
-              />
+              <!--
+                整行可点，勾选框自身也可点。不 stop 的话点勾选框会同时触发它的
+                update 与冒泡到外层行按钮的 click，两次 toggle 相互抵消，表现为
+                「点勾选框没反应」。
+              -->
+              <span @click.stop>
+                <BaseCheckbox
+                  :model-value="checked.has(server.name)"
+                  :label="server.name"
+                  @update:model-value="emit('toggle', server.name)"
+                />
+              </span>
               <span
                 v-if="STATE_LABEL[props.stateOf(server)]"
                 class="fz-import__tag"

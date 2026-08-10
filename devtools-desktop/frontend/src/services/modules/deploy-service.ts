@@ -472,11 +472,13 @@ export async function cleanupHistory(input: CleanupInput): Promise<CleanupResult
 
 /* ==================== 项目扫描与添加 ==================== */
 
+/**
+ * 扫描目录下的候选项目。后端 `listAvailableProjects` 只给目录名与路径
+ * （项目分析要到添加时才做），故此处不含 tool / type。
+ */
 export interface AvailableProject {
   name: string
   path: string
-  tool: string
-  type: string
 }
 
 function normalizeAvailableProject(value: unknown): AvailableProject {
@@ -484,8 +486,6 @@ function normalizeAvailableProject(value: unknown): AvailableProject {
   return {
     name: text(row.name),
     path: text(row.path),
-    tool: text(row.tool),
-    type: text(row.type),
   }
 }
 
@@ -499,7 +499,10 @@ export interface BrowseEntry {
   name: string
   path: string
   isProject: boolean
-  tool: string
+  /** 已在面板中的项目：可见但不可勾选，避免用户重复添加。 */
+  alreadyAdded: boolean
+  /** 非项目目录是否还有子目录。为 false 时是空目录，不可进入。 */
+  hasSubDirs: boolean
 }
 
 export interface BrowseResult {
@@ -525,15 +528,42 @@ export async function browseProjects(dir?: string, signal?: AbortSignal): Promis
         name: text(entry.name),
         path: text(entry.path),
         isProject: entry.isProject === true,
-        tool: text(entry.tool),
+        alreadyAdded: entry.alreadyAdded === true,
+        hasSubDirs: entry.hasSubDirs === true,
       }
     }),
   }
 }
 
-export async function addProjects(paths: string[]): Promise<{ added: number }> {
+/** 单条添加失败的原因。后端对重复项固定返回 `'已存在'`，据此分列跳过与真失败。 */
+export interface AddProjectFailure {
+  path: string
+  error: string
+}
+
+export interface AddProjectsResult {
+  added: number
+  /** 已在面板中、本次跳过的。属预期结果，不算失败。 */
+  skipped: AddProjectFailure[]
+  /** 分析失败等真错误，需要用户定位。 */
+  failed: AddProjectFailure[]
+}
+
+/** 后端对重复项的固定错误文案，用于区分「跳过」与「失败」。 */
+const ALREADY_EXISTS = '已存在'
+
+export async function addProjects(paths: string[]): Promise<AddProjectsResult> {
   const row = record(await apiClient.post<unknown>('/api/projects/batch', { paths }, REMOTE_TIMEOUT))
-  return { added: num(row.added, paths.length) }
+  const added = Array.isArray(row.added) ? row.added.length : num(row.added, 0)
+  const errors = (Array.isArray(row.errors) ? row.errors : []).map((value) => {
+    const entry = record(value)
+    return { path: text(entry.path), error: text(entry.error) }
+  })
+  return {
+    added,
+    skipped: errors.filter(item => item.error === ALREADY_EXISTS),
+    failed: errors.filter(item => item.error !== ALREADY_EXISTS),
+  }
 }
 
 export async function removeProject(name: string): Promise<void> {

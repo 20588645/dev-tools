@@ -298,3 +298,22 @@ D7 已落地为静态文本「密码」，提交固定 `authType: 'password'`。
 | 4 | `buildModal` / `deployModal` | 含发起流程、M1 与 M5；`deploy.js` / `deploy.css` / `log-viewer-bridge` 在此批归零 |
 
 每批单独验收后再进下一批。`deploy.js` 与 `deploy.css` 的整体删除、第 2 项跨页耦合 `log-viewer-bridge` 的关闭都落在第 4 批。
+
+## 13. 第 6 步第 2 批实现决策（2026-08-10）
+
+**「+ 添加项目」按钮位置保持不变（用户确认）。** 备选方案是移到项目总览子页工具栏（与「+ 添加服务器」一致），代价是切到服务器/历史子页后无法添加项目、且改动了信息架构；L2 的约定是不改信息架构，故保留在页头，弹窗随 `MigrationHost` 常驻并装一条转发桥。详见 assessment 13.2。
+
+**弹窗的归属确认为「跨页共享」而非部署面板独有。** 它有四个入口分属两个页面（部署页头、项目总览空态、本地运行页页头与空态），迁移前四处共用同一个 `showAddProject()`。这是首轮 Tauri 验收报出 D1 的根因——本地运行页迁移时把入口留下了、接线没做。
+
+**新增两个跨页事件：**
+
+| 事件 | 方向 | 用途 | 存续 |
+| --- | --- | --- | --- |
+| `devtools:add-project-requested` | legacy 页头 / Vue 三处按钮 → 常驻弹窗 | 拉起添加项目弹窗 | 保留 |
+| `devtools:projects-changed` | 常驻弹窗 → 项目总览子页 + 本地运行页 | 添加成功后各自静默刷新列表 | 保留 |
+
+只有 `installAddProjectBridge`（把 `showAddProject` 装到 `window` 供 legacy 页头的 `onclick` 调用）属迁移期产物，页头迁入 Vue 后可删；两个事件本身是 Vue 侧的跨页通信，长期保留。
+
+**service 契约按后端实际返回修正三处**（C1/C2/C3，见 assessment 13.4），其中 `addProjects` 原实现在所有情况下都会虚报「全部成功」。
+
+**`BaseSelectableItem` 内嵌可交互控件的约定（D2）。** 整行可点的容器内再放勾选框时，勾选框必须包一层 `@click.stop`，否则两次 toggle 相互抵消。修复落在两个调用点而非公共组件——`BaseSelectableItem` 本身不该假设插槽内容是否可交互，且仓库内只有这两处是这种嵌套。后续新增此类组合需照此处理。

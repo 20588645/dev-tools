@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onActivated, onMounted, ref } from 'vue'
+import { onBeforeUnmount, onActivated, onMounted, ref } from 'vue'
 
 import BaseButton from '@/components/base/BaseButton.vue'
 import ConfirmDialog from '@/components/feedback/ConfirmDialog.vue'
@@ -9,6 +9,7 @@ import LoadingState from '@/components/feedback/LoadingState.vue'
 import BaseInput from '@/components/form/BaseInput.vue'
 import FilterChip from '@/components/navigation/FilterChip.vue'
 import GroupRenameDialog from '@/components/overlay/GroupRenameDialog.vue'
+import { onProjectsChanged, requestAddProject } from '@/legacy/add-project-bridge'
 import { getServers, removeProject as removeProjectRequest, type DeployServer } from '@/services/modules/deploy-service'
 import { getNodeRuntime, type Project } from '@/services/modules/project-service'
 import { useDeployTaskStore } from '@/stores/deploy-task'
@@ -48,8 +49,7 @@ const FILTERS: Array<{ key: DeployFilter, label: string }> = [
 ]
 
 /**
- * 构建/部署弹窗与项目配置弹窗仍在 legacy 侧（本轮只迁项目总览）。
- * 通过旧全局函数触发，等第 6 步迁弹窗时改为 Vue 组件。
+ * 构建/部署弹窗仍在 legacy 侧（第 4 批迁）。项目配置与添加项目已迁到 Vue。
  */
 function callLegacy(name: string, ...args: unknown[]) {
   const fn = (globalThis as Record<string, unknown>)[name]
@@ -112,9 +112,20 @@ async function onRenameGroup(name: string) {
   }
 }
 
+/**
+ * 添加项目弹窗随应用常驻（不是本子页的子组件），添加完成后靠事件通知刷新。
+ * 监听器不随 deactivated 摘掉：在服务器子页添加项目后，回到本页要已是新数据。
+ */
+let stopProjectsChanged: (() => void) | null = null
+
 onMounted(() => {
   void page.load()
   void loadConfigOptions()
+  stopProjectsChanged = onProjectsChanged(() => { void page.load({ silent: true }) })
+})
+
+onBeforeUnmount(() => {
+  stopProjectsChanged?.()
 })
 
 /**
@@ -177,7 +188,7 @@ onActivated(() => {
         description="点击右上角「+ 添加项目」开始"
       >
         <template #actions>
-          <BaseButton @click="callLegacy('showAddProject')">+ 添加项目</BaseButton>
+          <BaseButton @click="requestAddProject()">+ 添加项目</BaseButton>
         </template>
       </EmptyState>
       <EmptyState v-else-if="page.filtered.value.length === 0" title="没有匹配的项目" compact />

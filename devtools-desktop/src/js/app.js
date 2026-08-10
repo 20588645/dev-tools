@@ -7,8 +7,8 @@ let nodeVersions = [];
 let currentNodeVersion = '';
 let currentProject = null;
 let currentRunFilter = 'all';
-let availableProjects = [];
-let checkedAvailableProjects = new Set();
+// availableProjects / checkedAvailableProjects 随添加项目弹窗迁入 Vue 一并退役，
+// 见 deploy.js 顶部「添加项目弹窗已迁到 Vue」的说明。
 let currentRunId = null;             // 当前日志弹窗展示的本地运行任务
 let runModalProjectName = '';
 let runModalMode = 'start';

@@ -3,6 +3,11 @@ import { defineAsyncComponent, onBeforeUnmount, onMounted, ref } from 'vue'
 
 import LogViewer from '@/components/logviewer/LogViewer.vue'
 import { onLegacyPageActivation, onLegacySubTabActivation, type LegacyPageId } from '@/legacy/legacy-bridge'
+import {
+  emitProjectsChanged,
+  installAddProjectBridge,
+  onAddProjectRequested,
+} from '@/legacy/add-project-bridge'
 import { installDeployTaskBridge } from '@/legacy/deploy-task-bridge'
 import { installLogViewerBridge } from '@/legacy/log-viewer-bridge'
 import { createDeployRealtimeService } from '@/services/deploy-realtime-service'
@@ -10,6 +15,9 @@ import { createRunRuntimeService } from '@/services/run-runtime-service'
 import { createTodoReminderService } from '@/services/todo-reminder-service'
 import { normalizeThemeMode, useAppStore, type Theme } from '@/stores/app'
 import { useLogTaskStore } from '@/stores/log-task'
+import { useNotificationStore } from '@/stores/notification'
+import AddProjectDialog from '@/views/deploy/components/AddProjectDialog.vue'
+import { useAddProject } from '@/views/deploy/composables/useAddProject'
 import HomeView from '@/views/home/HomeView.vue'
 
 defineOptions({ name: 'MigrationHost' })
@@ -27,6 +35,13 @@ const DeployServersView = defineAsyncComponent(() => import('@/views/deploy/Depl
 const DeployHistoryView = defineAsyncComponent(() => import('@/views/deploy/DeployHistoryView.vue'))
 const app = useAppStore()
 const logTask = useLogTaskStore()
+const notify = useNotificationStore()
+/*
+  添加项目弹窗随应用常驻：它有三个入口（部署页头、项目总览空态、本地运行页），
+  分属不同页面，而这些页面在 KeepAlive 下切走即 deactivated——弹窗挂在其中任一
+  页内则从别处点不开。见 add-project-bridge 的说明。
+ */
+const addProject = useAddProject()
 const todoReminderService = createTodoReminderService()
 /* 运行态对账与托盘刷新：必须随应用常驻，不能等本地运行页挂载，见服务内说明。 */
 const runRuntimeService = createRunRuntimeService()
@@ -76,6 +91,8 @@ let stopPageActivation: (() => void) | null = null
 let stopSubTabActivation: (() => void) | null = null
 let stopLogViewerBridge: (() => void) | null = null
 let stopDeployTaskBridge: (() => void) | null = null
+let stopAddProjectBridge: (() => void) | null = null
+let stopAddProjectRequests: (() => void) | null = null
 
 /**
  * 旧脚本里日志链路的两个副作用：最小化时给出可点击回来的 Toast、点击日志中的
@@ -91,6 +108,20 @@ function onLogMinimize() {
 
 function onOpenSource(payload: { path: string; line: number; column: number | null }) {
   void window.openFileInEditorByPath?.(payload.path, payload.line, logTask.projectName)
+}
+
+/** 添加完成后广播，让项目总览子页静默刷新；分列提示已存在跳过与真失败。 */
+async function onSubmitAddProject() {
+  const result = await addProject.submit()
+  if (!result) {
+    if (addProject.error.value) notify.push(addProject.error.value, 'error')
+    return
+  }
+  emitProjectsChanged()
+  const parts = [`成功添加 ${result.added} 个`]
+  if (result.skipped.length) parts.push(`${result.skipped.length} 个已存在跳过`)
+  if (result.failed.length) parts.push(`${result.failed.length} 个失败`)
+  notify.push(parts.join('，'), result.failed.length ? 'warning' : 'success')
 }
 
 function syncLegacyTheme() {
@@ -120,6 +151,8 @@ onMounted(() => {
    */
   stopLogViewerBridge = installLogViewerBridge()
   stopDeployTaskBridge = installDeployTaskBridge()
+  stopAddProjectBridge = installAddProjectBridge()
+  stopAddProjectRequests = onAddProjectRequested(() => { void addProject.show() })
   deployRealtimeService.start()
 })
 
@@ -132,6 +165,8 @@ onBeforeUnmount(() => {
   deployRealtimeService.stop()
   stopLogViewerBridge?.()
   stopDeployTaskBridge?.()
+  stopAddProjectBridge?.()
+  stopAddProjectRequests?.()
 })
 </script>
 
@@ -193,6 +228,32 @@ onBeforeUnmount(() => {
         <DeployHistoryView v-if="activePage === 'deploy' && activeDeploySub === 'history'" />
       </KeepAlive>
     </Teleport>
+    <!-- 添加项目弹窗：同为 BaseDialog，随应用常驻，从任一部署子页都能打开 -->
+    <AddProjectDialog
+      :open="addProject.open.value"
+      :mode="addProject.mode.value"
+      :visible-available="addProject.visibleAvailable.value"
+      :scan-checked="addProject.scanChecked.value"
+      :scan-empty-kind="addProject.scanEmptyKind.value"
+      :scan-loading="addProject.scanLoading.value"
+      :query="addProject.query.value"
+      :entries="addProject.entries.value"
+      :browse-checked="addProject.browseChecked.value"
+      :breadcrumbs="addProject.breadcrumbs.value"
+      :browse-loading="addProject.browseLoading.value"
+      :selected-count="addProject.selectedPaths.value.length"
+      :submit-label="addProject.submitLabel.value"
+      :submitting="addProject.submitting.value"
+      :error="addProject.error.value"
+      @close="addProject.close()"
+      @update:mode="addProject.switchMode($event)"
+      @update:query="addProject.query.value = $event"
+      @toggle-scan="addProject.toggleScan($event)"
+      @toggle-all-scan="addProject.toggleAllScan($event)"
+      @toggle-browse="addProject.toggleBrowse($event)"
+      @navigate="addProject.browseTo($event)"
+      @submit="onSubmitAddProject"
+    />
     <!-- LogViewer 内部用 BaseDialog（NModal），自带 teleport 到 body -->
     <LogViewer
       v-model="logTask.visible"

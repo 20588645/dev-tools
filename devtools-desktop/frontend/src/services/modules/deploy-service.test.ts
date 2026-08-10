@@ -1,6 +1,10 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+
+import { apiClient } from '@/services/api-client'
 
 import {
+  addProjects,
+  browseProjects,
   buildServerPayload,
   isMaskedPassword,
   normalizeFileZillaSource,
@@ -10,6 +14,10 @@ import {
   normalizeServer,
   type ServerInput,
 } from './deploy-service'
+
+afterEach(() => {
+  vi.restoreAllMocks()
+})
 
 const baseInput: ServerInput = {
   name: '同仁堂生产',
@@ -185,5 +193,89 @@ describe('normalizeHistoryItem 的时间戳', () => {
     const item = normalizeHistoryItem({ id: 'h', timestamp: '2026-06-28T16:42:00.000Z' })
     expect(item.timestamp).toBeGreaterThan(0)
     expect(new Date(item.timestamp).getUTCFullYear()).toBe(2026)
+  })
+})
+
+describe('browseProjects 归一', () => {
+  /*
+    alreadyAdded 与 hasSubDirs 决定列表项的可勾选与可进入状态。此前 service 未
+    解析这两个字段，导致「已添加」项可被重复勾选、空目录也显示为可进入。
+  */
+  it('取出决定禁用与可进入状态的两个布尔字段', async () => {
+    vi.spyOn(apiClient, 'request').mockResolvedValue({
+      currentDir: '/Users/ldy/project/group',
+      root: '/Users/ldy/project',
+      entries: [
+        { name: 'portal', path: '/p/portal', isProject: true, alreadyAdded: true, hasSubDirs: false },
+        { name: 'group-b', path: '/p/group-b', isProject: false, alreadyAdded: false, hasSubDirs: true },
+      ],
+    })
+
+    const result = await browseProjects('/Users/ldy/project/group')
+
+    expect(result.entries[0]).toEqual({
+      name: 'portal',
+      path: '/p/portal',
+      isProject: true,
+      alreadyAdded: true,
+      hasSubDirs: false,
+    })
+    expect(result.entries[1].hasSubDirs).toBe(true)
+  })
+
+  it('缺字段时两个布尔都按 false 处理，不误判为已添加或可进入', async () => {
+    vi.spyOn(apiClient, 'request').mockResolvedValue({
+      root: '/Users/ldy/project',
+      entries: [{ name: 'x', path: '/p/x' }],
+    })
+
+    const [entry] = (await browseProjects()).entries
+
+    expect(entry.alreadyAdded).toBe(false)
+    expect(entry.hasSubDirs).toBe(false)
+    expect(entry.isProject).toBe(false)
+  })
+
+  it('缺 currentDir 时回落到请求目录，面包屑不至于塌成根', async () => {
+    vi.spyOn(apiClient, 'request').mockResolvedValue({ root: '/r', entries: [] })
+
+    expect((await browseProjects('/r/sub')).currentDir).toBe('/r/sub')
+  })
+})
+
+describe('addProjects 结果分列', () => {
+  /*
+    后端对重复项返回 error:'已存在'，属预期跳过而非失败。此前 service 只取
+    added 的条数，两类错误都被丢掉，用户看不到「哪几个没进来、为什么」。
+  */
+  it('已存在归跳过，其余归失败', async () => {
+    vi.spyOn(apiClient, 'post').mockResolvedValue({
+      added: [{ name: 'a' }, { name: 'b' }],
+      errors: [
+        { path: '/p/dup', error: '已存在' },
+        { path: '/p/broken', error: '缺少 package.json' },
+      ],
+    })
+
+    const result = await addProjects(['/p/a', '/p/b', '/p/dup', '/p/broken'])
+
+    expect(result.added).toBe(2)
+    expect(result.skipped).toEqual([{ path: '/p/dup', error: '已存在' }])
+    expect(result.failed).toEqual([{ path: '/p/broken', error: '缺少 package.json' }])
+  })
+
+  it('无 errors 字段时两列都为空', async () => {
+    vi.spyOn(apiClient, 'post').mockResolvedValue({ added: [{ name: 'a' }] })
+
+    const result = await addProjects(['/p/a'])
+
+    expect(result).toEqual({ added: 1, skipped: [], failed: [] })
+  })
+
+  /* 不能像旧实现那样在异常路径下把 added 兜成「全部成功」。 */
+  it('added 缺失时计 0，不虚报成功条数', async () => {
+    vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+    expect((await addProjects(['/p/a', '/p/b'])).added).toBe(0)
   })
 })

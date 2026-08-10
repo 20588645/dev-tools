@@ -592,3 +592,79 @@ E2E 8 项在测试库通过：旧 DOM 与三个全局函数确认为 `undefined`
 ### 12.6 待用户 Tauri 手动 E2E
 
 需在真机验：打开项目默认配置弹窗、改别名与 Node 版本、勾选/取消默认服务器并保存，确认卡片摘要与部署弹窗的默认选中都跟上；以及**本地运行页的配置弹窗 Node 版本下拉**（B1 影响面，修复前显示「请选择」）。
+
+## 13. 第 6 步第 2 批：添加项目弹窗（2026-08-10）
+
+### 13.1 落地结构
+
+| 文件 | 职责 |
+| --- | --- |
+| `views/deploy/components/AddProjectDialog.vue` | 纯受控弹窗：`BaseDialog` + `BaseSegmented` 双模式 + `BaseSelectableItem` / `BaseCheckbox` / `BaseInput` / `BaseButton` |
+| `views/deploy/composables/useAddProject.ts` | 两种模式的取数、双套勾选、面包屑推导与批量提交 |
+| `legacy/add-project-bridge.ts` | 页头按钮 → 弹窗的转发桥，以及项目变更 → 总览刷新的反向事件 |
+| `services/modules/deploy-service.ts` | `BrowseEntry` 补 `alreadyAdded` / `hasSubDirs`；`addProjects` 返回结构改为分列；`AvailableProject` 去掉后端不返回的 `tool` / `type` |
+
+M1：`width="min(720px, 94vw)"` + `bodyMaxHeight="min(560px, 70vh)"`，扫描网格与浏览列表再各自限高自滚——候选项数量不可预期（实测 27 项）。
+M2：`📂` / `🔍` / `📦` / `📁` / `✅` / `☑` / `☐` 共 7 处 emoji 去除，目录与已添加状态改描边 SVG。
+M3：12 处内联事件、2 个原生 `input` 全部替换为 Base* 组件。
+M6：`.seg` 手写双模式切换换成 `BaseSegmented`。
+
+### 13.2 弹窗为何挂在 MigrationHost 而非某个页面内
+
+弹窗有**四个入口，分属两个页面**：部署面板 legacy 页头的按钮（`#page-deploy` 的 `page-fixed-header`，三个子页共用）、项目总览的空态按钮、**本地运行页页头与空态的两个按钮**。迁移前这四处都是 `onclick="showAddProject()"`，共用同一个弹窗与同一份项目数据（`/api/projects`）。
+
+部署面板三个子页与本地运行页都在 `KeepAlive` 下，切走即 deactivated。弹窗挂在其中任一页内部时，从别处点按钮不会有任何反应。故弹窗随 `MigrationHost` 常驻（与 `LogViewer` 同级），legacy 页头的 `onclick` 由 `add-project-bridge` 装到 `window` 上转发，Vue 侧三处直接调 `requestAddProject()`。
+
+代价是反向也需要一条事件：弹窗与这些页面不再是父子关系，添加成功后用 `devtools:projects-changed` 通知**部署面板项目总览与本地运行页**各自静默刷新。两处监听都不随 deactivated 摘掉——在任一页添加项目后，回到另一页要已是新数据。
+
+按钮位置保持不变（用户确认）。`installAddProjectBridge` 只为 legacy 页头的 `onclick` 服务，页头迁入 Vue 后可删；两个事件本身是 Vue 侧的跨页通信，会保留。
+
+### 13.3 用户 Tauri 验收发现的缺陷（2026-08-10）
+
+**D1（高）本地运行页「+ 添加项目」按钮点了没反应——非本批引入，自 `2f1b93d` 起一直是死的。** `RunView` 抛 `emit('add-project')`，但挂载它的 `MigrationHost` 从未监听该事件。代码里两句注释还互相矛盾：一处写「添加项目在第 4 步接入」，另一处写「仍属部署面板的项目管理范畴，交回旧实现处理」，实际两边都没做。迁移前该页页头是 `onclick="showAddProject()"`（`git show 2f1b93d^:frontend/index.html:262` 可证），与部署面板共用弹窗。
+
+本批弹窗已是应用级常驻，正好补上：删掉那个空 emit，两个按钮直接调 `requestAddProject()`，并接上 `onProjectsChanged` 让本页列表自行刷新。
+
+**D2（中）勾选框自身的点击被抵消，表现为「点勾选框没反应」——影响面含已上线页面。** `BaseSelectableItem`（整行可点）内嵌 `BaseCheckbox` 时，点勾选框会**同时**触发它的 `update:modelValue` 与冒泡到外层行按钮的 `click`，两次 toggle 相互抵消。点行内空白处只走一次，所以行为看着「时好时坏」。
+
+我这批 12 项 E2E 全部点在卡片文本上（走冒泡那条路径），因此漏掉了它。排查时顺带确认 `FileZillaImportDialog` 用同一结构，**服务器管理子页已上线，同样中招**——那里点勾选框也一直无效。仓库内只有这两处是这种嵌套（另外五处 `BaseSelectableItem` 都不含勾选框），两处均已在勾选框外包一层 `@click.stop` 修复，并补一条 E2E 锁「点勾选框与点行空白处各只切一次」。
+
+### 13.4 顺带修掉的三个既有缺陷
+
+**C1（中）`BrowseEntry` 丢掉两个状态字段。** service 只解析 `name` / `path` / `isProject` / `tool`，而 `alreadyAdded`（已添加，不可重复勾选）与 `hasSubDirs`（空目录，不可进入）根本没取。legacy 直接读原始 JSON 所以表现正常，但任何走 service 的新代码都会把已添加项渲染成可勾选、把空目录渲染成可进入。
+
+**C2（中）`addProjects` 折叠掉了「跳过 vs 失败」。** 原返回 `{ added: number }`，且 `added` 用 `num(row.added, paths.length)` 兜底——后端实际返回的是**项目对象数组**，`num()` 拿数组解析必然落到兜底值，于是无论真实结果如何都报「全部成功」。现改为按数组长度计数，并把 `errors` 按后端的 `'已存在'` 文案分列成 `skipped` / `failed`。
+
+**C3（低）`AvailableProject` 的 `tool` / `type` 恒为空串。** 后端 `listAvailableProjects` 只给 `{ name, path }`（项目分析要到添加时才做），两个字段属凭空声明，已删除。
+
+### 13.5 行为改进一处
+
+**全选只作用于当前搜索结果。** legacy 的 `toggleAllAvailable` 对 `availableProjects` 全量加选，搜索状态下会把用户看不见的项目一起选上并直接提交。改为「全选 = 选中所见」，单测与 E2E 各锁一条。
+
+### 13.6 legacy 退役
+
+`deploy.js`：删除 `showAddProject` / `switchAddMode` / `renderAvailableProjects` / `toggleAvailableProject` / `toggleAllAvailable` / `filterAvailableProjects` / `browseTo` / `renderBrowseBreadcrumb` / `renderBrowseList` / `toggleBrowseProject` / `updateAddSubmitBtn` / `addSelectedProjects` 共 **12 个函数**，以及 `currentAddMode` / `checkedBrowseProjects` 两个模块级变量。
+`app.js`：删除 `availableProjects` / `checkedAvailableProjects` 两个全局。
+`index.html`：删除 `#addProjectModal` 整块 DOM（含 12 处内联事件）。
+
+CSS 暂不动：`.module-item` / `.module-grid` / `.module-toolbar` / `.browser-item` / `.browser-list` / `.browser-breadcrumb` / `.deploy-empty-state` 仍被构建/部署与远程浏览弹窗使用，留到第 4 批统一清理。
+
+### 13.7 验证结果
+
+`lint`（CSS 基线 25、Token、架构门禁）/ `build:frontend` / `test:architecture` 全通过；`test:unit` **346 项**通过（新增 22：`useAddProject` 16、`deploy-service` 的 browse 归一与 batch 分列 6）。
+
+E2E 12 项覆盖弹窗本体：旧 DOM 归零且页头按钮拉起 Vue 弹窗、搜索过滤 + 全选只选所见并校验提交载荷、未勾选时提交禁用、三种空态可区分、取候选失败给原因、浏览列表的禁用与可进入状态、面包屑展开与回退、切模式后提交只带当前模式勾选、分列提示文案、**从服务器管理子页也能打开弹窗**、900 宽下弹窗完整落在视口内且底部按钮可见、重开不残留。
+
+D1/D2 修复后另补 4 项：本地运行页页头按钮拉起弹窗、从本地运行页添加后**本页列表不切页即刷新**、本地运行页空态按钮同样可用、**点勾选框本体与点行空白处各只切换一次**（D2 回归）。
+
+全量回归 **67 项 `--workers=1` 全通过**（第 1 批记录的 2 项 notes 失败本轮未复现，与那 3 项 502 同属并行下的 dev server 争用/测试库互污染，串行即消失）。
+
+发起端点全程用 `page.route` 拦截，`POST /api/projects/batch` 只记录不放行，没有真实写入任何项目。取证脚本与 `test-results` 已清理。
+
+### 13.8 待用户 Tauri 手动 E2E
+
+首轮已验部署面板全部通过，并报出 D1。D1/D2 修复后需复验：
+
+1. **本地运行页页头「+ 添加项目」**（D1 本体），添加后确认本页列表不切页就刷新
+2. **点勾选框本体**能勾上（D2）——两个弹窗都要试：添加项目弹窗的扫描/浏览列表、**服务器管理子页的 FileZilla 导入弹窗**（D2 影响面，修复前点勾选框无效）
+3. 部署面板侧已验通过的部分无需重测
