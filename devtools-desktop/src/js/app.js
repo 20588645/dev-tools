@@ -855,7 +855,6 @@ function switchPage(page, el, source = 'legacy') {
     const activeSub = document.querySelector('#page-deploy .seg__item.is-active');
     if (activeSub) switchSubTab(activeSub.dataset.sub, activeSub);
   }
-  if (page === 'filetransfer') initFileTransfer();
   if (page === 'editor') initEditor();
   if (page === 'terminal') loadCommands();
   emitLegacyPageActivation(page, source);

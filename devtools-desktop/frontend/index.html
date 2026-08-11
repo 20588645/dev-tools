@@ -22,7 +22,6 @@
 <link rel="stylesheet" href="css/pages/terminal.css">
 <link rel="stylesheet" href="css/pages/editor.css">
 <link rel="stylesheet" href="css/legacy-runtime.css">
-<link rel="stylesheet" href="css/pages/filetransfer.css">
 <link rel="stylesheet" href="css/overrides.css">
 <link rel="stylesheet" href="css/xterm.css">
 <link rel="stylesheet" href="js/vendor/codemirror/cm.bundle.css">
@@ -97,111 +96,7 @@
 
 <!-- 文件传输（FileZilla 式双栏 SFTP 文件管理） -->
 <section class="page" id="page-filetransfer">
-  <div class="page-fixed-header">
-    <div class="page-header-bar page-header-simple">
-      <div>
-        <div class="page-title">📂 文件传输</div>
-        <div class="page-subtitle">FileZilla 式双栏文件管理：本地 ⇄ 远程服务器，连接后可浏览与互传（建设中）</div>
-      </div>
-      <div class="page-header-actions">
-        <button class="btn" id="ftRefreshBtn" onclick="ftRefreshAll()" disabled title="刷新两栏目录">↻ 刷新</button>
-      </div>
-    </div>
-
-    <!-- 会话连接栏 -->
-    <div class="page-toolbar ft-session-bar">
-      <span class="ft-session-label">服务器</span>
-      <select id="ftServerSelect" class="ft-server-select" onchange="ftOnServerChange()"></select>
-      <button class="btn btn--primary" id="ftConnectBtn" onclick="ftConnect(event)" title="连接所选服务器（可同时连多个，每个一个标签）">连接</button>
-      <span class="ft-session-status" id="ftSessionStatus">
-        <span class="ft-status-dot"></span>
-        <span class="ft-status-text">未连接</span>
-      </span>
-      <span class="ft-session-spacer"></span>
-      <span class="ft-session-hint" id="ftSessionHint"></span>
-    </div>
-  </div>
-
-  <div class="page-scroll-body ft-scroll-body">
-    <!-- 双栏工作区：本地 | 可拖拽分隔条 | 远程 -->
-    <div class="ft-workspace">
-      <!-- 本地栏 -->
-      <section class="ft-pane ft-pane--local" id="ftLocalPane">
-        <header class="ft-pane-head">
-          <span class="ft-pane-title"><span class="ft-pane-icon">💻</span>本地</span>
-          <span class="ft-pane-count" id="ftLocalCount"></span>
-        </header>
-        <div class="ft-pane-toolbar">
-          <button class="btn btn--sm" id="ftLocalUp" onclick="ftLocalUp()" disabled title="上一级目录">⬆ 上一级</button>
-          <button class="btn btn--sm" id="ftLocalHome" onclick="ftLocalHome()" disabled title="回到主目录">🏠 主目录</button>
-          <button class="btn btn--sm" id="ftLocalMkdir" onclick="ftLocalMkdir()" disabled title="在当前目录新建文件夹">＋ 新建</button>
-          <span class="ft-pane-toolbar-spacer"></span>
-          <button class="btn btn--sm btn--icon" id="ftLocalRefresh" onclick="ftLocalRefresh()" disabled title="刷新">↻</button>
-        </div>
-        <div class="ft-pathbar">
-          <input type="text" class="ft-path-input" id="ftLocalPathInput" placeholder="输入路径回车跳转，输入时提示子目录" spellcheck="false" autocomplete="off" title="输入路径回车直达；输入时自动提示子目录，↑↓ 选择、Enter 进入、Esc 关闭">
-          <div class="ft-path-suggest" id="ftLocalSuggest" hidden></div>
-        </div>
-        <div class="ft-listhead" id="ftLocalListhead">
-          <span class="ft-lh-icon"></span>
-          <span class="ft-lh-col" data-sort="name">名称<span class="ft-lh-arr"></span></span>
-          <span class="ft-lh-col ft-lh-size" data-sort="size">大小<span class="ft-lh-arr"></span></span>
-          <span class="ft-lh-col ft-lh-time" data-sort="mtime">修改时间<span class="ft-lh-arr"></span></span>
-        </div>
-        <div class="ft-pane-body" id="ftLocalBody"></div>
-        <div class="ft-pane-foot" id="ftLocalFoot"></div>
-      </section>
-
-      <!-- 中间可拖拽分隔条：拖动调整本地/远程两栏宽度（双击复位 50/50） -->
-      <div class="ft-splitter" id="ftSplitter" title="拖拽调整左右栏宽度（双击复位）"></div>
-
-      <!-- 远程栏 -->
-      <section class="ft-pane ft-pane--remote" id="ftRemotePane">
-        <header class="ft-pane-head">
-          <span class="ft-pane-title"><span class="ft-pane-icon">🖥</span>远程</span>
-          <span class="ft-pane-count" id="ftRemoteCount"></span>
-        </header>
-        <!-- T11：多服务器标签条（连了才显示，点切换、× 断开） -->
-        <div class="ft-tabs" id="ftRemoteTabs"></div>
-        <div class="ft-pane-toolbar">
-          <button class="btn btn--sm" id="ftRemoteUp" onclick="ftRemoteUp()" disabled title="上一级目录">⬆ 上一级</button>
-          <button class="btn btn--sm" id="ftRemoteHome" onclick="ftRemoteHome()" disabled title="回到默认目录">🏠 默认</button>
-          <button class="btn btn--sm" id="ftRemoteMkdir" onclick="ftRemoteMkdir()" disabled title="在当前目录新建文件夹">＋ 新建</button>
-          <span class="ft-pane-toolbar-spacer"></span>
-          <button class="btn btn--sm btn--icon" id="ftRemoteRefresh" onclick="ftRemoteRefresh()" disabled title="刷新">↻</button>
-        </div>
-        <div class="ft-pathbar">
-          <input type="text" class="ft-path-input" id="ftRemotePathInput" placeholder="输入远程路径回车跳转，输入时提示子目录" spellcheck="false" autocomplete="off" title="输入路径回车直达；输入时自动提示子目录，↑↓ 选择、Enter 进入、Esc 关闭">
-          <div class="ft-path-suggest" id="ftRemoteSuggest" hidden></div>
-        </div>
-        <div class="ft-listhead" id="ftRemoteListhead">
-          <span class="ft-lh-icon"></span>
-          <span class="ft-lh-col" data-sort="name">名称<span class="ft-lh-arr"></span></span>
-          <span class="ft-lh-col ft-lh-size" data-sort="size">大小<span class="ft-lh-arr"></span></span>
-          <span class="ft-lh-col ft-lh-time" data-sort="mtime">修改时间<span class="ft-lh-arr"></span></span>
-        </div>
-        <div class="ft-pane-body" id="ftRemoteBody"></div>
-        <div class="ft-pane-foot" id="ftRemoteFoot"></div>
-      </section>
-    </div>
-
-    <!-- 传输队列 -->
-    <section class="ft-queue" id="ftQueue">
-      <header class="ft-queue-head">
-        <span class="ft-queue-title">传输队列 <span class="ft-queue-count" id="ftQueueCount">0</span></span>
-        <div class="ft-queue-actions">
-          <select id="ftConflictPolicy" class="ft-conflict-select" title="目标已存在时如何处理">
-            <option value="overwrite">冲突：覆盖</option>
-            <option value="skip">冲突：跳过</option>
-            <option value="rename">冲突：重命名</option>
-          </select>
-          <button class="btn btn--sm" id="ftQueueClear" onclick="ftClearFinished()" disabled>清除已完成</button>
-          <button class="btn btn--sm btn--danger" id="ftQueueCancelAll" onclick="ftCancelAll()" disabled>全部取消</button>
-        </div>
-      </header>
-      <div class="ft-queue-body" id="ftQueueBody"></div>
-    </section>
-  </div>
+  <div id="vue-filetransfer-host" aria-live="polite"></div>
 </section>
 
 <!-- 本地运行 -->
@@ -512,7 +407,6 @@
 <script src="js/api.js"></script>
 <script src="js/websocket.js"></script>
 <script src="js/app.js"></script>
-<script src="js/filetransfer.js"></script>
 <script src="js/vendor/codemirror/cm.bundle.js"></script>
 <script src="js/editor.js"></script>
 <script src="js/xterm.js"></script>

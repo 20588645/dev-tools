@@ -9,6 +9,7 @@ import {
   onAddProjectRequested,
 } from '@/legacy/add-project-bridge'
 import { createDeployRealtimeService } from '@/services/deploy-realtime-service'
+import { createFileTransferSessionService } from '@/services/filetransfer-session-service'
 import { createRunRuntimeService } from '@/services/run-runtime-service'
 import { createTodoReminderService } from '@/services/todo-reminder-service'
 import { normalizeThemeMode, useAppStore, type Theme } from '@/stores/app'
@@ -23,6 +24,7 @@ defineOptions({ name: 'MigrationHost' })
 const IpCheckView = defineAsyncComponent(() => import('@/views/ipcheck/IpCheckView.vue'))
 const NotesView = defineAsyncComponent(() => import('@/views/notes/NotesView.vue'))
 const RunView = defineAsyncComponent(() => import('@/views/run/RunView.vue'))
+const FileTransferView = defineAsyncComponent(() => import('@/views/filetransfer/FileTransferView.vue'))
 const NotebookView = defineAsyncComponent(() => import('@/views/notebook/NotebookView.vue'))
 const SettingsView = defineAsyncComponent(() => import('@/views/settings/SettingsView.vue'))
 const TodoView = defineAsyncComponent(() => import('@/views/todo/TodoView.vue'))
@@ -45,6 +47,8 @@ const todoReminderService = createTodoReminderService()
 const runRuntimeService = createRunRuntimeService()
 /* 构建/部署实时链路与刷新恢复：同理常驻，任务可在任何页面发起与完成。 */
 const deployRealtimeService = createDeployRealtimeService()
+/* SFTP keepalive + transfer WS：切走文件传输页不销毁会话。 */
+const fileTransferSessionService = createFileTransferSessionService()
 const activePage = ref<LegacyPageId>(
   (document.querySelector('.page.active')?.id.replace(/^page-/, '') as LegacyPageId | undefined) ?? 'home',
 )
@@ -70,6 +74,9 @@ usageTarget?.setAttribute('data-vue-owner', 'usage')
 const runTarget = document.querySelector('#vue-run-host')
 const hasRunTarget = Boolean(runTarget)
 runTarget?.setAttribute('data-vue-owner', 'run')
+const filetransferTarget = document.querySelector('#vue-filetransfer-host')
+const hasFiletransferTarget = Boolean(filetransferTarget)
+filetransferTarget?.setAttribute('data-vue-owner', 'filetransfer')
 /* 部署面板三个子页均已迁到 Vue。 */
 const deployDashboardTarget = document.querySelector('#vue-deploy-dashboard-host')
 const hasDeployDashboardTarget = Boolean(deployDashboardTarget)
@@ -151,6 +158,7 @@ onMounted(() => {
   stopAddProjectBridge = installAddProjectBridge()
   stopAddProjectRequests = onAddProjectRequested(() => { void addProject.show() })
   deployRealtimeService.start()
+  fileTransferSessionService.start()
 })
 
 onBeforeUnmount(() => {
@@ -160,6 +168,7 @@ onBeforeUnmount(() => {
   todoReminderService.stop()
   runRuntimeService.stop()
   deployRealtimeService.stop()
+  fileTransferSessionService.stop()
   stopLogReopen?.()
   stopAddProjectBridge?.()
   stopAddProjectRequests?.()
@@ -207,6 +216,11 @@ onBeforeUnmount(() => {
     <Teleport v-if="hasRunTarget" to="#vue-run-host">
       <KeepAlive>
         <RunView v-if="activePage === 'run'" />
+      </KeepAlive>
+    </Teleport>
+    <Teleport v-if="hasFiletransferTarget" to="#vue-filetransfer-host">
+      <KeepAlive>
+        <FileTransferView v-if="activePage === 'filetransfer'" />
       </KeepAlive>
     </Teleport>
     <Teleport v-if="hasDeployDashboardTarget" to="#vue-deploy-dashboard-host">

@@ -1,10 +1,10 @@
 # 文件传输页面迁移评估
 
-> 状态：Phase 6-3 **PG0～PG1 已完成**（2026-08-11）；PG2 / PG3 尚未开始，无 `decision.md`
+> 状态：Phase 6-3 **PG5 已完成 / 页面关闭**（2026-08-11）；用户 Tauri 手测通过，legacy 已删（见 [decision.md](./decision.md)）
 > 关联计划：[vue3_architecture_migration_execution_plan.md](../../../vue3_architecture_migration_execution_plan.md)
 > 产出日期：2026-08-11
 
-本文只做运行态取证与代码研究，不提方案、不改 Vue 实现。本轮顺带修了 Phase 6-2 归零后的 `servers` 全局断供（见 §3.1 D0），属阻塞 PG0 连接态取证的回归修复，不是功能扩展。
+本文只做运行态取证与代码研究；优化分级与实施范围见 `decision.md`，不在本文替用户选型。PG0 顺带修了 Phase 6-2 归零后的 `servers` 全局断供（见 §3.1 D0）。用户已确认连接态 Tauri 补证通过。
 
 ## 1. 页面规模
 
@@ -169,14 +169,14 @@ flowchart TB
 | D5 | 低 | 窄屏 880px 堆叠后远程 tabs + 路径栏密度高，900×600 需真机再验 | 待用户补取证 |
 | D6 | 低 | 冲突策略与队列在底部，长列表时需滚动才看见进度 | 体验，PG2 评估 |
 
-## 6. legacy 待删清单（PG5 用，预登记）
+## 6. legacy 待删清单（PG5，已执行 2026-08-11）
 
-- `src/js/filetransfer.js` 整文件 + `index.html` script 引用
-- `src/css/pages/filetransfer.css` + link（核实无其它消费者后整删）
-- `#page-filetransfer` 内静态 DOM → Vue host
-- 13 处内联 `onclick`/`onchange`
-- `app.js` 中 `showPage('filetransfer')` → `initFileTransfer()` 分支
-- 运行时注入的 `#ftCtxMenu`（若仍在）
+- [x] `src/js/filetransfer.js` 整文件 + `index.html` script 引用
+- [x] `src/css/pages/filetransfer.css`（HTML link 已在 PG4 移除）
+- [x] `#page-filetransfer` 静态 DOM → `#vue-filetransfer-host`
+- [x] 内联 `onclick`/`onchange`（随 DOM 删除）
+- [x] `app.js` 中 `initFileTransfer()` 分支（PG4 已去）
+- [x] 运行时 `#ftCtxMenu`（改 Vue `FtContextMenu`）
 
 ## 7. 用户手动补证清单（连接态）
 
@@ -190,4 +190,4 @@ flowchart TB
 
 ---
 
-**下一门禁**：PG2 优化建议 + PG3 用户确认 L0～L3（默认预期：视觉/组件 L1～L2，任务语义冻结；自动重连若要做则 L3）。
+**下一门禁**：无（本页 PG0～PG5 已关闭）。后续仅回归维护。
