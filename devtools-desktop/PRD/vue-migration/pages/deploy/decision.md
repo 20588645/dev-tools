@@ -317,3 +317,42 @@ D7 已落地为静态文本「密码」，提交固定 `authType: 'password'`。
 **service 契约按后端实际返回修正三处**（C1/C2/C3，见 assessment 13.4），其中 `addProjects` 原实现在所有情况下都会虚报「全部成功」。
 
 **`BaseSelectableItem` 内嵌可交互控件的约定（D2）。** 整行可点的容器内再放勾选框时，勾选框必须包一层 `@click.stop`，否则两次 toggle 相互抵消。修复落在两个调用点而非公共组件——`BaseSelectableItem` 本身不该假设插槽内容是否可交互，且仓库内只有这两处是这种嵌套。后续新增此类组合需照此处理。
+
+## 14. 第 3 批与第 4 批合并（2026-08-10，用户确认）
+
+**第 3 批（`remoteBrowserModal`）不再单独成批，合入第 4 批。** PG3 分批时把它当作独立单元，实际核对代码后不成立——远程浏览与部署弹窗是双向强耦合：
+
+- `openRemoteBrowser()` 读 `checkedServers`（部署弹窗的服务器勾选态）取 serverId，没有勾选就直接拦下
+- `confirmRemotePath()` 直接操作 `#remotePath` 这个原生 `<select>` 的 DOM：遍历 options 找匹配项，找不到就 `new Option(...)` 追加并选中
+
+单独先迁远程浏览，就必须造一座「Vue 读 legacy 勾选态、Vue 写 legacy select DOM」的桥，而这座桥在第 4 批立刻废弃。用完即弃的桥本身还要操作原生 select DOM，是个额外容错点，收益不抵成本。
+
+合并后第 4 批范围：`buildModal` / `deployModal` / `remoteBrowserModal`，`deploy.js` / `deploy.css` / `log-viewer-bridge` 在此批归零。**交付仍分两次验收**：先远程浏览组件本体（自带 serverId 与路径回调，不依赖 legacy），再接构建/部署弹窗。
+
+**M7 降级：不强行让两处共用一个 `RemoteBrowserPanel`。** PG2 记「两处交互与 DOM 结构本就相同」，核对后为误判——两者只共用 `.browser-list` / `.browser-breadcrumb` 两个 CSS 类名，行为差异是结构性的：
+
+| | 远程目录浏览 | 添加项目的手动浏览（第 2 批已迁） |
+| --- | --- | --- |
+| 列 | 四列：图标 / 名称 / 大小 / 修改时间 | 两列：名称 / 状态标签 |
+| 选择语义 | 单选「当前所在目录」，选的是路径本身 | 多选目录内的项目，选的是条目 |
+| 条目状态 | 文件不可点、`..` 返回上级 | `alreadyAdded` 禁用、空目录禁用 |
+| 连接态 | 有：SFTP 连接中 / 连接失败 / `fallback` 回落提示 | 无，本机读盘 |
+
+强行合并会做出一个带四五个分支开关的缝合组件。故 `RemoteBrowserPanel` 只服务远程浏览一处（它确实只有一个调用方），第 2 批的手动浏览保持现状不动。`src/js/editor.js` 的文件浏览器是第三个 `.browser-item` 消费方，属文件编辑页，不在本步范围。
+
+## 15. 第 4 批 Part B：构建/部署弹窗（2026-08-11）
+
+**交付**：`useBuildDeploy` + `BuildDeployDialog` + 接入 `DeployDashboardView`；远程浏览经已有 `RemoteBrowserDialog` 回写发布目录。
+
+**契约对齐**：
+- 发起顺序：`task.begin` → 开 LogViewer → HTTP → `attachTaskId`；失败 `abandon` + `setRunning(false)`
+- 多服务器先 `ConfirmDialog` 再发请求
+- 偏好键沿用 `fav_*` / `last_*`
+- Node 变更静默 `updateProject({ nodeVersion })`
+- 桌面通知 / Toast 点回日志改为事件 `devtools:log-reopen-requested`（不再经 `__logViewer`）
+
+**归零**：
+- 删除 `src/js/deploy.js`、`src/css/pages/deploy.css`、`legacy/log-viewer-bridge.ts`、`legacy/deploy-task-bridge.ts`
+- 删除 `index.html` 中 `buildModal` / `deployModal` / `remoteBrowserModal`
+- 部署壳层 `.sub-page` 规则并入 `legacy-runtime.css`
+- `DeployServersView.syncLegacyServers` 删除；`app.js` 不再预加载 projects/servers/nodeVersions

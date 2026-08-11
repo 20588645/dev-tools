@@ -8,8 +8,6 @@ import {
   installAddProjectBridge,
   onAddProjectRequested,
 } from '@/legacy/add-project-bridge'
-import { installDeployTaskBridge } from '@/legacy/deploy-task-bridge'
-import { installLogViewerBridge } from '@/legacy/log-viewer-bridge'
 import { createDeployRealtimeService } from '@/services/deploy-realtime-service'
 import { createRunRuntimeService } from '@/services/run-runtime-service'
 import { createTodoReminderService } from '@/services/todo-reminder-service'
@@ -89,8 +87,7 @@ const activeDeploySub = ref(
 let themeObserver: MutationObserver | null = null
 let stopPageActivation: (() => void) | null = null
 let stopSubTabActivation: (() => void) | null = null
-let stopLogViewerBridge: (() => void) | null = null
-let stopDeployTaskBridge: (() => void) | null = null
+let stopLogReopen: (() => void) | null = null
 let stopAddProjectBridge: (() => void) | null = null
 let stopAddProjectRequests: (() => void) | null = null
 
@@ -101,9 +98,13 @@ let stopAddProjectRequests: (() => void) | null = null
 function onLogMinimize() {
   logTask.minimize()
   const isRun = logTask.kind === 'run'
-  const title = isRun ? '▶ 本地服务仍在运行' : '📌 任务仍在后台运行'
+  const title = isRun ? '本地服务仍在运行' : '任务仍在后台运行'
   const message = isRun ? '点击此处可查看运行日志' : '点击此处可查看进度'
   window.showToast?.(title, message, { clickable: true, persistent: true })
+}
+
+function onLogReopenRequested() {
+  logTask.reopen()
 }
 
 function onOpenSource(payload: { path: string; line: number; column: number | null }) {
@@ -145,12 +146,8 @@ onMounted(() => {
   })
   todoReminderService.start()
   runRuntimeService.start()
-  /*
-    两个桥必须先装：deploy 服务启动时就会尝试恢复活跃任务，而恢复流程会经
-    LogViewer 回放日志——桥没装上时 legacy 侧的弹窗调用也会落空。
-   */
-  stopLogViewerBridge = installLogViewerBridge()
-  stopDeployTaskBridge = installDeployTaskBridge()
+  window.addEventListener('devtools:log-reopen-requested', onLogReopenRequested)
+  stopLogReopen = () => window.removeEventListener('devtools:log-reopen-requested', onLogReopenRequested)
   stopAddProjectBridge = installAddProjectBridge()
   stopAddProjectRequests = onAddProjectRequested(() => { void addProject.show() })
   deployRealtimeService.start()
@@ -163,8 +160,7 @@ onBeforeUnmount(() => {
   todoReminderService.stop()
   runRuntimeService.stop()
   deployRealtimeService.stop()
-  stopLogViewerBridge?.()
-  stopDeployTaskBridge?.()
+  stopLogReopen?.()
   stopAddProjectBridge?.()
   stopAddProjectRequests?.()
 })

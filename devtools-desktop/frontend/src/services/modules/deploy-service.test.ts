@@ -4,6 +4,7 @@ import { apiClient } from '@/services/api-client'
 
 import {
   addProjects,
+  getGitLog,
   browseProjects,
   buildServerPayload,
   isMaskedPassword,
@@ -277,5 +278,43 @@ describe('addProjects 结果分列', () => {
     vi.spyOn(apiClient, 'post').mockResolvedValue({})
 
     expect((await addProjects(['/p/a', '/p/b'])).added).toBe(0)
+  })
+})
+
+describe('getGitLog 归一', () => {
+  /*
+    后端返回 { branch, commits }，提交时间字段名是 time（ISO 字符串）。
+    原实现按裸数组 + timestamp 解析，`(rows ?? []).map` 拿到对象后恒返回空列表，
+    构建/部署弹窗的「最近提交」区因此从未显示过内容。
+  */
+  it('取出 branch 与 commits，时间读 time 字段', async () => {
+    vi.spyOn(apiClient, 'request').mockResolvedValue({
+      branch: 'develop',
+      commits: [
+        { hash: 'fa8ecfc', message: '修复部署路径', author: 'ledy', time: '2026-08-09T12:00:00.000Z' },
+      ],
+    })
+
+    const result = await getGitLog('b8seed-portal')
+
+    expect(result.branch).toBe('develop')
+    expect(result.commits).toHaveLength(1)
+    expect(result.commits[0].hash).toBe('fa8ecfc')
+    expect(result.commits[0].timestamp).toBe(Date.parse('2026-08-09T12:00:00.000Z'))
+  })
+
+  it('非 git 仓库时后端回 branch 为占位、commits 为空，不抛错', async () => {
+    vi.spyOn(apiClient, 'request').mockResolvedValue({ branch: '—', commits: [], error: 'not a git repo' })
+
+    const result = await getGitLog('plain-dir')
+
+    expect(result.branch).toBe('—')
+    expect(result.commits).toEqual([])
+  })
+
+  it('缺字段时回空列表', async () => {
+    vi.spyOn(apiClient, 'request').mockResolvedValue({})
+
+    expect(await getGitLog('x')).toEqual({ branch: '', commits: [] })
   })
 })

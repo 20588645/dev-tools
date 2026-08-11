@@ -571,25 +571,42 @@ export async function removeProject(name: string): Promise<void> {
 }
 
 export interface GitLogEntry {
+  /** 短 hash，后端已截到 7 位。 */
   hash: string
   message: string
   author: string
   timestamp: number
 }
 
-/** 构建/部署弹窗里展示的最近提交，帮助确认要发的是哪个版本。 */
-export async function getGitLog(projectName: string, signal?: AbortSignal): Promise<GitLogEntry[]> {
-  const rows = await apiClient.request<unknown[]>(
+export interface GitLogResult {
+  /** 当前分支。后端取不到 git 信息时给 `—`。 */
+  branch: string
+  commits: GitLogEntry[]
+}
+
+/**
+ * 构建/部署弹窗里展示的最近提交，帮助确认要发的是哪个版本。
+ *
+ * 后端返回 `{ branch, commits }` 而非裸数组，且提交时间的字段名是 `time`
+ * （ISO 字符串）——原实现按裸数组 + `timestamp` 解析，恒返回空列表。
+ * 取不到 git 信息时后端也回 200，只是 `commits` 为空，故调用方按空列表隐藏该区。
+ */
+export async function getGitLog(projectName: string, signal?: AbortSignal): Promise<GitLogResult> {
+  const row = record(await apiClient.request<unknown>(
     `/api/projects/${encodeURIComponent(projectName)}/git-log`,
     { signal, timeout: DEPLOY_TIMEOUT },
-  )
-  return (rows ?? []).map((value) => {
-    const row = record(value)
-    return {
-      hash: text(row.hash),
-      message: text(row.message),
-      author: text(row.author),
-      timestamp: normalizeTimestamp(row.timestamp),
-    }
-  })
+  ))
+  const commits = Array.isArray(row.commits) ? row.commits : []
+  return {
+    branch: text(row.branch),
+    commits: commits.map((value) => {
+      const entry = record(value)
+      return {
+        hash: text(entry.hash),
+        message: text(entry.message),
+        author: text(entry.author),
+        timestamp: normalizeTimestamp(entry.time),
+      }
+    }),
+  }
 }

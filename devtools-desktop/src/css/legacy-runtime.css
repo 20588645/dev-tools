@@ -674,3 +674,32 @@ body[data-theme="dark"] .modal-overlay {
 .sys-dialog-overlay.active .sys-dialog {
   animation: dialogIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+/* ========== 部署面板壳层（子页显隐与二级固定头） ==========
+   原 pages/deploy.css 在构建/部署弹窗迁入 Vue 后只剩壳层规则，并入此处后删文件。
+   卡片 / 历史表 / 服务器表样式已在各自 Vue 的 scoped CSS。 */
+#page-deploy .sub-page .page-sticky-header {
+  flex-shrink: 0;
+  padding-bottom: 14px;
+}
+
+.sub-page { display: none; }
+.sub-page.active { display: block; }
+
+#page-deploy .sub-page {
+  display: none;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+  padding-bottom: 0;
+}
+
+#page-deploy .sub-page.active {
+  display: flex;
+}
+
+#page-deploy .page-sticky-header {
+  padding-bottom: 10px !important;
+  flex: 0 0 auto !important;
+}

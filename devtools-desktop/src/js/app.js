@@ -1,18 +1,9 @@
 // ========== app.js — Global State, Init, Shared Utilities ==========
 
 // ========== State ==========
-let projects = [];
-let servers = [];
-let nodeVersions = [];
-let currentNodeVersion = '';
-let currentProject = null;
+// project / server / node 全局已随构建部署弹窗迁入 Vue 退役；各 Vue 页自行拉数。
 let currentRunFilter = 'all';
-// availableProjects / checkedAvailableProjects 随添加项目弹窗迁入 Vue 一并退役，
-// 见 deploy.js 顶部「添加项目弹窗已迁到 Vue」的说明。
-let currentRunId = null;             // 当前日志弹窗展示的本地运行任务
-let runModalProjectName = '';
-let runModalMode = 'start';
-let selectedRunModuleNames = new Set();
+// availableProjects / checkedAvailableProjects 随添加项目弹窗迁入 Vue 一并退役。
 let notifiedRunIds = new Set();
 let notifiedRunCompileErrors = new Set();
 let pendingRunCompileErrorTimers = {};
@@ -354,8 +345,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupModalDismissal();
   setupNotificationActionHandlers();
   requestNotificationPermission();
-  await Promise.all([loadProjects(), loadServers(), loadNodeVersions()]);
-  // 活跃任务恢复由 Vue 的 deploy-realtime-service 在自身启动时完成
+  // Vue 各页自行加载项目 / 服务器 / Node 版本数据
   updateToolbarDate();
 });
 
@@ -654,14 +644,9 @@ function setupWSHandlers() {
   /*
     构建 / 部署的 log、progress、status 三条链路已由 Vue 的
     `services/deploy-realtime-service.ts` 全量承担（随应用常驻，含刷新恢复与
-    WS 重连对账）。这里不能保留并行处理器——两侧会同时写同一个 log store，
-    表现为每行日志追加两次、完成时弹两次提示。
+    WS 重连对账）。run-log 由 useRunRealtime 处理。这里不能保留并行处理器——
+    两侧会同时写同一个 log store，表现为每行日志追加两次、完成时弹两次提示。
    */
-
-  WS.on('run-log', (data) => {
-    if (data.id !== currentRunId) return;
-    appendLog(data.text, data.type);
-  });
 
   WS.on('upgrade-progress', (data) => {
     window.dispatchEvent(new CustomEvent(UPGRADE_PROGRESS_EVENT, { detail: data }));
@@ -961,26 +946,9 @@ async function withButtonBusy(btn, busyText, fn) {
   }
 }
 
-// ========== Log Viewer 桥（过渡期） ==========
-// 日志弹窗已迁到 Vue 公共 LogViewer（frontend/src/components/logviewer/），由
-// window.__logViewer 暴露命令式接口。部署面板尚未迁移，仍走这些包装函数；
-// deploy 页迁完后本节连同下方的包装一并删除。
-function logViewer() {
-  return window.__logViewer || null;
-}
-
-function openLogViewer({ kind, id = null, title, subtitle = '', projectName = '', steps = [], running = true }) {
-  logViewer()?.open({ kind, id, title, subtitle, projectName, steps, running });
-}
-
-// 步骤推进（原 setStepActive / setStepDone / getProgressStepCount 与
-// logViewerStepCount 缓存）已归 deploy-realtime-service 的 stepIndexOf——phase 到
-// 步骤索引的映射与步骤总数都在那里，legacy 侧不再有消费方。
-
-// 行分类、ANSI 着色、源码链接与智能滚动均已由 LogViewer 组件承担
-// （frontend/src/components/logviewer/log-format.ts）。这里只做转发。
-function appendLog(text, type = 'info') {
-  logViewer()?.append(text, type);
+// 桌面通知 / Toast 点回日志：经事件交给 MigrationHost → logTask.reopen()
+function reopenLogModal() {
+  window.dispatchEvent(new CustomEvent('devtools:log-reopen-requested'));
 }
 
 function escapeHtml(str) {
@@ -1017,10 +985,6 @@ window.sendDesktopNotification = sendDesktopNotification;
 // legacy 侧已无命令式调用。这里只剩普通弹窗的 DOM 开关。
 function closeModal(id) {
   document.getElementById(id)?.classList.remove('active');
-}
-
-function reopenLogModal() {
-  logViewer()?.reopen();
 }
 
 // ========== Toast ==========

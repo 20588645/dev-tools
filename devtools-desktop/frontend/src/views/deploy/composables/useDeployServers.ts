@@ -9,8 +9,8 @@ import {
 /**
  * 服务器管理子页的列表数据。
  *
- * `servers` 同时被构建/部署弹窗与项目配置弹窗消费（旧实现里是 `app.js` 的全局
- * `servers`），所以刷新后要通知 legacy 侧，见 View 中的 `syncLegacyServers`。
+ * 构建/部署与项目配置弹窗均经 getServers() 自行拉取；dashboard 在 onActivated
+ * 时重载。不再回写 legacy 全局 servers。
  */
 export function useDeployServers() {
   const servers = shallowRef<DeployServer[]>([])

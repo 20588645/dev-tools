@@ -668,3 +668,28 @@ D1/D2 修复后另补 4 项：本地运行页页头按钮拉起弹窗、从本�
 1. **本地运行页页头「+ 添加项目」**（D1 本体），添加后确认本页列表不切页就刷新
 2. **点勾选框本体**能勾上（D2）——两个弹窗都要试：添加项目弹窗的扫描/浏览列表、**服务器管理子页的 FileZilla 导入弹窗**（D2 影响面，修复前点勾选框无效）
 3. 部署面板侧已验通过的部分无需重测
+
+## 16. 第 6 步第 4 批 Part B 实现记录（2026-08-11）
+
+构建 / 部署 / 远程浏览三个弹窗已全部迁入 Vue，deploy 页脚本与样式归零。
+
+### 16.1 新增
+
+| 文件 | 职责 |
+| --- | --- |
+| `composables/useBuildDeploy.ts` (+ test) | 模块多选/收藏偏好、服务器勾选、发布目录、快速测连、git log、发起构建/部署 |
+| `components/BuildDeployDialog.vue` | 构建与部署共用对话框 |
+| Part A 已有 | `useRemoteBrowser` / `RemoteBrowserPanel` / `RemoteBrowserDialog` |
+
+### 16.2 退役
+
+- `src/js/deploy.js` 整文件
+- `src/css/pages/deploy.css` 整文件（壳层 `.sub-page` 并入 `legacy-runtime.css`）
+- `legacy/log-viewer-bridge.ts`、`legacy/deploy-task-bridge.ts`
+- `index.html` 的 `#buildModal` / `#deployModal` / `#remoteBrowserModal`
+- `DeployServersView.syncLegacyServers`；`app.js` 启动时不再 `loadProjects/loadServers/loadNodeVersions`
+- 桌面通知点回日志改为 `devtools:log-reopen-requested` 事件
+
+### 16.3 顺带修复
+
+`getGitLog`：后端返回 `{ branch, commits }` 且时间字段为 `time`，原实现按裸数组 + `timestamp` 解析导致「最近提交」区恒空。

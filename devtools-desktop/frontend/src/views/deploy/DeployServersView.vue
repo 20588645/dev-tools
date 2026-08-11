@@ -66,30 +66,9 @@ const columns = computed<BaseDataTableColumn<ServerRow>[]>(() => [
   },
 ])
 
-/**
- * 服务器列表同时被 legacy 侧的构建/部署弹窗与项目配置弹窗消费（旧 `app.js` 的
- * 全局 `servers`）。本子页增删改后必须回写，否则那些弹窗仍显示旧数据。
- * 等第 6 步弹窗迁完可以删掉。
- */
-function syncLegacyServers() {
-  const globals = globalThis as Record<string, unknown>
-  globals.servers = page.servers.value.map(server => ({
-    id: server.id,
-    name: server.name,
-    host: server.host,
-    port: server.port,
-    username: server.username,
-    authType: server.authType,
-    password: server.passwordMasked,
-    defaultRemotePath: server.defaultRemotePath,
-    deployPaths: server.deployPaths,
-  }))
-}
-
 async function refresh(options: { silent?: boolean } = {}) {
   try {
     await page.load(options)
-    syncLegacyServers()
   } catch (cause) {
     notify.push(`刷新服务器失败：${reason(cause)}`, 'error')
   }
@@ -111,7 +90,6 @@ async function onConfirmRemove() {
   try {
     await page.remove(server.id)
     pendingRemove.value = null
-    syncLegacyServers()
     notify.push(`已删除 ${server.name}`, 'success')
   } catch (cause) {
     notify.push(`删除失败：${reason(cause)}`, 'error')

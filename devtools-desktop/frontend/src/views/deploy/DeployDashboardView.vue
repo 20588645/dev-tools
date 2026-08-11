@@ -16,12 +16,16 @@ import { useDeployTaskStore } from '@/stores/deploy-task'
 import { useLogTaskStore } from '@/stores/log-task'
 import { useNotificationStore } from '@/stores/notification'
 
+import BuildDeployDialog from './components/BuildDeployDialog.vue'
 import DeployGroupSection from './components/DeployGroupSection.vue'
 import DeployProjectCard from './components/DeployProjectCard.vue'
 import ProjectConfigDialog from './components/ProjectConfigDialog.vue'
+import RemoteBrowserDialog from './components/RemoteBrowserDialog.vue'
+import { useBuildDeploy } from './composables/useBuildDeploy'
 import { useDeployDashboard, type DeployFilter } from './composables/useDeployDashboard'
 import { useDeployRealtime } from './composables/useDeployRealtime'
 import { useProjectConfig } from './composables/useProjectConfig'
+import { useRemoteBrowser } from './composables/useRemoteBrowser'
 import './deploy-dashboard.css'
 
 defineOptions({ name: 'DeployDashboardView' })
@@ -32,10 +36,12 @@ const log = useLogTaskStore()
 const notify = useNotificationStore()
 
 const config = useProjectConfig()
+const buildDeploy = useBuildDeploy()
+const remoteBrowser = useRemoteBrowser()
 
 const renamingGroup = ref<string | null>(null)
 const pendingRemove = ref<Project | null>(null)
-/** 配置弹窗要选目标服务器与 Node 版本，两者都不属于项目列表，单独取。 */
+/** 配置 / 构建 / 部署弹窗共用的服务器与 Node 版本列表。 */
 const servers = ref<DeployServer[]>([])
 const nodeVersions = ref<string[]>([])
 const currentNodeVersion = ref('')
@@ -47,14 +53,6 @@ const FILTERS: Array<{ key: DeployFilter, label: string }> = [
   { key: 'configured', label: '已配置' },
   { key: 'unconfigured', label: '未配置' },
 ]
-
-/**
- * 构建/部署弹窗仍在 legacy 侧（第 4 批迁）。项目配置与添加项目已迁到 Vue。
- */
-function callLegacy(name: string, ...args: unknown[]) {
-  const fn = (globalThis as Record<string, unknown>)[name]
-  if (typeof fn === 'function') (fn as (...rest: unknown[]) => void)(...args)
-}
 
 /** 任务完成后刷新卡片，让「最近部署」摘要跟上。 */
 useDeployRealtime({ onFinished: () => void page.load({ silent: true }) })
@@ -77,7 +75,7 @@ async function onConfirmRemove() {
 }
 
 /**
- * 配置弹窗的辅助数据。失败不阻塞页面：弹窗里会给「暂无服务器」空态，
+ * 配置 / 构建 / 部署弹窗的辅助数据。失败不阻塞页面：弹窗里会给空态，
  * Node 下拉退化成只有「系统默认」——与 legacy 取数失败时的表现一致。
  */
 async function loadConfigOptions() {
@@ -110,6 +108,32 @@ async function onRenameGroup(name: string) {
   } catch (cause) {
     notify.push(`重命名失败：${cause instanceof Error ? cause.message : '未知错误'}`, 'error')
   }
+}
+
+function openBuild(project: Project) {
+  buildDeploy.openBuild(project)
+}
+
+function openDeploy(project: Project) {
+  buildDeploy.openDeploy(project, servers.value)
+}
+
+async function onSubmitBuildDeploy() {
+  await buildDeploy.submit()
+}
+
+async function onOpenRemoteBrowser() {
+  const target = buildDeploy.remoteBrowserTarget()
+  if (!target) {
+    notify.push('请先选择至少一个目标服务器', 'warning')
+    return
+  }
+  await remoteBrowser.show(target)
+}
+
+function onConfirmRemotePath() {
+  const path = remoteBrowser.confirm()
+  buildDeploy.applyRemotePath(path)
 }
 
 /**
@@ -208,8 +232,8 @@ onActivated(() => {
             :project="project"
             :last="page.lastDeployOf(project.name)"
             :busy="task.isBusy(project.name)"
-            @build="callLegacy('openBuildModal', project.name)"
-            @deploy="callLegacy('openDeployModal', project.name)"
+            @build="openBuild(project)"
+            @deploy="openDeploy(project)"
             @configure="config.openFor(project)"
             @progress="log.reopen()"
             @remove="askRemove(project)"
@@ -224,8 +248,8 @@ onActivated(() => {
           :project="project"
           :last="page.lastDeployOf(project.name)"
           :busy="task.isBusy(project.name)"
-          @build="callLegacy('openBuildModal', project.name)"
-          @deploy="callLegacy('openDeployModal', project.name)"
+          @build="openBuild(project)"
+          @deploy="openDeploy(project)"
           @configure="config.openFor(project)"
           @progress="log.reopen()"
           @remove="askRemove(project)"
@@ -241,6 +265,16 @@ onActivated(() => {
       tone="danger"
       @update:model-value="!$event && (pendingRemove = null)"
       @confirm="onConfirmRemove"
+    />
+    <ConfirmDialog
+      :model-value="buildDeploy.pendingMultiConfirm.value !== null"
+      title="多服务器部署"
+      :message="buildDeploy.pendingMultiConfirm.value
+        ? `确认同时部署到 ${buildDeploy.pendingMultiConfirm.value.serverIds.length} 台服务器（${buildDeploy.pendingMultiConfirm.value.names}）？`
+        : ''"
+      confirm-text="全部部署"
+      @update:model-value="!$event && buildDeploy.cancelMultiConfirm()"
+      @confirm="buildDeploy.confirmMultiDeploy()"
     />
     <GroupRenameDialog
       :group-key="renamingGroup"
@@ -260,6 +294,57 @@ onActivated(() => {
       @update:state="config.patch($event)"
       @toggle-server="config.toggleServer($event)"
       @submit="onSubmitConfig"
+    />
+    <BuildDeployDialog
+      :project="buildDeploy.project.value"
+      :mode="buildDeploy.mode.value"
+      :title="buildDeploy.title.value"
+      :subtitle="buildDeploy.subtitle.value"
+      :is-multi="buildDeploy.isMulti.value"
+      :selected-modules="buildDeploy.selectedModules.value"
+      :favorites="buildDeploy.favorites.value"
+      :module-filter="buildDeploy.moduleFilter.value"
+      :module-query="buildDeploy.moduleQuery.value"
+      :module-sections="buildDeploy.moduleSections.value"
+      :node-version="buildDeploy.nodeVersion.value"
+      :node-versions="nodeVersions"
+      :current-node-version="currentNodeVersion"
+      :servers="buildDeploy.servers.value"
+      :server-ids="buildDeploy.serverIds.value"
+      :remote-path="buildDeploy.remotePath.value"
+      :path-options="buildDeploy.pathOptions.value"
+      :git-branch="buildDeploy.gitBranch.value"
+      :git-commits="buildDeploy.gitCommits.value"
+      :conn-badges="buildDeploy.connBadges.value"
+      :test-summary="buildDeploy.testSummary.value"
+      :testing="buildDeploy.testing.value"
+      :submitting="buildDeploy.submitting.value"
+      :error="buildDeploy.error.value"
+      @close="buildDeploy.close()"
+      @submit="onSubmitBuildDeploy"
+      @update:module-filter="buildDeploy.moduleFilter.value = $event"
+      @update:module-query="buildDeploy.moduleQuery.value = $event"
+      @update:node-version="buildDeploy.nodeVersion.value = $event"
+      @update:remote-path="buildDeploy.remotePath.value = $event"
+      @toggle-module="buildDeploy.toggleModule($event)"
+      @toggle-favorite="buildDeploy.toggleFavorite($event)"
+      @toggle-all="buildDeploy.toggleAll($event)"
+      @toggle-server="(id, checked) => buildDeploy.setServerChecked(id, checked)"
+      @quick-test="buildDeploy.quickTest()"
+      @browse="onOpenRemoteBrowser"
+    />
+    <RemoteBrowserDialog
+      :target="remoteBrowser.target.value"
+      :breadcrumbs="remoteBrowser.breadcrumbs.value"
+      :current-dir="remoteBrowser.currentDir.value"
+      :entries="remoteBrowser.visibleEntries.value"
+      :parent-dir="remoteBrowser.parentDir.value"
+      :loading="remoteBrowser.loading.value"
+      :error="remoteBrowser.error.value"
+      :fallback="remoteBrowser.fallback.value"
+      @close="remoteBrowser.close()"
+      @navigate="remoteBrowser.navigate($event)"
+      @confirm="onConfirmRemotePath"
     />
   </div>
 </template>

@@ -10,7 +10,7 @@ const maximumDuplicateSelectorErrors = new Map([
   // 服务器管理子页迁移时这两个文件曾各 +1（.history-table/.history-row 从混合组
   // 收缩为同名规则）；部署历史子页迁完、整批 .history-* 规则删除后已回落原值。
   ['src/css/overrides.css', 4],
-  ['src/css/pages/deploy.css', 2],
+  // deploy.css 已在 step 6 Part B 删除，不再纳入 baseline。
   ['src/css/legacy-runtime.css', 4],
 ])
 

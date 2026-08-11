@@ -38,6 +38,22 @@ export function formatDeployStatus(status: 'success' | 'error'): DeployStatusVie
     : { label: '失败', tone: 'danger' }
 }
 
+/**
+ * Git 提交相对时间。与旧 `gitTimeAgo` 同分档，含「昨天」——比笼统的「1天前」
+ * 更贴近「刚刚发过 / 昨天发过」的决策语境。
+ */
+export function formatGitCommitAgo(timestamp: number, now = Date.now()): string {
+  if (!timestamp) return '未知时间'
+  const minutes = Math.max(0, Math.floor((now - timestamp) / 60_000))
+  if (minutes < 1) return '刚刚'
+  if (minutes < 60) return `${minutes}分钟前`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours}小时前`
+  const days = Math.floor(hours / 24)
+  if (days === 1) return '昨天'
+  return `${days}天前`
+}
+
 /** 文件大小，用于远程目录浏览。 */
 export function formatFileSize(bytes: number): string {
   if (!bytes || bytes < 0) return '0 B'
