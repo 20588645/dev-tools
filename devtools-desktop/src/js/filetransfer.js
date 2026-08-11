@@ -43,10 +43,35 @@ let ftSugTimer = null;
 
 let ftWired = false; // 事件委托只绑一次
 
+/**
+ * 本页自管的服务器列表。
+ *
+ * 原先读 `app.js` 的全局 `servers`（由 `deploy.js` 的 `loadServers` /
+ * Vue 服务器子页的 `syncLegacyServers` 回写）。Phase 6-2 弹窗迁完后那两条
+ * 写入路径都删了，全局恒为空——下拉框永远「暂无服务器」。改为进入本页时
+ * 自行拉 `/api/servers`；迁入 Vue 后本函数随整页一并删除。
+ */
+let ftServers = [];
+
+async function ftLoadServers() {
+  try {
+    const data = await API.get('/api/servers');
+    ftServers = Array.isArray(data) ? data : [];
+  } catch (e) {
+    console.error('加载服务器列表失败:', e);
+    ftServers = [];
+    if (typeof showToast === 'function') {
+      showToast('加载服务器列表失败', (e && e.message) || '稍后重试');
+    }
+  }
+  ftRenderServerOptions();
+  ftSyncSessionUI();
+}
+
 // 进入页面：绑事件 + 刷新服务器下拉 + 同步会话态；本地栏首次自动列家目录
 function initFileTransfer() {
   ftWireOnce();
-  ftRenderServerOptions();
+  void ftLoadServers();
   ftRenderQueue();
   ftRenderTabs();
   ftSyncSessionUI();
@@ -394,7 +419,7 @@ function ftSaveSort(side) {
 function ftRenderServerOptions() {
   const sel = document.getElementById('ftServerSelect');
   if (!sel) return;
-  const list = Array.isArray(servers) ? servers : [];
+  const list = Array.isArray(ftServers) ? ftServers : [];
   if (list.length === 0) {
     sel.innerHTML = '<option value="">（暂无服务器，请先在「部署面板 · 服务器管理」添加）</option>';
     sel.disabled = true;
@@ -523,7 +548,7 @@ async function ftConnect(event) {
   const sel = document.getElementById('ftServerSelect');
   const serverId = sel && sel.value;
   if (!serverId) { showToast('请先选择服务器'); return; }
-  const server = (servers || []).find((s) => s.id === serverId) || { id: serverId };
+  const server = (ftServers || []).find((s) => s.id === serverId) || { id: serverId };
   const exist = ftTabs.find((t) => t.server && t.server.id === serverId);
   if (exist) { ftSwitchTab(exist.id); showToast('已切到该连接', server.name || server.host || ''); return; }
   const btn = event ? event.currentTarget : document.getElementById('ftConnectBtn');
@@ -598,7 +623,7 @@ function ftSyncSessionUI() {
     btn.classList.add('btn--primary');
     btn.classList.remove('btn--danger');
   }
-  if (sel) sel.disabled = !(Array.isArray(servers) && servers.length);
+  if (sel) sel.disabled = !(Array.isArray(ftServers) && ftServers.length);
   ftUpdateRemoteToolbar();
 
   if (connected && ftCurrentServer) {
