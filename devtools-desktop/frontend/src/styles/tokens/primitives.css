@@ -67,6 +67,7 @@
   --radius-pill: 999px;
   --shadow-sm: 0 1px 2px rgb(15 23 42 / 8%);
   --shadow-md: 0 8px 24px rgb(15 23 42 / 14%);
+  --shadow-lg: 0 20px 40px rgb(15 23 42 / 14%);
   --duration-fast: 120ms;
   --duration-normal: 180ms;
   --duration-slow: 260ms;

@@ -27,4 +27,31 @@
   --color-series-2: var(--color-teal-400);
   --color-series-3: var(--color-cyan-400);
   --color-series-muted: var(--color-neutral-500);
+
+  /* 终端表面与 xterm 主题（由 runtime getComputedStyle 解析，勿在业务 TS 写死 hex） */
+  --color-terminal: #0c1017;
+  --color-terminal-header: color-mix(in srgb, var(--color-surface) 80%, transparent);
+  --color-terminal-btn: color-mix(in srgb, var(--color-surface-raised) 60%, transparent);
+  --color-terminal-btn-fg: var(--color-text-muted);
+  --color-terminal-btn-hover: var(--color-action-hover);
+  --color-terminal-btn-hover-bg: color-mix(in srgb, var(--color-action) 12%, transparent);
+  --color-surface-hover: color-mix(in srgb, var(--color-text) 6%, transparent);
+  --color-danger-subtle: color-mix(in srgb, var(--color-danger) 14%, transparent);
+
+  --term-xterm-bg: var(--color-terminal);
+  --term-xterm-fg: #aab6c5;
+  --term-xterm-cursor: #edf2f8;
+  --term-xterm-selection: color-mix(in srgb, var(--color-action) 30%, transparent);
+  --term-xterm-black: #000000;
+  --term-xterm-red: #ff5d6c;
+  --term-xterm-green: #33d17a;
+  --term-xterm-yellow: #f7b955;
+  --term-xterm-blue: #7d74f7;
+  --term-xterm-magenta: #f3e8ff;
+  --term-xterm-cyan: #06b6d4;
+  --term-xterm-white: #edf2f8;
+  --term-search-active-bg: color-mix(in srgb, var(--color-action) 85%, transparent);
+  --term-search-active-border: var(--color-action);
+  --term-search-match-bg: color-mix(in srgb, var(--color-action) 35%, transparent);
+  --term-search-match-border: color-mix(in srgb, var(--color-action) 55%, transparent);
 }

@@ -22,4 +22,22 @@
   --color-series-2: var(--color-teal-600);
   --color-series-3: var(--color-cyan-500);
   --color-series-muted: var(--color-neutral-400);
+
+  --color-terminal: #f8fafc;
+  --color-terminal-header: color-mix(in srgb, var(--color-surface-raised) 85%, transparent);
+  --color-terminal-btn: color-mix(in srgb, var(--color-surface) 90%, transparent);
+  --color-terminal-btn-fg: var(--color-text-muted);
+  --color-terminal-btn-hover: var(--color-action);
+  --color-terminal-btn-hover-bg: color-mix(in srgb, var(--color-action) 8%, transparent);
+  --color-surface-hover: color-mix(in srgb, var(--color-text) 5%, transparent);
+  --color-danger-subtle: color-mix(in srgb, var(--color-danger) 12%, transparent);
+
+  --term-xterm-bg: var(--color-terminal);
+  --term-xterm-fg: #0f172a;
+  --term-xterm-cursor: #0f172a;
+  --term-xterm-selection: color-mix(in srgb, var(--color-text) 15%, transparent);
+  --term-search-active-bg: var(--color-warning);
+  --term-search-active-border: var(--color-amber-500);
+  --term-search-match-bg: color-mix(in srgb, var(--color-warning) 30%, transparent);
+  --term-search-match-border: color-mix(in srgb, var(--color-warning) 50%, transparent);
 }

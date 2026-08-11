@@ -864,8 +864,7 @@ function switchPage(page, el, source = 'legacy') {
       const activeSub = document.querySelector('#page-deploy .seg__item.is-active');
       if (activeSub) switchSubTab(activeSub.dataset.sub, activeSub);
     }
-    // editor 已迁 Vue：不再调用 initEditor()
-    if (page === 'terminal') loadCommands();
+    // editor / terminal 已迁 Vue：不再调用 initEditor() / loadCommands()
     emitLegacyPageActivation(page, source);
   };
 

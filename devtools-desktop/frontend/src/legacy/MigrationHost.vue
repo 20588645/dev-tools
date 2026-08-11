@@ -16,6 +16,7 @@ import {
 import { createDeployRealtimeService } from '@/services/deploy-realtime-service'
 import { createFileTransferSessionService } from '@/services/filetransfer-session-service'
 import { createRunRuntimeService } from '@/services/run-runtime-service'
+import { createTerminalRuntimeService } from '@/services/terminal-runtime-service'
 import { createTodoReminderService } from '@/services/todo-reminder-service'
 import { normalizeThemeMode, useAppStore, type Theme } from '@/stores/app'
 import { useLogTaskStore } from '@/stores/log-task'
@@ -31,6 +32,7 @@ const NotesView = defineAsyncComponent(() => import('@/views/notes/NotesView.vue
 const RunView = defineAsyncComponent(() => import('@/views/run/RunView.vue'))
 const FileTransferView = defineAsyncComponent(() => import('@/views/filetransfer/FileTransferView.vue'))
 const FileEditorView = defineAsyncComponent(() => import('@/views/editor/FileEditorView.vue'))
+const TerminalView = defineAsyncComponent(() => import('@/views/terminal/TerminalView.vue'))
 const NotebookView = defineAsyncComponent(() => import('@/views/notebook/NotebookView.vue'))
 const SettingsView = defineAsyncComponent(() => import('@/views/settings/SettingsView.vue'))
 const TodoView = defineAsyncComponent(() => import('@/views/todo/TodoView.vue'))
@@ -55,6 +57,8 @@ const runRuntimeService = createRunRuntimeService()
 const deployRealtimeService = createDeployRealtimeService()
 /* SFTP keepalive + transfer WS：切走文件传输页不销毁会话。 */
 const fileTransferSessionService = createFileTransferSessionService()
+/* xterm + PTY：切走快捷命令页不销毁终端实例与远端进程。 */
+const terminalRuntimeService = createTerminalRuntimeService()
 const activePage = ref<LegacyPageId>(
   (document.querySelector('.page.active')?.id.replace(/^page-/, '') as LegacyPageId | undefined) ?? 'home',
 )
@@ -86,6 +90,9 @@ filetransferTarget?.setAttribute('data-vue-owner', 'filetransfer')
 const editorTarget = document.querySelector('#vue-editor-host')
 const hasEditorTarget = Boolean(editorTarget)
 editorTarget?.setAttribute('data-vue-owner', 'editor')
+const terminalTarget = document.querySelector('#vue-terminal-host')
+const hasTerminalTarget = Boolean(terminalTarget)
+terminalTarget?.setAttribute('data-vue-owner', 'terminal')
 /* 部署面板三个子页均已迁到 Vue。 */
 const deployDashboardTarget = document.querySelector('#vue-deploy-dashboard-host')
 const hasDeployDashboardTarget = Boolean(deployDashboardTarget)
@@ -170,6 +177,7 @@ onMounted(() => {
   stopPageLeaveGuardBridge = installPageLeaveGuardBridge()
   deployRealtimeService.start()
   fileTransferSessionService.start()
+  terminalRuntimeService.start()
 })
 
 onBeforeUnmount(() => {
@@ -180,6 +188,7 @@ onBeforeUnmount(() => {
   runRuntimeService.stop()
   deployRealtimeService.stop()
   fileTransferSessionService.stop()
+  terminalRuntimeService.stop()
   stopLogReopen?.()
   stopAddProjectBridge?.()
   stopAddProjectRequests?.()
@@ -238,6 +247,11 @@ onBeforeUnmount(() => {
     <Teleport v-if="hasEditorTarget" to="#vue-editor-host">
       <KeepAlive>
         <FileEditorView v-if="activePage === 'editor'" />
+      </KeepAlive>
+    </Teleport>
+    <Teleport v-if="hasTerminalTarget" to="#vue-terminal-host">
+      <KeepAlive>
+        <TerminalView v-if="activePage === 'terminal'" />
       </KeepAlive>
     </Teleport>
     <Teleport v-if="hasDeployDashboardTarget" to="#vue-deploy-dashboard-host">
