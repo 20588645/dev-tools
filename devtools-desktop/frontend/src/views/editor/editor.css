@@ -1,0 +1,387 @@
+/* ===== views/editor：迁自 src/css/pages/editor.css，适配 Vue PageFrame ===== */
+
+#vue-editor-host {
+  width: 100%;
+  min-width: 0;
+  min-height: calc(100vh - 58px);
+}
+
+.ed-page {
+  position: relative;
+  height: calc(100vh - 58px);
+  min-width: 0;
+  min-height: 520px;
+  overflow: hidden;
+  background: var(--color-page);
+}
+
+.ed-page > .page-frame__body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  padding: var(--space-4);
+  padding-top: 0;
+}
+
+.ed-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ed-toolbar__icon {
+  display: inline-flex;
+  margin-right: 6px;
+  vertical-align: -2px;
+}
+
+.ed-layout {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--bg-elevated, var(--color-surface));
+  border: 1px solid var(--border, var(--color-border));
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+.ed-tabs {
+  display: flex;
+  flex-shrink: 0;
+  align-items: stretch;
+  gap: 0;
+  min-height: 38px;
+  overflow: hidden auto;
+  background: var(--bg-input, var(--color-surface-subtle));
+  border-bottom: 1px solid var(--border, var(--color-border));
+}
+
+.ed-tabs::-webkit-scrollbar { height: 0; }
+
+.ed-tab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  max-width: 220px;
+  padding: 0 10px 0 14px;
+  color: var(--text-secondary, var(--color-text-muted));
+  font-size: 12.5px;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  border-right: 1px solid var(--border, var(--color-border));
+  transition: background 0.12s ease;
+  gap: 8px;
+}
+
+.ed-tab:hover { background: var(--bg-hover, var(--color-surface-hover)); }
+
+.ed-tab.active {
+  color: var(--text-primary, var(--color-text));
+  font-weight: 600;
+  background: var(--bg-elevated, var(--color-surface));
+}
+
+.ed-tab.active::after {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 2px;
+  content: '';
+  background: var(--primary, var(--color-action));
+}
+
+.ed-tab-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ed-tab-close {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  color: var(--text-muted, var(--color-text-muted));
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  border-radius: 5px;
+}
+
+.ed-tab-close:hover {
+  color: var(--danger, var(--color-danger));
+  background: var(--danger-subtle, var(--color-danger-subtle));
+}
+
+.ed-tab-close .ed-tab-x { opacity: 0.85; }
+
+.ed-tab-close.dirty .ed-tab-x { display: none; }
+
+.ed-tab-close.dirty::before {
+  width: 8px;
+  height: 8px;
+  content: '';
+  background: var(--primary, var(--color-action));
+  border-radius: 50%;
+}
+
+.ed-tab-close.dirty:hover::before { display: none; }
+
+.ed-tab-close.dirty:hover .ed-tab-x { display: block; }
+
+.ed-body {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.ed-editor-host {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+}
+
+.ed-editor-host .CodeMirror {
+  height: 100%;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.ed-editor-host .CodeMirror-gutters {
+  border-right: 1px solid var(--border, var(--color-border));
+}
+
+.ed-empty {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted, var(--color-text-muted));
+  text-align: center;
+  gap: 4px;
+}
+
+.ed-empty-icon {
+  margin-bottom: 10px;
+  color: var(--text-muted, var(--color-text-muted));
+  opacity: 0.55;
+}
+
+.ed-empty-title {
+  color: var(--text-secondary, var(--color-text-muted));
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.ed-empty-desc {
+  max-width: 320px;
+  color: var(--text-muted, var(--color-text-muted));
+  font-size: 12px;
+}
+
+.ed-statusbar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  height: 28px;
+  padding: 0 14px;
+  color: var(--text-muted, var(--color-text-muted));
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: var(--bg-input, var(--color-surface-subtle));
+  border-top: 1px solid var(--border, var(--color-border));
+  gap: 16px;
+}
+
+.ed-status-path {
+  max-width: 50%;
+  overflow: hidden;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  direction: rtl;
+  unicode-bidi: plaintext;
+}
+
+.ed-status-spacer { flex: 1 1 auto; }
+
+.ed-status-item { flex-shrink: 0; }
+
+.ed-statusbar .save-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 4px;
+  vertical-align: 0;
+  border-radius: 50%;
+  background: var(--text-muted, var(--color-text-muted));
+}
+
+.ed-statusbar .save-dot.success { background: var(--color-success); }
+.ed-statusbar .save-dot.warning { background: var(--color-warning); }
+.ed-statusbar .save-dot.danger { background: var(--color-danger); }
+
+.ed-statusbar .save-dot.loading {
+  animation: edPulse 0.9s ease infinite;
+}
+
+@keyframes edPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+.ed-editor-host .CodeMirror-dialog {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  border-color: var(--border, var(--color-border));
+}
+
+.ed-tab-menu {
+  position: fixed;
+  z-index: 9999;
+  min-width: 160px;
+  padding: 5px;
+  font-size: 13px;
+  user-select: none;
+  background: var(--bg-elevated, var(--color-surface));
+  border: 1px solid var(--border, var(--color-border));
+  border-radius: 10px;
+  box-shadow: var(--shadow-md);
+  animation: edMenuIn 0.1s ease;
+}
+
+@keyframes edMenuIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.ed-tab-menu-item {
+  padding: 7px 12px;
+  color: var(--text-primary, var(--color-text));
+  white-space: nowrap;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.1s ease;
+}
+
+.ed-tab-menu-item:hover { background: var(--bg-hover, var(--color-surface-hover)); }
+
+.ed-tab-menu-item.disabled {
+  color: var(--text-muted, var(--color-text-muted));
+  cursor: default;
+  opacity: 0.5;
+}
+
+.ed-tab-menu-item.disabled:hover { background: none; }
+
+.ed-tab-menu-sep {
+  height: 1px;
+  margin: 5px 6px;
+  background: var(--border, var(--color-border));
+}
+
+.ed-browser__nav {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.ed-browser__empty {
+  padding: 24px;
+  color: var(--text-muted, var(--color-text-muted));
+  text-align: center;
+}
+
+.ed-browser__save-row {
+  display: flex;
+  align-items: center;
+  margin-top: 12px;
+  gap: 8px;
+}
+
+.ed-browser__save-row > span {
+  color: var(--text-secondary, var(--color-text-muted));
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.ed-browser .browser-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 8px;
+  color: var(--text-muted, var(--color-text-muted));
+  font-size: 12px;
+  gap: 4px;
+}
+
+.ed-browser .browser-breadcrumb__crumb {
+  padding: 2px 4px;
+  color: var(--text-primary, var(--color-text));
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.ed-browser .browser-breadcrumb__crumb:hover {
+  background: var(--bg-hover, var(--color-surface-hover));
+}
+
+.ed-browser .browser-list {
+  max-height: 420px;
+  overflow: auto;
+  border: 1px solid var(--border, var(--color-border));
+  border-radius: 8px;
+}
+
+.ed-browser .browser-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 12px;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border, var(--color-border));
+  gap: 8px;
+}
+
+.ed-browser .browser-item:last-child { border-bottom: none; }
+
+.ed-browser .browser-item:hover {
+  background: var(--bg-hover, var(--color-surface-hover));
+}
+
+.browser-item__name {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 8px;
+}
+
+.browser-item__kind {
+  flex-shrink: 0;
+  padding: 1px 5px;
+  color: var(--accent, var(--color-action));
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  background: var(--color-surface-subtle, var(--bg-input));
+  border-radius: 4px;
+}
+
+.browser-item__meta {
+  flex-shrink: 0;
+  color: var(--text-muted, var(--color-text-muted));
+  font-size: 11px;
+}

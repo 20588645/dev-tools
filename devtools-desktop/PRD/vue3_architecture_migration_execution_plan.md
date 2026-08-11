@@ -1,12 +1,12 @@
 # DevTools Desktop Vue 3 架构渐进重构执行计划
 
-> 文档版本：1.54
-> 状态：执行中（Phase 6-1 / 6-2 / 6-3 已关闭；下一步 Phase 7-1 Editor）
+> 文档版本：1.58
+> 状态：执行中（Phase 6 / 7-1 已关闭；下一步 Phase 7-2 Terminal）
 > 编制日期：2026-07-21  
 > 最近更新：2026-08-11
 > 适用仓库：`devtools-desktop`  
 > 核心原则：保持软件持续可运行，按页面逐步替换，不进行一次性推倒重写。
-> **Phase 6-2 部署面板 `deploy` 已关闭**。三个子页（项目总览 / 服务器管理 / 部署历史）PG0～PG5 与真实 Tauri 验收均已通过；第 6 步弹窗四批亦已完成并提交——第 1 批项目默认配置（`fa8ecfc`）、第 2 批添加项目（`7880d26`）、第 3/4 批合并的远程浏览 + 构建/部署弹窗（`6167e6e`，用户 Tauri 验收通过）。`deploy.js` / `deploy.css` 整文件删除；壳层 `.sub-page` 规则并入 `legacy-runtime.css`。Run 遗留的四项跨页耦合**全部收口**：第 1、3、4 项此前已关；第 2 项 `legacy/log-viewer-bridge.ts`（及 `deploy-task-bridge.ts`）随第 6 步弹窗迁完删除，桌面通知/Toast 点回日志改为事件 `devtools:log-reopen-requested`。[组件架构合规专项](./vue-migration/component-architecture-compliance.md)已于 2026-08-06 关闭（机器基线 0、批准例外 0，最终 Smoke Test 通过），该文转为长期生效的规则文档。**Phase 6-3 文件传输 `filetransfer` 已关闭**（PG0～PG5；L1；用户 Tauri 验收通过；`filetransfer.js`/`filetransfer.css` 已删）。**当前执行指针：Phase 7-1 文件编辑 `editor`，从 PG0 起。**
+> **Phase 6-2 部署面板 `deploy` 已关闭**。三个子页（项目总览 / 服务器管理 / 部署历史）PG0～PG5 与真实 Tauri 验收均已通过；第 6 步弹窗四批亦已完成并提交——第 1 批项目默认配置（`fa8ecfc`）、第 2 批添加项目（`7880d26`）、第 3/4 批合并的远程浏览 + 构建/部署弹窗（`6167e6e`，用户 Tauri 验收通过）。`deploy.js` / `deploy.css` 整文件删除；壳层 `.sub-page` 规则并入 `legacy-runtime.css`。Run 遗留的四项跨页耦合**全部收口**：第 1、3、4 项此前已关；第 2 项 `legacy/log-viewer-bridge.ts`（及 `deploy-task-bridge.ts`）随第 6 步弹窗迁完删除，桌面通知/Toast 点回日志改为事件 `devtools:log-reopen-requested`。[组件架构合规专项](./vue-migration/component-architecture-compliance.md)已于 2026-08-06 关闭（机器基线 0、批准例外 0，最终 Smoke Test 通过），该文转为长期生效的规则文档。**Phase 6-3 文件传输 `filetransfer` 已关闭**。**Phase 7-1 文件编辑 `editor` 已关闭**（PG0～PG5；L1；切页脏确认；用户 Tauri 验收通过；`editor.js`/`editor.css` 已删）。**当前执行指针：Phase 7-2 快捷命令 `terminal`，从 PG0 起。**
 
 ---
 
@@ -517,7 +517,7 @@ L3 中纯前端且低风险的改动可以与页面 Vue 实现处于同一页面
 | 10 | Phase 6-1 | 本地运行 `run` | **PG0～PG5 已完成** | 已完成 | 体验、进程、轮询、WebSocket、后台状态和真实 Tauri E2E 通过；四项跨页耦合已随 Phase 6-2 全部收口 |
 | 11 | Phase 6-2 | 部署面板 `deploy` | **已完成**（三子页 + 第 6 步弹窗；`6167e6e`） | 已完成 | 三子页 PG0～PG5、构建/部署/远程浏览弹窗、`deploy.js`/`deploy.css`/`log-viewer-bridge` 归零；四项跨页耦合全部收口；用户 Tauri 验收通过 |
 | 12 | Phase 6-3 | 文件传输 `filetransfer` | **已完成** | 已完成 | L1 Vue + session/queue store；无自动重连；legacy 归零；用户 Tauri 验收通过 |
-| 13 | Phase 7-1 | 文件编辑 `editor` | 等待 | Phase 6 完成后开始 PG0 | CodeMirror 生命周期和未保存保护通过 |
+| 13 | Phase 7-1 | 文件编辑 `editor` | **已完成** | 已完成 | L1 Vue + CM5 生命周期 + 切页脏确认；legacy 归零；用户 Tauri 验收通过 |
 | 14 | Phase 7-2 | 快捷命令 `terminal` | 等待 | 完成 `editor` 后开始 PG0 | Xterm、PTY、WebGL 降级和多标签恢复通过 |
 | 15 | Phase 8 | Vue 应用壳与 Router | 等待全部业务页 | 升级现有 `App.vue`，创建 `AppLayout.vue` | 侧边栏、主题、Router 和全局反馈由 Vue 接管 |
 | 16 | Phase 9 | 旧架构清理与发布 | 等待 Phase 8 | 删除 legacy bridge、旧 `src` 和污染 CSS | G7/G8、正式构建、升级与全量回归通过 |
@@ -1347,7 +1347,7 @@ frontend/src/services/modules/ipcheck-service.ts
 | 10 | 本地运行 | `views/run/`、`run-service.ts`、`stores/run.ts`；旧 `run.js`、`run.css` 已删除 | 高 | 进程、轮询、WebSocket | Phase 6-1 | **初版阶段性提交，Gate 未关闭** | 合规基础完成后处理体验问题与真实 Tauri E2E |
 | 11 | 部署面板 | `views/deploy/`（三子页 + 构建/部署/远程浏览弹窗均已迁）；旧 `deploy.js`、`deploy.css`、`log-viewer-bridge` 已删除 | 很高 | 项目、SSH、构建、弹窗 | Phase 6-2 | **PG5 / 第 6 步弹窗已通过（`6167e6e`）** | 保持回归，不重复迁移；下一页为文件传输 |
 | 12 | 文件传输 | `views/filetransfer/`、`file-transfer` store、session service；旧 js/css 已删；`assessment.md` + `decision.md` | 很高 | SFTP、会话、队列、keepalive | Phase 6-3 | **PG5 已通过** | 保持回归；下一页为编辑器 |
-| 13 | 文件编辑 | `editor.js`、`editor.css` | 高 | CodeMirror、未保存状态 | Phase 7-1 | 等待 | Phase 6 完成后开始 PG0 |
+| 13 | 文件编辑 | `views/editor/`、`stores/editor.ts`、离开守卫桥；旧 js/css 已删；`assessment.md` + `decision.md` | 高 | CodeMirror、未保存状态 | Phase 7-1 | **PG5 已通过** | 保持回归；下一页为终端 |
 | 14 | 快捷命令 | `terminal.js`、`terminal.css` | 很高 | Xterm、PTY、WebSocket、WebGL | Phase 7-2 | 等待 | `editor` 提交后开始 PG0 |
 
 页面顺序默认锁定。需要调整时，必须说明依赖、收益、风险和受影响 Gate，经用户确认后同步修改本矩阵。不得把 Phase 8 侧边栏、应用壳和 Router 插入任一业务页面迁移之前。

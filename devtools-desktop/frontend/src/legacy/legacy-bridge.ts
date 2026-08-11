@@ -63,6 +63,43 @@ export function requestLegacyPage(pageId: LegacyPageId) {
   }))
 }
 
+/**
+ * 页面离开守卫：在 legacy `switchPage` 真正改 `.page.active` 之前调用。
+ * 返回 `true` 允许离开，`false` 取消切换（用于编辑器脏标签确认等）。
+ * 无 vue-router 时 KeepAlive 的 onDeactivated 太晚，必须在 switchPage 入口拦截。
+ */
+export type PageLeaveGuard = () => boolean | Promise<boolean>
+
+const pageLeaveGuards = new Map<LegacyPageId, PageLeaveGuard>()
+
+export function registerPageLeaveGuard(pageId: LegacyPageId, guard: PageLeaveGuard): () => void {
+  pageLeaveGuards.set(pageId, guard)
+  return () => {
+    if (pageLeaveGuards.get(pageId) === guard) pageLeaveGuards.delete(pageId)
+  }
+}
+
+export async function runPageLeaveGuards(pageId: string): Promise<boolean> {
+  if (!isLegacyPageId(pageId)) return true
+  const guard = pageLeaveGuards.get(pageId)
+  if (!guard) return true
+  try {
+    return Boolean(await guard())
+  } catch {
+    return false
+  }
+}
+
+/** 把守卫挂到 window，供尚未迁完的 `src/js/app.js` `switchPage` 调用。 */
+export function installPageLeaveGuardBridge(): () => void {
+  window.__devtoolsRunPageLeaveGuards = runPageLeaveGuards
+  return () => {
+    if (window.__devtoolsRunPageLeaveGuards === runPageLeaveGuards) {
+      delete window.__devtoolsRunPageLeaveGuards
+    }
+  }
+}
+
 export function onLegacyPageActivation(listener: (detail: LegacyPageActivationDetail) => void) {
   const handler = (event: Event) => listener((event as CustomEvent<LegacyPageActivationDetail>).detail)
   window.addEventListener(LEGACY_PAGE_ACTIVATED_EVENT, handler)

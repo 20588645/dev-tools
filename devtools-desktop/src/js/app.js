@@ -826,38 +826,65 @@ function setupNavigation() {
 }
 
 // ========== 页面切换 ==========
+// 离开守卫：Vue 侧 `registerPageLeaveGuard` 经 window.__devtoolsRunPageLeaveGuards 注入。
+// 编辑器脏标签确认必须在改 .page.active 之前完成（KeepAlive onDeactivated 已太晚）。
+let switchPageBusy = false;
+
 function switchPage(page, el, source = 'legacy') {
   const targetPage = document.getElementById('page-' + page);
   if (!targetPage) {
     console.warn('[Navigation] 未找到目标页面:', page);
     return;
   }
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.dock-item').forEach(d => d.classList.remove('active'));
-  document.querySelectorAll('.sidebar-item').forEach(d => d.classList.remove('active'));
-  targetPage.classList.add('active');
-  const navEl = el || document.querySelector(`.sidebar-item[data-page="${page}"], .dock-item[data-page="${page}"]`);
-  if (navEl) navEl.classList.add('active');
-  const main = document.querySelector('.main-content');
-  if (main) {
-    main.scrollTop = 0;
-    main.scrollLeft = 0;
-    main.classList.toggle('home-active', page === 'home');
-  }
-  const activePage = targetPage;
-  if (activePage) {
-    activePage.scrollTop = 0;
-    activePage.scrollLeft = 0;
-    const scrollBody = activePage.querySelector('.page-scroll-body');
+  if (switchPageBusy) return;
+
+  const currentPageEl = document.querySelector('.page.active');
+  const currentPage = currentPageEl && currentPageEl.id
+    ? currentPageEl.id.replace(/^page-/, '')
+    : null;
+
+  const applySwitch = () => {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.dock-item').forEach(d => d.classList.remove('active'));
+    document.querySelectorAll('.sidebar-item').forEach(d => d.classList.remove('active'));
+    targetPage.classList.add('active');
+    const navEl = el || document.querySelector(`.sidebar-item[data-page="${page}"], .dock-item[data-page="${page}"]`);
+    if (navEl) navEl.classList.add('active');
+    const main = document.querySelector('.main-content');
+    if (main) {
+      main.scrollTop = 0;
+      main.scrollLeft = 0;
+      main.classList.toggle('home-active', page === 'home');
+    }
+    targetPage.scrollTop = 0;
+    targetPage.scrollLeft = 0;
+    const scrollBody = targetPage.querySelector('.page-scroll-body');
     if (scrollBody) scrollBody.scrollTop = 0;
+    if (page === 'deploy') {
+      const activeSub = document.querySelector('#page-deploy .seg__item.is-active');
+      if (activeSub) switchSubTab(activeSub.dataset.sub, activeSub);
+    }
+    // editor 已迁 Vue：不再调用 initEditor()
+    if (page === 'terminal') loadCommands();
+    emitLegacyPageActivation(page, source);
+  };
+
+  if (
+    currentPage
+    && currentPage !== page
+    && typeof window.__devtoolsRunPageLeaveGuards === 'function'
+  ) {
+    switchPageBusy = true;
+    Promise.resolve(window.__devtoolsRunPageLeaveGuards(currentPage))
+      .then((ok) => {
+        if (ok) applySwitch();
+      })
+      .catch(() => { /* 守卫异常视为取消离开 */ })
+      .finally(() => { switchPageBusy = false; });
+    return;
   }
-  if (page === 'deploy') {
-    const activeSub = document.querySelector('#page-deploy .seg__item.is-active');
-    if (activeSub) switchSubTab(activeSub.dataset.sub, activeSub);
-  }
-  if (page === 'editor') initEditor();
-  if (page === 'terminal') loadCommands();
-  emitLegacyPageActivation(page, source);
+
+  applySwitch();
 }
 
 // ========== 子 Tab 切换 ==========

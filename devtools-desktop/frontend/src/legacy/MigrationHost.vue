@@ -2,7 +2,12 @@
 import { defineAsyncComponent, onBeforeUnmount, onMounted, ref } from 'vue'
 
 import LogViewer from '@/components/logviewer/LogViewer.vue'
-import { onLegacyPageActivation, onLegacySubTabActivation, type LegacyPageId } from '@/legacy/legacy-bridge'
+import {
+  installPageLeaveGuardBridge,
+  onLegacyPageActivation,
+  onLegacySubTabActivation,
+  type LegacyPageId,
+} from '@/legacy/legacy-bridge'
 import {
   emitProjectsChanged,
   installAddProjectBridge,
@@ -25,6 +30,7 @@ const IpCheckView = defineAsyncComponent(() => import('@/views/ipcheck/IpCheckVi
 const NotesView = defineAsyncComponent(() => import('@/views/notes/NotesView.vue'))
 const RunView = defineAsyncComponent(() => import('@/views/run/RunView.vue'))
 const FileTransferView = defineAsyncComponent(() => import('@/views/filetransfer/FileTransferView.vue'))
+const FileEditorView = defineAsyncComponent(() => import('@/views/editor/FileEditorView.vue'))
 const NotebookView = defineAsyncComponent(() => import('@/views/notebook/NotebookView.vue'))
 const SettingsView = defineAsyncComponent(() => import('@/views/settings/SettingsView.vue'))
 const TodoView = defineAsyncComponent(() => import('@/views/todo/TodoView.vue'))
@@ -77,6 +83,9 @@ runTarget?.setAttribute('data-vue-owner', 'run')
 const filetransferTarget = document.querySelector('#vue-filetransfer-host')
 const hasFiletransferTarget = Boolean(filetransferTarget)
 filetransferTarget?.setAttribute('data-vue-owner', 'filetransfer')
+const editorTarget = document.querySelector('#vue-editor-host')
+const hasEditorTarget = Boolean(editorTarget)
+editorTarget?.setAttribute('data-vue-owner', 'editor')
 /* 部署面板三个子页均已迁到 Vue。 */
 const deployDashboardTarget = document.querySelector('#vue-deploy-dashboard-host')
 const hasDeployDashboardTarget = Boolean(deployDashboardTarget)
@@ -97,6 +106,7 @@ let stopSubTabActivation: (() => void) | null = null
 let stopLogReopen: (() => void) | null = null
 let stopAddProjectBridge: (() => void) | null = null
 let stopAddProjectRequests: (() => void) | null = null
+let stopPageLeaveGuardBridge: (() => void) | null = null
 
 /**
  * 旧脚本里日志链路的两个副作用：最小化时给出可点击回来的 Toast、点击日志中的
@@ -157,6 +167,7 @@ onMounted(() => {
   stopLogReopen = () => window.removeEventListener('devtools:log-reopen-requested', onLogReopenRequested)
   stopAddProjectBridge = installAddProjectBridge()
   stopAddProjectRequests = onAddProjectRequested(() => { void addProject.show() })
+  stopPageLeaveGuardBridge = installPageLeaveGuardBridge()
   deployRealtimeService.start()
   fileTransferSessionService.start()
 })
@@ -172,6 +183,7 @@ onBeforeUnmount(() => {
   stopLogReopen?.()
   stopAddProjectBridge?.()
   stopAddProjectRequests?.()
+  stopPageLeaveGuardBridge?.()
 })
 </script>
 
@@ -221,6 +233,11 @@ onBeforeUnmount(() => {
     <Teleport v-if="hasFiletransferTarget" to="#vue-filetransfer-host">
       <KeepAlive>
         <FileTransferView v-if="activePage === 'filetransfer'" />
+      </KeepAlive>
+    </Teleport>
+    <Teleport v-if="hasEditorTarget" to="#vue-editor-host">
+      <KeepAlive>
+        <FileEditorView v-if="activePage === 'editor'" />
       </KeepAlive>
     </Teleport>
     <Teleport v-if="hasDeployDashboardTarget" to="#vue-deploy-dashboard-host">
