@@ -165,7 +165,8 @@ test('mounts one formal Vue settings page and keeps both themes inside the defau
   await expect(page.locator('#page-settings .settings-content')).toHaveCount(0)
   await expect(page.locator('script[src="js/settings.js"]')).toHaveCount(0)
   await expect(page.locator('link[href="css/pages/settings.css"]')).toHaveCount(0)
-  await expect(page.locator('link[href$="legacy-runtime.css"]')).toHaveCount(1)
+  // P9-7：旧 CSS 全部吸收进 Vue 构建（styles/legacy），index.html 不再有任何静态 link
+  await expect(page.locator('link[href$="legacy-runtime.css"]')).toHaveCount(0)
   expect(await page.evaluate(() => ({
     loadSettings: typeof (window as unknown as { loadSettings?: unknown }).loadSettings,
     moveMenuItem: typeof (window as unknown as { moveMenuItem?: unknown }).moveMenuItem,

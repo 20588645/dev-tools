@@ -1,20 +1,22 @@
 # Phase 9：旧架构清理 — 决策
 
-> 状态：**P9-1～P9-6 已落地**（2026-08-12）
+> 状态：**P9-1～P9-7 已落地**（2026-08-12）
 > 关联评估：[assessment.md](./assessment.md)
 
 ## 1. 确认方向
 
 1. 分批清理，保持可运行。
-2. 已完成：P9-1～P9-5；**P9-6 CM5/xterm 归 npm 并按路由懒加载**，`src/` 下 JS 归零。
-3. 版本策略：CM 锁 5 系、xterm 锁 5.5 系——P9-6 是搬运不是升级，与 vendor 行为对齐。
-4. P8 壳层 `!important` 以登记例外过渡，P9-7 收口归零（见 assessment §5）。
+2. 已完成：P9-1～P9-6；**P9-7 旧 CSS 全部随 Vue 构建装载**，仓库 `src/` 目录与 Vite `publicDir` 删除。
+3. 吸收策略：活规则搬运（视觉零回归优先）、死规则删除（以消费者审计为据）；
+   `styles/legacy/` 是显式过渡目录，G7 随 token 化归零。
+4. 层叠顺序契约：legacy（原 link 序）→ tokens，由 `main.ts` import 顺序保证。
 
-## 2. 明确不做（P9-6 已遵守）
+## 2. 明确不做（P9-7 已遵守）
 
-- 不升 CM6 / xterm 6
-- 不删 `overrides.css`、不改 Vite `publicDir`（P9-7）
+- 不重构壳层 `!important` 层叠（登记例外，G7 处理）
+- 不翻新过时 E2E 选择器（G8 验收时统一处理；仅更新因本轮失效的断言）
 
 ## 3. 下一轮
 
-按评估表执行 **P9-7**（吸收 `legacy-runtime`；删 `overrides.css`；改 Vite `publicDir`；删旧 `src` 静态树）。
+**P9-8**：G7/G8 全量验收——`legacy/` 目录改名收编、壳层 `!important` 归零、
+E2E 翻新、正式构建 + 升级 + 全量回归。启动前先完成真实 Tauri 冒烟。

@@ -1,8 +1,10 @@
-/* ===== layout：应用壳层、侧栏、菜单、page 骨架与固定页头（批次5 拆分自 style.css，规则保持原始相对顺序） ===== */
+/* ===== layout：应用壳层、侧栏、page 骨架与固定页头（P9-7 自 src/css/layout.css 吸收）
+ * 已删除无消费者段：menu-order-*（设置页旧排序 UI）、theme-mode-*（P9-4 删主题菜单）、
+ * todo-group-*、.page-sticky-header、#sub-history、body.sidebar-collapsed 全部规则
+ * （AppShell 的 useSidebarChrome syncBody:false，body 类永不存在；折叠态由
+ * AppLayout 的 .app-layout-root.is-collapsed 承担）、.is-stuck（app.js 已删）。
+ * body:not(.sidebar-collapsed) 恒真，保留原选择器以维持特异性与层叠位置。 ===== */
 
-/* ---------- Main Area ---------- */
-
-/* ---------- Homepage ---------- */
 .page-title {
   font-size: 22px;
   font-weight: 700;
@@ -16,10 +18,6 @@
   margin-bottom: 22px;
 }
 
-/* ---------- App Sidebar (new HTML class names) ---------- */
-/* ---------- App Main & Toolbar (new HTML class names) ---------- */
-/* ---------- Main Content (keep .main-content working) ---------- */
-/* ========== Step 2: Deploy Panel — Mac Native Tool Style ========== */
 /* --- Page Header Bar --- */
 .page-header-bar { /* 保留：与穿插规则存在层叠依赖 */
   display: flex;
@@ -37,76 +35,6 @@
   font-size: 12px;
   color: var(--text-muted);
   margin: 0;
-}
-
-/* Settings Menu Order */
-.menu-order-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.menu-order-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  background: var(--bg-input);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  transition: border-color 0.12s, background 0.12s;
-}
-
-.menu-order-item:hover { border-color: var(--border-strong); background: var(--bg-card-hover); }
-
-.menu-order-icon {
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-secondary);
-  flex-shrink: 0;
-}
-
-.menu-order-icon svg { width: 16px; height: 16px; }
-
-.menu-order-label {
-  flex: 1;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-primary);
-}
-
-.menu-order-actions {
-  display: flex;
-  gap: 4px;
-}
-
-.menu-order-btn {
-  width: 26px;
-  height: 26px;
-  border: 1px solid var(--border);
-  background: var(--bg-elevated);
-  color: var(--text-secondary);
-  border-radius: var(--radius-xs);
-  font-size: 13px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.12s;
-}
-
-.menu-order-btn:hover:not(:disabled) {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: var(--accent-subtle, rgba(14, 165, 165, 0.08));
-}
-
-.menu-order-btn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
 }
 
 .sidebar-item { /* 保留：与穿插规则存在层叠依赖 */
@@ -151,24 +79,10 @@
 
 }
 
-.page-sticky-header {
-  position: relative !important;
-  top: auto !important;
-  z-index: 1;
-  background: transparent;
-  padding-bottom: 10px !important;
-}
-
-/* ========== User Fix Pass: native titlebar, deploy scrolling, sidebar collapse ========== */
+/* ========== User Fix Pass: native titlebar, sidebar collapse ========== */
 .sidebar-collapse-toggle {
   font-size: 18px !important;
   line-height: 1 !important;
-}
-
-body.sidebar-collapsed .app-main {
-  min-width: 0 !important;
-  width: auto !important;
-  margin-left: 0 !important;
 }
 
 /* ========== Sidebar Footer Tools ========== */
@@ -216,33 +130,6 @@ body:not(.sidebar-collapsed) .sidebar-footer {
   overflow: hidden !important;
   text-overflow: ellipsis !important;
   white-space: nowrap !important;
-}
-
-body.sidebar-collapsed .sidebar-tool-button {
-  width: 34px !important;
-  height: 34px !important;
-  min-height: 34px !important;
-  justify-content: center !important;
-  gap: 0 !important;
-  padding: 0 !important;
-}
-
-body.sidebar-collapsed .sidebar-tool-label {
-  display: none !important;
-}
-
-body.sidebar-collapsed .sidebar-nav {
-  align-items: center !important;
-}
-
-body.sidebar-collapsed .sidebar-footer {
-  align-items: center !important;
-  padding-left: 0 !important;
-  padding-right: 0 !important;
-}
-
-#sub-history .page-header {
-  margin-bottom: 0 !important;
 }
 
 .brand-icon {
@@ -307,90 +194,6 @@ body.sidebar-collapsed .sidebar-footer {
   background: transparent !important;
 }
 
-.theme-mode-menu {
-  position: fixed;
-  z-index: 1200;
-  width: 204px;
-  padding: 6px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-strong);
-  border-radius: 11px;
-  box-shadow: var(--shadow-md);
-  backdrop-filter: blur(20px) saturate(130%);
-  -webkit-backdrop-filter: blur(20px) saturate(130%);
-}
-
-.theme-mode-menu[hidden] {
-  display: none !important;
-}
-
-.theme-mode-option {
-  display: grid;
-  width: 100%;
-  min-height: 44px;
-  padding: 6px 8px;
-  color: var(--text-secondary);
-  background: transparent;
-  border: 0;
-  border-radius: 7px;
-  cursor: pointer;
-  grid-template-columns: 22px minmax(0, 1fr) 16px;
-  align-items: center;
-  gap: 8px;
-  text-align: left;
-  transition: color 0.12s ease, background-color 0.12s ease;
-}
-
-.theme-mode-option:hover,
-.theme-mode-option:focus-visible {
-  color: var(--text-primary);
-  background: var(--bg-hover);
-  outline: none;
-}
-
-.theme-mode-option[aria-checked="true"] {
-  color: var(--primary);
-  background: var(--primary-light);
-}
-
-.theme-mode-option-icon {
-  font-size: 14px;
-  line-height: 1;
-  text-align: center;
-}
-
-.theme-mode-option-copy {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  line-height: 1.25;
-}
-
-.theme-mode-option-copy strong {
-  font-size: 12px;
-  font-weight: 620;
-}
-
-.theme-mode-option-copy small {
-  margin-top: 2px;
-  overflow: hidden;
-  color: var(--text-muted);
-  font-size: 9px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.theme-mode-option-check {
-  opacity: 0;
-  font-size: 11px;
-  font-weight: 700;
-  text-align: center;
-}
-
-.theme-mode-option[aria-checked="true"] .theme-mode-option-check {
-  opacity: 1;
-}
-
 .app-main {
   flex: 1;
   display: flex;
@@ -446,10 +249,6 @@ body.sidebar-collapsed .sidebar-footer {
 /* ========== Sidebar Width & Native Titlebar Divider Fix ========== */
 body:not(.sidebar-collapsed) {
   --sidebar-width: 140px !important;
-}
-
-body.sidebar-collapsed {
-  --sidebar-width: 56px !important;
 }
 
 .app-shell {
@@ -577,51 +376,6 @@ body.sidebar-collapsed {
   flex: 0 0 17px !important;
 }
 
-body.sidebar-collapsed .app-shell {
-  display: grid !important;
-  grid-template-columns: 56px minmax(0, 1fr) !important;
-}
-
-body.sidebar-collapsed .app-sidebar {
-  box-sizing: border-box !important;
-  overflow: hidden !important;
-  width: 56px !important;
-  min-width: 56px !important;
-  max-width: 56px !important;
-  padding-left: 7px !important;
-  padding-right: 7px !important;
-  align-items: center !important;
-}
-
-body.sidebar-collapsed .app-sidebar::after {
-  top: 64px;
-}
-
-body.sidebar-collapsed .sidebar-brand {
-  padding-left: 0 !important;
-  padding-right: 0 !important;
-  justify-content: center !important;
-}
-
-body.sidebar-collapsed .sidebar-nav,
-body.sidebar-collapsed .sidebar-footer {
-  align-items: center !important;
-}
-
-body.sidebar-collapsed .sidebar-item {
-  width: 34px !important;
-  min-width: 34px !important;
-  padding: 0 !important;
-  justify-content: center !important;
-  height: 34px !important;
-  gap: 0 !important;
-}
-
-body.sidebar-collapsed .sidebar-brand span:last-child,
-body.sidebar-collapsed .sidebar-item span:last-child {
-  display: none !important;
-}
-
 /* ========== True Final Sidebar Footer Width Fix ========== */
 .app-sidebar .sidebar-footer {
   box-sizing: border-box !important;
@@ -651,31 +405,6 @@ body:not(.sidebar-collapsed) .app-sidebar .sidebar-footer .sidebar-tool-button {
 
 body:not(.sidebar-collapsed) .app-sidebar .sidebar-footer .sidebar-tool-label {
   display: inline !important;
-}
-
-body.sidebar-collapsed .app-sidebar .sidebar-footer {
-  width: 100% !important;
-  align-items: center !important;
-  gap: 10px !important;
-  padding: 12px 0 0 !important;
-}
-
-body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
-  width: 34px !important;
-  min-width: 34px !important;
-  max-width: 34px !important;
-  height: 34px !important;
-  min-height: 34px !important;
-  justify-content: center !important;
-  padding: 0 !important;
-}
-
-.todo-group-header.collapsed::before {
-  transform: rotate(-90deg) !important;
-}
-
-.todo-group-items.collapsed {
-  display: none !important;
 }
 
 /* 首页重构：自适应高度，填满剩余高度，防止底部留白 */
@@ -715,14 +444,13 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
   animation: pageEnter 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
-#vue-ipcheck-host,
 #page-ipcheck {
   width: 100%;
   min-width: 0;
   min-height: calc(100vh - 58px);
 }
 
-/* ========== 方案A：统一两行式页头 ========== */
+/* ========== 统一两行式页头 ========== */
 /* --- 第一行：标题+描述 左 | 主操作按钮 右 --- */
 .page-header-bar.page-header-simple {
   display: flex !important;
@@ -740,8 +468,6 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
   flex-shrink: 0;
 }
 
-/* 侧栏自动更新提示气泡药丸 */
-/* 侧栏折叠状态下的更新气泡样式重置 */
 .sidebar-item {
   cursor: pointer;
   transition: all 0.12s;
@@ -756,11 +482,9 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
   position: relative;
 }
 
-/* ========== 公共页面顶部组件（真固定布局，配合 app.js initPageStickyHeaders） ==========
+/* ========== 公共页面顶部组件（真固定布局） ==========
    结构约定：.page > .page-fixed-header + .page-scroll-body
-   头部静态置顶、完全不参与滚动（sticky 在 WebView 子滚动容器内惯性滚动时会抖动跟滚，
-   故改为 flex 定高布局，内容在 .page-scroll-body 内独立滚动，与部署页模式一致）。
-   含该结构的页面由 app.js 自动加 has-fixed-header 类。 */
+   头部静态置顶、完全不参与滚动，内容在 .page-scroll-body 内独立滚动。 */
 .page.has-fixed-header.active {
   display: flex !important;
   flex-direction: column !important;
@@ -776,11 +500,6 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
   padding: 2px 2px 10px;
   border-bottom: 1px solid transparent;
   transition: border-color .15s ease, box-shadow .15s ease;
-}
-
-.page.has-fixed-header .page-fixed-header.is-stuck {
-  border-bottom-color: var(--border);
-  box-shadow: 0 10px 24px -14px rgba(0, 0, 0, 0.28);
 }
 
 .page.has-fixed-header .page-scroll-body {

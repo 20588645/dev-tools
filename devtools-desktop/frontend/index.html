@@ -9,16 +9,6 @@
     window.__TAURI__ = window.__TAURI_INTERNALS__;
   }
 </script>
-<link rel="stylesheet" href="css/base.css">
-<link rel="stylesheet" href="css/layout.css">
-<link rel="stylesheet" href="css/components.css">
-<link rel="stylesheet" href="css/button.css">
-<link rel="stylesheet" href="css/state.css">
-<link rel="stylesheet" href="css/segmented.css">
-<link rel="stylesheet" href="css/badge.css">
-<link rel="stylesheet" href="css/card.css">
-<link rel="stylesheet" href="css/legacy-runtime.css">
-<link rel="stylesheet" href="css/overrides.css">
 </head>
 <body data-theme="light" data-theme-mode="system">
 <!-- P9-4：Vue 挂载前按本地偏好刷主题，避免 FOUC；权威仍归 Pinia startThemeSync -->
@@ -35,7 +25,7 @@
   } catch (e) {}
 })();
 </script>
-<!-- P8-5：可见壳由 Vue AppLayout 接管；P9-6：CM5/xterm 归 npm，随路由 chunk 懒加载 -->
+<!-- P8-5：可见壳由 Vue AppLayout 接管；P9-7：全部样式随 Vue 构建（styles/legacy + tokens） -->
 <div id="app" aria-live="polite"></div>
 
 <script type="module" src="/src/main.ts"></script>

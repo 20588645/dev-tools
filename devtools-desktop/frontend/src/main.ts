@@ -6,6 +6,8 @@ import { installUiLibrary } from './plugins/ui-library'
 import { createMigrationRouter } from './router'
 import { setAppRouter } from './router/navigate'
 import { startRealtime } from './services/realtime'
+// legacy 在前、tokens 在后：保持旧 index.html link → module CSS 的原层叠顺序
+import './styles/legacy/index.css'
 import './styles/tokens/index.css'
 
 const pinia = createPinia()

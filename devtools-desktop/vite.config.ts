@@ -8,7 +8,6 @@ const projectRoot = fileURLToPath(new URL('.', import.meta.url))
 export default defineConfig({
   root: fileURLToPath(new URL('./frontend', import.meta.url)),
   base: './',
-  publicDir: fileURLToPath(new URL('./src', import.meta.url)),
   plugins: [vue()],
   resolve: {
     alias: {

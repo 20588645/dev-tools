@@ -1,6 +1,6 @@
 # Phase 9：旧架构清理 — 评估
 
-> 状态：**P9-1～P9-6 已完成**（2026-08-12）
+> 状态：**P9-1～P9-7 已完成**（2026-08-12）
 > 关联计划：[vue3_architecture_migration_execution_plan.md](../../../vue3_architecture_migration_execution_plan.md)
 > 关联决策：[decision.md](./decision.md)
 
@@ -18,23 +18,37 @@
 | P9-4 | 删 `app.js`（open-editor / 主题 FOUC / 实验功能 / upgrade 桥） | **已完成** |
 | P9-5 | `window.WS` → Vue 共享模块；删 `websocket.js`/`api.js` | **已完成** |
 | P9-6 | CM5/xterm → npm + 路由级懒加载；删 `src/js` vendor | **已完成** |
-| P9-7 | overrides / publicDir / 旧 `src` 静态树 | 待办 |
-| P9-8 | rename legacy + G7/G8 | 待办 |
+| P9-7 | 旧 CSS 吸收进 Vue 构建；删 `overrides.css`/`publicDir`/旧 `src` 树 | **已完成** |
+| P9-8 | rename legacy + G7/G8 全量验收 | 待办 |
 
-## 3. P9-6 落地摘要
+## 3. P9-7 落地摘要
 
-- npm 依赖：`codemirror@5.65`（锁 5 系）、`@xterm/xterm@5.5` + fit/search/webgl addon（锁 5 系，与 vendor 行为对齐，不顺带升 6）
-- `views/editor/codemirror-loader.ts`：与旧 `cm.bundle` **逐项对齐**（core + dialog/closebrackets/matchbrackets/search 三件套/active-line + 14 mode + material-darker），随编辑器路由 chunk 懒加载（FileEditorView 461KB）
-- `services/terminal-xterm-loader.ts`：xterm 四包 + 官方 CSS 独立 chunk（406KB），`bootFromSessions` 挂载时 `ensureXtermLoaded()` 动态 import
-- 删除 `src/js/vendor/`、`src/js/xterm*.js`、`src/css/xterm.css` 与 `index.html` 引用；`src/js` 目录清空
-- 主包体积不变（490KB），CM/xterm 均不进主包
-- 门禁修复：粒子色板移入 `legacy-runtime.css` 变体类（token 审计归零）；`AppLayout` 删除 `#666` fallback；P8 壳层 40 处 `!important` 以块级注释**登记例外**（见 §5）
+- **消费者审计驱动瘦身**：对 10 个旧 CSS 文件逐类反查 Vue 模板/TS 引用；
+  `badge.css`/`button.css`/`card.css`/`state.css` 零消费者**整文件删除**；
+  `overrides.css` 活规则并入 runtime 承接文件后**整文件删除**
+- **吸收结构** `frontend/src/styles/legacy/`：`base.css`（旧变量体系，原样）、
+  `layout.css`（删 menu-order/theme-mode/todo-group/sticky/`body.sidebar-collapsed` 死段）、
+  `components.css`（删旧按钮/弹窗/toast/表格等 44 死类段）、`segmented.css`（删 `--sm`）、
+  `runtime.css`（intro/browser/waifu/粒子 + overrides 活段）；`index.css` 保持原 link 顺序，
+  `main.ts` 在 tokens 之前引入
+- 规模：3357 行 → 1665 行（约 −50%）；重复选择器基线 23 → 12（脚本已收紧）
+- **删除**：仓库 `src/` 整树、Vite `publicDir` 配置、`index.html` 全部静态 CSS link、
+  过时的 `scripts/css-audit.js`
+- 门禁跟随：基线脚本改扫新路径；token 审计豁免 `styles/legacy`（过渡目录）；
+  legacy 目录用子级 `.stylelintrc.json` 隔离 `declaration-no-important`；
+  migration stylelint 用 `--ignore-pattern` 排除 legacy
 
-## 4. 仍依赖经典资产（P9-6 后）
+## 4. 关键判定依据（复核时用）
 
-- 旧 CSS 静态树（`src/css/`）与 `overrides.css`、Vite `publicDir` → 仓库 `src/`——P9-7
-- `src/` 下已无任何 JS
+- `body.sidebar-collapsed` 死：AppShell `useSidebarChrome({ syncBody: false })`，body 类无人写入；折叠态由 `AppLayout .is-collapsed` 承担
+- `#page-*` id 全按活处理：RouterView 根动态拼 `page-${pageId}`
+- 死判据：类名在 `frontend/src/**/*.{vue,ts}` + `index.html` 中无字面/前缀出现
 
-## 5. 登记例外（P9-7 归零）
+## 5. 登记例外（G7 归零）
 
-- `AppLayout.vue` / `AppShell.vue` 共 40 处 `declaration-no-important`：压制 `src/css/layout.css` 旧侧栏与 `.page` 显隐规则所需；P9-7 吸收 legacy-runtime、删除旧 CSS 后随之删除。
+- `AppLayout.vue` / `AppShell.vue` 共 40 处 `declaration-no-important`：压制 `styles/legacy/layout.css` 旧壳层规则所需
+- `styles/legacy/` 目录整体：旧变量体系 + 12 个重复选择器基线，随页面样式全面 token 化删除
+
+## 6. 建议
+
+本轮动了全站样式装载方式（link → bundle），**强烈建议在 P9-8 前做一次真实 Tauri 冒烟**（亮暗主题、侧栏折叠、四档窗口、编辑器/终端懒加载）。

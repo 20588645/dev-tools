@@ -9,7 +9,7 @@ const LIVE2D_SCRIPT_ID = 'live2d-widget-script'
 const LIVE2D_SCRIPT_SRC = 'https://fastly.jsdelivr.net/npm/live2d-widgets@1.0.0/dist/autoload.js'
 const LIVE2D_RESTORE_DELAY = 1_500
 
-/** 色板定义在 legacy-runtime.css 的 `.click-particle--c1..c7`，此处只随机挑类。 */
+/** 色板定义在 styles/legacy/runtime.css 的 `.click-particle--c1..c7`，此处只随机挑类。 */
 const PARTICLE_COLOR_VARIANTS = 7
 const PARTICLE_COUNT = 7
 

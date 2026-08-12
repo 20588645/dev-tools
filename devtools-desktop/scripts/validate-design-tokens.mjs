@@ -3,7 +3,8 @@ import { extname, join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const root = fileURLToPath(new URL('../frontend/src/', import.meta.url))
-const tokenRoots = [join(root, 'styles', 'tokens'), join(root, 'styles', 'themes')]
+// styles/legacy 是 P9-7 自旧 src/css 吸收的过渡目录（旧变量体系），G7 随 token 化删除
+const tokenRoots = [join(root, 'styles', 'tokens'), join(root, 'styles', 'themes'), join(root, 'styles', 'legacy')]
 const sourceExtensions = new Set(['.vue', '.css', '.ts'])
 const colorPattern = /#[0-9a-f]{3,8}\b|\brgba?\(|\bhsla?\(/giu
 
