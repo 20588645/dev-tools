@@ -88,3 +88,151 @@ function close() {
     </template>
   </BaseDialog>
 </template>
+
+<style scoped>
+/* L3（legacy token 化）：介绍弹窗视觉自 styles/legacy/runtime.css 收编自持。 */
+.intro-hero {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-surface-raised) 72%, transparent);
+}
+
+.intro-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  color: var(--color-action);
+  background: color-mix(in srgb, var(--color-action) 11%, transparent);
+  font-size: 22px;
+  font-weight: var(--font-weight-bold);
+}
+
+.intro-title {
+  margin-bottom: 5px;
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+}
+
+.intro-desc {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-relaxed);
+}
+
+.intro-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: var(--space-3);
+}
+
+@media (max-width: 640px) {
+  .intro-grid { grid-template-columns: 1fr; }
+
+  .intro-system-grid { grid-template-columns: 1fr; }
+}
+
+.intro-item {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 9px;
+  min-height: 88px;
+  padding: 11px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+}
+
+.intro-item-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  color: var(--color-action);
+  background: color-mix(in srgb, var(--color-action) 11%, transparent);
+  font-size: 15px;
+  line-height: 1;
+}
+
+.intro-item strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--color-text);
+  font-size: 12px;
+}
+
+.intro-item span {
+  display: block;
+  color: var(--color-text-subtle);
+  font-size: 10.5px;
+  line-height: 1.5;
+}
+
+.intro-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: var(--space-3);
+}
+
+.intro-meta span {
+  padding: 5px 9px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-raised);
+  color: var(--color-text-muted);
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.intro-system-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.intro-system-item {
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-raised);
+}
+
+.intro-system-item span,
+.intro-system-item strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.intro-system-item span {
+  margin-bottom: 5px;
+  color: var(--color-text-subtle);
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.intro-system-item strong {
+  color: var(--color-text);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+}
+
+.intro-system-item strong.ok { color: var(--color-success); }
+.intro-system-item strong.warn { color: var(--color-warning); }
+.intro-system-item strong.danger { color: var(--color-danger); }
+</style>

@@ -52,6 +52,7 @@ const tabs = [
 </template>
 
 <style scoped>
+/* L3（legacy token 化）：页头与分段切换视觉自 styles/legacy 收编自持。 */
 .deploy-chrome {
   display: flex;
   flex-direction: column;
@@ -66,7 +67,80 @@ const tabs = [
   overflow: auto;
 }
 
+.page-header-bar.page-header-simple {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 48px;
+  margin-bottom: var(--space-3);
+  padding: 0;
+}
+
+.page-title {
+  margin: 0 0 4px;
+  color: var(--color-text);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+.page-subtitle {
+  margin: 2px 0 0;
+  color: var(--color-text-subtle);
+  font-size: var(--font-size-xs);
+}
+
+.page-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.page-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-height: 36px;
+  margin-bottom: 14px;
+}
+
+.seg {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
 .seg__item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 28px;
+  padding: 0 13px;
+  border: none;
+  border-radius: calc(var(--radius-sm) - 2px);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
   text-decoration: none;
+  cursor: pointer;
+  transition: background-color var(--duration-fast) ease, color var(--duration-fast) ease;
+}
+
+.seg__item:hover { color: var(--color-text); }
+
+.seg__item.is-active {
+  background: var(--color-surface);
+  color: var(--color-action);
+  box-shadow: var(--shadow-sm);
 }
 </style>

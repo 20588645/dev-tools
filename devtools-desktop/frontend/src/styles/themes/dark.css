@@ -1,6 +1,4 @@
 :root,
 [data-theme="dark"] {
-  /* Keep Vue page canvases continuous with the legacy shell while the shell is
-     still being migrated. The fallback also keeps standalone Vue previews usable. */
-  --color-page: var(--bg-page, var(--color-neutral-900));
+  --color-page: #0a1621;
 }

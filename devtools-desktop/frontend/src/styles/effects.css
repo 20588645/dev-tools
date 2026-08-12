@@ -1,0 +1,50 @@
+/* ===== 实验性全局特效（experimental-effects-service 的 DOM 产物） =====
+ * L3 自 styles/legacy/runtime.css 收编：点击粒子与 Live2D 看板娘均挂 body 下，
+ * 与任何页面组件无父子关系，故保留为全局样式。色板取组件层 token。 */
+
+.click-particle {
+  position: fixed;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 99999;
+  animation: click-particle-burst 0.6s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+}
+
+.click-particle--c1 { background-color: var(--component-particle-1); }
+.click-particle--c2 { background-color: var(--component-particle-2); }
+.click-particle--c3 { background-color: var(--component-particle-3); }
+.click-particle--c4 { background-color: var(--component-particle-4); }
+.click-particle--c5 { background-color: var(--component-particle-5); }
+.click-particle--c6 { background-color: var(--component-particle-6); }
+.click-particle--c7 { background-color: var(--component-particle-7); }
+
+@keyframes click-particle-burst {
+  0% {
+    transform: translate(-50%, -50%) translate(0, 0) scale(1);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translate(-50%, -50%) translate(var(--tx), var(--ty)) scale(0);
+    opacity: 0;
+  }
+}
+
+/* stylelint-disable declaration-no-important --
+   登记例外：Live2D 第三方脚本直接写元素内联样式（element.style），
+   位置与缩放收口只能以 !important 覆盖，此为正当场景（共 6 处）。 */
+#waifu {
+  left: auto !important;
+  right: 20px !important;
+  bottom: 40px !important;
+  z-index: 999;
+  transform: scale(0.5) !important;
+  transform-origin: right bottom !important;
+  pointer-events: auto;
+}
+
+#waifu canvas,
+#waifu #live2d {
+  transform: none !important;
+}
+/* stylelint-enable declaration-no-important */

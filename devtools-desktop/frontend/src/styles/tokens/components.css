@@ -41,6 +41,15 @@
   --component-control-border-focus: color-mix(in srgb, var(--color-focus-ring) 68%, var(--color-border));
   --component-control-focus-ring: 0 0 0 2px color-mix(in srgb, var(--color-focus-ring) 14%, transparent);
 
+  /* 点击粒子特效色板（装饰性数据组，不表达状态语义） */
+  --component-particle-1: rgb(167 139 250 / 90%);
+  --component-particle-2: rgb(129 140 248 / 90%);
+  --component-particle-3: rgb(96 165 250 / 85%);
+  --component-particle-4: rgb(52 211 153 / 85%);
+  --component-particle-5: rgb(251 191 36 / 85%);
+  --component-particle-6: rgb(244 114 182 / 90%);
+  --component-particle-7: rgb(248 113 113 / 85%);
+
   /* Third-party UI adapter aliases. The adapter resolves these to concrete
      colors because Naive UI derives alpha variants in JavaScript. */
   --component-vendor-page: var(--color-page);
