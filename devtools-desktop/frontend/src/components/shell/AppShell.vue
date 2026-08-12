@@ -61,8 +61,22 @@ function onIntro() {
 </template>
 
 <style>
-/* P9-8：!important 移除。styles/legacy/layout.css 的 .page 显隐规则已去 important，
-   本段靠 .main-content.router-main 前缀的更高特异性覆盖。 */
+/* L2（legacy token 化）：RouterView 根（.page）骨架自 styles/legacy/layout.css 移入自持。 */
+.page {
+  flex-direction: column;
+  width: 100%;
+  box-sizing: border-box;
+  height: auto;
+  min-height: calc(100vh - 58px);
+  overflow: visible;
+  padding: 0;
+}
+
+.page.active {
+  display: flex;
+  animation: pageEnter 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 .main-content.router-main > .page.active {
   display: flex;
   width: 100%;
@@ -71,10 +85,41 @@ function onIntro() {
   min-height: 0;
 }
 
-.main-content.home-active.router-main > .page.active {
+.main-content.home-active.router-main > .page.active,
+.main-content.home-active > #page-home.active {
   flex: 1 1 auto;
   height: 100%;
   min-height: 0;
   overflow: hidden;
 }
+
+/* 结构约定：.page > .page-fixed-header + .page-scroll-body
+   头部静态置顶、完全不参与滚动，内容在 .page-scroll-body 内独立滚动。 */
+.page.has-fixed-header.active {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.page.has-fixed-header .page-fixed-header {
+  flex-shrink: 0;
+  margin: 0 0 4px;
+  padding: 2px 2px 10px;
+  border-bottom: 1px solid transparent;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.page.has-fixed-header .page-scroll-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 8px 2px 24px;
+}
+
+.page-fixed-header .page-header-bar { margin-bottom: 10px; }
+
+.page-fixed-header .page-toolbar { margin-bottom: 0; }
 </style>

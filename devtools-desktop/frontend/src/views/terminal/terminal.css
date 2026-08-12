@@ -110,14 +110,14 @@
   flex-direction: column;
   gap: 10px;
   padding: var(--space-4);
-  background: var(--color-surface, var(--bg-card));
-  border: 1px solid var(--color-border, var(--border));
-  border-radius: var(--radius-md, var(--radius));
+  background: var(--color-surface, var(--color-surface));
+  border: 1px solid var(--color-border, var(--color-border));
+  border-radius: var(--radius-md, var(--radius-md));
   transition: border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
 }
 
 .term-cmd-card:hover {
-  border-color: var(--color-action, var(--primary));
+  border-color: var(--color-action, var(--color-action));
   box-shadow: var(--shadow-sm);
 }
 
@@ -150,7 +150,7 @@
   width: 36px;
   height: 36px;
   font-size: 20px;
-  background: var(--color-surface-subtle, var(--bg-input));
+  background: var(--color-surface-subtle, var(--color-surface-raised));
   border-radius: 8px;
 }
 
@@ -164,11 +164,11 @@
   overflow: hidden;
   padding: 6px 10px;
   color: var(--color-text-muted);
-  font-family: var(--font-family-mono, var(--font-mono));
+  font-family: var(--font-family-mono, var(--font-family-mono));
   font-size: var(--font-size-xs);
   text-overflow: ellipsis;
   white-space: nowrap;
-  background: var(--color-surface-subtle, var(--bg-input));
+  background: var(--color-surface-subtle, var(--color-surface-raised));
   border-radius: 6px;
 }
 
@@ -189,7 +189,7 @@
   flex-shrink: 0;
   height: 1px;
   margin-top: var(--space-3);
-  background: var(--color-border, var(--border));
+  background: var(--color-border, var(--color-border));
 }
 
 .term-panel {
@@ -211,8 +211,8 @@
   height: 38px;
   padding: 0 14px;
   user-select: none;
-  background: var(--color-terminal-header, var(--terminal-hdr-bg));
-  border: 1px solid var(--color-border, var(--border));
+  background: var(--color-terminal-header, var(--color-terminal-header));
+  border: 1px solid var(--color-border, var(--color-border));
   border-bottom: none;
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   backdrop-filter: blur(10px);
@@ -251,13 +251,13 @@
   padding: 0 12px 0 16px;
   margin-bottom: -1px;
   color: var(--color-text-muted);
-  font-family: var(--font-family-mono, var(--font-mono));
+  font-family: var(--font-family-mono, var(--font-family-mono));
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
   cursor: pointer;
   user-select: none;
   background: color-mix(in srgb, var(--color-text-muted) 8%, transparent);
-  border: 1px solid var(--color-border, var(--border));
+  border: 1px solid var(--color-border, var(--color-border));
   border-bottom: none;
   border-radius: var(--radius-md) var(--radius-md) 0 0;
   transition: background var(--duration-normal) var(--ease-standard), color var(--duration-normal) var(--ease-standard);
@@ -272,8 +272,8 @@
   z-index: 2;
   color: var(--color-text);
   font-weight: var(--font-weight-semibold);
-  background: var(--color-terminal, var(--bg-terminal));
-  border-color: var(--color-border-strong, var(--border-strong)) var(--color-border-strong, var(--border-strong)) transparent;
+  background: var(--color-terminal, var(--color-terminal));
+  border-color: var(--color-border-strong, var(--color-border-strong)) var(--color-border-strong, var(--color-border-strong)) transparent;
   box-shadow: var(--shadow-sm);
 }
 
@@ -368,20 +368,20 @@
   gap: 6px;
   height: 24px;
   padding: 4px 10px;
-  color: var(--color-terminal-btn-fg, var(--terminal-btn-color));
+  color: var(--color-terminal-btn-fg, var(--color-terminal-btn-fg));
   font-size: var(--font-size-xs);
   font-weight: 550;
   cursor: pointer;
-  background: var(--color-terminal-btn, var(--terminal-btn-bg));
-  border: 1px solid var(--color-border, var(--border));
+  background: var(--color-terminal-btn, var(--color-terminal-btn));
+  border: 1px solid var(--color-border, var(--color-border));
   border-radius: var(--radius-sm);
   transition: all var(--duration-normal) var(--ease-standard);
 }
 
 .term-action-btn:hover {
-  color: var(--color-terminal-btn-hover, var(--terminal-btn-hover));
-  background: var(--color-terminal-btn-hover-bg, var(--terminal-btn-hover-bg));
-  border-color: var(--color-border-strong, var(--border-strong));
+  color: var(--color-terminal-btn-hover, var(--color-terminal-btn-hover));
+  background: var(--color-terminal-btn-hover-bg, var(--color-terminal-btn-hover-bg));
+  border-color: var(--color-border-strong, var(--color-border-strong));
   transform: translateY(-1px);
 }
 
@@ -404,8 +404,8 @@
   min-height: 0;
   padding: 12px 14px;
   overflow: hidden;
-  background: var(--color-terminal, var(--bg-terminal));
-  border: 1px solid var(--color-border, var(--border));
+  background: var(--color-terminal, var(--color-terminal));
+  border: 1px solid var(--color-border, var(--color-border));
   border-radius: 0 0 var(--radius-lg) var(--radius-lg);
   box-shadow: inset 0 3px 12px color-mix(in srgb, var(--color-text) 12%, transparent), var(--shadow-sm);
 }
@@ -418,7 +418,7 @@
 
 /* xterm 视口背景：提高选择器优先级以覆盖 addon 默认，避免 !important */
 .term-panel .term-xterm-host .xterm .xterm-viewport {
-  background-color: var(--color-terminal, var(--bg-terminal));
+  background-color: var(--color-terminal, var(--color-terminal));
   border-radius: 0 0 var(--radius-lg) var(--radius-lg);
 }
 
@@ -484,7 +484,7 @@
 .term-search-bar__count {
   min-width: 32px;
   color: var(--color-text-muted);
-  font-family: var(--font-family-mono, var(--font-mono));
+  font-family: var(--font-family-mono, var(--font-family-mono));
   font-size: 10px;
   text-align: center;
   user-select: none;
