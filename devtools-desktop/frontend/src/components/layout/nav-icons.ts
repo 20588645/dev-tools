@@ -1,7 +1,7 @@
 import type { LegacyPageId } from '@/legacy/legacy-bridge'
 
 /**
- * 与 `src/js/app.js` SIDEBAR_MENU_ITEMS.icon 对齐的内联 SVG。
+ * 与侧栏菜单项图标对齐的内联 SVG。
  * P8-3 暂存于此；P8-5 前可再迁入 route meta iconKey。
  */
 export const NAV_ICONS: Record<LegacyPageId, string> = {

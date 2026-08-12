@@ -1,7 +1,7 @@
 /**
  * 日志行解析与着色的纯函数集合。
  *
- * 从旧 `src/js/app.js` 的 `appendLog` / `ansiToHtml` / `colorizeAndLinkLog` 迁出。
+ * 从旧日志渲染链路迁出（原 `appendLog` / `ansiToHtml` / `colorizeAndLinkLog`）。
  * 保持原有分类与匹配规则不变，只把「拼 HTML 字符串」改为「产出结构化片段」，
  * 由 Vue 模板负责渲染与转义，不再手工 escapeHtml。
  */

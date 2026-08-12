@@ -6,7 +6,6 @@ const rootPackagePath = path.resolve(__dirname, '../package.json');
 const tauriConfigPath = path.resolve(__dirname, '../src-tauri/tauri.conf.json');
 const sidecarPackagePath = path.resolve(__dirname, '../sidecar/package.json');
 const cargoTomlPath = path.resolve(__dirname, '../src-tauri/Cargo.toml');
-const appJsPath = path.resolve(__dirname, '../src/js/app.js');
 
 try {
   console.log('[SyncVersion] 开始自动同步版本号...');
@@ -69,26 +68,8 @@ try {
     console.warn(`⚠ 找不到 Cargo.toml 文件: ${cargoTomlPath}`);
   }
 
-  // 5. 同步 src/js/app.js
-  if (fs.existsSync(appJsPath)) {
-    let appJsContent = fs.readFileSync(appJsPath, 'utf8');
-    const appVersionRegex = /let\s+APP_VERSION\s*=\s*'[^']*'/g;
-    if (appVersionRegex.test(appJsContent)) {
-      const updatedAppJs = appJsContent.replace(appVersionRegex, `let APP_VERSION = '${version}'`);
-      if (updatedAppJs !== appJsContent) {
-        fs.writeFileSync(appJsPath, updatedAppJs, 'utf8');
-        console.log(`✔ 已同步 app.js 中的 APP_VERSION 变量至 ${version}`);
-      } else {
-        console.log('○ app.js 中的 APP_VERSION 变量已一致，无需修改');
-      }
-    } else {
-      console.warn('⚠ 在 app.js 中未找到 APP_VERSION 变量声明');
-    }
-  } else {
-    console.warn(`⚠ 找不到 app.js 文件: ${appJsPath}`);
-  }
-
-  // 6. 同步根目录 README.md（版本徽章 + DMG 示例文件名）
+  // 5. 同步根目录 README.md（版本徽章 + DMG 示例文件名）
+  // P9-4：`src/js/app.js` 已删除，不再同步 APP_VERSION。
   const readmePath = path.resolve(__dirname, '../../README.md');
   if (fs.existsSync(readmePath)) {
     let readme = fs.readFileSync(readmePath, 'utf8');

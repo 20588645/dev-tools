@@ -7,10 +7,13 @@ import {
   installAddProjectBridge,
   onAddProjectRequested,
 } from '@/legacy/add-project-bridge'
+import { installUpgradeProgressBridge } from '@/legacy/legacy-bridge'
 import { showAppToast } from '@/services/app-toast'
 import { createDeployRealtimeService } from '@/services/deploy-realtime-service'
 import { createDesktopNotificationService } from '@/services/desktop-notification'
+import { createExperimentalEffectsService } from '@/services/experimental-effects-service'
 import { createFileTransferSessionService } from '@/services/filetransfer-session-service'
+import { openInEditor } from '@/services/modules/run-service'
 import { createRunRuntimeService } from '@/services/run-runtime-service'
 import { createTerminalRuntimeService } from '@/services/terminal-runtime-service'
 import { createTodoReminderService } from '@/services/todo-reminder-service'
@@ -26,6 +29,7 @@ const notify = useNotificationStore()
 const addProject = useAddProject()
 const todoReminderService = createTodoReminderService()
 const desktopNotificationService = createDesktopNotificationService()
+const experimentalEffectsService = createExperimentalEffectsService()
 const runRuntimeService = createRunRuntimeService()
 const deployRealtimeService = createDeployRealtimeService()
 const fileTransferSessionService = createFileTransferSessionService()
@@ -34,6 +38,7 @@ const terminalRuntimeService = createTerminalRuntimeService()
 let stopLogReopen: (() => void) | null = null
 let stopAddProjectBridge: (() => void) | null = null
 let stopAddProjectRequests: (() => void) | null = null
+let stopUpgradeProgressBridge: (() => void) | null = null
 
 function onLogMinimize() {
   logTask.minimize()
@@ -47,8 +52,17 @@ function onLogReopenRequested() {
   logTask.reopen()
 }
 
-function onOpenSource(payload: { path: string; line: number; column: number | null }) {
-  void window.openFileInEditorByPath?.(payload.path, payload.line, logTask.projectName)
+async function onOpenSource(payload: { path: string; line: number; column: number | null }) {
+  try {
+    await openInEditor({
+      projectName: logTask.projectName || undefined,
+      path: payload.path,
+      line: payload.line,
+    })
+    showAppToast('正在编辑器中定位代码...', payload.path)
+  } catch (cause) {
+    showAppToast(`无法定位代码: ${cause instanceof Error ? cause.message : '未知错误'}`)
+  }
 }
 
 async function onSubmitAddProject() {
@@ -67,6 +81,7 @@ async function onSubmitAddProject() {
 onMounted(() => {
   todoReminderService.start()
   desktopNotificationService.start()
+  experimentalEffectsService.start()
   runRuntimeService.start()
   deployRealtimeService.start()
   fileTransferSessionService.start()
@@ -75,11 +90,13 @@ onMounted(() => {
   stopLogReopen = () => window.removeEventListener('devtools:log-reopen-requested', onLogReopenRequested)
   stopAddProjectBridge = installAddProjectBridge()
   stopAddProjectRequests = onAddProjectRequested(() => { void addProject.show() })
+  stopUpgradeProgressBridge = installUpgradeProgressBridge()
 })
 
 onBeforeUnmount(() => {
   todoReminderService.stop()
   desktopNotificationService.stop()
+  experimentalEffectsService.stop()
   runRuntimeService.stop()
   deployRealtimeService.stop()
   fileTransferSessionService.stop()
@@ -87,6 +104,7 @@ onBeforeUnmount(() => {
   stopLogReopen?.()
   stopAddProjectBridge?.()
   stopAddProjectRequests?.()
+  stopUpgradeProgressBridge?.()
 })
 </script>
 

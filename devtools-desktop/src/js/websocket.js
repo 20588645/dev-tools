@@ -96,3 +96,28 @@ const WS = {
   迁移期两侧共用这一条连接，故在此显式导出；WS 全量迁入 Vue 后可删。
 */
 window.WS = WS;
+
+// ========== 启动链（P9-4 自 app.js 迁入） ==========
+// 经典侧仅剩职责：发现 sidecar 端口（api.js 的 initAPI）后建立共享 WS 连接。
+// Vue 的模块脚本先于 DOMContentLoaded 执行，各服务经 window.WS 的订阅不会漏。
+document.addEventListener('DOMContentLoaded', async () => {
+  await initAPI();
+  WS.connect();
+});
+
+// 设置页重启 Sidecar 后端口可能变化：API_BASE（api.js 的全局词法绑定）与
+// WS 连接一起切到新端口，并重置退避计数立即重连。
+window.addEventListener('devtools:sidecar-restarted', (event) => {
+  const port = Number(event.detail?.port);
+  if (!Number.isInteger(port) || port < 1 || port > 65535) return;
+  API_BASE = 'http://127.0.0.1:' + port;
+  clearTimeout(WS.reconnectTimer);
+  if (WS.socket) {
+    try {
+      WS.socket.onclose = null;
+      WS.socket.close();
+    } catch (e) {}
+  }
+  WS.reconnectAttempts = 0;
+  WS.connect(port);
+});

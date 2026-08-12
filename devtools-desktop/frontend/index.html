@@ -23,20 +23,25 @@
 <link rel="stylesheet" href="js/vendor/codemirror/cm.bundle.css">
 </head>
 <body data-theme="light" data-theme-mode="system">
-<!-- P8-5：可见壳由 Vue AppLayout 接管；P9-2：项目介绍已迁 Vue ProjectIntroDialog -->
+<!-- P9-4：Vue 挂载前按本地偏好刷主题，避免 FOUC；权威仍归 Pinia startThemeSync -->
+<script>
+(function () {
+  try {
+    var mode = localStorage.getItem('devtools-theme');
+    if (mode !== 'system' && mode !== 'light' && mode !== 'dark') mode = 'system';
+    var theme = mode === 'system'
+      ? (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+      : mode;
+    document.body.setAttribute('data-theme-mode', mode);
+    document.body.setAttribute('data-theme', theme);
+  } catch (e) {}
+})();
+</script>
+<!-- P8-5：可见壳由 Vue AppLayout 接管；P9-2：介绍弹窗；P9-4：sysDialog/app.js 已删 -->
 <div id="app" aria-live="polite"></div>
-
-<div class="sys-dialog-overlay" id="sysDialog">
-  <div class="sys-dialog">
-    <div class="sys-dialog-icon" id="sysDialogIcon">⚠️</div>
-    <div class="sys-dialog-msg" id="sysDialogMsg"></div>
-    <div class="sys-dialog-btns" id="sysDialogBtns"></div>
-  </div>
-</div>
 
 <script src="js/api.js"></script>
 <script src="js/websocket.js"></script>
-<script src="js/app.js"></script>
 <script src="js/vendor/codemirror/cm.bundle.js"></script>
 <script src="js/xterm.js"></script>
 <script src="js/xterm-addon-fit.js"></script>
