@@ -1,6 +1,7 @@
 import { watch, type WatchStopHandle } from 'vue'
 
 import { keepaliveSftp } from '@/services/modules/filetransfer-service'
+import { realtimeWs } from '@/services/realtime'
 import { useFileTransferStore, type TransferEventPayload } from '@/stores/file-transfer'
 
 /**
@@ -8,20 +9,10 @@ import { useFileTransferStore, type TransferEventPayload } from '@/stores/file-t
  *
  * keepalive 与 `transfer` WS 不能挂在 KeepAlive 会 deactivate 的页面组件上：
  * 切走「文件传输」页时 UI 隐藏，但 SFTP 会话与队列进度必须继续。
- * 挂在 MigrationHost，与 deploy-realtime / run-runtime 同模式。
+ * 挂在 AppShellServices，与 deploy-realtime / run-runtime 同模式。
  */
 
 const KEEPALIVE_MS = 60 * 1000
-
-interface LegacyWebSocket {
-  on(type: string, handler: (payload: unknown) => void): void
-  off(type: string, handler: (payload: unknown) => void): void
-}
-
-function legacyWs(): LegacyWebSocket | null {
-  const candidate = (globalThis as { WS?: LegacyWebSocket }).WS
-  return candidate && typeof candidate.on === 'function' ? candidate : null
-}
 
 function asPayload(value: unknown): TransferEventPayload {
   if (!value || typeof value !== 'object') return {}
@@ -77,7 +68,7 @@ export function createFileTransferSessionService() {
   function start() {
     if (started) return
     started = true
-    const ws = legacyWs()
+    const ws = realtimeWs()
     ws?.on('transfer', handleTransfer)
     stopWatch = watch(
       () => store.tabs.map((t) => t.id).join(','),
@@ -91,7 +82,7 @@ export function createFileTransferSessionService() {
     started = false
     stopWatch?.()
     stopWatch = null
-    const ws = legacyWs()
+    const ws = realtimeWs()
     ws?.off('transfer', handleTransfer)
     for (const id of [...timers.keys()]) stopTimer(id)
   }

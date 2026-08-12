@@ -30,6 +30,7 @@ export interface AppRouteMeta {
 }
 
 declare module 'vue-router' {
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type -- 声明合并：把项目字段注入 vue-router 的 RouteMeta
   interface RouteMeta extends Partial<AppRouteMeta> {}
 }
 

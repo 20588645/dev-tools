@@ -62,8 +62,6 @@ beforeEach(() => {
   resetDeployFinishedListenersForTest()
   getActiveJob.mockResolvedValue(null)
   delete (globalThis as { WS?: unknown }).WS
-  delete window.__devtoolsShowToast
-  delete window.showToast
 })
 
 describe('createDeployRealtimeService', () => {

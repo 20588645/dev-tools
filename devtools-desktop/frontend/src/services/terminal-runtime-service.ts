@@ -3,6 +3,7 @@ import {
   deleteTerminalSession,
   listTerminalSessions,
 } from '@/services/modules/terminal-service'
+import { realtimeWs } from '@/services/realtime'
 import { createResizeDebouncer, createTerminalSessionId } from '@/services/terminal-helpers'
 import { useNotificationStore } from '@/stores/notification'
 import { useTerminalStore } from '@/stores/terminal'
@@ -14,12 +15,6 @@ import { useTerminalStore } from '@/stores/terminal'
  * 同 WS 内 PTY 与每 tab 的 Terminal 实例继续存活；切回只 fit+focus。
  * 真正销毁发生在：关 tab、或 MigrationHost onBeforeUnmount → stop()。
  */
-
-interface LegacyWebSocket {
-  on(type: string, handler: (payload: unknown) => void): void
-  off(type: string, handler: (payload: unknown) => void): void
-  socket?: { readyState: number; send: (data: string) => void } | null
-}
 
 interface XtermTheme {
   background: string
@@ -86,11 +81,6 @@ type TerminalCtor = new (options: Record<string, unknown>) => XtermTerminal
 type FitCtor = new () => FitAddonInstance
 type SearchCtor = new () => SearchAddonInstance
 type WebglCtor = new () => WebglAddonInstance
-
-function legacyWs(): LegacyWebSocket | null {
-  const candidate = (globalThis as { WS?: LegacyWebSocket }).WS
-  return candidate && typeof candidate.on === 'function' ? candidate : null
-}
 
 function getXtermApis(): {
   Terminal: TerminalCtor
@@ -180,9 +170,8 @@ function buildRuntime() {
   }
 
   function sendWs(type: string, data: Record<string, unknown>) {
-    const ws = legacyWs()
-    if (ws?.socket && ws.socket.readyState === 1) {
-      ws.socket.send(JSON.stringify({ type, data }))
+    const ws = realtimeWs()
+    if (ws?.send?.(type, data)) {
       store.setConnectionStatus('connected')
     } else {
       store.setConnectionStatus('disconnected')
@@ -481,8 +470,7 @@ function buildRuntime() {
 
   function injectCommand(command: string, terminalId?: string) {
     const id = terminalId || store.activeTabId
-    const ws = legacyWs()
-    if (!id || !ws?.socket || ws.socket.readyState !== 1) {
+    if (!id || !realtimeWs()?.connected) {
       notify.push('终端未连接或未就绪', 'warning')
       return false
     }
@@ -499,8 +487,7 @@ function buildRuntime() {
    * 登录壳需要短暂就绪窗口，故在 terminal-init 后再延迟注入。
    */
   function runCommandInNewTab(command: string, tabName?: string) {
-    const ws = legacyWs()
-    if (!ws?.socket || ws.socket.readyState !== 1) {
+    if (!realtimeWs()?.connected) {
       notify.push('终端未连接或未就绪', 'warning')
       return false
     }
@@ -626,7 +613,7 @@ function buildRuntime() {
   function start() {
     if (started) return
     started = true
-    const ws = legacyWs()
+    const ws = realtimeWs()
     ws?.on('terminal-output', handleOutput)
     ws?.on('terminal-exit', handleExit)
     ws?.on('open', handleWsOpen)
@@ -645,7 +632,7 @@ function buildRuntime() {
     started = false
     pageActive = false
     resizeDebouncer.cancel()
-    const ws = legacyWs()
+    const ws = realtimeWs()
     ws?.off('terminal-output', handleOutput)
     ws?.off('terminal-exit', handleExit)
     ws?.off('open', handleWsOpen)

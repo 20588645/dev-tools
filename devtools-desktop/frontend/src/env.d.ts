@@ -10,26 +10,8 @@ interface MigrationRuntime {
   mount: (root?: Element | null) => VueApp<Element> | null
 }
 
-/** 迁移期仍由旧 `src/js/*.js` / main.ts 提供的全局。P9-4 起 `app.js` 已删。 */
-interface LegacyGlobals {
-  /**
-   * Vue Toast 桥：由 `main.ts` 安装。
-   * 签名兼容旧 `showToast(title, message, options)`。
-   */
-  __devtoolsShowToast?: (
-    title: string,
-    message?: string,
-    options?: { clickable?: boolean; persistent?: boolean },
-  ) => void
-  showToast?: (
-    title: string,
-    message?: string,
-    options?: { clickable?: boolean; persistent?: boolean },
-  ) => void
-}
-
 declare global {
-  interface Window extends LegacyGlobals {
+  interface Window {
     __DEVTOOLS_MIGRATION__?: MigrationRuntime
     /** CodeMirror 5 由 vendor bundle 以全局脚本注入。 */
     CodeMirror?: CodeMirrorStatic

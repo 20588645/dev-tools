@@ -1,6 +1,7 @@
 import { showAppToast } from '@/services/app-toast'
 import { sendDesktopNotification } from '@/services/desktop-notification'
 import type { RunJob } from '@/services/modules/run-service'
+import { realtimeWs } from '@/services/realtime'
 import { useRunStore } from '@/stores/run'
 
 /**
@@ -16,16 +17,6 @@ import { useRunStore } from '@/stores/run'
  *
  * 与 RunView 内的对账并存是安全的：`reconcile` 幂等，且失败时保留现有状态。
  */
-
-interface LegacyWebSocket {
-  on(type: string, handler: (payload: unknown) => void): void
-  off(type: string, handler: (payload: unknown) => void): void
-}
-
-function legacyWs(): LegacyWebSocket | null {
-  const candidate = (globalThis as { WS?: LegacyWebSocket }).WS
-  return candidate && typeof candidate.on === 'function' ? candidate : null
-}
 
 const RUN_COMPILE_ERROR_NOTIFY_DELAY = 15_000
 
@@ -129,7 +120,7 @@ export function createRunRuntimeService() {
     started = true
     // 启动即对账一次，让托盘在用户尚未进入任何页面时就正确
     void store.reconcile()
-    const ws = legacyWs()
+    const ws = realtimeWs()
     ws?.on('open', handleOpen)
     ws?.on('run-status', handleStatus)
   }
@@ -143,7 +134,7 @@ export function createRunRuntimeService() {
     })
     notifiedRunIds.clear()
     notifiedRunCompileErrors.clear()
-    const ws = legacyWs()
+    const ws = realtimeWs()
     ws?.off('open', handleOpen)
     ws?.off('run-status', handleStatus)
   }

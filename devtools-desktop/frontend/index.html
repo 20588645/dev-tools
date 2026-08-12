@@ -37,28 +37,14 @@
   } catch (e) {}
 })();
 </script>
-<!-- P8-5：可见壳由 Vue AppLayout 接管；P9-2：介绍弹窗；P9-4：sysDialog/app.js 已删 -->
+<!-- P8-5：可见壳由 Vue AppLayout 接管；P9-5：WS/API 归 Vue（services/realtime + api-client） -->
 <div id="app" aria-live="polite"></div>
 
-<script src="js/api.js"></script>
-<script src="js/websocket.js"></script>
 <script src="js/vendor/codemirror/cm.bundle.js"></script>
 <script src="js/xterm.js"></script>
 <script src="js/xterm-addon-fit.js"></script>
 <script src="js/xterm-addon-search.js"></script>
 <script src="js/xterm-addon-webgl.js"></script>
 <script type="module" src="/src/main.ts"></script>
-<script>
-  window.addEventListener('error', function(e) {
-    try {
-      if (window.WS && WS.socket && WS.socket.readyState === 1) {
-        WS.socket.send(JSON.stringify({
-          type: 'frontend-error',
-          data: { message: e.message, stack: e.error ? e.error.stack : '' }
-        }));
-      }
-    } catch (err) {}
-  });
-</script>
 </body>
 </html>

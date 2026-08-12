@@ -1,36 +1,22 @@
 import { showAppToast } from '@/services/app-toast'
 import { sendDesktopNotification } from '@/services/desktop-notification'
 import { getActiveJob } from '@/services/modules/deploy-service'
+import { realtimeWs } from '@/services/realtime'
 import { useDeployTaskStore, type DeployPhase } from '@/stores/deploy-task'
 import { useLogTaskStore } from '@/stores/log-task'
 import { useNotificationStore } from '@/stores/notification'
 
 /**
- * 应用级构建 / 部署实时链路。
+ * 应用级构建 / 部署实时链路（`log` / `progress` / `status` 三处理器 + 刷新恢复）。
+ * 本地运行的 `run-status` / `run-log` 由 `run-runtime-service` 与 `useRunRealtime`
+ * 负责，两者共用同一条共享实时连接（`services/realtime.ts`），不另起连接。
  *
- * 取代旧 `app.js:setupWSHandlers` 里 `log` / `progress` / `status` 三个处理器与
- * `checkActiveJob`。本地运行的 `run-status` / `run-log` 由 `run-runtime-service`
- * 与 `useRunRealtime` 负责，两者共用同一条旧全局 WS 连接，不另起连接。
+ * 为什么必须常驻（挂在 `AppShellServices`）而不是留在 `useDeployRealtime` 里：
  *
- * 为什么必须常驻（挂在 `MigrationHost`）而不是留在 `useDeployRealtime` 里：
- *
- * 1. 构建/部署从**项目总览**的卡片发起，而弹窗仍在 legacy 侧——任务可以在任何
- *    页面上发起并在任何页面上完成，链路不能依赖某个子页被访问过。
- * 2. `checkActiveJob` 要在启动与 WS 重连时恢复任务，那两个时刻通常还没有任何
- *    deploy 子页挂载过。
- * 3. 与 legacy 处理器并存会**双写**同一个 log store（每行日志追加两次），
- *    所以 `app.js` 侧那三个处理器随本服务上线一并退役。
+ * 1. 构建/部署从**项目总览**的卡片发起——任务可以在任何页面上发起并在任何
+ *    页面上完成，链路不能依赖某个子页被访问过。
+ * 2. 刷新恢复要在启动与 WS 重连时进行，那两个时刻通常还没有任何 deploy 子页挂载过。
  */
-
-interface LegacyWebSocket {
-  on(type: string, handler: (payload: unknown) => void): void
-  off(type: string, handler: (payload: unknown) => void): void
-}
-
-function legacyWs(): LegacyWebSocket | null {
-  const candidate = (globalThis as { WS?: LegacyWebSocket }).WS
-  return candidate && typeof candidate.on === 'function' ? candidate : null
-}
 
 function asRecord(payload: unknown): Record<string, unknown> {
   return payload && typeof payload === 'object' ? payload as Record<string, unknown> : {}
@@ -247,7 +233,7 @@ export function createDeployRealtimeService() {
   function start() {
     if (started) return
     started = true
-    const ws = legacyWs()
+    const ws = realtimeWs()
     ws?.on('log', handleLog)
     ws?.on('progress', handleProgress)
     ws?.on('status', handleStatus)
@@ -259,7 +245,7 @@ export function createDeployRealtimeService() {
   function stop() {
     if (!started) return
     started = false
-    const ws = legacyWs()
+    const ws = realtimeWs()
     ws?.off('log', handleLog)
     ws?.off('progress', handleProgress)
     ws?.off('status', handleStatus)

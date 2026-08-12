@@ -20,6 +20,11 @@ vi.mock('@/services/modules/deploy-service', async () => {
   return { ...actual, getActiveJob: vi.fn().mockResolvedValue(null) }
 })
 
+// done 状态会触发桌面通知；不 mock 会在无 localStorage 的环境产生未处理拒绝
+vi.mock('@/services/desktop-notification', () => ({
+  sendDesktopNotification: vi.fn(),
+}))
+
 function installFakeWs() {
   const handlers = new Map<string, Set<(payload: unknown) => void>>()
   const ws = {

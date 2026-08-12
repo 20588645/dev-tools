@@ -23,7 +23,7 @@
     "lint:tokens": "node scripts/validate-design-tokens.mjs",
     "lint:architecture": "node scripts/validate-component-architecture.mjs",
     "lint:architecture:details": "node scripts/validate-component-architecture.mjs --details",
-    "lint:js": "eslint sidecar scripts src/js frontend/src tests vite.config.ts vitest.config.ts playwright.config.ts",
+    "lint:js": "eslint sidecar scripts frontend/src tests vite.config.ts vitest.config.ts playwright.config.ts",
     "lint:css": "npm run lint:css:legacy && npm run lint:css:migration",
     "lint:css:legacy": "node scripts/verify-legacy-stylelint-baseline.mjs",
     "lint:css:migration": "stylelint \"frontend/src/**/*.{vue,css}\""

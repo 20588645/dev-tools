@@ -2,6 +2,7 @@ import { onBeforeUnmount, onMounted, ref } from 'vue'
 
 import { useInterval } from '@/composables/use-interval'
 import { usePageVisibility } from '@/composables/use-page-visibility'
+import { realtimeWs } from '@/services/realtime'
 import { useRunStore } from '@/stores/run'
 
 /**
@@ -20,17 +21,6 @@ import { useRunStore } from '@/stores/run'
 
 /** 与旧实现一致。改动它会同时影响运行时长刷新粒度与对账频率。 */
 const POLL_INTERVAL = 15_000
-
-/** 旧全局 WS（`src/js/websocket.js`）。Vue 侧不另起连接，避免两份状态各自维护。 */
-interface LegacyWebSocket {
-  on(type: string, handler: (payload: unknown) => void): void
-  off(type: string, handler: (payload: unknown) => void): void
-}
-
-function legacyWs(): LegacyWebSocket | null {
-  const candidate = (globalThis as { WS?: LegacyWebSocket }).WS
-  return candidate && typeof candidate.on === 'function' ? candidate : null
-}
 
 export interface RunRealtimeOptions {
   /**
@@ -79,14 +69,14 @@ export function useRunRealtime(options: RunRealtimeOptions = {}) {
   }, POLL_INTERVAL)
 
   onMounted(() => {
-    const ws = legacyWs()
+    const ws = realtimeWs()
     ws?.on('run-status', handleStatus)
     ws?.on('run-log', handleLog)
     ws?.on('open', handleOpen)
   })
 
   onBeforeUnmount(() => {
-    const ws = legacyWs()
+    const ws = realtimeWs()
     ws?.off('run-status', handleStatus)
     ws?.off('run-log', handleLog)
     ws?.off('open', handleOpen)

@@ -40,6 +40,3 @@ export function showAppToast(
     onClick,
   })
 }
-
-/** 供经典脚本在 Vue 就绪后调用；由 `main.ts` 挂到 `window.__devtoolsShowToast`。 */
-export type DevtoolsShowToast = typeof showAppToast

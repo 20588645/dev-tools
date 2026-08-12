@@ -1,4 +1,5 @@
 import { navigateToPage } from '@/router/navigate'
+import { realtimeWs } from '@/services/realtime'
 
 export const LEGACY_PAGE_IDS = [
   'home',
@@ -83,19 +84,14 @@ export function requestHomeRefresh(reason: HomeRefreshRequestDetail['reason'] = 
   }))
 }
 
-interface LegacyWebSocketLike {
-  on(type: string, handler: (payload: unknown) => void): void
-  off(type: string, handler: (payload: unknown) => void): void
-}
-
 /**
  * WS `upgrade-progress` → window 事件桥（P9-4 自 `app.js` 迁入）。
  * 设置页的升级进度对话框监听 `UPGRADE_PROGRESS_EVENT`，与 WS 解耦；
- * WS 连接仍由经典 `websocket.js` 持有，故经 `window.WS` 订阅。
+ * P9-5 起经共享实时连接（`services/realtime.ts`）订阅。
  */
 export function installUpgradeProgressBridge(): () => void {
-  const ws = (globalThis as { WS?: LegacyWebSocketLike }).WS
-  if (!ws || typeof ws.on !== 'function') return () => {}
+  const ws = realtimeWs()
+  if (!ws) return () => {}
   const handler = (payload: unknown) => {
     window.dispatchEvent(new CustomEvent(UPGRADE_PROGRESS_EVENT, { detail: payload }))
   }

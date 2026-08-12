@@ -5,12 +5,13 @@ import App from './App.vue'
 import { installUiLibrary } from './plugins/ui-library'
 import { createMigrationRouter } from './router'
 import { setAppRouter } from './router/navigate'
-import { showAppToast } from './services/app-toast'
+import { startRealtime } from './services/realtime'
 import './styles/tokens/index.css'
 
 const pinia = createPinia()
 setActivePinia(pinia)
-window.__devtoolsShowToast = showAppToast
+// 共享 WS 单例须在应用壳挂载前就绪：常驻服务 onMounted 即注册处理器
+startRealtime()
 
 const router = createMigrationRouter()
 setAppRouter(router)
