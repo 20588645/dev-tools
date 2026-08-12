@@ -1,6 +1,6 @@
 # Phase 8：应用壳与 Router — 决策
 
-> 状态：**Phase 8 P8-1～P8-6 代码收口完成**（2026-08-12）；建议 Tauri 冒烟后进入 Phase 9
+> 状态：**Phase 8 P8-1～P8-6 代码收口完成**（2026-08-12）；Phase 9 已启动（P9-1/P9-2 完成）
 > 关联评估：[assessment.md](./assessment.md)
 > 产出日期：2026-08-11
 
@@ -26,6 +26,6 @@
 - `legacy-bridge`：删除 page-activation / subtab / leave window bridge；保留 leave register/run、home-refresh、菜单序事件、`requestLegacyPage` 别名
 - `layout.css`：删除 `#vue-migration-host` 规则；`#vue-ipcheck-host` 兼作 `#page-ipcheck`
 
-**仍留 Phase 9**：整份 `app.js`、Toast/通知、vendor、介绍弹窗等。
+**仍留 Phase 9**：整份 `app.js`、桌面通知、vendor、WS 等（Toast/介绍弹窗已于 P9-2 迁出）。
 
-**Gate**：用户 Tauri 冒烟通过后进入 Phase 9。
+**Gate**：Phase 9 分批推进中；见 `pages/phase9/`。

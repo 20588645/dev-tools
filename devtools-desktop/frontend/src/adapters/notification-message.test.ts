@@ -7,9 +7,16 @@ import { createNotificationMessageBridge } from './notification-message'
 
 function createMessageApi() {
   const handles: MessageReactive[] = []
-  const calls: Array<{ tone: NotificationTone, content: string, options?: MessageOptions }> = []
+  const calls: Array<{
+    tone: NotificationTone
+    content: string | (() => unknown)
+    options?: MessageOptions
+  }> = []
 
-  const create = (tone: NotificationTone) => (content: string, options?: MessageOptions) => {
+  const create = (tone: NotificationTone) => (
+    content: string | (() => unknown),
+    options?: MessageOptions,
+  ) => {
     const handle = { type: tone, destroy: vi.fn() } as MessageReactive
     calls.push({ tone, content, options })
     handles.push(handle)
@@ -45,7 +52,8 @@ describe('notification message adapter', () => {
     bridge.sync([item()])
 
     expect(calls).toHaveLength(1)
-    expect(calls[0]).toMatchObject({ tone: 'success', content: '保存成功' })
+    expect(calls[0]?.tone).toBe('success')
+    expect(typeof calls[0]?.content).toBe('function')
     expect(calls[0]?.options).toMatchObject({
       closable: true,
       duration: 4_000,
@@ -53,6 +61,22 @@ describe('notification message adapter', () => {
     })
     calls[0]?.options?.onAfterLeave?.()
     expect(remove).toHaveBeenCalledWith('notification-1')
+  })
+
+  it('invokes onClick and destroys the message for clickable toasts', () => {
+    const { api, calls, handles } = createMessageApi()
+    const onClick = vi.fn()
+    const bridge = createNotificationMessageBridge(api, vi.fn())
+
+    bridge.sync([item({ clickable: true, onClick })])
+    const vnode = typeof calls[0]?.content === 'function' ? calls[0].content() : null
+    const props = vnode && typeof vnode === 'object' && 'props' in vnode
+      ? (vnode as { props?: { onClick?: () => void } }).props
+      : undefined
+    props?.onClick?.()
+
+    expect(onClick).toHaveBeenCalledOnce()
+    expect(handles[0]?.destroy).toHaveBeenCalledOnce()
   })
 
   it('keeps non-positive durations visible until explicitly closed', () => {

@@ -23,107 +23,8 @@
 <link rel="stylesheet" href="js/vendor/codemirror/cm.bundle.css">
 </head>
 <body data-theme="light" data-theme-mode="system">
-<!-- P8-5：可见壳由 Vue AppLayout 接管；此处仅挂载点与全局弹窗/脚本 -->
+<!-- P8-5：可见壳由 Vue AppLayout 接管；P9-2：项目介绍已迁 Vue ProjectIntroDialog -->
 <div id="app" aria-live="polite"></div>
-
-<div class="modal-overlay" id="projectIntroModal">
-  <div class="modal modal-intro">
-    <div class="modal-header">
-      <div>
-        <h2>DevTools Desktop</h2>
-        <p class="modal-subtitle">前端开发全流程效率工具</p>
-      </div>
-      <button class="modal-close" onclick="closeModal('projectIntroModal')">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="intro-hero">
-        <div class="intro-mark">⌘</div>
-        <div>
-          <div class="intro-title">个人前端开发工作台</div>
-          <div class="intro-desc">集成本地运行、构建部署、快捷命令、任务管理、工时记录和个人笔记，覆盖日常开发全流程。</div>
-        </div>
-      </div>
-      <div class="intro-grid">
-        <div class="intro-item">
-          <div class="intro-item-icon">▶</div>
-          <div>
-            <strong>本地运行</strong>
-            <span>管理多项目开发服务，快速启动、模块选择、自动重启。</span>
-          </div>
-        </div>
-        <div class="intro-item">
-          <div class="intro-item-icon">↗</div>
-          <div>
-            <strong>构建部署</strong>
-            <span>多模块构建 + SFTP 部署，服务器管理，历史记录追踪。</span>
-          </div>
-        </div>
-        <div class="intro-item">
-          <div class="intro-item-icon">⚡</div>
-          <div>
-            <strong>快捷命令</strong>
-            <span>预设 Shell 命令一键执行，VPN 路由、杀端口、查 IP。</span>
-          </div>
-        </div>
-        <div class="intro-item">
-          <div class="intro-item-icon">✓</div>
-          <div>
-            <strong>待办事项</strong>
-            <span>三列看板管理任务进度，支持定时提醒通知。</span>
-          </div>
-        </div>
-        <div class="intro-item">
-          <div class="intro-item-icon">✏️</div>
-          <div>
-            <strong>工时内容</strong>
-            <span>按周记录每日工作内容，直接查询 Git 活动并写入对应日期。</span>
-          </div>
-        </div>
-        <div class="intro-item">
-          <div class="intro-item-icon">📒</div>
-          <div>
-            <strong>个人笔记</strong>
-            <span>个人知识库，支持图片粘贴、标签分类、全文搜索。</span>
-          </div>
-        </div>
-        <div class="intro-item">
-          <div class="intro-item-icon">🔔</div>
-          <div>
-            <strong>系统通知</strong>
-            <span>构建完成、运行异常、待办到期通过桌面通知提醒。</span>
-          </div>
-        </div>
-      </div>
-      <div class="intro-system-grid">
-        <div class="intro-system-item">
-          <span>版本</span>
-          <strong id="introVersion">读取中</strong>
-        </div>
-        <div class="intro-system-item">
-          <span>Sidecar</span>
-          <strong id="introSidecarStatus">读取中</strong>
-        </div>
-        <div class="intro-system-item">
-          <span>存储</span>
-          <strong>SQLite</strong>
-        </div>
-        <div class="intro-system-item">
-          <span>平台</span>
-          <strong>macOS · Tauri</strong>
-        </div>
-      </div>
-      <div class="intro-meta">
-        <span>Tauri 2.x</span>
-        <span>Node.js Sidecar</span>
-        <span>SQLite</span>
-        <span>macOS</span>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn--primary" onclick="closeModal('projectIntroModal')">知道了</button>
-    </div>
-  </div>
-</div>
 
 <div class="sys-dialog-overlay" id="sysDialog">
   <div class="sys-dialog">
@@ -133,7 +34,6 @@
   </div>
 </div>
 
-<script src="js/sortable.min.js"></script>
 <script src="js/api.js"></script>
 <script src="js/websocket.js"></script>
 <script src="js/app.js"></script>

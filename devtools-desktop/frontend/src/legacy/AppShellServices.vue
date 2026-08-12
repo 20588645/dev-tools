@@ -11,6 +11,7 @@ import { createDeployRealtimeService } from '@/services/deploy-realtime-service'
 import { createFileTransferSessionService } from '@/services/filetransfer-session-service'
 import { createRunRuntimeService } from '@/services/run-runtime-service'
 import { createTerminalRuntimeService } from '@/services/terminal-runtime-service'
+import { showAppToast } from '@/services/app-toast'
 import { createTodoReminderService } from '@/services/todo-reminder-service'
 import { useLogTaskStore } from '@/stores/log-task'
 import { useNotificationStore } from '@/stores/notification'
@@ -37,7 +38,7 @@ function onLogMinimize() {
   const isRun = logTask.kind === 'run'
   const title = isRun ? '本地服务仍在运行' : '任务仍在后台运行'
   const message = isRun ? '点击此处可查看运行日志' : '点击此处可查看进度'
-  window.showToast?.(title, message, { clickable: true, persistent: true })
+  showAppToast(title, message, { clickable: true, persistent: true })
 }
 
 function onLogReopenRequested() {

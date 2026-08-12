@@ -546,11 +546,6 @@ function toggleThemeMenu(event) {
   else closeThemeModeMenu(true);
 }
 
-function openProjectIntro() {
-  document.getElementById('projectIntroModal')?.classList.add('active');
-  refreshProjectIntroStatus();
-}
-
 function setupModalDismissal() {
   document.addEventListener('mousedown', (event) => {
     const overlay = event.target;
@@ -795,45 +790,13 @@ function closeModal(id) {
 }
 
 // ========== Toast ==========
+// DOM Toast 已退役；Vue 在 main.ts 挂载 `__devtoolsShowToast`（Pinia + Naive Message）。
 function showToast(title, message, options = {}) {
-  let container = document.getElementById('toastContainer');
-  if (!container) {
-    container = document.createElement('div');
-    container.id = 'toastContainer';
-    container.className = 'toast-container';
-    document.body.appendChild(container);
+  if (typeof window.__devtoolsShowToast === 'function') {
+    window.__devtoolsShowToast(title, message, options);
+    return;
   }
-  const toast = document.createElement('div');
-  toast.className = `toast-item${options.clickable ? ' clickable' : ''}`;
-
-  const dismissToast = () => {
-    toast.classList.add('leaving');
-    setTimeout(() => toast.remove(), 220);
-  };
-
-  toast.innerHTML = `
-    <span class="toast-close">&times;</span>
-    <div class="toast-title">${title}</div>
-    ${message ? `<div class="toast-message">${message}</div>` : ''}
-  `;
-
-  toast.querySelector('.toast-close').addEventListener('click', (e) => {
-    e.stopPropagation();
-    dismissToast();
-  });
-
-  if (options.clickable) {
-    toast.addEventListener('click', () => {
-      reopenLogModal();
-      dismissToast();
-    });
-  }
-
-  container.appendChild(toast);
-
-  if (!options.persistent) {
-    setTimeout(dismissToast, 5000);
-  }
+  console.info('[toast]', title, message || '');
 }
 
 // 刷新后的活跃任务恢复（原 checkActiveJob）已归 Vue 的 deploy-realtime-service：

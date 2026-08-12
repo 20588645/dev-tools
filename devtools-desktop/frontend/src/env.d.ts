@@ -12,12 +12,20 @@ interface MigrationRuntime {
 
 /** 迁移期仍由旧 `src/js/*.js` 提供的全局函数。各页迁移完成后逐个收敛。 */
 interface LegacyGlobals {
+  /**
+   * Vue Toast 桥：由 `main.ts` 安装；`app.js` 的 `showToast` 转调至此。
+   * 签名兼容旧 `showToast(title, message, options)`。
+   */
+  __devtoolsShowToast?: (
+    title: string,
+    message?: string,
+    options?: { clickable?: boolean; persistent?: boolean },
+  ) => void
   showToast?: (
     title: string,
     message?: string,
     options?: { clickable?: boolean; persistent?: boolean },
   ) => void
-  openProjectIntro?: () => void
   /** 拉起编辑器并定位到行；由 `app.js` 提供，供 LogViewer 的源码链接调用。 */
   openFileInEditorByPath?: (path: string, line: number, projectName?: string) => Promise<void> | void
   /**

@@ -1,4 +1,5 @@
 import type { MessageApi, MessageOptions, MessageReactive } from 'naive-ui'
+import { h } from 'vue'
 
 import type { NotificationItem, NotificationTone } from '@/stores/notification'
 
@@ -26,6 +27,22 @@ export function createNotificationMessageBridge(
     if (!disposed) removeNotification(id)
   }
 
+  function renderContent(item: NotificationItem) {
+    const textStyle = { whiteSpace: 'pre-line' as const }
+    if (!item.clickable && !item.onClick) {
+      return () => h('span', { style: textStyle }, item.message)
+    }
+
+    return () => h('span', {
+      class: 'app-toast--clickable',
+      style: { ...textStyle, cursor: 'pointer' },
+      onClick: () => {
+        item.onClick?.()
+        activeMessages.get(item.id)?.destroy()
+      },
+    }, item.message)
+  }
+
   function show(item: NotificationItem) {
     const options: MessageOptions = {
       closable: true,
@@ -33,7 +50,7 @@ export function createNotificationMessageBridge(
       keepAliveOnHover: true,
       onAfterLeave: () => removeAfterLeave(item.id),
     }
-    activeMessages.set(item.id, message[item.tone](item.message, options))
+    activeMessages.set(item.id, message[item.tone](renderContent(item), options))
   }
 
   function sync(items: readonly NotificationItem[]) {

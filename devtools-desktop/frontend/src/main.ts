@@ -1,13 +1,17 @@
-import { createPinia } from 'pinia'
 import { createApp, type App as VueApp } from 'vue'
+import { createPinia, setActivePinia } from 'pinia'
 
 import App from './App.vue'
 import { installUiLibrary } from './plugins/ui-library'
 import { createMigrationRouter } from './router'
 import { setAppRouter } from './router/navigate'
+import { showAppToast } from './services/app-toast'
 import './styles/tokens/index.css'
 
 const pinia = createPinia()
+setActivePinia(pinia)
+window.__devtoolsShowToast = showAppToast
+
 const router = createMigrationRouter()
 setAppRouter(router)
 

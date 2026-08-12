@@ -1,3 +1,4 @@
+import { showAppToast } from '@/services/app-toast'
 import { getActiveJob } from '@/services/modules/deploy-service'
 import { useDeployTaskStore, type DeployPhase } from '@/stores/deploy-task'
 import { useLogTaskStore } from '@/stores/log-task'
@@ -232,7 +233,7 @@ export function createDeployRealtimeService() {
       }
 
       const elapsed = Math.round((Date.now() - job.startTime) / 1000)
-      window.showToast?.(`🔄 恢复${typeLabel}任务`, `${job.projectName} 已运行 ${elapsed}s`, { clickable: true })
+      showAppToast(`恢复${typeLabel}任务`, `${job.projectName} 已运行 ${elapsed}s`, { clickable: true })
     } catch (cause) {
       console.warn('[deploy-realtime] 恢复活跃任务失败', cause)
     }

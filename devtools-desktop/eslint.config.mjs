@@ -15,7 +15,6 @@ export default [
       'test-results/**',
       'src/js/vendor/**',
       'src/js/xterm*.js',
-      'src/js/sortable.min.js',
       'src-tauri/**',
       'sidecar/data/**',
       'sidecar/data-test/**',

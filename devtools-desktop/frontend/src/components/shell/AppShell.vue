@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import AppLayout from '@/components/layout/AppLayout.vue'
+import ProjectIntroDialog from '@/components/shell/ProjectIntroDialog.vue'
 import { useSidebarChrome } from '@/composables/useSidebarChrome'
 import AppShellServices from '@/legacy/AppShellServices.vue'
 import { keepAliveNamesFromCatalog } from '@/router/route-meta'
@@ -12,6 +13,7 @@ defineOptions({ name: 'AppShell' })
 const route = useRoute()
 const router = useRouter()
 const keepAliveInclude = keepAliveNamesFromCatalog()
+const introOpen = ref(false)
 
 const activePageId = computed(() => String(route.meta.pageId ?? 'home'))
 const isHome = computed(() => activePageId.value === 'home')
@@ -30,7 +32,7 @@ function onNavigate(_pageId: string, path: string) {
 }
 
 function onIntro() {
-  window.openProjectIntro?.()
+  introOpen.value = true
 }
 </script>
 
@@ -55,6 +57,7 @@ function onIntro() {
     </RouterView>
   </AppLayout>
   <AppShellServices />
+  <ProjectIntroDialog v-model="introOpen" />
 </template>
 
 <style>

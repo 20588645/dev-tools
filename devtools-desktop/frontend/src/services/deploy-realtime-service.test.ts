@@ -58,6 +58,7 @@ beforeEach(() => {
   getActiveJob.mockResolvedValue(null)
   delete (globalThis as { WS?: unknown }).WS
   delete window.sendDesktopNotification
+  delete window.__devtoolsShowToast
   delete window.showToast
 })
 
