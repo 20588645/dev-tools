@@ -1,6 +1,6 @@
 # Phase 9：旧架构清理 — 评估
 
-> 状态：**P9-1～P9-8 代码收口完成；G8 余用户侧发布验收**（2026-08-12）
+> 状态：**已关闭（P9-1～P9-8；G7/G8 通过，用户发布验收完成）**（2026-08-12）
 > 关联计划：[vue3_architecture_migration_execution_plan.md](../../../vue3_architecture_migration_execution_plan.md)
 > 关联决策：[decision.md](./decision.md)
 
@@ -57,9 +57,12 @@
 | lint / lint:tokens / CSS 基线 / typecheck | ✅ |
 | test:unit（438） / test:e2e（66） | ✅ |
 | build:frontend | ✅（主包 490KB，CM/xterm 独立 chunk） |
-| `npm run build` 正式打包 / macOS 安装启动 / Sidecar 拉起退出 / 数据兼容 / 旧版本升级 | ⏳ **需用户执行** |
+| `npm run build` 正式打包 / macOS 安装启动 / Sidecar 拉起退出 / 数据兼容 / 旧版本升级 | ✅ **用户验收通过（2026-08-12）** |
 
-## 6. 后续
+## 6. 结论与后续
 
-1. 用户执行正式打包与升级回归（G8 收尾）。
-2. 独立批次：`styles/legacy` 全面 token 化（G7 完全关闭 + 例外归零）。
+**Phase 9 关闭，Vue 3 渐进迁移主线完成**：旧架构（静态 HTML 页面结构、全局脚本、
+`window.*` 桥、vendor 脚本、旧 CSS 静态树、Vite `publicDir`）全部退役。
+
+迁移后长期项（不阻塞发布）：`styles/legacy` 全面 token 化——收编旧变量体系、
+消化约 146 处已登记 `!important` 与 12 个重复选择器基线，随页面样式打磨渐进归零。

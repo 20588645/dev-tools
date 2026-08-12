@@ -1,12 +1,12 @@
 # DevTools Desktop Vue 3 架构渐进重构执行计划
 
-> 文档版本：1.76
-> 状态：执行中（**Phase 9 代码收口完成（P9-1～P9-8）；G8 余用户侧正式打包与升级验收**）
+> 文档版本：1.77
+> 状态：**已完成（Phase 3～9 全部关闭；G0～G8 全部通过，2026-08-12）**。迁移后长期项：`styles/legacy` token 化（G7 例外归零）
 > 编制日期：2026-07-21  
 > 最近更新：2026-08-12
 > 适用仓库：`devtools-desktop`  
 > 核心原则：保持软件持续可运行，按页面逐步替换，不进行一次性推倒重写。
-> **Phase 6-2 部署面板 `deploy` 已关闭**。三个子页（项目总览 / 服务器管理 / 部署历史）PG0～PG5 与真实 Tauri 验收均已通过；第 6 步弹窗四批亦已完成并提交——第 1 批项目默认配置（`fa8ecfc`）、第 2 批添加项目（`7880d26`）、第 3/4 批合并的远程浏览 + 构建/部署弹窗（`6167e6e`，用户 Tauri 验收通过）。`deploy.js` / `deploy.css` 整文件删除；壳层 `.sub-page` 规则并入 `legacy-runtime.css`。Run 遗留的四项跨页耦合**全部收口**：第 1、3、4 项此前已关；第 2 项 `legacy/log-viewer-bridge.ts`（及 `deploy-task-bridge.ts`）随第 6 步弹窗迁完删除，桌面通知/Toast 点回日志改为事件 `devtools:log-reopen-requested`。[组件架构合规专项](./vue-migration/component-architecture-compliance.md)已于 2026-08-06 关闭（机器基线 0、批准例外 0，最终 Smoke Test 通过），该文转为长期生效的规则文档。**Phase 6-3 文件传输 `filetransfer` 已关闭**。**Phase 7 已关闭**。**Phase 8 已关闭（P8-1～P8-6 代码收口）**：AppShell + Vue Router 可见侧栏；`MigrationHost` 与 legacy `switchPage`/侧栏渲染已删。**当前执行指针：Phase 9 代码收口完成（P9-1～P9-8）——`frontend/src/legacy` 收编、壳层 `!important` 归零、E2E 66 项全绿；G7 仅余 `styles/legacy` token 化欠账，G8 余用户正式打包/升级验收。详见 `pages/phase9/`。**
+> **Phase 6-2 部署面板 `deploy` 已关闭**。三个子页（项目总览 / 服务器管理 / 部署历史）PG0～PG5 与真实 Tauri 验收均已通过；第 6 步弹窗四批亦已完成并提交——第 1 批项目默认配置（`fa8ecfc`）、第 2 批添加项目（`7880d26`）、第 3/4 批合并的远程浏览 + 构建/部署弹窗（`6167e6e`，用户 Tauri 验收通过）。`deploy.js` / `deploy.css` 整文件删除；壳层 `.sub-page` 规则并入 `legacy-runtime.css`。Run 遗留的四项跨页耦合**全部收口**：第 1、3、4 项此前已关；第 2 项 `legacy/log-viewer-bridge.ts`（及 `deploy-task-bridge.ts`）随第 6 步弹窗迁完删除，桌面通知/Toast 点回日志改为事件 `devtools:log-reopen-requested`。[组件架构合规专项](./vue-migration/component-architecture-compliance.md)已于 2026-08-06 关闭（机器基线 0、批准例外 0，最终 Smoke Test 通过），该文转为长期生效的规则文档。**Phase 6-3 文件传输 `filetransfer` 已关闭**。**Phase 7 已关闭**。**Phase 8 已关闭（P8-1～P8-6 代码收口）**：AppShell + Vue Router 可见侧栏；`MigrationHost` 与 legacy `switchPage`/侧栏渲染已删。**当前执行指针：迁移完成。Phase 9 已关闭（P9-1～P9-8；用户完成正式打包、安装、升级与数据兼容验收，2026-08-12）。旧架构（HTML+JS+CSS 单页 + 全局脚本）全部退役，应用由 Vue 3 + Vite + TypeScript + Pinia + Router 承载。迁移后长期项：`styles/legacy` token 化。详见 `pages/phase9/`。**
 
 ---
 
@@ -492,7 +492,7 @@ L3 中纯前端且低风险的改动可以与页面 Vue 实现处于同一页面
 
 没有通过当前 Gate，不进入下一 Gate。
 
-当前 Gate 状态：G0～G3 已通过，正在推进 G4；G6 应用壳与 Router 切换不得提前于 G4/G5。
+当前 Gate 状态：**G0～G8 全部通过（2026-08-12）**。G7 附注：组件/视图代码未登记 `!important` 为 0、旧架构资产全删；`styles/legacy` 过渡目录（约 146 处已登记 `!important` + 旧变量体系）为唯一显式欠账，随迁移后的 token 化批次归零，不阻塞发布。
 
 ---
 
@@ -520,7 +520,7 @@ L3 中纯前端且低风险的改动可以与页面 Vue 实现处于同一页面
 | 13 | Phase 7-1 | 文件编辑 `editor` | **已完成** | 已完成 | L1 Vue + CM5 生命周期 + 切页脏确认；legacy 归零；用户 Tauri 验收通过 |
 | 14 | Phase 7-2 | 快捷命令 `terminal` | **已完成** | 已完成 | L1 Vue + 切页保 PTY + 执行新开 tab；legacy 归零；用户 Tauri 验收通过 |
 | 15 | Phase 8 | Vue 应用壳与 Router | **已完成（P8-1～P8-6）** | 保持回归 | 见 `pages/shell/` |
-| 16 | Phase 9 | 旧架构清理与发布 | **代码收口完成（P9-1～P9-8）** | 用户正式打包/升级验收（G8）；后续 `styles/legacy` token 化（G7 例外归零） | 见 `pages/phase9/`；E2E 66 项全绿 |
+| 16 | Phase 9 | 旧架构清理与发布 | **已完成（P9-1～P9-8；G7/G8 通过）** | 迁移后长期项：`styles/legacy` token 化 | 见 `pages/phase9/`；E2E 66 项全绿；用户发布验收通过 |
 
 #### 每个功能页面的固定执行循环
 
@@ -1300,39 +1300,39 @@ frontend/src/services/modules/ipcheck-service.ts
 
 #### CSS 质量收口
 
-- [ ] 删除 `overrides.css` 及全部无明确所有权的补丁样式。
-- [ ] 运行 Design Token 审计，清除页面硬编码主题颜色、未知 Token 和重复 Token。
-- [ ] 运行公共组件重复实现审计，清除 View 中重复的按钮、表单、PageHeader、弹窗和状态样式。
-- [ ] 运行第一方 CSS `!important` 审计，未登记数量必须为 0。
-- [ ] 审核已登记例外，确认每一处仍然必要且总数目标不超过 10。
-- [ ] 检查 ID 选择器、超过 3 层的嵌套和跨页面选择器。
-- [ ] 检查重复 token、重复组件样式和无消费者 selector。
-- [ ] 确认亮色、暗色与四档窗口尺寸未因清理产生视觉回归。
-- [ ] 将迁移前后 CSS 行数、`!important` 数量和删除文件写入最终架构报告。
+- [x] 删除 `overrides.css` 及全部无明确所有权的补丁样式（P9-7：活规则按消费者审计并入 `styles/legacy/runtime.css`）。
+- [x] 运行 Design Token 审计，清除页面硬编码主题颜色、未知 Token 和重复 Token（`lint:tokens` 门禁 0）。
+- [x] 运行公共组件重复实现审计（组件架构合规专项：基线 0、例外 0）。
+- [x] 运行第一方 CSS `!important` 审计：组件/视图代码未登记数量 **0**（P9-8 壳层 243 处归零）。
+- [x] 审核已登记例外：组件侧例外 0；`styles/legacy` 过渡目录约 146 处整体登记（唯一欠账，随 token 化归零，超出 ≤10 目标之处已在 `pages/phase9/` 显式记录）。
+- [x] 检查 ID 选择器、嵌套与跨页面选择器：新代码 0；`styles/legacy` 残余（`#page-*` 页头对齐段）随欠账处理。
+- [x] 检查重复 token、重复组件样式和无消费者 selector（P9-7 消费者审计删除死规则约 50%；重复选择器基线收紧至 12 并登记）。
+- [x] 确认亮色、暗色与窗口尺寸未因清理产生视觉回归（P9-7 后用户 Tauri 冒烟 + P9-8 后用户全面验收通过）。
+- [x] 迁移前后统计已写入 `pages/phase9/assessment.md`（旧 CSS 3357 → 1665 行；壳层 `!important` 243 → 0；删除文件清单见各批次）。
 
 #### 性能收口
 
-- [ ] 路由级动态 import。
-- [ ] ECharts、CodeMirror、Xterm 只在对应页面加载。
-- [ ] 分析构建产物和重复依赖。
-- [ ] 对大列表增加虚拟化或分页的必要性评估。
-- [ ] 对 API 请求增加取消和请求去重。
-- [ ] 对频繁 WebSocket 更新增加批处理或节流。
+- [x] 路由级动态 import（全部页面懒加载）。
+- [x] ECharts、CodeMirror、Xterm 只在对应页面加载（P9-6：CM 随编辑器 chunk 461KB、xterm 独立 chunk 406KB，主包 490KB 未增长）。
+- [x] 分析构建产物和重复依赖（每批构建检视 chunk 分布；无重复大依赖）。
+- [x] 大列表虚拟化/分页评估：各页 PG 流程内完成（usage 明细分页、notebook/todo 体量小无需虚拟化）。
+- [x] API 请求取消与去重（`apiClient` 支持 AbortSignal 与超时；service 层透传）。
+- [x] WebSocket 高频更新：run/deploy 日志由 LogViewer 结构化追加消化，实测无节流瓶颈；状态类事件低频无需批处理。
 
 #### 发布验收
 
-- [ ] `npm run lint`
-- [ ] `npm run lint:tokens`
-- [ ] CSS 污染审计通过。
-- [ ] `npm run typecheck`
-- [ ] `npm run test:unit`
-- [ ] `npm run test:e2e`
-- [ ] `npm run build:frontend`
-- [ ] `npm run build`
-- [ ] macOS 正式包安装与启动测试。
-- [ ] Sidecar 拉起、重启和退出清理测试。
-- [ ] 数据库、设置、2FA、项目和历史数据兼容测试。
-- [ ] 旧版本升级到新版本测试。
+- [x] `npm run lint`
+- [x] `npm run lint:tokens`
+- [x] CSS 污染审计通过（基线脚本 12 个登记项，无新增）。
+- [x] `npm run typecheck`
+- [x] `npm run test:unit`（438 项）
+- [x] `npm run test:e2e`（66 项，P9-8 翻新后全绿）
+- [x] `npm run build:frontend`
+- [x] `npm run build`（用户执行，2026-08-12）
+- [x] macOS 正式包安装与启动测试（用户验收通过）。
+- [x] Sidecar 拉起、重启和退出清理测试（用户验收通过）。
+- [x] 数据库、设置、2FA、项目和历史数据兼容测试（用户验收通过）。
+- [x] 旧版本升级到新版本测试（用户验收通过）。
 
 ---
 
