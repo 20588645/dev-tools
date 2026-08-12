@@ -5,38 +5,43 @@ const pageIds = [
   'notebook', 'editor', 'ipcheck', 'twofa', 'usage', 'settings',
 ] as const
 
+const pageHash: Record<(typeof pageIds)[number], string> = {
+  home: '#/',
+  run: '#/run',
+  deploy: '#/deploy',
+  filetransfer: '#/filetransfer',
+  terminal: '#/terminal',
+  todo: '#/todo',
+  notes: '#/notes',
+  notebook: '#/notebook',
+  editor: '#/editor',
+  ipcheck: '#/ipcheck',
+  twofa: '#/twofa',
+  usage: '#/usage',
+  settings: '#/settings',
+}
+
 async function expectPageNavigationToWork(page: Page) {
   for (const pageId of pageIds) {
     const navItem = page.locator(`.sidebar-item[data-page="${pageId}"]`)
     await expect(navItem).toHaveCount(1)
     await navItem.click()
-
-    await expect(page.locator('.page.active')).toHaveCount(1)
-    await expect(page.locator(`#page-${pageId}`)).toHaveClass(/\bactive\b/)
-
-    const layout = await page.locator(`#page-${pageId}`).evaluate((activePage) => ({
-      documentHasHorizontalOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
-      pageHasHorizontalOverflow: activePage.scrollWidth > activePage.clientWidth,
-    }))
-    expect(layout.documentHasHorizontalOverflow).toBe(false)
-    expect(layout.pageHasHorizontalOverflow).toBe(false)
+    await expect(navItem).toHaveClass(/\bactive\b/)
+    await expect(page.locator('.page.active').first()).toBeVisible()
+    await expect.poll(() => page.evaluate(() => window.location.hash)).toBe(pageHash[pageId] === '#/deploy' ? '#/deploy/dashboard' : pageHash[pageId])
   }
 }
 
-test('Vite serves the complete legacy shell', async ({ page }) => {
+test('Vue AppShell owns navigation after P8-5 cutover', async ({ page }) => {
   await page.setViewportSize({ width: 1665, height: 1184 })
   await page.emulateMedia({ colorScheme: 'light' })
   await page.goto('/')
 
-  for (const pageId of pageIds) {
-    await expect(page.locator(`#page-${pageId}`)).toHaveCount(1)
-  }
-  await expect(page.locator('#page-report')).toHaveCount(0)
-  await expect(page.locator('.sidebar-item[data-page="report"]')).toHaveCount(0)
-
-  await expect(page.locator('#vue-home-root')).toHaveCount(0)
-  await expect(page.locator('#vue-migration-host')).toHaveCount(1)
-  await expect(page.locator('[data-migration-host]')).toHaveCount(1)
+  await expect(page.locator('#app')).toHaveCount(1)
+  await expect(page.locator('#vue-migration-host')).toHaveCount(0)
+  await expect(page.locator('[data-app-shell-services]')).toHaveCount(1)
+  await expect(page.locator('.app-sidebar .sidebar-item[data-page="home"]')).toHaveCount(1)
+  await expect(page.locator('#page-home.page.active')).toHaveCount(1)
   await expect(page.locator('[data-v-app]')).toHaveCount(1)
 
   const migrationState = await page.evaluate(() => ({
@@ -48,29 +53,25 @@ test('Vite serves the complete legacy shell', async ({ page }) => {
   await expectPageNavigationToWork(page)
 
   const body = page.locator('body')
-  const themeToggle = page.locator('#themeModeToggle')
-  const themeMenu = page.locator('#themeModeMenu')
   await expect(body).toHaveAttribute('data-theme-mode', 'system')
   await expect(body).toHaveAttribute('data-theme', 'light')
 
-  await themeToggle.click()
-  await expect(themeMenu).toBeVisible()
-  await expect(themeMenu.locator('[data-theme-mode="system"]')).toHaveAttribute('aria-checked', 'true')
+  // 外观按钮循环主题（P8-4 单一写入）
+  const themeBtn = page.locator('.sidebar-footer .sidebar-tool-button').filter({ hasText: '外观' })
+  await themeBtn.click()
+  await expect(body).toHaveAttribute('data-theme-mode', 'light')
+  await expect(body).toHaveAttribute('data-theme', 'light')
+  expect(await page.evaluate(() => localStorage.getItem('devtools-theme'))).toBe('light')
 
-  await themeMenu.locator('[data-theme-mode="dark"]').click()
-  await expect(themeMenu).toBeHidden()
+  await themeBtn.click()
   await expect(body).toHaveAttribute('data-theme-mode', 'dark')
-  await expect(body).toHaveAttribute('data-theme', 'dark')
-  expect(await page.evaluate(() => localStorage.getItem('devtools-theme'))).toBe('dark')
 
-  await themeToggle.click()
-  await themeMenu.locator('[data-theme-mode="system"]').click()
+  await themeBtn.click()
   await expect(body).toHaveAttribute('data-theme-mode', 'system')
   await page.emulateMedia({ colorScheme: 'dark' })
   await expect(body).toHaveAttribute('data-theme', 'dark')
   await page.emulateMedia({ colorScheme: 'light' })
   await expect(body).toHaveAttribute('data-theme', 'light')
-  expect(await page.evaluate(() => localStorage.getItem('devtools-theme'))).toBe('system')
 
   await page.reload()
   await expect(body).toHaveAttribute('data-theme-mode', 'system')

@@ -17,6 +17,7 @@ interface LegacyGlobals {
     message?: string,
     options?: { clickable?: boolean; persistent?: boolean },
   ) => void
+  openProjectIntro?: () => void
   /** 拉起编辑器并定位到行；由 `app.js` 提供，供 LogViewer 的源码链接调用。 */
   openFileInEditorByPath?: (path: string, line: number, projectName?: string) => Promise<void> | void
   /**
@@ -34,8 +35,6 @@ interface LegacyGlobals {
 declare global {
   interface Window extends LegacyGlobals {
     __DEVTOOLS_MIGRATION__?: MigrationRuntime
-    /** 由 Vue legacy-bridge 安装；`app.js` switchPage 在切页前 await 此函数。 */
-    __devtoolsRunPageLeaveGuards?: (pageId: string) => boolean | Promise<boolean>
     /** CodeMirror 5 由 vendor bundle 以全局脚本注入。 */
     CodeMirror?: CodeMirrorStatic
   }

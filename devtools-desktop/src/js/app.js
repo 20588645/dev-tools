@@ -11,9 +11,6 @@ const RUN_COMPILE_ERROR_NOTIFY_DELAY = 15000;
 let APP_VERSION = '0.1.93';
 
 // ========== Vue Migration Bridge ==========
-const LEGACY_PAGE_ACTIVATED_EVENT = 'devtools:legacy-page-activated';
-const LEGACY_PAGE_REQUESTED_EVENT = 'devtools:legacy-page-requested';
-const MENU_ORDER_CHANGED_EVENT = 'devtools:menu-order-changed';
 const EXPERIMENTAL_SETTING_CHANGED_EVENT = 'devtools:experimental-setting-changed';
 const SIDECAR_RESTARTED_EVENT = 'devtools:sidecar-restarted';
 const UPGRADE_PROGRESS_EVENT = 'devtools:upgrade-progress';
@@ -93,24 +90,10 @@ function restoreExperimentalPreferences() {
   }
 }
 
-function emitLegacyPageActivation(pageId, source = 'legacy') {
-  window.dispatchEvent(new CustomEvent(LEGACY_PAGE_ACTIVATED_EVENT, {
-    detail: { pageId, source },
-  }));
-}
-
-function setupVueNavigationBridge() {
+function setupVueCompatBridge() {
   if (vueNavigationBridgeBound) return;
   vueNavigationBridgeBound = true;
-  window.addEventListener(LEGACY_PAGE_REQUESTED_EVENT, (event) => {
-    const pageId = event.detail?.pageId;
-    if (!pageId || !document.getElementById('page-' + pageId)) return;
-    const nav = document.querySelector(`.sidebar-item[data-page="${pageId}"], .dock-item[data-page="${pageId}"]`);
-    switchPage(pageId, nav, 'vue');
-  });
-  window.addEventListener(MENU_ORDER_CHANGED_EVENT, () => {
-    renderSidebar();
-  });
+  // P8-6：导航权威已是 Vue Router；此处只保留非导航兼容事件
   window.addEventListener(EXPERIMENTAL_SETTING_CHANGED_EVENT, (event) => {
     const { key, enabled } = event.detail || {};
     if (key === 'live2d') setLive2dEnabled(Boolean(enabled));
@@ -341,7 +324,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   loadAppSettings();
   WS.connect();
   setupWSHandlers();
-  setupNavigation();
+  setupVueCompatBridge();
   setupModalDismissal();
   setupNotificationActionHandlers();
   requestNotificationPermission();
@@ -381,6 +364,14 @@ function getThemeMode() {
 }
 
 function applyThemeMode(mode, options = {}) {
+  // P8-4：Vue 挂载后由 Pinia 单一写入；legacy 只转发
+  if (typeof window.__devtoolsApplyThemeMode === 'function') {
+    window.__devtoolsApplyThemeMode(mode, options);
+    const normalizedMode = normalizeThemeMode(mode);
+    const effectiveTheme = document.body.getAttribute('data-theme') || resolveThemeMode(normalizedMode);
+    updateThemeIcon(normalizedMode, effectiveTheme);
+    return effectiveTheme;
+  }
   const normalizedMode = normalizeThemeMode(mode);
   const effectiveTheme = resolveThemeMode(normalizedMode);
   document.body.setAttribute('data-theme-mode', normalizedMode);
@@ -394,24 +385,22 @@ function applyThemeMode(mode, options = {}) {
 }
 
 function bindSystemThemeListener() {
-  const mediaQuery = getSystemThemeMediaQuery();
-  if (!mediaQuery || systemThemeListenerBound) return;
-  const handleSystemThemeChange = () => {
-    if (getThemeMode() === 'system') applyThemeMode('system', { persist: false });
-  };
-  if (typeof mediaQuery.addEventListener === 'function') {
-    mediaQuery.addEventListener('change', handleSystemThemeChange);
-  } else if (typeof mediaQuery.addListener === 'function') {
-    mediaQuery.addListener(handleSystemThemeChange);
-  }
-  systemThemeListenerBound = true;
+  // P8-4：系统主题监听归 Pinia startThemeSync；legacy 不再绑定，避免双监听
+  return;
 }
 
 function initTheme() {
+  // Vue 就绪前先刷一遍 DOM，避免 FOUC；系统监听与持久权威交给 Pinia
   const savedMode = normalizeThemeMode(localStorage.getItem(THEME_STORAGE_KEY));
   applyThemeMode(savedMode, { persist: false });
-  bindSystemThemeListener();
   ensureThemeModeMenu();
+  window.addEventListener('devtools:theme-changed', (event) => {
+    const detail = event.detail || {};
+    updateThemeIcon(
+      normalizeThemeMode(detail.mode || getThemeMode()),
+      detail.theme || document.body.getAttribute('data-theme') || resolveThemeMode(getThemeMode()),
+    );
+  });
   if (!themeBodyObserver) {
     themeBodyObserver = new MutationObserver(() => updateThemeIcon(getThemeMode()));
     themeBodyObserver.observe(document.body, {
@@ -557,30 +546,6 @@ function toggleThemeMenu(event) {
   else closeThemeModeMenu(true);
 }
 
-function initSidebarState() {
-  const saved = sessionStorage.getItem('devtools-sidebar-collapsed');
-  const collapsed = saved === null ? false : saved === 'true';
-  document.body.classList.toggle('sidebar-collapsed', collapsed);
-  updateSidebarCollapseIcon(collapsed);
-}
-
-function toggleSidebarCollapse() {
-  const collapsed = !document.body.classList.contains('sidebar-collapsed');
-  document.body.classList.toggle('sidebar-collapsed', collapsed);
-  sessionStorage.setItem('devtools-sidebar-collapsed', String(collapsed));
-  updateSidebarCollapseIcon(collapsed);
-}
-
-function updateSidebarCollapseIcon(collapsed) {
-  const btn = document.querySelector('.sidebar-collapse-toggle');
-  if (!btn) return;
-  const icon = btn.querySelector('.sidebar-collapse-icon');
-  const label = btn.querySelector('.sidebar-collapse-label');
-  if (icon) icon.textContent = collapsed ? '›' : '‹';
-  if (label) label.textContent = collapsed ? '展开' : '收起';
-  btn.title = collapsed ? '展开侧栏' : '折叠侧栏';
-}
-
 function openProjectIntro() {
   document.getElementById('projectIntroModal')?.classList.add('active');
   refreshProjectIntroStatus();
@@ -713,189 +678,6 @@ function handleRunCompileErrorNotification(data) {
     sendDesktopNotification('本地项目编译报错', `${latest.projectName}${modulesText}\n${latest.compileError || '请查看运行日志'}`, false, { target: 'log' });
     showToast('❌ 本地项目编译报错', latest.projectName, { clickable: true });
   }, RUN_COMPILE_ERROR_NOTIFY_DELAY);
-}
-
-// ========== 侧边栏菜单配置（动态渲染 + 排序） ==========
-const SIDEBAR_MENU_ITEMS = [
-  { page: 'home', label: '应用首页', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>', fixed: 'first' },
-  { page: 'run', label: '本地运行', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/><line x1="19" y1="5" x2="19" y2="19"/></svg>' },
-  { page: 'deploy', label: '部署面板', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>' },
-  { page: 'filetransfer', label: '文件传输', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 11 21 7 17 3"/><line x1="21" y1="7" x2="9" y2="7"/><polyline points="7 13 3 17 7 21"/><line x1="3" y1="17" x2="15" y2="17"/></svg>' },
-  { page: 'terminal', label: '快捷命令', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>' },
-  { page: 'todo', label: '待办事项', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>' },
-  { page: 'notes', label: '工时内容', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>' },
-  { page: 'notebook', label: '个人笔记', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>' },
-  { page: 'editor', label: '文件编辑', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="10 12 8 14 10 16"/><polyline points="14 12 16 14 14 16"/></svg>' },
-  { page: 'ipcheck', label: '纯净检测', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>' },
-  { page: 'twofa', label: '双因验证', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="10" width="18" height="11" rx="2"/><path d="M7 10V7a5 5 0 0 1 10 0v3"/></svg>' },
-  { page: 'usage', label: '用量统计', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>' },
-  { page: 'settings', label: '系统设置', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68 1.65 1.65 0 0 0 9 3.17V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>', fixed: 'last' }
-];
-
-const MENU_ORDER_KEY = 'devtools-menu-order';
-const DEFAULT_MENU_ORDER = ['run', 'deploy', 'filetransfer', 'terminal', 'todo', 'notes', 'notebook', 'editor', 'ipcheck', 'twofa', 'usage'];
-
-function getMenuOrder() {
-  try {
-    const saved = localStorage.getItem(MENU_ORDER_KEY);
-    if (saved) {
-      const order = JSON.parse(saved);
-      const sortablePages = SIDEBAR_MENU_ITEMS.filter(m => !m.fixed).map(m => m.page);
-      const normalized = Array.isArray(order) ? order.filter(p => sortablePages.includes(p)) : [];
-      const missing = sortablePages.filter(p => !normalized.includes(p));
-      if (normalized.length === sortablePages.length) return normalized;
-      if (normalized.length) return [...normalized, ...missing];
-    }
-  } catch (e) {}
-  return DEFAULT_MENU_ORDER;
-}
-
-function getSortedMenuItems() {
-  const order = getMenuOrder();
-  const first = SIDEBAR_MENU_ITEMS.find(m => m.fixed === 'first');
-  const last = SIDEBAR_MENU_ITEMS.find(m => m.fixed === 'last');
-  const middle = order.map(page => SIDEBAR_MENU_ITEMS.find(m => m.page === page)).filter(Boolean);
-  return [first, ...middle, last];
-}
-
-function renderSidebar() {
-  const nav = document.getElementById('sidebarNav');
-  if (!nav) return;
-  const activePage = nav.querySelector('.sidebar-item.active')?.dataset.page || 'home';
-  const items = getSortedMenuItems();
-  nav.innerHTML = items.map(item => {
-    const isActive = item.page === activePage ? ' active' : '';
-    const isUpdateDot = '';
-    return `<button class="sidebar-item${isActive}" data-page="${item.page}" onclick="switchPage('${item.page}', this)"><span class="nav-icon">${item.icon}</span><span>${item.label}</span>${isUpdateDot}</button>`;
-  }).join('');
-}
-
-// ========== 公共页面顶部组件（吸附式） ==========
-// 约定：新功能页面的标题区 + 工具栏统一包在 <div class="page-fixed-header"> 内，
-// 滚动时自动吸附在顶部（毛玻璃背景，吸附后出现分隔线）。静态页面直接套类即可；
-// 动态页面可用 renderPageHeader() 按标准结构渲染。初始化由 setupNavigation 自动完成。
-function initPageStickyHeaders() {
-  document.querySelectorAll('.page .page-fixed-header').forEach(header => {
-    const page = header.closest('.page');
-    if (!page || page._fixedHeaderBound) return;
-    page._fixedHeaderBound = true;
-    page.classList.add('has-fixed-header');
-    const body = page.querySelector('.page-scroll-body');
-    if (body) {
-      body.addEventListener('scroll', () => {
-        header.classList.toggle('is-stuck', body.scrollTop > 4);
-      }, { passive: true });
-    }
-  });
-}
-
-/**
- * 动态渲染标准页面顶部。page 为页面名（对应 #page-<name> 内的 .page-fixed-header 容器）。
- * opts: { icon, title, subtitle, actionsHTML, toolbarHTML }
- */
-function renderPageHeader(page, opts = {}) {
-  const host = document.querySelector(`#page-${page} .page-fixed-header`);
-  if (!host) return;
-  host.innerHTML = `
-    <div class="page-header-bar page-header-simple">
-      <div>
-        <div class="page-title">${opts.icon ? opts.icon + ' ' : ''}${opts.title || ''}</div>
-        ${opts.subtitle ? `<div class="page-subtitle">${opts.subtitle}</div>` : ''}
-      </div>
-      ${opts.actionsHTML ? `<div class="page-header-actions">${opts.actionsHTML}</div>` : ''}
-    </div>
-    ${opts.toolbarHTML ? `<div class="page-toolbar">${opts.toolbarHTML}</div>` : ''}`;
-}
-
-// ========== Navigation ==========
-function setupNavigation() {
-  renderSidebar();
-  setupVueNavigationBridge();
-  initSidebarState();
-  initPageStickyHeaders();
-  const collapseBtn = document.querySelector('.sidebar-collapse-toggle');
-  if (collapseBtn) {
-    collapseBtn.addEventListener('click', (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      toggleSidebarCollapse();
-    });
-  }
-
-  emitLegacyPageActivation('home', 'legacy');
-}
-
-// ========== 页面切换 ==========
-// 离开守卫：Vue 侧 `registerPageLeaveGuard` 经 window.__devtoolsRunPageLeaveGuards 注入。
-// 编辑器脏标签确认必须在改 .page.active 之前完成（KeepAlive onDeactivated 已太晚）。
-let switchPageBusy = false;
-
-function switchPage(page, el, source = 'legacy') {
-  const targetPage = document.getElementById('page-' + page);
-  if (!targetPage) {
-    console.warn('[Navigation] 未找到目标页面:', page);
-    return;
-  }
-  if (switchPageBusy) return;
-
-  const currentPageEl = document.querySelector('.page.active');
-  const currentPage = currentPageEl && currentPageEl.id
-    ? currentPageEl.id.replace(/^page-/, '')
-    : null;
-
-  const applySwitch = () => {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.dock-item').forEach(d => d.classList.remove('active'));
-    document.querySelectorAll('.sidebar-item').forEach(d => d.classList.remove('active'));
-    targetPage.classList.add('active');
-    const navEl = el || document.querySelector(`.sidebar-item[data-page="${page}"], .dock-item[data-page="${page}"]`);
-    if (navEl) navEl.classList.add('active');
-    const main = document.querySelector('.main-content');
-    if (main) {
-      main.scrollTop = 0;
-      main.scrollLeft = 0;
-      main.classList.toggle('home-active', page === 'home');
-    }
-    targetPage.scrollTop = 0;
-    targetPage.scrollLeft = 0;
-    const scrollBody = targetPage.querySelector('.page-scroll-body');
-    if (scrollBody) scrollBody.scrollTop = 0;
-    if (page === 'deploy') {
-      const activeSub = document.querySelector('#page-deploy .seg__item.is-active');
-      if (activeSub) switchSubTab(activeSub.dataset.sub, activeSub);
-    }
-    // editor / terminal 已迁 Vue：不再调用 initEditor() / loadCommands()
-    emitLegacyPageActivation(page, source);
-  };
-
-  if (
-    currentPage
-    && currentPage !== page
-    && typeof window.__devtoolsRunPageLeaveGuards === 'function'
-  ) {
-    switchPageBusy = true;
-    Promise.resolve(window.__devtoolsRunPageLeaveGuards(currentPage))
-      .then((ok) => {
-        if (ok) applySwitch();
-      })
-      .catch(() => { /* 守卫异常视为取消离开 */ })
-      .finally(() => { switchPageBusy = false; });
-    return;
-  }
-
-  applySwitch();
-}
-
-// ========== 子 Tab 切换 ==========
-function switchSubTab(sub, btn) {
-  document.querySelectorAll('#page-deploy .seg__item').forEach(t => t.classList.remove('is-active'));
-  document.querySelectorAll('.sub-page').forEach(p => p.classList.remove('active'));
-  btn.classList.add('is-active');
-  const subPage = document.getElementById('sub-' + sub);
-  subPage.classList.add('active');
-  subPage.scrollTop = 0;
-  // 三个子页均已迁到 Vue，取数与滚动复位都由各自宿主监听本事件自行处理
-  window.dispatchEvent(new CustomEvent('devtools:legacy-subtab-activated', { detail: { sub } }));
 }
 
 // ========== Shared Utilities ==========

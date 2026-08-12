@@ -1,14 +1,14 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import {
-  installPageLeaveGuardBridge,
   registerPageLeaveGuard,
   runPageLeaveGuards,
 } from './legacy-bridge'
 
-describe('page leave guard bridge', () => {
+describe('page leave guards', () => {
   afterEach(() => {
-    delete window.__devtoolsRunPageLeaveGuards
+    // ensure clean map by registering then unregistering dummy
+    registerPageLeaveGuard('editor', () => true)()
   })
 
   it('allows leave when no guard is registered', async () => {
@@ -32,14 +32,5 @@ describe('page leave guard bridge', () => {
       throw new Error('boom')
     })
     await expect(runPageLeaveGuards('editor')).resolves.toBe(false)
-  })
-
-  it('installs window bridge for legacy switchPage', async () => {
-    registerPageLeaveGuard('editor', async () => false)
-    const stop = installPageLeaveGuardBridge()
-    expect(typeof window.__devtoolsRunPageLeaveGuards).toBe('function')
-    await expect(window.__devtoolsRunPageLeaveGuards?.('editor')).resolves.toBe(false)
-    stop()
-    expect(window.__devtoolsRunPageLeaveGuards).toBeUndefined()
   })
 })

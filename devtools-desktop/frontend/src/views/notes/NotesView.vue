@@ -6,7 +6,7 @@ import PageFrame from '@/components/layout/PageFrame.vue'
 import PageHeader from '@/components/layout/PageHeader.vue'
 import PageToolbar from '@/components/layout/PageToolbar.vue'
 import PageTop from '@/components/layout/PageTop.vue'
-import { requestLegacyPage } from '@/legacy/legacy-bridge'
+import { navigateToPage } from '@/router/navigate'
 import { useNotificationStore } from '@/stores/notification'
 
 import DailyWorkNote from './components/DailyWorkNote.vue'
@@ -53,7 +53,7 @@ const referenceNoteContents = computed(() => Object.fromEntries(
 function openSettings() {
   referenceOpen.value = false
   void flushAll()
-  requestLegacyPage('settings')
+  void navigateToPage('settings')
 }
 
 function referenceTargetDate(item: GitActivityItem, mode: ReferenceInsertMode, targetDate?: string) {

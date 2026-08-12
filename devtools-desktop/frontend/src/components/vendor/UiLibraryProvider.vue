@@ -12,6 +12,7 @@ import {
 import { computed, onBeforeUnmount } from 'vue'
 
 import { createNaiveThemeOverrides } from '@/adapters/naive-ui'
+import { installThemeBridge } from '@/legacy/theme-bridge'
 import { useAppStore } from '@/stores/app'
 
 const app = useAppStore()
@@ -21,8 +22,16 @@ const overlayTarget = typeof document !== 'undefined' && document.querySelector(
   ? '#ui-foundation-preview'
   : undefined
 
-if (typeof document !== 'undefined') app.startThemeSync()
-onBeforeUnmount(() => app.stopThemeSync())
+let stopThemeBridge: (() => void) | null = null
+if (typeof document !== 'undefined') {
+  app.startThemeSync()
+  stopThemeBridge = installThemeBridge()
+}
+onBeforeUnmount(() => {
+  app.stopThemeSync()
+  stopThemeBridge?.()
+  stopThemeBridge = null
+})
 </script>
 
 <template>

@@ -14,6 +14,7 @@ import { useLogTaskStore } from '@/stores/log-task'
 import { useNotificationStore } from '@/stores/notification'
 
 import FileZillaImportDialog from './components/FileZillaImportDialog.vue'
+import DeployChrome from './components/DeployChrome.vue'
 import ServerFormDialog from './components/ServerFormDialog.vue'
 import ServerRowActions from './components/ServerRowActions.vue'
 import { useDeployServers } from './composables/useDeployServers'
@@ -151,6 +152,7 @@ onActivated(() => { void refresh({ silent: true }) })
 </script>
 
 <template>
+  <DeployChrome>
   <div class="deploy-servers" data-test="deploy-servers">
     <div class="deploy-servers__toolbar">
       <BaseButton variant="secondary" @click="importer.show()">从 FileZilla 导入</BaseButton>
@@ -229,4 +231,5 @@ onActivated(() => { void refresh({ silent: true }) })
       @confirm="onConfirmRemove"
     />
   </div>
+  </DeployChrome>
 </template>

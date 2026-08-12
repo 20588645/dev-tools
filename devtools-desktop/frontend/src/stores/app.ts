@@ -54,6 +54,12 @@ export const useAppStore = defineStore('app', {
       if (options.persist !== false && typeof localStorage !== 'undefined') {
         localStorage.setItem(THEME_KEY, normalizedMode)
       }
+      // P8-4：通知 legacy 侧栏图标；DOM 写入仅由此处（及桥接调用）完成
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('devtools:theme-changed', {
+          detail: { mode: normalizedMode, theme: effectiveTheme },
+        }))
+      }
     },
 
     applyTheme(theme: Theme) {

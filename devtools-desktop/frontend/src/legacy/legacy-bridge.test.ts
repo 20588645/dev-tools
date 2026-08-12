@@ -1,17 +1,23 @@
-import { describe, expect, it, vi } from 'vitest'
+import { createPinia, setActivePinia } from 'pinia'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+import { createMigrationRouter } from '@/router'
+import { getAppRouter, setAppRouter } from '@/router/navigate'
 
 import {
-  LEGACY_PAGE_ACTIVATED_EVENT,
   LEGACY_PAGE_IDS,
   HOME_REFRESH_REQUESTED_EVENT,
   isLegacyPageId,
-  emitLegacyPageActivation,
-  onLegacyPageActivation,
   requestHomeRefresh,
   requestLegacyPage,
 } from './legacy-bridge'
 
 describe('legacy bridge', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    setAppRouter(createMigrationRouter())
+  })
+
   it('keeps the complete 13-page contract after report is absorbed into notes', () => {
     expect(LEGACY_PAGE_IDS).toHaveLength(13)
     expect(new Set(LEGACY_PAGE_IDS).size).toBe(13)
@@ -20,34 +26,16 @@ describe('legacy bridge', () => {
     expect(isLegacyPageId('unknown')).toBe(false)
   })
 
-  it('emits and unsubscribes activation events', () => {
-    const listener = vi.fn()
-    const stop = onLegacyPageActivation(listener)
-
-    emitLegacyPageActivation({ pageId: 'run', source: 'legacy' })
-    expect(listener).toHaveBeenCalledWith({ pageId: 'run', source: 'legacy' })
-
-    stop()
-    window.dispatchEvent(new CustomEvent(LEGACY_PAGE_ACTIVATED_EVENT, {
-      detail: { pageId: 'usage', source: 'legacy' },
-    }))
-    expect(listener).toHaveBeenCalledTimes(1)
-  })
-
-  it('requests legacy navigation and home refresh through DOM events', () => {
-    const pageListener = vi.fn()
+  it('requestLegacyPage delegates to router; home refresh still uses DOM event', async () => {
     const refreshListener = vi.fn()
-    window.addEventListener('devtools:legacy-page-requested', pageListener)
     window.addEventListener(HOME_REFRESH_REQUESTED_EVENT, refreshListener)
 
-    requestLegacyPage('usage')
-    requestHomeRefresh('runtime-change')
+    await requestLegacyPage('usage')
+    expect(getAppRouter()?.currentRoute.value.path).toBe('/usage')
 
-    expect(pageListener).toHaveBeenCalledOnce()
-    expect((pageListener.mock.calls[0][0] as CustomEvent).detail).toEqual({ pageId: 'usage', source: 'vue' })
+    requestHomeRefresh('runtime-change')
     expect((refreshListener.mock.calls[0][0] as CustomEvent).detail).toEqual({ reason: 'runtime-change' })
 
-    window.removeEventListener('devtools:legacy-page-requested', pageListener)
     window.removeEventListener(HOME_REFRESH_REQUESTED_EVENT, refreshListener)
   })
 })

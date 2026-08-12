@@ -17,6 +17,7 @@ import { useLogTaskStore } from '@/stores/log-task'
 import { useNotificationStore } from '@/stores/notification'
 
 import HistoryCleanupDialog from './components/HistoryCleanupDialog.vue'
+import DeployChrome from './components/DeployChrome.vue'
 import HistoryRowActions from './components/HistoryRowActions.vue'
 import {
   useDeployHistory,
@@ -210,6 +211,7 @@ onActivated(() => { void refresh({ silent: true }) })
 </script>
 
 <template>
+  <DeployChrome>
   <div class="deploy-history" data-test="deploy-history">
     <div class="deploy-history__toolbar">
       <BaseButton
@@ -325,4 +327,5 @@ onActivated(() => { void refresh({ silent: true }) })
       @submit="onCleanup"
     />
   </div>
+  </DeployChrome>
 </template>

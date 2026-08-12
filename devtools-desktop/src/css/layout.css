@@ -695,12 +695,6 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
   overflow: hidden !important;
 }
 
-.main-content.home-active #vue-migration-host {
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-}
-
 /* --- 侧边栏当前项指示条 --- */
 .sidebar-item.active::before {
   content: '';
@@ -721,7 +715,8 @@ body.sidebar-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
   animation: pageEnter 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
-#vue-ipcheck-host {
+#vue-ipcheck-host,
+#page-ipcheck {
   width: 100%;
   min-width: 0;
   min-height: calc(100vh - 58px);

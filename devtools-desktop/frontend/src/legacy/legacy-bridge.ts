@@ -1,3 +1,5 @@
+import { navigateToPage } from '@/router/navigate'
+
 export const LEGACY_PAGE_IDS = [
   'home',
   'run',
@@ -16,14 +18,6 @@ export const LEGACY_PAGE_IDS = [
 
 export type LegacyPageId = typeof LEGACY_PAGE_IDS[number]
 
-export interface LegacyPageActivationDetail {
-  pageId: LegacyPageId
-  source: 'legacy' | 'vue'
-}
-
-export const LEGACY_PAGE_ACTIVATED_EVENT = 'devtools:legacy-page-activated'
-export const LEGACY_SUBTAB_ACTIVATED_EVENT = 'devtools:legacy-subtab-activated'
-export const LEGACY_PAGE_REQUESTED_EVENT = 'devtools:legacy-page-requested'
 export const HOME_REFRESH_REQUESTED_EVENT = 'devtools:home-refresh-requested'
 export const MENU_ORDER_CHANGED_EVENT = 'devtools:menu-order-changed'
 export const EXPERIMENTAL_SETTING_CHANGED_EVENT = 'devtools:experimental-setting-changed'
@@ -53,20 +47,13 @@ export function isLegacyPageId(value: unknown): value is LegacyPageId {
   return typeof value === 'string' && LEGACY_PAGE_IDS.includes(value as LegacyPageId)
 }
 
-export function emitLegacyPageActivation(detail: LegacyPageActivationDetail) {
-  window.dispatchEvent(new CustomEvent<LegacyPageActivationDetail>(LEGACY_PAGE_ACTIVATED_EVENT, { detail }))
-}
-
+/** @deprecated 使用 navigateToPage；保留别名以免漏改调用点 */
 export function requestLegacyPage(pageId: LegacyPageId) {
-  window.dispatchEvent(new CustomEvent<LegacyPageActivationDetail>(LEGACY_PAGE_REQUESTED_EVENT, {
-    detail: { pageId, source: 'vue' },
-  }))
+  return navigateToPage(pageId)
 }
 
 /**
- * 页面离开守卫：在 legacy `switchPage` 真正改 `.page.active` 之前调用。
- * 返回 `true` 允许离开，`false` 取消切换（用于编辑器脏标签确认等）。
- * 无 vue-router 时 KeepAlive 的 onDeactivated 太晚，必须在 switchPage 入口拦截。
+ * 页面离开守卫：Router beforeEach 与 registerPageLeaveGuard（editor 脏确认）共用。
  */
 export type PageLeaveGuard = () => boolean | Promise<boolean>
 
@@ -88,32 +75,6 @@ export async function runPageLeaveGuards(pageId: string): Promise<boolean> {
   } catch {
     return false
   }
-}
-
-/** 把守卫挂到 window，供尚未迁完的 `src/js/app.js` `switchPage` 调用。 */
-export function installPageLeaveGuardBridge(): () => void {
-  window.__devtoolsRunPageLeaveGuards = runPageLeaveGuards
-  return () => {
-    if (window.__devtoolsRunPageLeaveGuards === runPageLeaveGuards) {
-      delete window.__devtoolsRunPageLeaveGuards
-    }
-  }
-}
-
-export function onLegacyPageActivation(listener: (detail: LegacyPageActivationDetail) => void) {
-  const handler = (event: Event) => listener((event as CustomEvent<LegacyPageActivationDetail>).detail)
-  window.addEventListener(LEGACY_PAGE_ACTIVATED_EVENT, handler)
-  return () => window.removeEventListener(LEGACY_PAGE_ACTIVATED_EVENT, handler)
-}
-
-/**
- * 部署面板的子页切换。部署面板按子页逐个迁移，Vue 侧需要知道当前是哪个子页
- * 才能只挂载已迁移的那个；三个子页全部迁完后这套桥接随 `switchSubTab` 一起删。
- */
-export function onLegacySubTabActivation(listener: (sub: string) => void) {
-  const handler = (event: Event) => listener(String((event as CustomEvent<{ sub: string }>).detail?.sub ?? ''))
-  window.addEventListener(LEGACY_SUBTAB_ACTIVATED_EVENT, handler)
-  return () => window.removeEventListener(LEGACY_SUBTAB_ACTIVATED_EVENT, handler)
 }
 
 export function requestHomeRefresh(reason: HomeRefreshRequestDetail['reason'] = 'manual') {

@@ -3,12 +3,12 @@ import { defineAsyncComponent } from 'vue'
 
 import { UiLibraryProvider } from './plugins/ui-library'
 import AppToastHost from './components/feedback/AppToastHost.vue'
-import MigrationHost from './legacy/MigrationHost.vue'
+import AppShell from './components/shell/AppShell.vue'
 
 const UiFoundationPreview = defineAsyncComponent(() => import('./views/UiFoundationPreview.vue'))
 
-const showUiFoundationPreview = import.meta.env.DEV
-  && new URLSearchParams(window.location.search).get('uiFoundation') === '1'
+const search = new URLSearchParams(window.location.search)
+const showUiFoundationPreview = import.meta.env.DEV && search.get('uiFoundation') === '1'
 </script>
 
 <template>
@@ -19,7 +19,7 @@ const showUiFoundationPreview = import.meta.env.DEV
     </UiLibraryProvider>
   </div>
   <UiLibraryProvider v-else>
-    <MigrationHost />
+    <AppShell />
     <AppToastHost />
   </UiLibraryProvider>
 </template>
@@ -31,5 +31,10 @@ const showUiFoundationPreview = import.meta.env.DEV
   inset: 0;
   overflow: auto;
   background: var(--color-page);
+}
+
+#app {
+  height: 100%;
+  min-height: 100vh;
 }
 </style>

@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { toRef } from 'vue'
+import { onActivated, onDeactivated, ref } from 'vue'
 
 import PageFrame from '@/components/layout/PageFrame.vue'
-import { requestLegacyPage } from '@/legacy/legacy-bridge'
+import { navigateToPage } from '@/router/navigate'
 
 import ActivityRhythmCard from './components/ActivityRhythmCard.vue'
 import AmbientPaletteCard from './components/AmbientPaletteCard.vue'
@@ -19,7 +19,10 @@ import './home.css'
 
 defineOptions({ name: 'HomeView' })
 
-const props = defineProps<{ active: boolean }>()
+/** KeepAlive：用 activated 驱动刷新，不再依赖 MigrationHost 传入的 active prop */
+const active = ref(true)
+onActivated(() => { active.value = true })
+onDeactivated(() => { active.value = false })
 
 const {
   dateLabel,
@@ -53,7 +56,7 @@ const {
   moon,
   refreshDashboard,
   refreshPurity,
-} = useHomeDashboard(toRef(props, 'active'))
+} = useHomeDashboard(active)
 </script>
 
 <template>
@@ -79,14 +82,14 @@ const {
         :requests="usageRequests"
         :heights="usageHeights"
         :has-trend="usageHasTrend"
-        @open="requestLegacyPage('usage')"
+        @open="navigateToPage('usage')"
         @retry="refreshDashboard"
       />
       <IpPurityCard
         :loading="purityState.loading"
         :error="purityState.error"
         :purity="purity"
-        @open="requestLegacyPage('ipcheck')"
+        @open="navigateToPage('ipcheck')"
         @retry="refreshPurity(true)"
       />
       <ActivityRhythmCard

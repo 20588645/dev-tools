@@ -1,25 +1,16 @@
 import { apiClient, type ApiRequestOptions } from '@/services/api-client'
+import {
+  DEFAULT_MENU_ORDER,
+  normalizeMenuOrder,
+  type SortableMenuPage,
+} from '@/router/route-meta'
 
 const MENU_ORDER_KEY = 'devtools-menu-order'
 const NOTIFICATION_ENABLED_KEY = 'devtools-notifications-enabled'
 const LIVE2D_ENABLED_KEY = 'devtools-live2d-enabled'
 const CLICK_EFFECT_ENABLED_KEY = 'devtools-click-effect-enabled'
 
-export const DEFAULT_MENU_ORDER = [
-  'run',
-  'deploy',
-  'filetransfer',
-  'terminal',
-  'todo',
-  'notes',
-  'notebook',
-  'editor',
-  'ipcheck',
-  'twofa',
-  'usage',
-] as const
-
-export type SortableMenuPage = typeof DEFAULT_MENU_ORDER[number]
+export { DEFAULT_MENU_ORDER, type SortableMenuPage }
 export type NotificationPermissionState = 'granted' | 'denied' | 'default' | 'unsupported'
 
 export interface HealthInfo {
@@ -177,18 +168,11 @@ export async function startUpgrade() {
 }
 
 export function readMenuOrder(storage: Storage = globalThis.localStorage): SortableMenuPage[] {
-  const defaults = [...DEFAULT_MENU_ORDER]
   try {
     const saved = JSON.parse(storage.getItem(MENU_ORDER_KEY) ?? '[]')
-    if (!Array.isArray(saved)) return defaults
-    const normalized = saved.filter((page): page is SortableMenuPage => (
-      typeof page === 'string'
-      && defaults.includes(page as SortableMenuPage)
-    ))
-    const unique = [...new Set(normalized)]
-    return [...unique, ...defaults.filter((page) => !unique.includes(page))]
+    return normalizeMenuOrder(saved)
   } catch {
-    return defaults
+    return normalizeMenuOrder(undefined)
   }
 }
 

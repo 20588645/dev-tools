@@ -302,7 +302,7 @@ pub fn run() {
                                 let _ = window.unminimize();
                                 let _ = window.set_focus();
                                 // 通知前端切换到本地运行页面
-                                let _ = window.eval("switchPage('run', document.querySelector('.sidebar-item[data-page=run]'))");
+                                let _ = window.eval("window.location.hash = '#/run'");
                             }
                         }
                         "quit" => {
@@ -315,7 +315,7 @@ pub fn run() {
                                     let _ = window.show();
                                     let _ = window.unminimize();
                                     let _ = window.set_focus();
-                                    let _ = window.eval("switchPage('run', document.querySelector('.sidebar-item[data-page=run]'))");
+                                    let _ = window.eval("window.location.hash = '#/run'");
                                 }
                             }
                         }

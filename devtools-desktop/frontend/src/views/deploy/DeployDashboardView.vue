@@ -17,6 +17,7 @@ import { useLogTaskStore } from '@/stores/log-task'
 import { useNotificationStore } from '@/stores/notification'
 
 import BuildDeployDialog from './components/BuildDeployDialog.vue'
+import DeployChrome from './components/DeployChrome.vue'
 import DeployGroupSection from './components/DeployGroupSection.vue'
 import DeployProjectCard from './components/DeployProjectCard.vue'
 import ProjectConfigDialog from './components/ProjectConfigDialog.vue'
@@ -164,6 +165,7 @@ onActivated(() => {
 </script>
 
 <template>
+  <DeployChrome>
   <div class="deploy-dashboard" data-test="deploy-dashboard">
     <div class="deploy-dashboard__toolbar">
       <BaseInput
@@ -347,4 +349,5 @@ onActivated(() => {
       @confirm="onConfirmRemotePath"
     />
   </div>
+  </DeployChrome>
 </template>
