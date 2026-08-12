@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 
 import type { DeployServer } from '@/services/modules/deploy-service'
 import { getServers } from '@/services/modules/deploy-service'
+import { sendDesktopNotification } from '@/services/desktop-notification'
 import {
   cancelTransfer,
   connectSftp,
@@ -789,7 +790,7 @@ export const useFileTransferStore = defineStore('file-transfer', {
         const body = task.state === 'done'
           ? `${what} 已${dir}到${place}`
           : `${what} ${dir}失败${task.error ? `：${task.error}` : ''}`
-        window.sendDesktopNotification?.(title, body, task.state === 'done', { target: 'filetransfer' })
+        void sendDesktopNotification(title, body, task.state === 'done', { target: 'filetransfer' })
       }
     },
 

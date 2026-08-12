@@ -1,4 +1,5 @@
 import { listTodos } from '@/services/modules/todo-service'
+import { sendDesktopNotification } from '@/services/desktop-notification'
 import { todoNotificationBody } from '@/views/todo/todo-content'
 
 const REMINDED_STORAGE_KEY = 'devtools-reminded-todos'
@@ -6,12 +7,7 @@ const REMINDER_LIMIT = 200
 const INITIAL_DELAY = 3_000
 const CHECK_INTERVAL = 30_000
 
-type DesktopNotificationBridge = (
-  title: string,
-  body: string,
-  isSuccess: boolean,
-  options?: { target?: string },
-) => Promise<void> | void
+type DesktopNotificationBridge = typeof sendDesktopNotification
 
 interface TodoReminderOptions {
   storage?: Storage
@@ -26,12 +22,6 @@ function readRemindedIds(storage: Storage) {
   } catch {
     return new Set<string>()
   }
-}
-
-function legacyNotificationBridge(): DesktopNotificationBridge | undefined {
-  return (window as typeof window & {
-    sendDesktopNotification?: DesktopNotificationBridge
-  }).sendDesktopNotification
 }
 
 export function createTodoReminderService(options: TodoReminderOptions = {}) {
@@ -61,8 +51,8 @@ export function createTodoReminderService(options: TodoReminderOptions = {}) {
 
         remindedIds.add(todo.id)
         saveRemindedIds()
-        const notify = options.notify ?? legacyNotificationBridge()
-        await notify?.('⏰ 待办提醒', todoNotificationBody(todo.title, todo.content), false, { target: 'log' })
+        const notify = options.notify ?? sendDesktopNotification
+        await notify('待办提醒', todoNotificationBody(todo.title, todo.content), false, { target: 'log' })
       }
     } catch {
       // Sidecar may still be starting; the next interval will retry.

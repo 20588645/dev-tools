@@ -4,10 +4,6 @@
 // project / server / node 全局已随构建部署弹窗迁入 Vue 退役；各 Vue 页自行拉数。
 let currentRunFilter = 'all';
 // availableProjects / checkedAvailableProjects 随添加项目弹窗迁入 Vue 一并退役。
-let notifiedRunIds = new Set();
-let notifiedRunCompileErrors = new Set();
-let pendingRunCompileErrorTimers = {};
-const RUN_COMPILE_ERROR_NOTIFY_DELAY = 15000;
 let APP_VERSION = '0.1.93';
 
 // ========== Vue Migration Bridge ==========
@@ -120,127 +116,9 @@ function setupVueCompatBridge() {
 }
 
 // ========== 桌面通知 ==========
-const NOTIFICATION_ENABLED_KEY = 'devtools-notifications-enabled';
-const NOTIFICATION_ACTION_TTL = 2 * 60 * 1000;
-let pendingNotificationAction = null;
-
-function areNotificationsEnabled() {
-  return localStorage.getItem(NOTIFICATION_ENABLED_KEY) !== 'false';
-}
-
-function setNotificationsEnabled(enabled) {
-  localStorage.setItem(NOTIFICATION_ENABLED_KEY, enabled ? 'true' : 'false');
-}
-
-function getTauriNotificationAPI() {
-  return window.__TAURI__?.notification || null;
-}
-
-async function isNotificationPermissionGranted() {
-  const tauriNotification = getTauriNotificationAPI();
-  if (tauriNotification?.isPermissionGranted) {
-    try {
-      return await tauriNotification.isPermissionGranted();
-    } catch (e) {
-      console.warn('检查 Tauri 通知权限失败:', e);
-    }
-  }
-  return 'Notification' in window && Notification.permission === 'granted';
-}
-
-async function requestNotificationPermission(options = {}) {
-  const force = options.force === true;
-  if (!force && !areNotificationsEnabled()) return false;
-
-  const tauriNotification = getTauriNotificationAPI();
-  if (tauriNotification?.requestPermission) {
-    try {
-      const permission = await tauriNotification.requestPermission();
-      return permission === 'granted';
-    } catch (e) {
-      console.warn('请求 Tauri 通知权限失败:', e);
-    }
-  }
-
-  if ('Notification' in window && Notification.permission === 'default') {
-    const permission = await Notification.requestPermission();
-    return permission === 'granted';
-  }
-  return 'Notification' in window && Notification.permission === 'granted';
-}
-
-async function sendDesktopNotification(title, body, isSuccess, options = {}) {
-  if (!areNotificationsEnabled() && !options.force) return;
-  const granted = await requestNotificationPermission({ force: options.force });
-  if (!granted) return;
-
-  try {
-    rememberNotificationAction(options);
-    const tauriNotification = getTauriNotificationAPI();
-    const notificationOptions = {
-      title,
-      body,
-      group: 'devtools-tasks',
-      autoCancel: true,
-      extra: {
-        status: isSuccess ? 'success' : 'fail',
-        target: options.target || 'log',
-      },
-    };
-
-    if (tauriNotification?.sendNotification) {
-      tauriNotification.sendNotification(notificationOptions);
-      return;
-    }
-
-    if (!('Notification' in window) || Notification.permission !== 'granted') return;
-    const notification = new Notification(title, {
-      body,
-      tag: 'devtools-' + Date.now(),
-      requireInteraction: false,
-      silent: false,
-    });
-    notification.onclick = () => {
-      window.focus();
-      if (options.target === 'log') reopenLogModal();
-      notification.close?.();
-    };
-    setTimeout(() => notification.close?.(), 10000);
-  } catch (e) {
-    console.warn('桌面通知发送失败:', e);
-  }
-}
-
-function rememberNotificationAction(options = {}) {
-  if (options.target !== 'log') return;
-  if (!document.hidden && document.hasFocus?.()) return;
-
-  pendingNotificationAction = {
-    target: options.target,
-    createdAt: Date.now(),
-  };
-}
-
-function setupNotificationActionHandlers() {
-  window.addEventListener('focus', handlePendingNotificationAction);
-  document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) handlePendingNotificationAction();
-  });
-}
-
-function handlePendingNotificationAction() {
-  if (!pendingNotificationAction) return;
-  if (Date.now() - pendingNotificationAction.createdAt > NOTIFICATION_ACTION_TTL) {
-    pendingNotificationAction = null;
-    return;
-  }
-
-  const action = pendingNotificationAction;
-  pendingNotificationAction = null;
-  if (action.target === 'log') {
-    setTimeout(() => reopenLogModal(), 80);
-  }
-}
+// P9-3：权限 / Tauri·Web 双通道 / 点回日志 已迁至
+// `frontend/src/services/desktop-notification.ts`；run 成功与编译报错通知在
+// `run-runtime-service.ts`。此处不再保留实现。
 
 let activeSysDialogClose = null;     // 当前系统弹窗的关闭回调
 
@@ -326,8 +204,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupWSHandlers();
   setupVueCompatBridge();
   setupModalDismissal();
-  setupNotificationActionHandlers();
-  requestNotificationPermission();
   // Vue 各页自行加载项目 / 服务器 / Node 版本数据
   updateToolbarDate();
 });
@@ -603,76 +479,14 @@ function updateToolbarDate() {
 function setupWSHandlers() {
   /*
     构建 / 部署的 log、progress、status 三条链路已由 Vue 的
-    `services/deploy-realtime-service.ts` 全量承担（随应用常驻，含刷新恢复与
-    WS 重连对账）。run-log 由 useRunRealtime 处理。这里不能保留并行处理器——
-    两侧会同时写同一个 log store，表现为每行日志追加两次、完成时弹两次提示。
+    `services/deploy-realtime-service.ts` 全量承担。
+    run-status 通知与对账已由 `run-runtime-service.ts` 承担（P9-3）。
+    此处仅保留升级进度事件桥。
    */
 
   WS.on('upgrade-progress', (data) => {
     window.dispatchEvent(new CustomEvent(UPGRADE_PROGRESS_EVENT, { detail: data }));
   });
-
-  /*
-    只保留桌面通知与去重记账。运行态、托盘菜单与首页刷新已由 Vue 的
-    run store + run-runtime-service 承担（后者随应用常驻，不依赖页面挂载）。
-   */
-  WS.on('run-status', async (data) => {
-    const isActive = ['starting', 'running'].includes(data.status);
-
-    if (data.status === 'running' && !notifiedRunIds.has(data.id)) {
-      notifiedRunIds.add(data.id);
-      const modulesText = (data.moduleNames || []).length ? ` · ${(data.moduleNames || []).join(', ')}` : '';
-      const urlText = data.url ? `\n${data.url}` : '';
-      sendDesktopNotification('本地运行成功', `${data.projectName}${modulesText} 已启动${urlText}`, true, { target: 'log' });
-    }
-    handleRunCompileErrorNotification(data);
-    if (!isActive && data.id) {
-      notifiedRunIds.delete(data.id);
-      clearRunCompileErrorTimers(data.id);
-      clearNotifiedCompileErrors(data.id);
-    }
-
-  });
-}
-
-function clearRunCompileErrorTimers(jobId) {
-  Object.keys(pendingRunCompileErrorTimers)
-    .filter(key => key.startsWith(`${jobId}:`))
-    .forEach(key => {
-      clearTimeout(pendingRunCompileErrorTimers[key]);
-      delete pendingRunCompileErrorTimers[key];
-    });
-}
-
-// 任务结束时清理其编译报错去重记录，避免 notifiedRunCompileErrors 只增不删导致
-// 长期运行缓慢内存增长（与 notifiedRunIds.delete / clearRunCompileErrorTimers 生命周期对齐）
-function clearNotifiedCompileErrors(jobId) {
-  [...notifiedRunCompileErrors].forEach(key => {
-    if (key.startsWith(`${jobId}:`)) notifiedRunCompileErrors.delete(key);
-  });
-}
-
-function handleRunCompileErrorNotification(data) {
-  if (!data.id) return;
-  if (data.compileStatus !== 'error') {
-    clearRunCompileErrorTimers(data.id);
-    return;
-  }
-  if (!data.compileErrorSeq) return;
-
-  const errorKey = `${data.id}:${data.compileErrorSeq}`;
-  if (notifiedRunCompileErrors.has(errorKey) || pendingRunCompileErrorTimers[errorKey]) return;
-
-  pendingRunCompileErrorTimers[errorKey] = setTimeout(() => {
-    delete pendingRunCompileErrorTimers[errorKey];
-    const latest = window.__runActiveJob?.(data.projectName);
-    if (!latest || latest.id !== data.id || latest.compileStatus !== 'error' || latest.compileErrorSeq !== data.compileErrorSeq) return;
-
-    notifiedRunCompileErrors.add(errorKey);
-    const modulesText = (latest.moduleNames || []).length ? ` · ${(latest.moduleNames || []).join(', ')}` : '';
-    sendDesktopNotification('本地项目编译报错', `${latest.projectName}${modulesText}\n${latest.compileError || '请查看运行日志'}`, false, { target: 'log' });
-    showToast('❌ 本地项目编译报错', latest.projectName, { clickable: true });
-  }, RUN_COMPILE_ERROR_NOTIFY_DELAY);
 }
 
 // ========== Shared Utilities ==========
@@ -748,11 +562,6 @@ async function withButtonBusy(btn, busyText, fn) {
   }
 }
 
-// 桌面通知 / Toast 点回日志：经事件交给 MigrationHost → logTask.reopen()
-function reopenLogModal() {
-  window.dispatchEvent(new CustomEvent('devtools:log-reopen-requested'));
-}
-
 function escapeHtml(str) {
   if (!str) return '';
   return str
@@ -776,14 +585,9 @@ async function openFileInEditorByPath(filepath, line, projectName = '') {
 
 window.openFileInEditorByPath = openFileInEditorByPath;
 
-// Vue 侧的 todo-reminder-service 与 deploy-realtime-service 都要发桌面通知，而本
-// 函数的权限申请、Tauri/Web 双通道与「点通知回到日志」记账尚未迁入 Vue。顶层
-// function 在传统脚本里不会成为 window 属性，须显式挂载（同 WS 的处理方式）。
-window.sendDesktopNotification = sendDesktopNotification;
-
 // ========== Modal Utils ==========
 // `logModal` 分支已删除：日志弹窗的关闭/最小化由 Vue LogViewer 自身的
-// requestClose 处理（running 时发 minimize 事件，MigrationHost 接住并给 Toast），
+// requestClose 处理（running 时发 minimize 事件，AppShellServices 接住并给 Toast），
 // legacy 侧已无命令式调用。这里只剩普通弹窗的 DOM 开关。
 function closeModal(id) {
   document.getElementById(id)?.classList.remove('active');

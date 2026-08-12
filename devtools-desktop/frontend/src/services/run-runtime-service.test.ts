@@ -2,8 +2,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { RunJob } from '@/services/modules/run-service'
-
-import { createRunRuntimeService } from './run-runtime-service'
+import { useRunStore } from '@/stores/run'
 
 vi.mock('@/services/modules/run-service', async () => {
   const actual = await vi.importActual<typeof import('@/services/modules/run-service')>(
@@ -16,10 +15,23 @@ vi.mock('@/services/tauri-client', () => ({
   tauriClient: { available: true, updateTrayMenu: vi.fn().mockResolvedValue(undefined) },
 }))
 
+vi.mock('@/services/desktop-notification', () => ({
+  sendDesktopNotification: vi.fn(),
+}))
+
+vi.mock('@/services/app-toast', () => ({
+  showAppToast: vi.fn(),
+}))
+
 const service = await import('@/services/modules/run-service')
 const getRunStatuses = vi.mocked(service.getRunStatuses)
 const { tauriClient } = await import('@/services/tauri-client')
 const updateTrayMenu = vi.mocked(tauriClient.updateTrayMenu)
+const { sendDesktopNotification } = await import('@/services/desktop-notification')
+const { showAppToast } = await import('@/services/app-toast')
+const mockedSendDesktopNotification = vi.mocked(sendDesktopNotification)
+const mockedShowAppToast = vi.mocked(showAppToast)
+const { createRunRuntimeService } = await import('./run-runtime-service')
 
 const job = (overrides: Partial<RunJob> = {}): RunJob =>
   service.normalizeRunJob({ id: 'run-1', projectName: 'demo', status: 'running', ...overrides })
@@ -51,7 +63,8 @@ beforeEach(() => {
   vi.clearAllMocks()
   getRunStatuses.mockResolvedValue([])
   delete (globalThis as { WS?: unknown }).WS
-  delete window.__runActiveJob
+  delete (window as Window & { __runActiveJob?: unknown }).__runActiveJob
+  vi.useRealTimers()
 })
 
 describe('createRunRuntimeService', () => {
@@ -112,17 +125,73 @@ describe('createRunRuntimeService', () => {
     expect(updateTrayMenu.mock.calls.at(-1)?.[0]).toEqual([{ name: 'p-ws', status: 'starting' }])
   })
 
-  it('装卸只读桥供 legacy 校验编译报错的新鲜度', () => {
+  it('running 首次到达时发本地运行成功桌面通知，且同 id 不重复', () => {
+    const ws = installFakeWs()
+    const svc = createRunRuntimeService()
+    svc.start()
+    const payload = job({
+      id: 'run-ok',
+      projectName: 'demo',
+      status: 'running',
+      moduleNames: ['web'],
+      url: 'http://127.0.0.1:3000',
+    })
+    ws.emit('run-status', payload)
+    ws.emit('run-status', payload)
+
+    expect(mockedSendDesktopNotification).toHaveBeenCalledOnce()
+    expect(mockedSendDesktopNotification).toHaveBeenCalledWith(
+      '本地运行成功',
+      'demo · web 已启动\nhttp://127.0.0.1:3000',
+      true,
+      { target: 'log' },
+    )
+  })
+
+  it('编译报错延时后仍有效才发桌面通知与可点击 toast', () => {
+    const deferred: Array<() => void> = []
+    const setTimeoutSpy = vi.spyOn(globalThis, 'setTimeout').mockImplementation((fn: TimerHandler) => {
+      if (typeof fn === 'function') deferred.push(fn as () => void)
+      return 0 as unknown as ReturnType<typeof setTimeout>
+    })
+
+    const ws = installFakeWs()
+    const svc = createRunRuntimeService()
+    svc.start()
+
+    ws.emit('run-status', job({
+      id: 'run-err',
+      projectName: 'demo',
+      status: 'running',
+      compileStatus: 'error',
+      compileError: 'Module not found',
+      compileErrorSeq: 3,
+      moduleNames: ['app'],
+    }))
+
+    expect(mockedSendDesktopNotification).toHaveBeenCalledOnce()
+    mockedSendDesktopNotification.mockClear()
+    expect(deferred.length).toBeGreaterThan(0)
+
+    deferred.forEach((fn) => fn())
+
+    expect(mockedSendDesktopNotification).toHaveBeenCalledWith(
+      '本地项目编译报错',
+      'demo · app\nModule not found',
+      false,
+      { target: 'log' },
+    )
+    expect(mockedShowAppToast).toHaveBeenCalledWith('本地项目编译报错', 'demo', { clickable: true })
+    expect(useRunStore().jobOf('demo')?.compileStatus).toBe('error')
+    setTimeoutSpy.mockRestore()
+  })
+
+  it('不再挂载 __runActiveJob 桥', () => {
     installFakeWs()
     const svc = createRunRuntimeService()
     svc.start()
-    expect(typeof window.__runActiveJob).toBe('function')
-
-    // 桥回答「该项目当前活跃任务」，legacy 用它判断报错是否已过期
-    expect(window.__runActiveJob?.('p')).toBeNull()
-
+    expect((window as Window & { __runActiveJob?: unknown }).__runActiveJob).toBeUndefined()
     svc.stop()
-    expect(window.__runActiveJob).toBeUndefined()
   })
 
   it('WS 尚未就绪时 start 不抛错', () => {

@@ -4,8 +4,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useDeployTaskStore } from '@/stores/deploy-task'
 import { useLogTaskStore } from '@/stores/log-task'
 
-import { createDeployRealtimeService, onDeployFinished, resetDeployFinishedListenersForTest } from './deploy-realtime-service'
-
 vi.mock('@/services/modules/deploy-service', async () => {
   const actual = await vi.importActual<typeof import('@/services/modules/deploy-service')>(
     '@/services/modules/deploy-service',
@@ -13,8 +11,15 @@ vi.mock('@/services/modules/deploy-service', async () => {
   return { ...actual, getActiveJob: vi.fn() }
 })
 
+vi.mock('@/services/desktop-notification', () => ({
+  sendDesktopNotification: vi.fn(),
+}))
+
+const { createDeployRealtimeService, onDeployFinished, resetDeployFinishedListenersForTest } = await import('./deploy-realtime-service')
 const deployService = await import('@/services/modules/deploy-service')
+const { sendDesktopNotification } = await import('@/services/desktop-notification')
 const getActiveJob = vi.mocked(deployService.getActiveJob)
+const mockedSendDesktopNotification = vi.mocked(sendDesktopNotification)
 
 /** 假的旧全局 WS，避免测试依赖真实连接。 */
 function installFakeWs() {
@@ -57,7 +62,6 @@ beforeEach(() => {
   resetDeployFinishedListenersForTest()
   getActiveJob.mockResolvedValue(null)
   delete (globalThis as { WS?: unknown }).WS
-  delete window.sendDesktopNotification
   delete window.__devtoolsShowToast
   delete window.showToast
 })
@@ -207,16 +211,14 @@ describe('createDeployRealtimeService', () => {
     退役 legacy WS 处理器后，桌面通知的唯一发出点就是本服务。漏掉它等于用户切到
     别的应用时完全收不到构建结果——这是 legacy 侧原本就有的行为，不能在迁移中丢。
    */
-  it('done 时经 legacy 桥发桌面通知', () => {
+  it('done 时发桌面通知', () => {
     const ws = installFakeWs()
-    const sendDesktopNotification = vi.fn()
-    window.sendDesktopNotification = sendDesktopNotification
     createDeployRealtimeService().start()
     startTask('t-1')
 
     ws.emit('status', { id: 't-1', phase: 'done', status: 'success', projectName: 'p', type: 'deploy', duration: '42s' })
 
-    expect(sendDesktopNotification).toHaveBeenCalledWith(
+    expect(mockedSendDesktopNotification).toHaveBeenCalledWith(
       '部署成功',
       'p 部署完成，耗时 42s',
       true,

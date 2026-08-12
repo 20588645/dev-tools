@@ -61,7 +61,7 @@ describe('todo reminder service', () => {
     await service.check()
 
     expect(notify).toHaveBeenCalledOnce()
-    expect(notify).toHaveBeenCalledWith('⏰ 待办提醒', '迁移待办\n正文', false, { target: 'log' })
+    expect(notify).toHaveBeenCalledWith('待办提醒', '迁移待办\n正文', false, { target: 'log' })
     expect(storage.getItem('devtools-reminded-todos')).toBe('["todo-1"]')
   })
 })

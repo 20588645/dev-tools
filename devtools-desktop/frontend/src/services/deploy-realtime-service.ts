@@ -1,4 +1,5 @@
 import { showAppToast } from '@/services/app-toast'
+import { sendDesktopNotification } from '@/services/desktop-notification'
 import { getActiveJob } from '@/services/modules/deploy-service'
 import { useDeployTaskStore, type DeployPhase } from '@/stores/deploy-task'
 import { useLogTaskStore } from '@/stores/log-task'
@@ -173,12 +174,11 @@ export function createDeployRealtimeService() {
     }
 
     /*
-      桌面通知仍走 legacy 的 `sendDesktopNotification`：它带权限申请、Tauri/Web
-      双通道与「点通知回到日志」的待办记账，整套尚未迁入 Vue（与
-      `todo-reminder-service` 同一处理方式）。
+      桌面通知已迁 Vue：`services/desktop-notification.ts` 负责权限、Tauri/Web
+      双通道与「点通知回到日志」。
     */
     const typeText = isBuildOnly ? '构建' : '部署'
-    window.sendDesktopNotification?.(
+    void sendDesktopNotification(
       `${typeText}${success ? '成功' : '失败'}`,
       success ? `${projectName} ${typeText}完成，耗时 ${duration}` : `${projectName} ${typeText}失败`,
       success,

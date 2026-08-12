@@ -1,12 +1,12 @@
 # DevTools Desktop Vue 3 架构渐进重构执行计划
 
-> 文档版本：1.70
-> 状态：执行中（Phase 8 已关闭；**Phase 9 进行中：P9-1 / P9-2 已完成，下一为 P9-3**）
+> 文档版本：1.71
+> 状态：执行中（Phase 8 已关闭；**Phase 9 进行中：P9-1～P9-3 已完成，下一为 P9-4**）
 > 编制日期：2026-07-21  
 > 最近更新：2026-08-12
 > 适用仓库：`devtools-desktop`  
 > 核心原则：保持软件持续可运行，按页面逐步替换，不进行一次性推倒重写。
-> **Phase 6-2 部署面板 `deploy` 已关闭**。三个子页（项目总览 / 服务器管理 / 部署历史）PG0～PG5 与真实 Tauri 验收均已通过；第 6 步弹窗四批亦已完成并提交——第 1 批项目默认配置（`fa8ecfc`）、第 2 批添加项目（`7880d26`）、第 3/4 批合并的远程浏览 + 构建/部署弹窗（`6167e6e`，用户 Tauri 验收通过）。`deploy.js` / `deploy.css` 整文件删除；壳层 `.sub-page` 规则并入 `legacy-runtime.css`。Run 遗留的四项跨页耦合**全部收口**：第 1、3、4 项此前已关；第 2 项 `legacy/log-viewer-bridge.ts`（及 `deploy-task-bridge.ts`）随第 6 步弹窗迁完删除，桌面通知/Toast 点回日志改为事件 `devtools:log-reopen-requested`。[组件架构合规专项](./vue-migration/component-architecture-compliance.md)已于 2026-08-06 关闭（机器基线 0、批准例外 0，最终 Smoke Test 通过），该文转为长期生效的规则文档。**Phase 6-3 文件传输 `filetransfer` 已关闭**。**Phase 7 已关闭**。**Phase 8 已关闭（P8-1～P8-6 代码收口）**：AppShell + Vue Router 可见侧栏；`MigrationHost` 与 legacy `switchPage`/侧栏渲染已删。**当前执行指针：Phase 9 — P9-1/P9-2 已完成（孤儿 Sortable 清理；Toast + 项目介绍迁 Vue）；下一 P9-3 桌面通知。详见 `pages/phase9/`。**
+> **Phase 6-2 部署面板 `deploy` 已关闭**。三个子页（项目总览 / 服务器管理 / 部署历史）PG0～PG5 与真实 Tauri 验收均已通过；第 6 步弹窗四批亦已完成并提交——第 1 批项目默认配置（`fa8ecfc`）、第 2 批添加项目（`7880d26`）、第 3/4 批合并的远程浏览 + 构建/部署弹窗（`6167e6e`，用户 Tauri 验收通过）。`deploy.js` / `deploy.css` 整文件删除；壳层 `.sub-page` 规则并入 `legacy-runtime.css`。Run 遗留的四项跨页耦合**全部收口**：第 1、3、4 项此前已关；第 2 项 `legacy/log-viewer-bridge.ts`（及 `deploy-task-bridge.ts`）随第 6 步弹窗迁完删除，桌面通知/Toast 点回日志改为事件 `devtools:log-reopen-requested`。[组件架构合规专项](./vue-migration/component-architecture-compliance.md)已于 2026-08-06 关闭（机器基线 0、批准例外 0，最终 Smoke Test 通过），该文转为长期生效的规则文档。**Phase 6-3 文件传输 `filetransfer` 已关闭**。**Phase 7 已关闭**。**Phase 8 已关闭（P8-1～P8-6 代码收口）**：AppShell + Vue Router 可见侧栏；`MigrationHost` 与 legacy `switchPage`/侧栏渲染已删。**当前执行指针：Phase 9 — P9-1～P9-3 已完成（孤儿清理；Toast/介绍；桌面通知 + run WS 通知）；下一 P9-4 收口并删除 `app.js`。详见 `pages/phase9/`。**
 
 ---
 
@@ -520,7 +520,7 @@ L3 中纯前端且低风险的改动可以与页面 Vue 实现处于同一页面
 | 13 | Phase 7-1 | 文件编辑 `editor` | **已完成** | 已完成 | L1 Vue + CM5 生命周期 + 切页脏确认；legacy 归零；用户 Tauri 验收通过 |
 | 14 | Phase 7-2 | 快捷命令 `terminal` | **已完成** | 已完成 | L1 Vue + 切页保 PTY + 执行新开 tab；legacy 归零；用户 Tauri 验收通过 |
 | 15 | Phase 8 | Vue 应用壳与 Router | **已完成（P8-1～P8-6）** | 保持回归 | 见 `pages/shell/` |
-| 16 | Phase 9 | 旧架构清理与发布 | **进行中（P9-1/P9-2 已完成）** | P9-3 桌面通知 | 见 `pages/phase9/`；分批删 legacy / 旧 `src` / 污染 CSS；G7/G8 |
+| 16 | Phase 9 | 旧架构清理与发布 | **进行中（P9-1～P9-3 已完成）** | P9-4 删 `app.js` | 见 `pages/phase9/`；分批删 legacy / 旧 `src` / 污染 CSS；G7/G8 |
 
 #### 每个功能页面的固定执行循环
 
@@ -1165,13 +1165,13 @@ frontend/src/services/modules/ipcheck-service.ts
 1. ~~**`.run-group*` 样式孤儿**~~ — **已关闭（项目总览子页迁移时解决）**。分组头改用公共 `BaseDisclosure panel` 变体，`deploy.js` 中的 `.run-group*` 生成逻辑与 `deploy.css` 那条「复用 run.css 全局定义」的注释已随旧渲染链路一并删除。
 2. **`legacy/log-viewer-bridge.ts`** — **本阶段收不了，转为第 6 步（构建/部署弹窗）的前置**。`logViewer()` 在 `app.js` 有 21 处调用，全部驱动构建/部署任务链路，而该链路本身尚未迁移；硬删会让构建部署日志全断。等第 6 步弹窗迁完后，连同 `app.js` 的包装函数一并删除。
 3. ~~**`runningProjects` 全局**~~ — **已关闭（2026-08-08）**。托盘改由 `stores/run.ts` 的 `syncRuntimeConsumers` 直接经 Tauri IPC 更新，不再绕 `app.js` 读全局；`runningProjects`、`syncTrayMenu` 与 `requestHomeRefreshIfVisible` 均已删除。首页仍走 `HOME_REFRESH_REQUESTED_EVENT` 事件桥（其自身带 `active` 守卫，与旧的可见性检查等价）。
-4. ~~**`loadRunStatuses`**~~ — **已关闭（2026-08-08）**。新增应用级 `services/run-runtime-service.ts`，在 `MigrationHost` 挂载时启动：启动即对账一次、并监听 WS `open` 与 `run-status`。
+4. ~~**`loadRunStatuses`**~~ — **已关闭（2026-08-08）**。新增应用级 `services/run-runtime-service.ts`，在应用壳常驻时启动：启动即对账一次、并监听 WS `open` 与 `run-status`。
 
    **这里有个不能省的约束**：`run store` 的 `reconcile` 原先只由 RunView 的 `useRunPage` / `useRunRealtime` 触发，而托盘是**启动即可见**的。若直接删掉 legacy 兜底而不补应用级对账，用户不进本地运行页时托盘就是空的、WS 断线重连后也不会自我纠正——那是真实回归。因此对账必须挂在随应用常驻的位置，与页面挂载解耦。
 
    `deploy.js` 的 `loadProjects` 随之化简为只取 `projects`（仍供构建/部署弹窗消费），其运行态对账、托盘刷新与三个已迁子页的失败态渲染均已移除。
 
-   另新增只读桥 `window.__runActiveJob`：`app.js` 的编译报错通知在延时回调里要校验「这条报错是否仍是该项目当前任务的最新一条」，原先读 `runningProjects`，全局删除后改由该桥回答。等桌面通知逻辑迁入 Vue 后一并删除。
+   ~~只读桥 `window.__runActiveJob`~~ — **P9-3 已删除（2026-08-12）**：run 成功 / 编译报错桌面通知并入 `run-runtime-service`，延时校验直接读 `run` store。
 
 #### 文件传输
 
@@ -1279,11 +1279,12 @@ frontend/src/services/modules/ipcheck-service.ts
 
 **建议工作量**：3～5 人日。
 
-**分批进度（见 `pages/phase9/`）**：P9-1 孤儿清理 ✅；P9-2 Toast/介绍 ✅；P9-3～P9-8 待办。
+**分批进度（见 `pages/phase9/`）**：P9-1 孤儿清理 ✅；P9-2 Toast/介绍 ✅；P9-3 桌面通知 + run WS 通知 ✅；P9-4～P9-8 待办。
 
 #### 删除清单
 
 - [x] 删除无消费者 vendor：`sortable.min.js`（P9-1）
+- [x] 删除 `window.sendDesktopNotification` / `__runActiveJob` 与 app.js run 通知路径（P9-3）
 - [ ] 删除旧 `src/index.html` 页面结构。
 - [ ] 删除旧 `src/js/app.js`。
 - [ ] 删除已迁移的全部页面脚本。

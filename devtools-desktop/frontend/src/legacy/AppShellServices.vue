@@ -7,11 +7,12 @@ import {
   installAddProjectBridge,
   onAddProjectRequested,
 } from '@/legacy/add-project-bridge'
+import { showAppToast } from '@/services/app-toast'
 import { createDeployRealtimeService } from '@/services/deploy-realtime-service'
+import { createDesktopNotificationService } from '@/services/desktop-notification'
 import { createFileTransferSessionService } from '@/services/filetransfer-session-service'
 import { createRunRuntimeService } from '@/services/run-runtime-service'
 import { createTerminalRuntimeService } from '@/services/terminal-runtime-service'
-import { showAppToast } from '@/services/app-toast'
 import { createTodoReminderService } from '@/services/todo-reminder-service'
 import { useLogTaskStore } from '@/stores/log-task'
 import { useNotificationStore } from '@/stores/notification'
@@ -24,6 +25,7 @@ const logTask = useLogTaskStore()
 const notify = useNotificationStore()
 const addProject = useAddProject()
 const todoReminderService = createTodoReminderService()
+const desktopNotificationService = createDesktopNotificationService()
 const runRuntimeService = createRunRuntimeService()
 const deployRealtimeService = createDeployRealtimeService()
 const fileTransferSessionService = createFileTransferSessionService()
@@ -64,6 +66,7 @@ async function onSubmitAddProject() {
 
 onMounted(() => {
   todoReminderService.start()
+  desktopNotificationService.start()
   runRuntimeService.start()
   deployRealtimeService.start()
   fileTransferSessionService.start()
@@ -76,6 +79,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   todoReminderService.stop()
+  desktopNotificationService.stop()
   runRuntimeService.stop()
   deployRealtimeService.stop()
   fileTransferSessionService.stop()
