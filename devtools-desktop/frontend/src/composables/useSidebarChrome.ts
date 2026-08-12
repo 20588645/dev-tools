@@ -1,6 +1,6 @@
 import { onMounted, onUnmounted, ref, type Ref } from 'vue'
 
-import { MENU_ORDER_CHANGED_EVENT } from '@/legacy/legacy-bridge'
+import { MENU_ORDER_CHANGED_EVENT } from '@/services/app-events'
 import { readMenuOrder } from '@/services/modules/settings-service'
 import {
   readSidebarCollapsed,

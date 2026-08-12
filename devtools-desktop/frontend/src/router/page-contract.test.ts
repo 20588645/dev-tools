@@ -1,9 +1,21 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import {
+  APP_PAGE_IDS,
+  isAppPageId,
   registerPageLeaveGuard,
   runPageLeaveGuards,
-} from './legacy-bridge'
+} from './page-contract'
+
+describe('app page contract', () => {
+  it('keeps the complete 13-page contract after report is absorbed into notes', () => {
+    expect(APP_PAGE_IDS).toHaveLength(13)
+    expect(new Set(APP_PAGE_IDS).size).toBe(13)
+    expect(isAppPageId('report')).toBe(false)
+    expect(isAppPageId('twofa')).toBe(true)
+    expect(isAppPageId('unknown')).toBe(false)
+  })
+})
 
 describe('page leave guards', () => {
   afterEach(() => {

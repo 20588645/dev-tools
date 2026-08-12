@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 
-import { MENU_ORDER_CHANGED_EVENT } from '@/legacy/legacy-bridge'
+import { MENU_ORDER_CHANGED_EVENT } from '@/services/app-events'
 import { readMenuOrder } from '@/services/modules/settings-service'
 import { useAppStore } from '@/stores/app'
 
@@ -122,6 +122,7 @@ watch(
       <button
         type="button"
         class="theme-toggle sidebar-tool-button"
+        data-test="theme-toggle"
         :title="themeTitle"
         :disabled="!enableThemeToggle"
         :aria-label="themeTitle"

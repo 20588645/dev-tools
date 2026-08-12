@@ -8,7 +8,7 @@ import {
   type ExperimentalSettingChangedDetail,
   type SidecarRestartedDetail,
   type UpgradeProgressDetail,
-} from '@/legacy/legacy-bridge'
+} from '@/services/app-events'
 import { apiClient } from '@/services/api-client'
 import {
   getReportConfig,

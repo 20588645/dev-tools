@@ -1,7 +1,7 @@
 import {
   EXPERIMENTAL_SETTING_CHANGED_EVENT,
   type ExperimentalSettingChangedDetail,
-} from '@/legacy/legacy-bridge'
+} from '@/services/app-events'
 import { showAppToast } from '@/services/app-toast'
 import { readExperimentalPreferences } from '@/services/modules/settings-service'
 

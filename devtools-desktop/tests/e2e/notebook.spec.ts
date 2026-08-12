@@ -181,7 +181,7 @@ test('renders the Vue notebook workspace in both themes without the retired DOM'
   await page.setViewportSize({ width: 1280, height: 800 })
   await openNotebook(page)
 
-  await expect(page.locator('#vue-notebook-host .notebook-view')).toHaveCount(1)
+  await expect(page.locator('.notebook-view')).toHaveCount(1)
   await expect(page.locator('#nbSearch')).toHaveCount(0)
   await expect(page.locator('#nbEditorContent')).toHaveCount(0)
   await expect(page.locator('script[src="js/notebook.js"]')).toHaveCount(0)
@@ -196,8 +196,10 @@ test('renders the Vue notebook workspace in both themes without the retired DOM'
   })
   await expectNoOverflow(page)
 
-  await page.locator('#themeModeToggle').click()
-  await page.locator('#themeModeMenu [data-theme-mode="dark"]').click()
+  // P9-8：主题菜单已删，侧栏按钮循环 system→light→dark
+  for (let i = 0; i < 3 && !(await page.locator('body[data-theme="dark"]').count()); i++) {
+    await page.locator('[data-test="theme-toggle"]').click()
+  }
   await expect(page.locator('body')).toHaveAttribute('data-theme', 'dark')
   await expectNoOverflow(page)
 })
@@ -427,8 +429,10 @@ test('matches the credential card structure in light and dark themes', async ({ 
   expect(light.projectWeight).toBe('650')
   expect(light.valueFont).toContain('SF Mono')
 
-  await page.locator('#themeModeToggle').click()
-  await page.locator('#themeModeMenu [data-theme-mode="dark"]').click()
+  // P9-8：主题菜单已删，侧栏按钮循环 system→light→dark
+  for (let i = 0; i < 3 && !(await page.locator('body[data-theme="dark"]').count()); i++) {
+    await page.locator('[data-test="theme-toggle"]').click()
+  }
   await expect(page.locator('body')).toHaveAttribute('data-theme', 'dark')
   const dark = await readStyles()
   expect(dark.borderCollapse).toBe('separate')

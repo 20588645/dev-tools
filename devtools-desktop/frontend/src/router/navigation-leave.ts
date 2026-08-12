@@ -1,10 +1,10 @@
 import type { Router, RouteLocationNormalized } from 'vue-router'
 
 import {
-  isLegacyPageId,
+  isAppPageId,
   runPageLeaveGuards,
-  type LegacyPageId,
-} from '@/legacy/legacy-bridge'
+  type AppPageId,
+} from '@/router/page-contract'
 
 import { NAV_CATALOG, type LeavePolicy } from './route-meta'
 
@@ -17,7 +17,7 @@ import { NAV_CATALOG, type LeavePolicy } from './route-meta'
  */
 
 export interface LeaveContractRow {
-  pageId: LegacyPageId
+  pageId: AppPageId
   leavePolicy: LeavePolicy
   keepSession: boolean
   note: string
@@ -37,9 +37,9 @@ export function listLeaveContract(): LeaveContractRow[] {
   }))
 }
 
-export function pageIdFromRoute(route: RouteLocationNormalized): LegacyPageId | null {
+export function pageIdFromRoute(route: RouteLocationNormalized): AppPageId | null {
   const raw = route.meta?.pageId
-  return isLegacyPageId(raw) ? raw : null
+  return isAppPageId(raw) ? raw : null
 }
 
 /**
@@ -49,7 +49,7 @@ export function pageIdFromRoute(route: RouteLocationNormalized): LegacyPageId | 
 export function shouldRunLeaveGuard(
   from: RouteLocationNormalized,
   to: RouteLocationNormalized,
-): LegacyPageId | null {
+): AppPageId | null {
   const fromId = pageIdFromRoute(from)
   const toId = pageIdFromRoute(to)
   if (!fromId) return null
@@ -57,7 +57,7 @@ export function shouldRunLeaveGuard(
   return fromId
 }
 
-export async function confirmLeavePage(pageId: LegacyPageId): Promise<boolean> {
+export async function confirmLeavePage(pageId: AppPageId): Promise<boolean> {
   return runPageLeaveGuards(pageId)
 }
 

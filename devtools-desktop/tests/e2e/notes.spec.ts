@@ -152,16 +152,18 @@ test('renders the confirmed Vue workspace without the retired legacy implementat
   await page.emulateMedia({ colorScheme: 'light' })
   await openNotes(page)
 
-  await expect(page.locator('#vue-notes-host')).toHaveCount(1)
-  await expect(page.locator('#vue-notes-host .notes-view')).toHaveCount(1)
+  await expect(page.locator('#page-notes')).toHaveCount(1)
+  await expect(page.locator('.notes-view')).toHaveCount(1)
   await expect(page.locator('.legacy-notes-fallback')).toHaveCount(0)
   await expect(page.locator('#notesWeekGrid')).toHaveCount(0)
   await expect(page.getByText('当前页面 Vue 迁移', { exact: true }).first()).toBeVisible()
   await expectNoPageOverflow(page)
   await expectUsableEditor(page)
 
-  await page.locator('#themeModeToggle').click()
-  await page.locator('#themeModeMenu [data-theme-mode="dark"]').click()
+  // P9-8：主题菜单已删，侧栏按钮循环 system→light→dark
+  for (let i = 0; i < 3 && !(await page.locator('body[data-theme="dark"]').count()); i++) {
+    await page.locator('[data-test="theme-toggle"]').click()
+  }
   await expect(page.locator('body')).toHaveAttribute('data-theme', 'dark')
   await expectNoPageOverflow(page)
 })

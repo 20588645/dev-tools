@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 
 import BaseButton from '@/components/base/BaseButton.vue'
-import { requestAddProject } from '@/legacy/add-project-bridge'
+import { requestAddProject } from '@/views/deploy/add-project-events'
 
 defineOptions({ name: 'DeployChrome' })
 

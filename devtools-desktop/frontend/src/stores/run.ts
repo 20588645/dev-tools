@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 
-import { requestHomeRefresh } from '@/legacy/legacy-bridge'
+import { requestHomeRefresh } from '@/services/app-events'
 import { tauriClient } from '@/services/tauri-client'
 import {
   batchStopRun,

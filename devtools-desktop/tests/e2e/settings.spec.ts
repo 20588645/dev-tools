@@ -159,8 +159,8 @@ test('mounts one formal Vue settings page and keeps both themes inside the defau
   await page.emulateMedia({ colorScheme: 'dark' })
   await openSettings(page)
 
-  await expect(page.locator('#vue-settings-host[data-vue-owner="settings"]')).toHaveCount(1)
-  await expect(page.locator('#vue-settings-host .settings-view')).toHaveCount(1)
+  await expect(page.locator('#page-settings')).toHaveCount(1)
+  await expect(page.locator('.settings-view')).toHaveCount(1)
   await expect(page.locator('.legacy-settings-fallback')).toHaveCount(0)
   await expect(page.locator('#page-settings .settings-content')).toHaveCount(0)
   await expect(page.locator('script[src="js/settings.js"]')).toHaveCount(0)

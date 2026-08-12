@@ -1,4 +1,4 @@
-import type { LegacyPageId } from '@/legacy/legacy-bridge'
+import type { AppPageId } from '@/router/page-contract'
 
 /**
  * 路由 meta：侧栏与离开策略的单一数据源（P8-1+；P8-5 后可见侧栏由 AppSidebar 消费）。
@@ -14,7 +14,7 @@ export type LeavePolicy = 'confirm' | 'none'
  * - false：无跨页会话（默认）
  */
 export interface AppRouteMeta {
-  pageId: LegacyPageId
+  pageId: AppPageId
   title: string
   /** 与 app.js SIDEBAR_MENU_ITEMS 对齐的排序键；home/settings 用 fixed */
   menuKey: string
@@ -35,7 +35,7 @@ declare module 'vue-router' {
 }
 
 export interface NavCatalogItem {
-  pageId: LegacyPageId
+  pageId: AppPageId
   title: string
   menuKey: string
   fixed?: NavFixed
@@ -204,7 +204,7 @@ export const NAV_CATALOG: readonly NavCatalogItem[] = [
 
 const NAV_BY_PAGE = new Map(NAV_CATALOG.map((item) => [item.pageId, item]))
 
-export function getNavCatalogItem(pageId: LegacyPageId): NavCatalogItem | undefined {
+export function getNavCatalogItem(pageId: AppPageId): NavCatalogItem | undefined {
   return NAV_BY_PAGE.get(pageId)
 }
 
@@ -229,7 +229,7 @@ export function normalizeMenuOrder(raw: unknown): SortableMenuPage[] {
 }
 
 /** 完整侧栏顺序：home + 中间可排序 + settings */
-export function buildSidebarOrder(middleOrder?: unknown): LegacyPageId[] {
+export function buildSidebarOrder(middleOrder?: unknown): AppPageId[] {
   return ['home', ...normalizeMenuOrder(middleOrder), 'settings']
 }
 

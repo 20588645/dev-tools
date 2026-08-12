@@ -2,12 +2,7 @@
 import { onBeforeUnmount, onMounted } from 'vue'
 
 import LogViewer from '@/components/logviewer/LogViewer.vue'
-import {
-  emitProjectsChanged,
-  installAddProjectBridge,
-  onAddProjectRequested,
-} from '@/legacy/add-project-bridge'
-import { installUpgradeProgressBridge } from '@/legacy/legacy-bridge'
+import { installUpgradeProgressBridge } from '@/services/app-events'
 import { showAppToast } from '@/services/app-toast'
 import { createDeployRealtimeService } from '@/services/deploy-realtime-service'
 import { createDesktopNotificationService } from '@/services/desktop-notification'
@@ -20,6 +15,7 @@ import { createTodoReminderService } from '@/services/todo-reminder-service'
 import { useLogTaskStore } from '@/stores/log-task'
 import { useNotificationStore } from '@/stores/notification'
 import AddProjectDialog from '@/views/deploy/components/AddProjectDialog.vue'
+import { emitProjectsChanged, onAddProjectRequested } from '@/views/deploy/add-project-events'
 import { useAddProject } from '@/views/deploy/composables/useAddProject'
 
 defineOptions({ name: 'AppShellServices' })
@@ -36,7 +32,6 @@ const fileTransferSessionService = createFileTransferSessionService()
 const terminalRuntimeService = createTerminalRuntimeService()
 
 let stopLogReopen: (() => void) | null = null
-let stopAddProjectBridge: (() => void) | null = null
 let stopAddProjectRequests: (() => void) | null = null
 let stopUpgradeProgressBridge: (() => void) | null = null
 
@@ -88,7 +83,6 @@ onMounted(() => {
   terminalRuntimeService.start()
   window.addEventListener('devtools:log-reopen-requested', onLogReopenRequested)
   stopLogReopen = () => window.removeEventListener('devtools:log-reopen-requested', onLogReopenRequested)
-  stopAddProjectBridge = installAddProjectBridge()
   stopAddProjectRequests = onAddProjectRequested(() => { void addProject.show() })
   stopUpgradeProgressBridge = installUpgradeProgressBridge()
 })
@@ -102,7 +96,6 @@ onBeforeUnmount(() => {
   fileTransferSessionService.stop()
   terminalRuntimeService.stop()
   stopLogReopen?.()
-  stopAddProjectBridge?.()
   stopAddProjectRequests?.()
   stopUpgradeProgressBridge?.()
 })

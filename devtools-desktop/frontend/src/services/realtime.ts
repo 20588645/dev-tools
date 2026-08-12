@@ -21,7 +21,7 @@ export interface RealtimeWs {
   send?(type: string, data?: unknown): boolean
 }
 
-/** 与 `legacy-bridge.ts` 的常量一致；字面量书写以避免 services → legacy 的环形依赖。 */
+/** 与 `app-events.ts` 的常量一致；字面量书写以避免 app-events ↔ realtime 的环形依赖。 */
 const SIDECAR_RESTARTED_EVENT = 'devtools:sidecar-restarted'
 const DEFAULT_PORT = 13456
 

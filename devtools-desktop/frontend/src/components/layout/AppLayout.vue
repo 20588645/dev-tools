@@ -57,9 +57,8 @@ const rootClass = computed(() => ({
 </template>
 
 <style>
-/* stylelint-disable declaration-no-important --
-   登记例外（P8 壳层）：折叠态需压制 styles/legacy/layout.css 的旧侧栏规则。
-   G7 随 legacy 样式目录 token 化归零。 */
+/* P9-8：!important 全部移除。styles/legacy/layout.css 的旧壳层规则已去 important，
+   本组件的折叠态覆盖靠 .app-layout-root.is-collapsed 前缀的更高特异性生效。 */
 .app-layout-root {
   height: 100%;
   min-height: 100vh;
@@ -67,75 +66,75 @@ const rootClass = computed(() => ({
 }
 
 .app-layout-root .app-shell {
-  grid-template-columns: var(--sidebar-width) minmax(0, 1fr) !important;
+  grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
 }
 
 .app-layout-root.is-collapsed .app-shell {
-  grid-template-columns: 56px minmax(0, 1fr) !important;
+  grid-template-columns: 56px minmax(0, 1fr);
 }
 
 .app-layout-root.is-collapsed .app-sidebar {
-  width: 56px !important;
-  min-width: 56px !important;
-  max-width: 56px !important;
-  padding-left: 7px !important;
-  padding-right: 7px !important;
-  align-items: center !important;
+  width: 56px;
+  min-width: 56px;
+  max-width: 56px;
+  padding-left: 7px;
+  padding-right: 7px;
+  align-items: center;
 }
 
 .app-layout-root.is-collapsed .sidebar-brand {
-  padding-left: 0 !important;
-  padding-right: 0 !important;
-  justify-content: center !important;
+  padding-left: 0;
+  padding-right: 0;
+  justify-content: center;
 }
 
 .app-layout-root.is-collapsed .sidebar-nav,
 .app-layout-root.is-collapsed .sidebar-footer {
-  align-items: center !important;
+  align-items: center;
 }
 
 .app-layout-root.is-collapsed .sidebar-item {
-  width: 34px !important;
-  min-width: 34px !important;
-  padding: 0 !important;
-  justify-content: center !important;
-  gap: 0 !important;
+  width: 34px;
+  min-width: 34px;
+  padding: 0;
+  justify-content: center;
+  gap: 0;
 }
 
 .app-layout-root.is-collapsed .sidebar-brand span:last-child,
 .app-layout-root.is-collapsed .sidebar-item span:last-child,
 .app-layout-root.is-collapsed .sidebar-tool-label {
-  display: none !important;
+  display: none;
 }
 
 .app-layout-root:not(.is-collapsed) .app-sidebar .sidebar-footer {
-  width: 100% !important;
-  align-items: stretch !important;
-  gap: 7px !important;
-  padding: 12px 8px 0 !important;
+  width: 100%;
+  align-items: stretch;
+  gap: 7px;
+  padding: 12px 8px 0;
 }
 
 .app-layout-root:not(.is-collapsed) .sidebar-tool-button {
-  width: 100% !important;
-  justify-content: flex-start !important;
-  gap: 8px !important;
-  padding: 0 10px !important;
+  width: 100%;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 0 10px;
 }
 
 .app-layout-root.is-collapsed .app-sidebar .sidebar-footer {
-  width: 100% !important;
-  align-items: center !important;
-  gap: 10px !important;
-  padding: 12px 0 0 !important;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0 0;
 }
 
-.app-layout-root.is-collapsed .sidebar-tool-button {
-  width: 34px !important;
-  min-width: 34px !important;
-  max-width: 34px !important;
-  height: 34px !important;
-  justify-content: center !important;
-  padding: 0 !important;
+.app-layout-root.is-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
+  width: 34px;
+  min-width: 34px;
+  max-width: 34px;
+  height: 34px;
+  justify-content: center;
+  padding: 0;
 }
 
 .app-layout-placeholder {

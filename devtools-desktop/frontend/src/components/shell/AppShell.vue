@@ -3,9 +3,9 @@ import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import AppLayout from '@/components/layout/AppLayout.vue'
+import AppShellServices from '@/components/shell/AppShellServices.vue'
 import ProjectIntroDialog from '@/components/shell/ProjectIntroDialog.vue'
 import { useSidebarChrome } from '@/composables/useSidebarChrome'
-import AppShellServices from '@/legacy/AppShellServices.vue'
 import { keepAliveNamesFromCatalog } from '@/router/route-meta'
 
 defineOptions({ name: 'AppShell' })
@@ -61,11 +61,10 @@ function onIntro() {
 </template>
 
 <style>
-/* stylelint-disable declaration-no-important --
-   登记例外（P8 壳层）：RouterView 根节点需压制 styles/legacy/layout.css 的旧 .page 显隐规则。
-   G7 随 legacy 样式目录 token 化归零。 */
+/* P9-8：!important 移除。styles/legacy/layout.css 的 .page 显隐规则已去 important，
+   本段靠 .main-content.router-main 前缀的更高特异性覆盖。 */
 .main-content.router-main > .page.active {
-  display: flex !important;
+  display: flex;
   width: 100%;
   min-width: 0;
   flex: 1 1 auto;
@@ -74,8 +73,8 @@ function onIntro() {
 
 .main-content.home-active.router-main > .page.active {
   flex: 1 1 auto;
-  height: 100% !important;
-  min-height: 0 !important;
-  overflow: hidden !important;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
 }
 </style>

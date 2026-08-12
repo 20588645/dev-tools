@@ -155,7 +155,7 @@ async function expectNoPageOverflow(page: Page) {
 
 test('mounts one Vue run page without the retired DOM or scripts', async ({ page }) => {
   await openRun(page)
-  await expect(page.locator('#vue-run-host[data-vue-owner="run"]')).toHaveCount(1)
+  await expect(page.locator('#page-run')).toHaveCount(1)
   await expect(page.locator('script[src="js/run.js"]')).toHaveCount(0)
   await expect(page.locator('link[href="css/pages/run.css"]')).toHaveCount(0)
   // 旧页面 DOM 与两个旧弹窗都已移除
@@ -333,7 +333,7 @@ test('renders groups with collapse and ordering, ungrouped last', async ({ page 
   await page.goto('/?apiPort=13900')
   await page.locator('.sidebar-item[data-page="run"]').click()
 
-  const groups = page.locator('#vue-run-host .run-group')
+  const groups = page.locator('#page-run .run-group')
   await expect(groups).toHaveCount(3)
   // 「未分组」始终排在末尾且没有排序/重命名操作
   await expect(groups.last().locator('.run-group__name')).toHaveText('未分组')
@@ -476,7 +476,7 @@ test('wraps each group and its cards in one shared panel boundary', async ({ pag
   await page.setViewportSize({ width: 1280, height: 800 })
   await page.goto('/?apiPort=13900')
   await page.locator('.sidebar-item[data-page="run"]').click()
-  const group = page.locator('#vue-run-host .run-group').first()
+  const group = page.locator('#page-run .run-group').first()
   await expect(group.locator('.run-card')).toHaveCount(2)
 
   // 分组用公共折叠组件的 panel 分区容器，而不是裸标题

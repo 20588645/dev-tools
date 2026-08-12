@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { LEGACY_PAGE_IDS } from '@/legacy/legacy-bridge'
+import { APP_PAGE_IDS } from '@/router/page-contract'
 import { createMigrationRouter } from '@/router'
 import {
   DEFAULT_MENU_ORDER,
@@ -14,7 +14,7 @@ import { migrationRoutes } from '@/router/routes'
 describe('route-meta catalog', () => {
   it('covers every legacy page id exactly once in NAV_CATALOG', () => {
     const ids = NAV_CATALOG.map((item) => item.pageId)
-    expect(ids.sort()).toEqual([...LEGACY_PAGE_IDS].sort())
+    expect(ids.sort()).toEqual([...APP_PAGE_IDS].sort())
     expect(new Set(ids).size).toBe(ids.length)
   })
 
@@ -53,7 +53,7 @@ describe('route-meta catalog', () => {
 describe('migrationRoutes P8-1', () => {
   it('registers top-level routes for all nav pages and deploy children', () => {
     const names = migrationRoutes.map((r) => r.name).filter(Boolean)
-    for (const page of LEGACY_PAGE_IDS) {
+    for (const page of APP_PAGE_IDS) {
       expect(names).toContain(page)
     }
     expect(names).toContain('deploy-dashboard')

@@ -1,22 +1,24 @@
 # Phase 9：旧架构清理 — 决策
 
-> 状态：**P9-1～P9-7 已落地**（2026-08-12）
+> 状态：**P9-1～P9-8 代码收口完成**（2026-08-12）
 > 关联评估：[assessment.md](./assessment.md)
 
 ## 1. 确认方向
 
-1. 分批清理，保持可运行。
-2. 已完成：P9-1～P9-6；**P9-7 旧 CSS 全部随 Vue 构建装载**，仓库 `src/` 目录与 Vite `publicDir` 删除。
-3. 吸收策略：活规则搬运（视觉零回归优先）、死规则删除（以消费者审计为据）；
-   `styles/legacy/` 是显式过渡目录，G7 随 token 化归零。
-4. 层叠顺序契约：legacy（原 link 序）→ tokens，由 `main.ts` import 顺序保证。
+1. 分批清理，保持可运行；P9-7 后经用户真实 Tauri 冒烟。
+2. P9-8 收编原则：模块按域归位（router / services / views/deploy / components/shell），
+   `legacy` 一词自源码目录退役；仅 `styles/legacy` 作为显式登记的样式过渡目录保留。
+3. 壳层层叠契约：`styles/legacy/layout.css` 与 AppLayout/AppShell 均无 `!important`，
+   覆盖关系完全由特异性表达。
+4. E2E 是 G8 的自动化基线：66 项全绿；运行方式见 assessment §3 备忘。
 
-## 2. 明确不做（P9-7 已遵守）
+## 2. G7/G8 口径
 
-- 不重构壳层 `!important` 层叠（登记例外，G7 处理）
-- 不翻新过时 E2E 选择器（G8 验收时统一处理；仅更新因本轮失效的断言）
+- G7 除 `styles/legacy` 目录（约 146 处 `!important` + 12 个重复选择器基线 + 旧变量体系）外全部达成；
+  该目录为**唯一显式欠账**，随后续 token 化批次归零。
+- G8 本地可验项全绿；正式打包、安装、升级与数据兼容验收由用户执行。
 
-## 3. 下一轮
+## 3. 下一步
 
-**P9-8**：G7/G8 全量验收——`legacy/` 目录改名收编、壳层 `!important` 归零、
-E2E 翻新、正式构建 + 升级 + 全量回归。启动前先完成真实 Tauri 冒烟。
+1. 用户：`npm run build` 正式打包 + 安装/升级/数据兼容验收（G8 收尾）。
+2. 后续批次：`styles/legacy` token 化（关闭 G7 例外欠账）。

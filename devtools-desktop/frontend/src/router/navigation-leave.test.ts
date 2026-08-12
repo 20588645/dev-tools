@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { NavigationFailureType, isNavigationFailure } from 'vue-router'
 
-import { registerPageLeaveGuard } from '@/legacy/legacy-bridge'
+import { registerPageLeaveGuard } from '@/router/page-contract'
 import { createMigrationRouter } from '@/router'
 import {
   listLeaveContract,

@@ -57,15 +57,17 @@ test('renders the confirmed Vue page at the default window size in both themes',
   await page.emulateMedia({ colorScheme: 'light' })
   await openIpCheck(page)
 
-  await expect(page.locator('#vue-ipcheck-host')).toHaveCount(1)
-  await expect(page.locator('#vue-ipcheck-host .ip-check-view')).toHaveCount(1)
+  await expect(page.locator('#page-ipcheck')).toHaveCount(1)
+  await expect(page.locator('.ip-check-view')).toHaveCount(1)
   await expect(page.locator('.legacy-ipcheck-fallback')).toHaveCount(0)
   await expect(page.locator('#ipcheckInput')).toHaveCount(0)
   await expect(page.locator('.page.active')).toHaveCount(1)
   await expectNoHorizontalOverflow(page)
 
-  await page.locator('#themeModeToggle').click()
-  await page.locator('#themeModeMenu [data-theme-mode="dark"]').click()
+  // P9-8：主题菜单已删，侧栏按钮循环 system→light→dark
+  for (let i = 0; i < 3 && !(await page.locator('body[data-theme="dark"]').count()); i++) {
+    await page.locator('[data-test="theme-toggle"]').click()
+  }
   await expect(page.locator('body')).toHaveAttribute('data-theme', 'dark')
   await expect(page.getByRole('heading', { name: '业务场景建议', exact: true })).toBeVisible()
   await expectNoHorizontalOverflow(page)

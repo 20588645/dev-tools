@@ -1,45 +1,25 @@
-import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { createMigrationRouter } from '@/router'
-import { getAppRouter, setAppRouter } from '@/router/navigate'
-
 import {
-  LEGACY_PAGE_IDS,
   HOME_REFRESH_REQUESTED_EVENT,
   UPGRADE_PROGRESS_EVENT,
   installUpgradeProgressBridge,
-  isLegacyPageId,
   requestHomeRefresh,
-  requestLegacyPage,
-} from './legacy-bridge'
+} from './app-events'
 
-describe('legacy bridge', () => {
+describe('app events', () => {
   beforeEach(() => {
-    setActivePinia(createPinia())
-    setAppRouter(createMigrationRouter())
     delete (globalThis as { WS?: unknown }).WS
   })
 
-  it('keeps the complete 13-page contract after report is absorbed into notes', () => {
-    expect(LEGACY_PAGE_IDS).toHaveLength(13)
-    expect(new Set(LEGACY_PAGE_IDS).size).toBe(13)
-    expect(isLegacyPageId('report')).toBe(false)
-    expect(isLegacyPageId('twofa')).toBe(true)
-    expect(isLegacyPageId('unknown')).toBe(false)
-  })
-
-  it('requestLegacyPage delegates to router; home refresh still uses DOM event', async () => {
-    const refreshListener = vi.fn()
-    window.addEventListener(HOME_REFRESH_REQUESTED_EVENT, refreshListener)
-
-    await requestLegacyPage('usage')
-    expect(getAppRouter()?.currentRoute.value.path).toBe('/usage')
+  it('home refresh uses a typed DOM event', () => {
+    const listener = vi.fn()
+    window.addEventListener(HOME_REFRESH_REQUESTED_EVENT, listener)
 
     requestHomeRefresh('runtime-change')
-    expect((refreshListener.mock.calls[0][0] as CustomEvent).detail).toEqual({ reason: 'runtime-change' })
+    expect((listener.mock.calls[0][0] as CustomEvent).detail).toEqual({ reason: 'runtime-change' })
 
-    window.removeEventListener(HOME_REFRESH_REQUESTED_EVENT, refreshListener)
+    window.removeEventListener(HOME_REFRESH_REQUESTED_EVENT, listener)
   })
 
   it('bridges WS upgrade-progress into a window event and cleans up', () => {
@@ -65,7 +45,7 @@ describe('legacy bridge', () => {
     window.removeEventListener(UPGRADE_PROGRESS_EVENT, listener)
   })
 
-  it('installUpgradeProgressBridge is a no-op when WS is missing', () => {
+  it('installUpgradeProgressBridge is a no-op when realtime is absent', () => {
     expect(() => installUpgradeProgressBridge()()).not.toThrow()
   })
 })

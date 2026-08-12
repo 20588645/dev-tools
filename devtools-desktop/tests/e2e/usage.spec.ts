@@ -125,7 +125,8 @@ async function openUsage(page: Page, viewport = { width: 1280, height: 800 }) {
 
 async function expectNoPageOverflow(page: Page) {
   const layout = await page.locator('#page-usage').evaluate((activePage) => {
-    const view = activePage.querySelector('.usage-view')
+    // P8 后 RouterView 根即 View 根：#page-usage 与 .usage-view 是同一元素
+    const view = activePage.matches('.usage-view') ? activePage : activePage.querySelector('.usage-view')
     return {
       documentX: document.documentElement.scrollWidth > document.documentElement.clientWidth,
       pageX: activePage.scrollWidth > activePage.clientWidth,
@@ -138,8 +139,8 @@ async function expectNoPageOverflow(page: Page) {
 
 test('mounts one Vue usage page without the retired DOM or scripts', async ({ page }) => {
   await openUsage(page)
-  await expect(page.locator('#vue-usage-host[data-vue-owner="usage"]')).toHaveCount(1)
-  await expect(page.locator('#vue-usage-host .usage-view')).toHaveCount(1)
+  await expect(page.locator('#page-usage')).toHaveCount(1)
+  await expect(page.locator('.usage-view')).toHaveCount(1)
   await expect(page.locator('#usageTrendChart')).toHaveCount(0)
   await expect(page.locator('script[src="js/usage.js"]')).toHaveCount(0)
   await expect(page.locator('link[href="css/pages/usage.css"]')).toHaveCount(0)
@@ -153,8 +154,10 @@ test('keeps the dashboard usable in both themes at 900 by 600', async ({ page })
   await expectNoPageOverflow(page)
   await expect(page.getByText('Token 构成', { exact: true })).toBeVisible()
 
-  await page.locator('#themeModeToggle').click()
-  await page.locator('#themeModeMenu [data-theme-mode="dark"]').click()
+  // P9-8：主题菜单已删，侧栏按钮循环 system→light→dark
+  for (let i = 0; i < 3 && !(await page.locator('body[data-theme="dark"]').count()); i++) {
+    await page.locator('[data-test="theme-toggle"]').click()
+  }
   await expect(page.locator('body')).toHaveAttribute('data-theme', 'dark')
   await expectNoPageOverflow(page)
 })

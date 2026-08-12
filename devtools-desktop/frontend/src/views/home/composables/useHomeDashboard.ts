@@ -5,7 +5,7 @@ import { usePageVisibility } from '@/composables/use-page-visibility'
 import {
   HOME_REFRESH_REQUESTED_EVENT,
   type HomeRefreshRequestDetail,
-} from '@/legacy/legacy-bridge'
+} from '@/services/app-events'
 import {
   getCurrentIpPurity,
   getDeploymentHistory,

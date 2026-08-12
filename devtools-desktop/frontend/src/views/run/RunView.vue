@@ -13,7 +13,7 @@ import PageTop from '@/components/layout/PageTop.vue'
 import FilterChip from '@/components/navigation/FilterChip.vue'
 import BaseDropdownMenu, { type DropdownMenuOption } from '@/components/overlay/BaseDropdownMenu.vue'
 import GroupRenameDialog from '@/components/overlay/GroupRenameDialog.vue'
-import { onProjectsChanged, requestAddProject } from '@/legacy/add-project-bridge'
+import { onProjectsChanged, requestAddProject } from '@/views/deploy/add-project-events'
 import { getNodeRuntime, type Project } from '@/services/modules/project-service'
 import { useNotificationStore } from '@/stores/notification'
 

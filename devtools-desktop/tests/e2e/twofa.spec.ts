@@ -108,7 +108,8 @@ async function openTwofa(page: Page, viewport = { width: 1280, height: 800 }) {
 
 async function expectNoPageOverflow(page: Page) {
   const layout = await page.locator('#page-twofa').evaluate((activePage) => {
-    const view = activePage.querySelector('.twofa-view')
+    // P8 后 RouterView 根即 View 根：#page-twofa 与 .twofa-view 是同一元素
+    const view = activePage.matches('.twofa-view') ? activePage : activePage.querySelector('.twofa-view')
     return {
       documentX: document.documentElement.scrollWidth > document.documentElement.clientWidth,
       pageX: activePage.scrollWidth > activePage.clientWidth,
@@ -121,8 +122,8 @@ async function expectNoPageOverflow(page: Page) {
 
 test('mounts one Vue twofa page without the retired DOM or scripts', async ({ page }) => {
   await openTwofa(page)
-  await expect(page.locator('#vue-twofa-host[data-vue-owner="twofa"]')).toHaveCount(1)
-  await expect(page.locator('#vue-twofa-host .twofa-view')).toHaveCount(1)
+  await expect(page.locator('#page-twofa')).toHaveCount(1)
+  await expect(page.locator('.twofa-view')).toHaveCount(1)
   await expect(page.locator('.twofa-layout, .twofa-detail-card, #twofaGroupBlocks')).toHaveCount(0)
   await expect(page.locator('script[src="js/twofa.js"]')).toHaveCount(0)
   await expect(page.locator('link[href="css/pages/twofa.css"]')).toHaveCount(0)

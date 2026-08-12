@@ -1,4 +1,4 @@
-import type { LegacyPageId } from '@/legacy/legacy-bridge'
+import type { AppPageId } from '@/router/page-contract'
 import {
   buildSidebarOrder,
   getNavCatalogItem,
@@ -25,6 +25,6 @@ export function resolveSidebarNavItems(middleOrder?: unknown): SidebarNavItemMod
   return items
 }
 
-export function isSidebarNavPage(pageId: string): pageId is LegacyPageId {
-  return Boolean(getNavCatalogItem(pageId as LegacyPageId))
+export function isSidebarNavPage(pageId: string): pageId is AppPageId {
+  return Boolean(getNavCatalogItem(pageId as AppPageId))
 }

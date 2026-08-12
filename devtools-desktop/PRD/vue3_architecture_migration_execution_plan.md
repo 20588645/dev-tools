@@ -1,12 +1,12 @@
 # DevTools Desktop Vue 3 架构渐进重构执行计划
 
-> 文档版本：1.75
-> 状态：执行中（Phase 8 已关闭；**Phase 9 进行中：P9-1～P9-7 已完成，下一为 P9-8（建议先 Tauri 冒烟）**）
+> 文档版本：1.76
+> 状态：执行中（**Phase 9 代码收口完成（P9-1～P9-8）；G8 余用户侧正式打包与升级验收**）
 > 编制日期：2026-07-21  
 > 最近更新：2026-08-12
 > 适用仓库：`devtools-desktop`  
 > 核心原则：保持软件持续可运行，按页面逐步替换，不进行一次性推倒重写。
-> **Phase 6-2 部署面板 `deploy` 已关闭**。三个子页（项目总览 / 服务器管理 / 部署历史）PG0～PG5 与真实 Tauri 验收均已通过；第 6 步弹窗四批亦已完成并提交——第 1 批项目默认配置（`fa8ecfc`）、第 2 批添加项目（`7880d26`）、第 3/4 批合并的远程浏览 + 构建/部署弹窗（`6167e6e`，用户 Tauri 验收通过）。`deploy.js` / `deploy.css` 整文件删除；壳层 `.sub-page` 规则并入 `legacy-runtime.css`。Run 遗留的四项跨页耦合**全部收口**：第 1、3、4 项此前已关；第 2 项 `legacy/log-viewer-bridge.ts`（及 `deploy-task-bridge.ts`）随第 6 步弹窗迁完删除，桌面通知/Toast 点回日志改为事件 `devtools:log-reopen-requested`。[组件架构合规专项](./vue-migration/component-architecture-compliance.md)已于 2026-08-06 关闭（机器基线 0、批准例外 0，最终 Smoke Test 通过），该文转为长期生效的规则文档。**Phase 6-3 文件传输 `filetransfer` 已关闭**。**Phase 7 已关闭**。**Phase 8 已关闭（P8-1～P8-6 代码收口）**：AppShell + Vue Router 可见侧栏；`MigrationHost` 与 legacy `switchPage`/侧栏渲染已删。**当前执行指针：Phase 9 — P9-1～P9-7 已完成（仓库 `src/` 整树与 `publicDir` 已删；旧 CSS 吸收进 `frontend/src/styles/legacy` 随 Vue 构建）；下一 P9-8 G7/G8 全量验收，启动前建议真实 Tauri 冒烟。详见 `pages/phase9/`。**
+> **Phase 6-2 部署面板 `deploy` 已关闭**。三个子页（项目总览 / 服务器管理 / 部署历史）PG0～PG5 与真实 Tauri 验收均已通过；第 6 步弹窗四批亦已完成并提交——第 1 批项目默认配置（`fa8ecfc`）、第 2 批添加项目（`7880d26`）、第 3/4 批合并的远程浏览 + 构建/部署弹窗（`6167e6e`，用户 Tauri 验收通过）。`deploy.js` / `deploy.css` 整文件删除；壳层 `.sub-page` 规则并入 `legacy-runtime.css`。Run 遗留的四项跨页耦合**全部收口**：第 1、3、4 项此前已关；第 2 项 `legacy/log-viewer-bridge.ts`（及 `deploy-task-bridge.ts`）随第 6 步弹窗迁完删除，桌面通知/Toast 点回日志改为事件 `devtools:log-reopen-requested`。[组件架构合规专项](./vue-migration/component-architecture-compliance.md)已于 2026-08-06 关闭（机器基线 0、批准例外 0，最终 Smoke Test 通过），该文转为长期生效的规则文档。**Phase 6-3 文件传输 `filetransfer` 已关闭**。**Phase 7 已关闭**。**Phase 8 已关闭（P8-1～P8-6 代码收口）**：AppShell + Vue Router 可见侧栏；`MigrationHost` 与 legacy `switchPage`/侧栏渲染已删。**当前执行指针：Phase 9 代码收口完成（P9-1～P9-8）——`frontend/src/legacy` 收编、壳层 `!important` 归零、E2E 66 项全绿；G7 仅余 `styles/legacy` token 化欠账，G8 余用户正式打包/升级验收。详见 `pages/phase9/`。**
 
 ---
 
@@ -520,7 +520,7 @@ L3 中纯前端且低风险的改动可以与页面 Vue 实现处于同一页面
 | 13 | Phase 7-1 | 文件编辑 `editor` | **已完成** | 已完成 | L1 Vue + CM5 生命周期 + 切页脏确认；legacy 归零；用户 Tauri 验收通过 |
 | 14 | Phase 7-2 | 快捷命令 `terminal` | **已完成** | 已完成 | L1 Vue + 切页保 PTY + 执行新开 tab；legacy 归零；用户 Tauri 验收通过 |
 | 15 | Phase 8 | Vue 应用壳与 Router | **已完成（P8-1～P8-6）** | 保持回归 | 见 `pages/shell/` |
-| 16 | Phase 9 | 旧架构清理与发布 | **进行中（P9-1～P9-7 已完成）** | Tauri 冒烟 → P9-8 G7/G8 | 见 `pages/phase9/`；旧 `src` 已删；G7/G8 |
+| 16 | Phase 9 | 旧架构清理与发布 | **代码收口完成（P9-1～P9-8）** | 用户正式打包/升级验收（G8）；后续 `styles/legacy` token 化（G7 例外归零） | 见 `pages/phase9/`；E2E 66 项全绿 |
 
 #### 每个功能页面的固定执行循环
 
@@ -1279,7 +1279,7 @@ frontend/src/services/modules/ipcheck-service.ts
 
 **建议工作量**：3～5 人日。
 
-**分批进度（见 `pages/phase9/`）**：P9-1 孤儿清理 ✅；P9-2 Toast/介绍 ✅；P9-3 桌面通知 + run WS 通知 ✅；P9-4 删 `app.js` ✅；P9-5 WS/API 归 Vue、删 `websocket.js`/`api.js` ✅；P9-6 CM5/xterm → npm 懒加载、`src/js` 清零 ✅；P9-7 旧 CSS 吸收、删 `src` 树与 `publicDir` ✅；P9-8 待办。
+**分批进度（见 `pages/phase9/`）**：P9-1 孤儿清理 ✅；P9-2 Toast/介绍 ✅；P9-3 桌面通知 + run WS 通知 ✅；P9-4 删 `app.js` ✅；P9-5 WS/API 归 Vue、删 `websocket.js`/`api.js` ✅；P9-6 CM5/xterm → npm 懒加载、`src/js` 清零 ✅；P9-7 旧 CSS 吸收、删 `src` 树与 `publicDir` ✅（用户 Tauri 冒烟通过）；P9-8 legacy 收编 + 壳层 `!important` 归零 + E2E 66 项全绿 ✅。
 
 #### 删除清单
 
