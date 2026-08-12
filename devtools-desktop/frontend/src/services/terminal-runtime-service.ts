@@ -82,27 +82,33 @@ type FitCtor = new () => FitAddonInstance
 type SearchCtor = new () => SearchAddonInstance
 type WebglCtor = new () => WebglAddonInstance
 
-function getXtermApis(): {
+interface XtermApis {
   Terminal: TerminalCtor
   FitAddon: FitCtor
   SearchAddon: SearchCtor
   WebglAddon: WebglCtor | null
-} {
-  const g = globalThis as {
-    Terminal?: TerminalCtor
-    FitAddon?: { FitAddon: FitCtor }
-    SearchAddon?: { SearchAddon: SearchCtor }
-    WebglAddon?: { WebglAddon: WebglCtor }
+}
+
+let xtermApis: XtermApis | null = null
+
+/**
+ * 懒加载 xterm chunk（P9-6）：终端页挂载后的 `bootFromSessions` 触发，
+ * xterm 及官方 CSS 随 `terminal-xterm-loader` 单独分包，不进主包。
+ */
+async function ensureXtermLoaded(): Promise<void> {
+  if (xtermApis) return
+  const mod = await import('@/services/terminal-xterm-loader')
+  xtermApis = {
+    Terminal: mod.Terminal as unknown as TerminalCtor,
+    FitAddon: mod.FitAddon as unknown as FitCtor,
+    SearchAddon: mod.SearchAddon as unknown as SearchCtor,
+    WebglAddon: mod.WebglAddon as unknown as WebglCtor,
   }
-  if (!g.Terminal || !g.FitAddon?.FitAddon || !g.SearchAddon?.SearchAddon) {
-    throw new Error('xterm.js 或 addon 尚未加载')
-  }
-  return {
-    Terminal: g.Terminal,
-    FitAddon: g.FitAddon.FitAddon,
-    SearchAddon: g.SearchAddon.SearchAddon,
-    WebglAddon: g.WebglAddon?.WebglAddon ?? null,
-  }
+}
+
+function getXtermApis(): XtermApis {
+  if (!xtermApis) throw new Error('xterm.js 或 addon 尚未加载')
+  return xtermApis
 }
 
 function cssVar(name: string, fallback = ''): string {
@@ -386,6 +392,7 @@ function buildRuntime() {
       await booting
       return
     }
+    await ensureXtermLoaded()
     booting = (async () => {
       try {
         const sessions = await listTerminalSessions()

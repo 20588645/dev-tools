@@ -57,6 +57,9 @@ const rootClass = computed(() => ({
 </template>
 
 <style>
+/* stylelint-disable declaration-no-important --
+   登记例外（P8 壳层）：折叠态需压制 src/css/layout.css 的旧侧栏规则。
+   P9-7 吸收 legacy-runtime / 删除旧 CSS 静态树时随之归零。 */
 .app-layout-root {
   height: 100%;
   min-height: 100vh;
@@ -142,6 +145,6 @@ const rootClass = computed(() => ({
 .app-layout-note {
   margin-top: 12px;
   font-size: 13px;
-  color: var(--text-secondary, #666);
+  color: var(--text-secondary);
 }
 </style>

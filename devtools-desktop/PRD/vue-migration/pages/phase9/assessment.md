@@ -1,6 +1,6 @@
 # Phase 9：旧架构清理 — 评估
 
-> 状态：**P9-1～P9-5 已完成**（2026-08-12）
+> 状态：**P9-1～P9-6 已完成**（2026-08-12）
 > 关联计划：[vue3_architecture_migration_execution_plan.md](../../../vue3_architecture_migration_execution_plan.md)
 > 关联决策：[decision.md](./decision.md)
 
@@ -17,20 +17,24 @@
 | P9-3 | 桌面通知 + run WS 通知路径 | **已完成** |
 | P9-4 | 删 `app.js`（open-editor / 主题 FOUC / 实验功能 / upgrade 桥） | **已完成** |
 | P9-5 | `window.WS` → Vue 共享模块；删 `websocket.js`/`api.js` | **已完成** |
-| P9-6 | CM5/xterm → npm | 待办 |
+| P9-6 | CM5/xterm → npm + 路由级懒加载；删 `src/js` vendor | **已完成** |
 | P9-7 | overrides / publicDir / 旧 `src` 静态树 | 待办 |
 | P9-8 | rename legacy + G7/G8 | 待办 |
 
-## 3. P9-5 落地摘要
+## 3. P9-6 落地摘要
 
-- 新增 `services/realtime.ts`：`RealtimeAdapter` 包装既有 `WebSocketClient`（指数退避、`open` 事件），保留旧 `on/off` 形状 + `send`/`connected`；`main.ts` 启动单例
-- 端口发现复用 `apiClient.initialize()`；`devtools:sidecar-restarted` → 重连新端口
-- 六个消费方（run/deploy/terminal/filetransfer 服务、`useRunRealtime`、upgrade 桥）改经 `realtimeWs()` 订阅；`globalThis.WS` 仅保留为**测试注入缝**，生产不再挂全局
-- `frontend-error` 上报自 `index.html` 内联脚本迁入 realtime 模块
-- 删除 `src/js/api.js`、`src/js/websocket.js` 与 `index.html` 引用；`lint:js` 目标去掉 `src/js`
-- 顺带清理：`__devtoolsShowToast` 桥（app.js 删除后无消费者）；`useDeployRealtime.test` 补桌面通知 mock（消除遗留未处理拒绝）；`route-meta.ts` 声明合并加 lint 豁免
+- npm 依赖：`codemirror@5.65`（锁 5 系）、`@xterm/xterm@5.5` + fit/search/webgl addon（锁 5 系，与 vendor 行为对齐，不顺带升 6）
+- `views/editor/codemirror-loader.ts`：与旧 `cm.bundle` **逐项对齐**（core + dialog/closebrackets/matchbrackets/search 三件套/active-line + 14 mode + material-darker），随编辑器路由 chunk 懒加载（FileEditorView 461KB）
+- `services/terminal-xterm-loader.ts`：xterm 四包 + 官方 CSS 独立 chunk（406KB），`bootFromSessions` 挂载时 `ensureXtermLoaded()` 动态 import
+- 删除 `src/js/vendor/`、`src/js/xterm*.js`、`src/css/xterm.css` 与 `index.html` 引用；`src/js` 目录清空
+- 主包体积不变（490KB），CM/xterm 均不进主包
+- 门禁修复：粒子色板移入 `legacy-runtime.css` 变体类（token 审计归零）；`AppLayout` 删除 `#666` fallback；P8 壳层 40 处 `!important` 以块级注释**登记例外**（见 §5）
 
-## 4. 仍依赖经典资产（P9-5 后）
+## 4. 仍依赖经典资产（P9-6 后）
 
-- CM5 / xterm 全局脚本（`src/js/vendor/`、`src/js/xterm*.js`）——P9-6
-- 旧 CSS 静态树与 `overrides.css`、Vite `publicDir` → 仓库 `src/`——P9-7
+- 旧 CSS 静态树（`src/css/`）与 `overrides.css`、Vite `publicDir` → 仓库 `src/`——P9-7
+- `src/` 下已无任何 JS
+
+## 5. 登记例外（P9-7 归零）
+
+- `AppLayout.vue` / `AppShell.vue` 共 40 处 `declaration-no-important`：压制 `src/css/layout.css` 旧侧栏与 `.page` 显隐规则所需；P9-7 吸收 legacy-runtime、删除旧 CSS 后随之删除。

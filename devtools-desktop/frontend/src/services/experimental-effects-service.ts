@@ -9,15 +9,8 @@ const LIVE2D_SCRIPT_ID = 'live2d-widget-script'
 const LIVE2D_SCRIPT_SRC = 'https://fastly.jsdelivr.net/npm/live2d-widgets@1.0.0/dist/autoload.js'
 const LIVE2D_RESTORE_DELAY = 1_500
 
-const PARTICLE_COLORS = [
-  'rgba(167, 139, 250, 0.9)',
-  'rgba(129, 140, 248, 0.9)',
-  'rgba(96, 165, 250, 0.85)',
-  'rgba(52, 211, 153, 0.85)',
-  'rgba(251, 191, 36, 0.85)',
-  'rgba(244, 114, 182, 0.9)',
-  'rgba(248, 113, 113, 0.85)',
-]
+/** 色板定义在 legacy-runtime.css 的 `.click-particle--c1..c7`，此处只随机挑类。 */
+const PARTICLE_COLOR_VARIANTS = 7
 const PARTICLE_COUNT = 7
 
 function handleClickParticle(event: MouseEvent) {
@@ -26,12 +19,12 @@ function handleClickParticle(event: MouseEvent) {
     const angle = (Math.PI * 2 * index) / PARTICLE_COUNT + (Math.random() - 0.5) * 0.8
     const distance = 30 + Math.random() * 40
     const size = 4 + Math.random() * 4
-    particle.className = 'click-particle'
+    const colorVariant = 1 + Math.floor(Math.random() * PARTICLE_COLOR_VARIANTS)
+    particle.className = `click-particle click-particle--c${colorVariant}`
     particle.style.left = `${event.clientX}px`
     particle.style.top = `${event.clientY}px`
     particle.style.width = `${size}px`
     particle.style.height = `${size}px`
-    particle.style.backgroundColor = PARTICLE_COLORS[Math.floor(Math.random() * PARTICLE_COLORS.length)]
     particle.style.setProperty('--tx', `${Math.cos(angle) * distance}px`)
     particle.style.setProperty('--ty', `${Math.sin(angle) * distance}px`)
     document.body.appendChild(particle)

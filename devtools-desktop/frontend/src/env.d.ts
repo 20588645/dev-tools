@@ -13,11 +13,9 @@ interface MigrationRuntime {
 declare global {
   interface Window {
     __DEVTOOLS_MIGRATION__?: MigrationRuntime
-    /** CodeMirror 5 由 vendor bundle 以全局脚本注入。 */
-    CodeMirror?: CodeMirrorStatic
   }
 
-  /** 仅迁移期用到的 CM5 最小类型；不引入 @types/codemirror，避免误升 CM6。 */
+  /** CM5 最小类型（配 views/editor/codemirror.d.ts 的模块声明）；不引 @types/codemirror，避免误升 CM6。 */
   interface CodeMirrorDoc {
     getValue(): string
     setValue(content: string): void

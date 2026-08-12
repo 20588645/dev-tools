@@ -61,6 +61,9 @@ function onIntro() {
 </template>
 
 <style>
+/* stylelint-disable declaration-no-important --
+   登记例外（P8 壳层）：RouterView 根节点需压制 src/css/layout.css 的旧 .page 显隐规则。
+   P9-7 吸收 legacy-runtime / 删除旧 CSS 静态树时随之归零。 */
 .main-content.router-main > .page.active {
   display: flex !important;
   width: 100%;

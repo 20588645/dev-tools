@@ -13,8 +13,6 @@ export default [
       'coverage/**',
       'playwright-report/**',
       'test-results/**',
-      'src/js/vendor/**',
-      'src/js/xterm*.js',
       'src-tauri/**',
       'sidecar/data/**',
       'sidecar/data-test/**',
@@ -44,21 +42,6 @@ export default [
       'no-unreachable': 'error',
       'no-redeclare': 'error',
       'no-unused-vars': ['warn', { args: 'none', varsIgnorePattern: '^_' }],
-    },
-  },
-  {
-    // 前端：全局函数式，仅查 bug 级问题
-    files: ['src/js/**/*.js'],
-    languageOptions: { ecmaVersion: 2023, sourceType: 'script' },
-    rules: {
-      'no-dupe-keys': 'error',
-      'no-dupe-args': 'error',
-      'no-duplicate-case': 'error',
-      'no-unreachable': 'error',
-      'no-redeclare': 'error',
-      'no-compare-neg-zero': 'error',
-      'use-isnan': 'error',
-      'valid-typeof': 'error',
     },
   },
   ...pluginVue.configs['flat/essential'].map(config => ({

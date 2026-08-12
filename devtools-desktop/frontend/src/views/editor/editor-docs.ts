@@ -1,3 +1,5 @@
+import CodeMirror from '@/views/editor/codemirror-loader'
+
 /**
  * CodeMirror Doc 驻留模块（非 Pinia）：Doc / changeGeneration 不可序列化，
  * 与标签元数据分离；KeepAlive 切走后仍可保留，真正 unmount 时 clear。
@@ -6,10 +8,9 @@
 const docs = new Map<string, CodeMirrorDoc>()
 const cleanGens = new Map<string, number>()
 
+/** P9-6 起 CM 由 npm 模块提供（codemirror-loader），随编辑器路由 chunk 加载。 */
 export function getCodeMirrorApi(): CodeMirrorStatic {
-  const cm = window.CodeMirror
-  if (!cm) throw new Error('CodeMirror 尚未加载')
-  return cm
+  return CodeMirror
 }
 
 export function createEditorDoc(content = '', mode: string | null = null): CodeMirrorDoc {
