@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>系统设置 — DevTools 原型 · 方案 B</title>
+<link rel="stylesheet" href="shared.css">
+<style>
+.set-wrap { display: grid; grid-template-columns: 220px 1fr; gap: 14px; height: 100%; min-height: 0; }
+.cat { display: flex; flex-direction: column; padding: 8px; }
+.cat-item {
+  display: flex; align-items: center; gap: 9px;
+  padding: 9px 12px; border-radius: 10px; cursor: pointer;
+  font-size: 13px; color: var(--text-2); border: none; background: none; font-family: inherit; text-align: left;
+}
+.cat-item:hover { background: var(--surface-2); color: var(--text-1); }
+.cat-item.on { background: var(--accent-weak); color: var(--accent); font-weight: 650; }
+.set-row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 13px 18px; border-bottom: 1px solid var(--border-soft);
+}
+.set-row:last-child { border-bottom: none; }
+.set-row .info { flex: 1; }
+.set-row .t { font-weight: 650; font-size: 13px; }
+.set-row .d { font-size: 11.5px; color: var(--text-3); margin-top: 1px; }
+.status-strip { display: flex; gap: 20px; padding: 12px 18px; font-size: 12px; color: var(--text-2); flex-wrap: wrap; }
+.status-strip b { font-family: var(--font-mono); font-weight: 600; }
+</style>
+</head>
+<body>
+<script src="shared.js"></script>
+
+<div class="main">
+  <div class="page-head">
+    <div class="page-title">系统设置</div>
+    <div class="page-sub">v0.1.93 · Sidecar 正常 · SQLite 3.2MB</div>
+    <div class="head-actions">
+      <input class="input-line" style="width:200px" placeholder="搜索设置项…">
+      <button class="btn" onclick="toggleTheme()">◐ 外观</button>
+      <button class="btn primary" data-open="#dlg-upgrade">检查更新</button>
+    </div>
+  </div>
+
+  <div class="content" style="display:flex; flex-direction:column">
+    <div class="panel" style="margin-bottom:14px">
+      <div class="status-strip">
+        <span>Sidecar <b style="color:var(--ok)">● :13456 运行中</b></span>
+        <span>WebSocket <b>2 客户端</b></span>
+        <span>数据库 <b>3.2MB</b></span>
+        <span>上次备份 <b>今天 03:00</b></span>
+        <span>托盘 <b style="color:var(--ok)">✓</b></span>
+        <span>通知权限 <b style="color:var(--ok)">✓ 已授权</b></span>
+      </div>
+    </div>
+
+    <div class="set-wrap">
+      <div class="panel cat">
+        <button class="cat-item on" onclick="switchCat(this,'通用')">⚙️ 通用</button>
+        <button class="cat-item" onclick="switchCat(this,'外观')">🎨 外观</button>
+        <button class="cat-item" onclick="switchCat(this,'Git 与周报')">🌿 Git 与周报</button>
+        <button class="cat-item" onclick="switchCat(this,'备份与数据')">💾 备份与数据</button>
+        <button class="cat-item" onclick="switchCat(this,'高级与实验')">🧪 高级与实验</button>
+        <button class="cat-item" onclick="switchCat(this,'关于')">ⓘ 关于</button>
+      </div>
+
+      <div class="panel" style="overflow-y:auto">
+        <div class="panel-head"><div class="panel-title">通用</div></div>
+        <div class="set-row">
+          <div class="info"><div class="t">开机自启动</div><div class="d">登录 macOS 后自动启动并驻留托盘</div></div>
+          <label class="switch"><input type="checkbox" checked><span class="knob"></span></label>
+        </div>
+        <div class="set-row">
+          <div class="info"><div class="t">请求超时</div><div class="d">Sidecar API 请求超时时间</div></div>
+          <select class="input" style="width:120px"><option>15 秒</option><option>30 秒</option><option>60 秒</option></select>
+        </div>
+        <div class="set-row">
+          <div class="info"><div class="t">菜单顺序</div><div class="d">拖拽调整侧栏菜单顺序，隐藏不用的页面</div></div>
+          <button class="btn sm" onclick="toast('打开菜单排序（示意）')">调整…</button>
+        </div>
+        <div class="set-row">
+          <div class="info"><div class="t">系统通知</div><div class="d">构建 / 部署 / 运行异常时发送桌面通知</div></div>
+          <label class="switch"><input type="checkbox" checked><span class="knob"></span></label>
+        </div>
+        <div class="set-row">
+          <div class="info"><div class="t">实验特效</div><div class="d">点击粒子与 Live2D 看板娘（由应用壳统一管理）</div></div>
+          <label class="switch"><input type="checkbox"><span class="knob"></span></label>
+        </div>
+        <div class="set-row">
+          <div class="info"><div class="t">Git 用户信息</div><div class="d">周报统计使用的作者匹配</div></div>
+          <input class="input" style="width:240px" value="ldy <ldy@dev.local>">
+        </div>
+        <div class="set-row">
+          <div class="info"><div class="t">数据备份</div><div class="d">每天 03:00 备份 SQLite 到 iCloud 目录，保留 14 份</div></div>
+          <button class="btn sm" onclick="toast('立即备份完成')">立即备份</button>
+          <label class="switch"><input type="checkbox" checked><span class="knob"></span></label>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗：两段式更新 -->
+<div class="overlay" id="dlg-upgrade">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">发现新版本 v0.2.0</div>
+      <div class="modal-sub">全新统一设计 · 修复 12 项问题</div>
+    </div>
+    <div class="modal-body" id="upgradeStep1">
+      <div style="font-size:12.5px; color:var(--text-2); line-height:1.8">
+        · 全新「柔和玻璃」视觉体系，13 页统一重构<br>
+        · 运行页项目卡片化，每行 4 张<br>
+        · 部署历史自动整理与批量删除<br>
+        · 修复 E2E 平台误判等 12 项问题
+      </div>
+      <div class="field" id="upgProgWrap" style="display:none">
+        <label>正在下载 · <span id="upgPct">0%</span></label>
+        <div class="progress"><i id="upgBar" style="width:0%"></i></div>
+        <div class="help">下载完成后会提示重启安装，不会打断当前操作</div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" data-close>稍后</button>
+      <button class="btn primary" id="upgBtn" onclick="startUpgrade()">下载更新</button>
+    </div>
+  </div>
+</div>
+
+<script>
+bindOverlays(document);
+function switchCat(el, name) {
+  document.querySelectorAll('.cat-item').forEach(c => c.classList.remove('on'));
+  el.classList.add('on');
+  document.querySelector('.panel-title').textContent = name;
+  toast('原型示意：已切到「' + name + '」分类');
+}
+function startUpgrade() {
+  const btn = document.getElementById('upgBtn');
+  const wrap = document.getElementById('upgProgWrap');
+  wrap.style.display = 'flex';
+  btn.disabled = true; btn.textContent = '下载中…';
+  let p = 0;
+  const timer = setInterval(() => {
+    p = Math.min(100, p + Math.random() * 18);
+    document.getElementById('upgBar').style.width = p + '%';
+    document.getElementById('upgPct').textContent = Math.round(p) + '%';
+    if (p >= 100) {
+      clearInterval(timer);
+      btn.disabled = false; btn.textContent = '重启并安装';
+      btn.onclick = () => toast('原型示意：此处将重启应用');
+    }
+  }, 350);
+}
+</script>
+</body>
+</html>

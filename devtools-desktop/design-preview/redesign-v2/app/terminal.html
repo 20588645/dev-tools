@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>快捷命令 — DevTools 原型 · 方案 B</title>
+<link rel="stylesheet" href="shared.css">
+<style>
+.cmd-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 11px; padding: 6px 18px 18px; }
+.cmd-card {
+  border: 1px solid var(--border-soft); border-radius: 13px;
+  padding: 11px 12px; background: var(--surface);
+  box-shadow: var(--shadow-card);
+  display: flex; flex-direction: column; gap: 7px;
+  transition: transform .12s, box-shadow .12s;
+}
+.cmd-card:hover { transform: translateY(-2px); }
+.cmd-name { font-weight: 700; font-size: 12.5px; display: flex; gap: 7px; align-items: center; }
+.cmd-name .icon-btn { margin-left: auto; width: 22px; height: 22px; font-size: 11px; }
+.cmd-code {
+  font-family: var(--font-mono); font-size: 10.5px; color: var(--text-3);
+  background: var(--surface-2); border-radius: 8px;
+  padding: 4px 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cmd-foot { display: flex; gap: 7px; align-items: center; }
+.cmd-foot .input-line { flex: 1; height: 26px; font-size: 11px; min-width: 0; border-radius: 8px; }
+@media (max-width: 1280px) { .cmd-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 980px) { .cmd-grid { grid-template-columns: repeat(2, 1fr); } }
+</style>
+</head>
+<body>
+<script src="shared.js"></script>
+
+<div class="main">
+  <div class="page-head">
+    <div class="page-title">快捷命令</div>
+    <div class="page-sub">预设常用 Shell 命令，每次执行在新终端标签中运行</div>
+    <div class="head-actions">
+      <button class="btn" onclick="toggleTheme()">◐ 外观</button>
+      <button class="btn primary" data-open="#dlg-addcmd">＋ 添加命令</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="toolbar">
+      <input class="input-line" style="width:280px" type="password" placeholder="sudo 密码（用于需要权限的命令）">
+      <button class="btn" onclick="toast('sudo 密码已保存')">保存</button>
+      <span class="badge ok">已配置</span>
+      <span class="grow"></span>
+      <input class="input-line" style="width:180px" placeholder="搜索命令…">
+    </div>
+
+    <div class="panel" style="margin-bottom:16px">
+      <div class="panel-head">
+        <div class="panel-title">预设命令</div>
+        <div class="panel-hint">14 条 · 拖拽可排序</div>
+      </div>
+      <div class="cmd-grid">
+        <div class="cmd-card">
+          <div class="cmd-name">🔗 茅台 VPN 连接<button class="icon-btn" data-open="#dlg-addcmd">✏️</button></div>
+          <div class="cmd-code">sudo route -n add 10.34.0.0 -netmask 255.255.0.0 10.30.1.${ip}</div>
+          <div class="cmd-foot"><input class="input-line" placeholder="网关末位，默认 224" value="224"><button class="btn sm primary" onclick="toast('已在新标签执行')">执行</button></div>
+        </div>
+        <div class="cmd-card">
+          <div class="cmd-name">🔌 茅台 VPN 清除<button class="icon-btn" data-open="#dlg-addcmd">✏️</button></div>
+          <div class="cmd-code">sudo route -n delete -net 10.34.0.0</div>
+          <div class="cmd-foot"><span style="flex:1"></span><button class="btn sm primary" onclick="toast('已在新标签执行')">执行</button></div>
+        </div>
+        <div class="cmd-card">
+          <div class="cmd-name">🔪 杀指定端口进程<button class="icon-btn" data-open="#dlg-addcmd">✏️</button></div>
+          <div class="cmd-code">lsof -ti :${port} | xargs kill -9</div>
+          <div class="cmd-foot"><input class="input-line" placeholder="端口号，如 8080"><button class="btn sm primary" onclick="toast('已在新标签执行')">执行</button></div>
+        </div>
+        <div class="cmd-card">
+          <div class="cmd-name">🔍 查看端口占用<button class="icon-btn" data-open="#dlg-addcmd">✏️</button></div>
+          <div class="cmd-code">lsof -i :${port}</div>
+          <div class="cmd-foot"><input class="input-line" placeholder="端口号，如 3000"><button class="btn sm primary" onclick="toast('已在新标签执行')">执行</button></div>
+        </div>
+        <div class="cmd-card">
+          <div class="cmd-name">🌐 查看本机 IP<button class="icon-btn" data-open="#dlg-addcmd">✏️</button></div>
+          <div class="cmd-code">ifconfig | grep 'inet ' | grep -v 127.0.0.1</div>
+          <div class="cmd-foot"><span style="flex:1"></span><button class="btn sm primary" onclick="toast('已在新标签执行')">执行</button></div>
+        </div>
+        <div class="cmd-card">
+          <div class="cmd-name">🩺 查看本软件进程<button class="icon-btn" data-open="#dlg-addcmd">✏️</button></div>
+          <div class="cmd-code">sh scripts/check-processes.sh</div>
+          <div class="cmd-foot"><span style="flex:1"></span><button class="btn sm primary" onclick="toast('已在新标签执行')">执行</button></div>
+        </div>
+        <div class="cmd-card">
+          <div class="cmd-name">🧹 清理残留 Sidecar<button class="icon-btn" data-open="#dlg-addcmd">✏️</button></div>
+          <div class="cmd-code">sh scripts/kill-stale-sidecar.sh</div>
+          <div class="cmd-foot"><span style="flex:1"></span><button class="btn sm primary" onclick="toast('已在新标签执行')">执行</button></div>
+        </div>
+        <div class="cmd-card">
+          <div class="cmd-name">⚡ 启动 LDTS 后端<button class="icon-btn" data-open="#dlg-addcmd">✏️</button></div>
+          <div class="cmd-code">ldts-backend-dev.sh --offline</div>
+          <div class="cmd-foot"><span style="flex:1"></span><button class="btn sm primary" onclick="toast('已在新标签执行')">执行</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head" style="padding-bottom:8px">
+        <div class="panel-title">终端</div>
+        <span class="grow"></span>
+        <input class="input-line" style="width:150px; height:26px; font-size:11px" placeholder="搜索输出… ⌘F">
+        <span class="badge ok">connected</span>
+        <button class="btn sm" onclick="toast('已清屏')">清除</button>
+        <button class="btn sm" onclick="toast('会话已重置')">重置</button>
+        <button class="btn sm">全屏</button>
+      </div>
+      <div style="display:flex; align-items:center; gap:6px; padding:0 18px 10px">
+        <span class="term-tab">vpn-connect ✕</span>
+        <span class="term-tab on">ldts-backend ✕</span>
+        <button class="btn sm" onclick="toast('已新建终端标签')">＋</button>
+      </div>
+      <div class="term-screen">
+        <div><span class="p">➜ ldts</span> ./script/dev/ldts-backend-dev.sh --offline</div>
+        <div class="dim">[offline] skip remote tunnel check</div>
+        <div>backend listening on <span class="p">127.0.0.1:13900</span></div>
+        <div class="dim">watching for file changes…</div>
+        <div><span class="p">➜ ldts</span> <span class="cur"></span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗：添加/编辑命令 -->
+<div class="overlay" id="dlg-addcmd">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">命令</div>
+      <div class="modal-sub">支持 ${参数} 占位符，执行前会要求填写</div>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex; gap:12px">
+        <div class="field" style="width:90px"><label>图标</label><input class="input" value="🔗" style="text-align:center"></div>
+        <div class="field" style="flex:1"><label>名称</label><input class="input" value="茅台 VPN 连接"></div>
+      </div>
+      <div class="field"><label>命令</label><textarea class="input" rows="3">sudo route -n add 10.34.0.0 -netmask 255.255.0.0 10.30.1.${ip}</textarea></div>
+      <div class="field"><label>参数提示（${ip}）</label><input class="input" value="网关末位，默认 224"><div class="help">检测到 1 个占位符：${ip}</div></div>
+      <label class="check"><input type="checkbox" checked> 需要 sudo 权限（自动带入已保存密码）</label>
+    </div>
+    <div class="modal-foot">
+      <button class="btn danger left" data-close onclick="toast('命令已删除','err')">删除</button>
+      <button class="btn" data-close>取消</button>
+      <button class="btn primary" data-close onclick="toast('命令已保存')">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>bindOverlays(document);</script>
+</body>
+</html>

@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>候选 C · 终端极客 — DevTools 全新设计</title>
+<style>
+/* ============ 候选 C：终端极客（Terminal Grid） ============
+   深色优先的工程仪表风。荧光青强调、等宽字体标注、
+   直角(3px)+清晰描边、区块编号、底部状态栏。亮色 = 工程图纸。
+   可点击页面：应用首页 / 本地运行 / 快捷命令 / 用量统计，其余为占位空状态。
+   ========================================================== */
+:root {
+  --font-ui: -apple-system, "SF Pro Text", "PingFang SC", sans-serif;
+  --font-mono: "SF Mono", ui-monospace, Menlo, monospace;
+  --bg-app: #0c0f12;
+  --bg-panel: #12161a;
+  --bg-inset: #0a0d10;
+  --bg-hover: #1a2026;
+  --border: #232a31;
+  --border-hi: #2f3941;
+  --text-1: #dfe7ec;
+  --text-2: #94a3ad;
+  --text-3: #5c6a74;
+  --accent: #2fd8c2;
+  --accent-dim: rgba(47,216,194,.14);
+  --accent-line: rgba(47,216,194,.4);
+  --ok: #57d364;   --ok-dim: rgba(87,211,100,.13);
+  --warn: #f2b52e; --warn-dim: rgba(242,181,46,.13);
+  --err: #ff5d5d;  --err-dim: rgba(255,93,93,.12);
+  --run: #38bdf8;  --run-dim: rgba(56,189,248,.13);
+  --shadow-pop: 0 24px 60px rgba(0,0,0,.65);
+  --r: 3px;
+  --sidebar-w: 208px;
+  --grid-line: rgba(140,170,190,.04);
+}
+[data-theme="light"] {
+  --bg-app: #f2f4f5;
+  --bg-panel: #fbfcfc;
+  --bg-inset: #e9edee;
+  --bg-hover: #e5eaec;
+  --border: #d4dbdf;
+  --border-hi: #bcc7cd;
+  --text-1: #17242c;
+  --text-2: #4e6472;
+  --text-3: #8ba0ac;
+  --accent: #0a9e8c;
+  --accent-dim: rgba(10,158,140,.10);
+  --accent-line: rgba(10,158,140,.45);
+  --ok: #1f9e4b;   --ok-dim: rgba(31,158,75,.10);
+  --warn: #c07f00; --warn-dim: rgba(192,127,0,.12);
+  --err: #d63838;  --err-dim: rgba(214,56,56,.10);
+  --run: #0284c7;  --run-dim: rgba(2,132,199,.10);
+  --shadow-pop: 0 24px 60px rgba(30,50,60,.25);
+  --grid-line: rgba(30,60,80,.05);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  font-family: var(--font-ui); font-size: 13px; line-height: 1.55;
+  color: var(--text-1);
+  background:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
+    var(--bg-app);
+  background-size: 28px 28px, 28px 28px, auto;
+  -webkit-font-smoothing: antialiased;
+  display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+}
+.app-row { flex: 1; display: flex; min-height: 0; }
+
+/* ---------- 侧栏 ---------- */
+.sidebar {
+  width: var(--sidebar-w); flex: none;
+  border-right: 1px solid var(--border); background: var(--bg-panel);
+  display: flex; flex-direction: column; padding: 14px 10px 10px;
+}
+.brand { display: flex; align-items: center; gap: 8px; padding: 0 6px 14px; }
+.brand-mark {
+  width: 26px; height: 26px; border-radius: var(--r);
+  border: 1px solid var(--accent-line); color: var(--accent);
+  display: grid; place-items: center;
+  font-family: var(--font-mono); font-size: 13px; font-weight: 700;
+  background: var(--accent-dim);
+}
+.brand-name { font-size: 13px; font-weight: 700; letter-spacing: 1px; font-family: var(--font-mono); }
+.brand-ver { margin-left: auto; font-size: 9.5px; color: var(--text-3); font-family: var(--font-mono); }
+.nav { flex: 1; overflow-y: auto; }
+.nav-group { margin-bottom: 13px; }
+.nav-group-label {
+  font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 1.5px;
+  color: var(--text-3); text-transform: uppercase; padding: 0 8px 5px;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 9px;
+  padding: 6px 8px; border-radius: var(--r);
+  border: 1px solid transparent;
+  color: var(--text-2); cursor: pointer;
+  background: none; width: 100%;
+  font: inherit; font-size: 12.5px; text-align: left; position: relative;
+}
+.nav-item:hover { background: var(--bg-hover); color: var(--text-1); }
+.nav-item.active {
+  background: var(--accent-dim); color: var(--accent);
+  border-color: var(--accent-line); font-weight: 600;
+}
+.nav-item.active::before {
+  content: ""; position: absolute; left: -10px; top: 20%; bottom: 20%;
+  width: 2px; background: var(--accent);
+}
+.nav-item svg { width: 15px; height: 15px; flex: none; }
+.nav-item .count {
+  margin-left: auto; font-family: var(--font-mono); font-size: 10px;
+  color: var(--text-3); border: 1px solid var(--border); border-radius: var(--r);
+  padding: 0 4px;
+}
+.nav-item.active .count { color: var(--accent); border-color: var(--accent-line); }
+.sidebar-foot { border-top: 1px solid var(--border); padding-top: 8px; display: flex; gap: 4px; }
+.foot-btn {
+  flex: 1; padding: 6px 4px; border-radius: var(--r); border: 1px solid transparent;
+  background: none; color: var(--text-2); font: inherit; font-size: 11.5px; cursor: pointer;
+}
+.foot-btn:hover { background: var(--bg-hover); border-color: var(--border); color: var(--text-1); }
+
+/* ---------- 主区 ---------- */
+.main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.page-head {
+  height: 50px; flex: none;
+  display: flex; align-items: center; gap: 12px; padding: 0 18px;
+  border-bottom: 1px solid var(--border); background: var(--bg-panel);
+}
+.crumb { font-family: var(--font-mono); font-size: 11px; color: var(--text-3); }
+.crumb b { color: var(--text-1); font-size: 14px; letter-spacing: .5px; }
+.head-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.search {
+  display: flex; align-items: center; gap: 7px;
+  height: 28px; padding: 0 10px; width: 210px;
+  border: 1px solid var(--border); border-radius: var(--r);
+  background: var(--bg-inset); color: var(--text-3);
+  font-family: var(--font-mono); font-size: 11px;
+}
+.kbd {
+  font-family: var(--font-mono); font-size: 9.5px;
+  border: 1px solid var(--border-hi); border-radius: 3px;
+  padding: 0 4px; margin-left: auto; color: var(--text-3);
+}
+.btn {
+  height: 28px; padding: 0 12px; border-radius: var(--r);
+  border: 1px solid var(--border-hi); background: var(--bg-panel);
+  color: var(--text-1); font: inherit; font-size: 12px; font-weight: 550;
+  cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+}
+.btn:hover { border-color: var(--accent-line); color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #06211d; font-weight: 700; }
+.btn.primary:hover { filter: brightness(1.1); color: #06211d; }
+.btn.sm { height: 23px; padding: 0 8px; font-size: 11px; }
+.btn.danger { color: var(--err); border-color: var(--err); }
+
+.content { flex: 1; overflow-y: auto; padding: 18px; }
+.page { display: none; }
+.page.active { display: block; }
+.grid { display: grid; gap: 12px; grid-template-columns: repeat(4, 1fr); }
+
+/* ---------- 统计卡 / 面板 ---------- */
+.stat {
+  background: var(--bg-panel); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 12px 14px; position: relative;
+}
+.stat-tag {
+  position: absolute; top: 10px; right: 10px;
+  font-family: var(--font-mono); font-size: 9px; color: var(--text-3); letter-spacing: 1px;
+}
+.stat-label { font-size: 11.5px; color: var(--text-2); display: flex; align-items: center; gap: 6px; }
+.stat-value { font-family: var(--font-mono); font-size: 24px; font-weight: 700; letter-spacing: -.5px; margin-top: 3px; }
+.stat-value small { font-size: 12px; color: var(--text-3); font-weight: 500; }
+.stat-meta { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+.stat-meta b { color: var(--ok); font-weight: 600; }
+.dot { width: 7px; height: 7px; border-radius: 1px; display: inline-block; }
+.panel {
+  background: var(--bg-panel); border: 1px solid var(--border);
+  border-radius: var(--r); overflow: hidden;
+}
+.panel.span2 { grid-column: span 2; }
+.panel.span3 { grid-column: span 3; }
+.panel.span4 { grid-column: span 4; }
+.panel-head {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 14px; border-bottom: 1px solid var(--border);
+  background: linear-gradient(to bottom, var(--bg-hover), transparent);
+}
+.panel-no { font-family: var(--font-mono); font-size: 10px; color: var(--accent); letter-spacing: 1px; }
+.panel-title { font-size: 12.5px; font-weight: 650; letter-spacing: .3px; }
+.panel-hint { font-size: 11px; color: var(--text-3); font-family: var(--font-mono); }
+.panel-head .spacer { margin-left: auto; }
+
+/* ---------- 表格 ---------- */
+table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+th {
+  text-align: left; font-family: var(--font-mono); font-size: 9.5px;
+  letter-spacing: 1.2px; text-transform: uppercase;
+  color: var(--text-3); padding: 6px 14px; border-bottom: 1px solid var(--border);
+}
+td { padding: 8px 14px; border-bottom: 1px solid var(--border); }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--bg-hover); }
+.mono { font-family: var(--font-mono); font-size: 11px; }
+.badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: var(--font-mono); font-size: 10.5px; font-weight: 600;
+  padding: 2px 7px; border-radius: var(--r); border: 1px solid transparent;
+}
+.badge.run  { color: var(--run);  background: var(--run-dim);  border-color: rgba(56,189,248,.3); }
+.badge.ok   { color: var(--ok);   background: var(--ok-dim);   border-color: rgba(87,211,100,.3); }
+.badge.warn { color: var(--warn); background: var(--warn-dim); border-color: rgba(242,181,46,.3); }
+.badge.off  { color: var(--text-3); background: var(--bg-inset); border-color: var(--border); }
+.row-actions { display: flex; gap: 5px; justify-content: flex-end; }
+
+/* ---------- chips / 日志 ---------- */
+.chips { display: flex; flex-wrap: wrap; gap: 7px; padding: 12px 14px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  border: 1px solid var(--border-hi); border-radius: var(--r);
+  background: var(--bg-inset); padding: 5px 10px;
+  font-size: 12px; cursor: pointer; color: var(--text-1); font-family: inherit;
+}
+.chip:hover { border-color: var(--accent-line); color: var(--accent); }
+.chip .mono { color: var(--text-3); font-size: 10px; }
+.log {
+  font-family: var(--font-mono); font-size: 11.5px; line-height: 1.75;
+  padding: 12px 14px; background: var(--bg-inset);
+  max-height: 176px; overflow-y: auto; border-top: 1px solid var(--border);
+}
+.log .t { color: var(--text-3); }
+.log .ok { color: var(--ok); }
+.log .warn { color: var(--warn); }
+.log .err { color: var(--err); }
+.cur::after { content: "▊"; color: var(--accent); animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+
+/* ---------- 工具条 / 分段控件 ---------- */
+.toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.seg {
+  display: inline-flex; border: 1px solid var(--border-hi);
+  border-radius: var(--r); overflow: hidden; background: var(--bg-panel);
+}
+.seg button {
+  border: none; background: none; font: inherit; font-size: 11.5px;
+  font-family: var(--font-mono);
+  padding: 5px 11px; color: var(--text-2); cursor: pointer;
+  border-right: 1px solid var(--border);
+}
+.seg button:last-child { border-right: none; }
+.seg button.on { background: var(--accent-dim); color: var(--accent); font-weight: 600; }
+.input-line {
+  height: 28px; padding: 0 10px; border: 1px solid var(--border-hi);
+  border-radius: var(--r); background: var(--bg-inset);
+  color: var(--text-1); font: inherit; font-size: 12px;
+}
+.input-line:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+.input-line::placeholder { color: var(--text-3); }
+
+/* ---------- 分组披露 ---------- */
+.group-head {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 14px; background: var(--bg-hover);
+  border-bottom: 1px solid var(--border);
+  font-size: 12px; font-weight: 650; cursor: pointer; user-select: none;
+}
+.group-head .tri { font-size: 9px; color: var(--accent); transition: transform .15s; }
+.group-head.closed .tri { transform: rotate(-90deg); }
+.group-head .g-count { font-weight: 400; color: var(--text-3); font-size: 10.5px; font-family: var(--font-mono); }
+.group-body.hide { display: none; }
+
+/* ---------- 终端 ---------- */
+.cmd-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 14px; }
+.cmd-card {
+  border: 1px solid var(--border); border-radius: var(--r);
+  padding: 10px 12px; background: var(--bg-inset);
+  display: flex; flex-direction: column; gap: 6px;
+}
+.cmd-card:hover { border-color: var(--border-hi); }
+.cmd-name { font-weight: 650; font-size: 12.5px; display: flex; gap: 6px; align-items: center; }
+.cmd-code {
+  font-family: var(--font-mono); font-size: 10.5px; color: var(--text-3);
+  background: var(--bg-app); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 3px 7px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cmd-foot { display: flex; gap: 6px; align-items: center; }
+.cmd-foot .input-line { flex: 1; height: 24px; font-size: 11px; min-width: 0; }
+.term-tabs {
+  display: flex; align-items: center; gap: 4px;
+  padding: 8px 10px 0; border-bottom: 1px solid var(--border); background: var(--bg-hover);
+}
+.term-tab {
+  display: inline-flex; align-items: center; gap: 7px;
+  border: 1px solid var(--border); border-bottom: none;
+  border-radius: var(--r) var(--r) 0 0;
+  padding: 5px 12px; font-size: 11px; font-family: var(--font-mono);
+  color: var(--text-2); background: var(--bg-panel); cursor: pointer;
+}
+.term-tab.on { background: var(--bg-inset); color: var(--accent); border-color: var(--border-hi); }
+.term-screen {
+  background: var(--bg-inset); color: var(--text-1);
+  font-family: var(--font-mono); font-size: 11.5px; line-height: 1.7;
+  padding: 12px 14px; min-height: 200px;
+}
+.term-screen .p { color: var(--accent); }
+.term-screen .dim { color: var(--text-3); }
+
+/* ---------- 图表 ---------- */
+.chart-wrap { padding: 16px 14px 10px; }
+.bars { display: flex; align-items: flex-end; gap: 10px; height: 160px; }
+.bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; justify-content: flex-end; }
+.bar { width: 100%; max-width: 34px; border-radius: 2px 2px 0 0; background: var(--accent); opacity: .8; }
+.bar.b2 { background: var(--run); }
+.bar-x { font-size: 10px; color: var(--text-3); font-family: var(--font-mono); }
+.legend { display: flex; gap: 14px; padding: 8px 2px 0; font-size: 11px; color: var(--text-2); font-family: var(--font-mono); }
+.legend .sw { width: 10px; height: 10px; border-radius: 2px; display: inline-block; margin-right: 5px; vertical-align: -1px; }
+.rank { padding: 4px 0; }
+.rank-row { display: flex; align-items: center; gap: 10px; padding: 6px 14px; font-size: 12px; }
+.rank-row .name { width: 130px; flex: none; font-family: var(--font-mono); font-size: 11px; }
+.rank-bar { flex: 1; height: 5px; border-radius: 0; background: var(--bg-inset); overflow: hidden; }
+.rank-bar i { display: block; height: 100%; background: var(--accent); }
+.rank-val { width: 72px; text-align: right; font-family: var(--font-mono); font-size: 11px; color: var(--text-2); }
+
+/* ---------- 空状态 ---------- */
+.placeholder {
+  border: 1px dashed var(--border-hi); border-radius: var(--r);
+  padding: 60px 20px; text-align: center; color: var(--text-3);
+  background: var(--bg-panel);
+}
+.placeholder .ic { font-size: 28px; margin-bottom: 10px; }
+.placeholder .tt { font-size: 13.5px; font-weight: 650; color: var(--text-2); margin-bottom: 4px; font-family: var(--font-mono); }
+.placeholder .ds { font-size: 12px; max-width: 430px; margin: 0 auto; }
+
+/* ---------- 底部状态栏 ---------- */
+.statusbar {
+  height: 26px; flex: none;
+  border-top: 1px solid var(--border); background: var(--bg-panel);
+  display: flex; align-items: center; gap: 16px; padding: 0 14px;
+  font-family: var(--font-mono); font-size: 10.5px; color: var(--text-3);
+}
+.statusbar .item { display: flex; align-items: center; gap: 5px; }
+.statusbar .ok { color: var(--ok); }
+.statusbar .right { margin-left: auto; display: flex; gap: 16px; }
+
+/* ---------- 弹窗 ---------- */
+.overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.55);
+  display: none; align-items: center; justify-content: center; z-index: 50;
+}
+.overlay.open { display: flex; }
+.modal {
+  width: 470px; max-width: calc(100vw - 48px);
+  background: var(--bg-panel); border: 1px solid var(--border-hi);
+  border-radius: 4px; box-shadow: var(--shadow-pop);
+}
+.modal-head {
+  padding: 12px 16px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: baseline; gap: 10px;
+  background: linear-gradient(to bottom, var(--bg-hover), transparent);
+}
+.modal-title { font-size: 13.5px; font-weight: 700; letter-spacing: .3px; }
+.modal-no { font-family: var(--font-mono); font-size: 10px; color: var(--accent); }
+.modal-sub { margin-left: auto; font-size: 11px; color: var(--text-3); font-family: var(--font-mono); }
+.modal-body { padding: 16px; display: flex; flex-direction: column; gap: 13px; }
+.field label {
+  display: block; font-family: var(--font-mono); font-size: 10px;
+  letter-spacing: 1px; text-transform: uppercase;
+  color: var(--text-3); margin-bottom: 5px;
+}
+.input, select.input {
+  width: 100%; height: 30px; padding: 0 10px;
+  border: 1px solid var(--border-hi); border-radius: var(--r);
+  background: var(--bg-inset); color: var(--text-1);
+  font: inherit; font-size: 12.5px;
+}
+.input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+.checks { display: flex; gap: 7px; flex-wrap: wrap; }
+.check {
+  display: inline-flex; align-items: center; gap: 6px;
+  border: 1px solid var(--border-hi); border-radius: var(--r);
+  background: var(--bg-inset); padding: 5px 10px;
+  font-size: 12px; cursor: pointer; user-select: none; font-family: var(--font-mono);
+}
+.check input { accent-color: var(--accent); }
+.modal-foot {
+  padding: 12px 16px; border-top: 1px solid var(--border);
+  display: flex; justify-content: flex-end; gap: 8px;
+}
+@media (max-width: 980px) {
+  .grid { grid-template-columns: repeat(2, 1fr); }
+  .panel.span2, .panel.span3, .panel.span4 { grid-column: span 2; }
+  .search { display: none; }
+  .cmd-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="app-row">
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-mark">▲</div>
+    <div class="brand-name">DEVTOOLS</div>
+    <div class="brand-ver">v0.2.0</div>
+  </div>
+  <nav class="nav">
+    <div class="nav-group">
+      <div class="nav-group-label">Workspace</div>
+      <button class="nav-item active" data-page="home"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 8.5 8 3l6 5.5M4 7.5V13h8V7.5"/></svg>应用首页</button>
+      <button class="nav-item" data-page="run"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4 3.5 12 8l-8 4.5z"/></svg>本地运行<span class="count">3</span></button>
+      <button class="nav-item" data-page="deploy"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 2v8m0 0 3-3M8 10 5 7M2.5 12.5h11"/></svg>部署面板</button>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Files · Term</div>
+      <button class="nav-item" data-page="filetransfer"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2.5 5.5h11v8h-11zM5 5.5v-2h6v2"/></svg>文件传输</button>
+      <button class="nav-item" data-page="editor"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="m10.5 3.5 2 2L6 12l-2.6.6L4 10zM9 5l2 2"/></svg>文件编辑</button>
+      <button class="nav-item" data-page="terminal"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="m3 4 3.5 3.5L3 11M8 12h5"/></svg>快捷命令<span class="count">14</span></button>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Records</div>
+      <button class="nav-item" data-page="todo"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3 4.5h10M3 8h10M3 11.5h6"/></svg>待办事项<span class="count">5</span></button>
+      <button class="nav-item" data-page="notes"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4 2.5h8v11H4zM6 5.5h4M6 8h4"/></svg>工时内容</button>
+      <button class="nav-item" data-page="notebook"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3.5 3h7l2 2v8h-9zM10.5 3v2h2"/></svg>个人笔记</button>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Utilities</div>
+      <button class="nav-item" data-page="ipcheck"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="8" r="5.5"/><path d="M2.5 8h11M8 2.5c3 3 3 8 0 11-3-3-3-8 0-11z"/></svg>纯净检测</button>
+      <button class="nav-item" data-page="twofa"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3.5" y="6.5" width="9" height="7" rx="1"/><path d="M5.5 6.5V4.5a2.5 2.5 0 0 1 5 0v2"/></svg>双因验证</button>
+      <button class="nav-item" data-page="usage"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3 13V7m5 6V3m5 10V9"/></svg>用量统计</button>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">System</div>
+      <button class="nav-item" data-page="settings"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="8" r="2"/><path d="M8 1.8 9 3.6l2-.4.6 2 2 .6-.4 2 1.8 1-1.8 1 .4 2-2 .6-.6 2-2-.4-1 1.8-1-1.8-2 .4-.6-2-2-.6.4-2L1.8 8l1.8-1-.4-2 2-.6.6-2 2 .4z"/></svg>系统设置</button>
+    </div>
+  </nav>
+  <div class="sidebar-foot">
+    <button class="foot-btn" id="themeBtnSide">◐ 外观</button>
+    <button class="foot-btn">ⓘ 介绍</button>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="page-head">
+    <div class="crumb">devtools / <b id="pageTitle">应用首页</b> <span id="pageSub" style="margin-left:8px"></span></div>
+    <div class="head-actions">
+      <div class="search">$ 搜索页面或命令<span class="kbd">⌘K</span></div>
+      <button class="btn" id="themeBtn">◐ THEME</button>
+      <button class="btn primary" id="openModal">＋ 新建部署</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ============ 应用首页 ============ -->
+    <section class="page active" data-page="home">
+      <div class="grid">
+        <div class="stat">
+          <div class="stat-tag">RUN</div>
+          <div class="stat-label"><span class="dot" style="background:var(--run)"></span>运行中项目</div>
+          <div class="stat-value">3</div>
+          <div class="stat-meta">ldts-backend up 4h12m</div>
+        </div>
+        <div class="stat">
+          <div class="stat-tag">DEPLOY</div>
+          <div class="stat-label"><span class="dot" style="background:var(--ok)"></span>今日部署</div>
+          <div class="stat-value">2</div>
+          <div class="stat-meta"><b>全部成功</b> · 最近 21:36</div>
+        </div>
+        <div class="stat">
+          <div class="stat-tag">TODO</div>
+          <div class="stat-label"><span class="dot" style="background:var(--warn)"></span>待办事项</div>
+          <div class="stat-value">5</div>
+          <div class="stat-meta">2 项今天到期</div>
+        </div>
+        <div class="stat">
+          <div class="stat-tag">TOKEN</div>
+          <div class="stat-label"><span class="dot" style="background:var(--accent)"></span>本月 Token</div>
+          <div class="stat-value">1.28<small>M</small></div>
+          <div class="stat-meta">≈ ¥42.10 · Δ −12%</div>
+        </div>
+
+        <div class="panel span2">
+          <div class="panel-head">
+            <span class="panel-no">01</span>
+            <div class="panel-title">本地运行</div>
+            <div class="panel-hint">3 projects · 1 running</div>
+            <span class="spacer"></span>
+            <button class="btn sm" data-goto="run">全部项目</button>
+          </div>
+          <table>
+            <thead><tr><th>Project</th><th>Port</th><th>Status</th><th style="text-align:right">Actions</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><b>ldts-backend</b><div class="mono" style="color:var(--text-3)">~/animation/ldts</div></td>
+                <td class="mono">:13900</td>
+                <td><span class="badge run">● RUNNING</span></td>
+                <td><div class="row-actions"><button class="btn sm">日志</button><button class="btn sm">停止</button></div></td>
+              </tr>
+              <tr>
+                <td><b>devtools-sidecar</b><div class="mono" style="color:var(--text-3)">~/personalTools</div></td>
+                <td class="mono">:13456</td>
+                <td><span class="badge ok">✓ READY</span></td>
+                <td><div class="row-actions"><button class="btn sm">日志</button><button class="btn sm">重启</button></div></td>
+              </tr>
+              <tr>
+                <td><b>animation-app</b><div class="mono" style="color:var(--text-3)">~/animation/app</div></td>
+                <td class="mono">—</td>
+                <td><span class="badge warn">◌ BUILDING</span></td>
+                <td><div class="row-actions"><button class="btn sm">日志</button><button class="btn sm">取消</button></div></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="panel span2">
+          <div class="panel-head">
+            <span class="panel-no">02</span>
+            <div class="panel-title">部署动态</div>
+            <div class="panel-hint">last 24h</div>
+            <span class="spacer"></span>
+            <button class="btn sm" data-goto="deploy">部署历史</button>
+          </div>
+          <table>
+            <thead><tr><th>Project / Module</th><th>Server</th><th>Result</th><th style="text-align:right">Time</th></tr></thead>
+            <tbody>
+              <tr><td><b>ldts</b> <span class="mono">backend</span></td><td class="mono">idc-hz-01</td><td><span class="badge ok">✓ OK</span></td><td class="mono" style="text-align:right">21:36</td></tr>
+              <tr><td><b>ldts</b> <span class="mono">frontend</span></td><td class="mono">idc-hz-01</td><td><span class="badge ok">✓ OK</span></td><td class="mono" style="text-align:right">21:31</td></tr>
+              <tr><td><b>drug-mall</b> <span class="mono">api</span></td><td class="mono">bozhou-02</td><td><span class="badge warn">↻ RETRIED</span></td><td class="mono" style="text-align:right">-1d 18:02</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="panel span2">
+          <div class="panel-head">
+            <span class="panel-no">03</span>
+            <div class="panel-title">快捷命令</div>
+            <div class="panel-hint">exec in new tab</div>
+            <span class="spacer"></span>
+            <button class="btn sm" data-goto="terminal">管理</button>
+          </div>
+          <div class="chips">
+            <button class="chip">🔗 茅台 VPN 连接 <span class="mono">route add…</span></button>
+            <button class="chip">🔌 茅台 VPN 清除</button>
+            <button class="chip">🔪 杀指定端口进程 <span class="mono">:8080</span></button>
+            <button class="chip">🌐 查看本机 IP</button>
+            <button class="chip">🧹 清理残留 Sidecar</button>
+            <button class="chip">⚡ 启动 LDTS 后端</button>
+          </div>
+        </div>
+
+        <div class="panel span2">
+          <div class="panel-head">
+            <span class="panel-no">04</span>
+            <div class="panel-title">运行日志 · ldts-backend</div>
+            <div class="panel-hint">pid 38564</div>
+            <span class="spacer"></span>
+            <button class="btn sm">全屏</button>
+          </div>
+          <div class="log">
+            <div><span class="t">23:41:02</span> <span class="ok">[ready]</span> tunnel daemon connected (10.30.1.224)</div>
+            <div><span class="t">23:41:04</span> GET /api/health <span class="ok">200</span> 3ms</div>
+            <div><span class="t">23:42:11</span> <span class="warn">[warn]</span> slow query detected: 412ms (jobs.list)</div>
+            <div><span class="t">23:43:27</span> POST /api/deploy/hooks <span class="ok">200</span> 18ms</div>
+            <div><span class="t">23:44:05</span> <span class="err">[error]</span> ws client dropped, retrying in 3s…</div>
+            <div><span class="t">23:44:08</span> <span class="ok">[ready]</span> ws reconnected (2 clients)<span class="cur"></span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 本地运行 ============ -->
+    <section class="page" data-page="run">
+      <div class="toolbar">
+        <input class="input-line" style="width:220px" placeholder="grep 项目名或路径…">
+        <div class="seg">
+          <button class="on">ALL 8</button><button>RUN 1</button><button>STOP 6</button><button>BUILD 1</button>
+        </div>
+        <div class="seg">
+          <button class="on">全部类型</button><button>node</button><button>java</button><button>static</button>
+        </div>
+        <span style="margin-left:auto"></span>
+        <button class="btn">扫描项目</button>
+        <button class="btn primary">＋ 添加项目</button>
+      </div>
+
+      <div class="panel" style="margin-bottom:12px">
+        <div class="group-head" data-group="g1"><span class="tri">▼</span>动画项目 <span class="g-count">3 projects · 1 running</span></div>
+        <div class="group-body" id="g1">
+          <table>
+            <thead><tr><th style="width:34%">Project</th><th>Modules</th><th>Port</th><th>Status</th><th style="text-align:right">Actions</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><b>ldts-backend</b><div class="mono" style="color:var(--text-3)">~/animation/ldts/apps/backend</div></td>
+                <td class="mono">backend / cron</td>
+                <td class="mono">:13900</td>
+                <td><span class="badge run">● RUNNING 4h12m</span></td>
+                <td><div class="row-actions"><button class="btn sm">日志</button><button class="btn sm">重启</button><button class="btn sm danger">停止</button></div></td>
+              </tr>
+              <tr>
+                <td><b>ldts-frontend</b><div class="mono" style="color:var(--text-3)">~/animation/ldts/apps/frontend</div></td>
+                <td class="mono">web</td>
+                <td class="mono">:5173</td>
+                <td><span class="badge off">◦ STOPPED</span></td>
+                <td><div class="row-actions"><button class="btn sm">历史</button><button class="btn sm primary">启动</button></div></td>
+              </tr>
+              <tr>
+                <td><b>animation-app</b><div class="mono" style="color:var(--text-3)">~/animation/app</div></td>
+                <td class="mono">web / api</td>
+                <td class="mono">—</td>
+                <td><span class="badge warn">◌ BUILDING 38%</span></td>
+                <td><div class="row-actions"><button class="btn sm">日志</button><button class="btn sm">取消</button></div></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-bottom:12px">
+        <div class="group-head" data-group="g2"><span class="tri">▼</span>个人工具 <span class="g-count">2 projects</span></div>
+        <div class="group-body" id="g2">
+          <table>
+            <tbody>
+              <tr>
+                <td style="width:34%"><b>devtools-sidecar</b><div class="mono" style="color:var(--text-3)">~/personalTools/devtools-desktop</div></td>
+                <td class="mono">sidecar</td>
+                <td class="mono">:13456</td>
+                <td><span class="badge ok">✓ READY</span></td>
+                <td><div class="row-actions"><button class="btn sm">日志</button><button class="btn sm">重启</button></div></td>
+              </tr>
+              <tr>
+                <td><b>blog-static</b><div class="mono" style="color:var(--text-3)">~/sites/blog</div></td>
+                <td class="mono">static</td>
+                <td class="mono">:8080</td>
+                <td><span class="badge off">◦ STOPPED</span></td>
+                <td><div class="row-actions"><button class="btn sm">历史</button><button class="btn sm primary">启动</button></div></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <span class="panel-no">LOG</span>
+          <div class="panel-title">运行日志 · ldts-backend</div>
+          <div class="panel-hint">pid 38564 · :13900</div>
+          <span class="spacer"></span>
+          <button class="btn sm">清空</button><button class="btn sm">全屏</button>
+        </div>
+        <div class="log">
+          <div><span class="t">23:41:02</span> <span class="ok">[ready]</span> tunnel daemon connected (10.30.1.224)</div>
+          <div><span class="t">23:41:04</span> GET /api/health <span class="ok">200</span> 3ms</div>
+          <div><span class="t">23:42:11</span> <span class="warn">[warn]</span> slow query detected: 412ms (jobs.list)</div>
+          <div><span class="t">23:44:08</span> <span class="ok">[ready]</span> ws reconnected (2 clients)<span class="cur"></span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 快捷命令 ============ -->
+    <section class="page" data-page="terminal">
+      <div class="toolbar">
+        <input class="input-line" style="width:260px" type="password" placeholder="sudo 密码（用于需要权限的命令）">
+        <button class="btn">保存</button>
+        <span class="badge ok">CONFIGURED</span>
+        <span style="margin-left:auto"></span>
+        <button class="btn primary">＋ 添加命令</button>
+      </div>
+
+      <div class="panel" style="margin-bottom:12px">
+        <div class="panel-head">
+          <span class="panel-no">CMD</span>
+          <div class="panel-title">预设命令</div>
+          <div class="panel-hint">exec opens a new terminal tab</div>
+        </div>
+        <div class="cmd-grid">
+          <div class="cmd-card">
+            <div class="cmd-name">🔗 茅台 VPN 连接</div>
+            <div class="cmd-code">sudo route -n add 10.34.0.0 -netmask 255.255.0.0 10.30.1.${ip}</div>
+            <div class="cmd-foot"><input class="input-line" placeholder="网关末位，默认 224" value="224"><button class="btn sm primary">执行</button></div>
+          </div>
+          <div class="cmd-card">
+            <div class="cmd-name">🔌 茅台 VPN 清除</div>
+            <div class="cmd-code">sudo route -n delete -net 10.34.0.0</div>
+            <div class="cmd-foot"><span style="flex:1"></span><button class="btn sm primary">执行</button></div>
+          </div>
+          <div class="cmd-card">
+            <div class="cmd-name">🔪 杀指定端口进程</div>
+            <div class="cmd-code">lsof -ti :${port} | xargs kill -9</div>
+            <div class="cmd-foot"><input class="input-line" placeholder="端口号，如 8080"><button class="btn sm primary">执行</button></div>
+          </div>
+          <div class="cmd-card">
+            <div class="cmd-name">🌐 查看本机 IP</div>
+            <div class="cmd-code">ifconfig | grep 'inet ' | grep -v 127.0.0.1</div>
+            <div class="cmd-foot"><span style="flex:1"></span><button class="btn sm primary">执行</button></div>
+          </div>
+          <div class="cmd-card">
+            <div class="cmd-name">🧹 清理残留 Sidecar</div>
+            <div class="cmd-code">sh scripts/kill-stale-sidecar.sh</div>
+            <div class="cmd-foot"><span style="flex:1"></span><button class="btn sm primary">执行</button></div>
+          </div>
+          <div class="cmd-card">
+            <div class="cmd-name">⚡ 启动 LDTS 后端</div>
+            <div class="cmd-code">ldts-backend-dev.sh --offline</div>
+            <div class="cmd-foot"><span style="flex:1"></span><button class="btn sm primary">执行</button></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="term-tabs">
+          <div class="term-tab">vpn-connect ✕</div>
+          <div class="term-tab on">ldts-backend ✕</div>
+          <button class="btn sm" style="margin:0 0 4px 4px">＋</button>
+          <span style="margin-left:auto; display:flex; gap:6px; padding-bottom:4px">
+            <span class="badge ok">CONNECTED</span>
+            <button class="btn sm">清除</button><button class="btn sm">重置</button><button class="btn sm">全屏</button>
+          </span>
+        </div>
+        <div class="term-screen">
+          <div><span class="p">➜ ldts</span> ./script/dev/ldts-backend-dev.sh --offline</div>
+          <div class="dim">[offline] skip remote tunnel check</div>
+          <div>backend listening on <span class="p">127.0.0.1:13900</span></div>
+          <div class="dim">watching for file changes…</div>
+          <div><span class="p">➜ ldts</span> <span class="cur"></span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 用量统计 ============ -->
+    <section class="page" data-page="usage">
+      <div class="toolbar">
+        <div class="seg">
+          <button>DAY</button><button>WEEK</button><button class="on">MONTH</button><button>CUSTOM</button>
+        </div>
+        <div class="seg">
+          <button class="on">全部应用</button><button>Claude</button><button>Codex</button><button>Cursor</button>
+        </div>
+        <span style="margin-left:auto"></span>
+        <button class="btn">数据与价格设置</button>
+        <button class="btn primary">同步数据</button>
+      </div>
+
+      <div class="grid">
+        <div class="stat">
+          <div class="stat-tag">SUM</div>
+          <div class="stat-label"><span class="dot" style="background:var(--accent)"></span>Token 总量</div>
+          <div class="stat-value">1.28<small>M</small></div>
+          <div class="stat-meta">in 862K · out 418K</div>
+        </div>
+        <div class="stat">
+          <div class="stat-tag">COST</div>
+          <div class="stat-label"><span class="dot" style="background:var(--ok)"></span>估算成本</div>
+          <div class="stat-value">¥42.10</div>
+          <div class="stat-meta">环比上月 <b>−12%</b></div>
+        </div>
+        <div class="stat">
+          <div class="stat-tag">CACHE</div>
+          <div class="stat-label"><span class="dot" style="background:var(--run)"></span>缓存命中</div>
+          <div class="stat-value">38<small>%</small></div>
+          <div class="stat-meta">saved ≈ ¥6.30</div>
+        </div>
+        <div class="stat">
+          <div class="stat-tag">DAYS</div>
+          <div class="stat-label"><span class="dot" style="background:var(--warn)"></span>活跃天数</div>
+          <div class="stat-value">11<small>/13</small></div>
+          <div class="stat-meta">avg 98K token/day</div>
+        </div>
+
+        <div class="panel span3">
+          <div class="panel-head">
+            <span class="panel-no">01</span>
+            <div class="panel-title">Token 用量趋势</div>
+            <div class="panel-hint">7d · by app</div>
+          </div>
+          <div class="chart-wrap">
+            <div class="bars">
+              <div class="bar-col"><div class="bar" style="height:42%"></div><div class="bar b2" style="height:20%"></div><div class="bar-x">8.7</div></div>
+              <div class="bar-col"><div class="bar" style="height:58%"></div><div class="bar b2" style="height:26%"></div><div class="bar-x">8.8</div></div>
+              <div class="bar-col"><div class="bar" style="height:35%"></div><div class="bar b2" style="height:14%"></div><div class="bar-x">8.9</div></div>
+              <div class="bar-col"><div class="bar" style="height:24%"></div><div class="bar b2" style="height:9%"></div><div class="bar-x">8.10</div></div>
+              <div class="bar-col"><div class="bar" style="height:66%"></div><div class="bar b2" style="height:30%"></div><div class="bar-x">8.11</div></div>
+              <div class="bar-col"><div class="bar" style="height:88%"></div><div class="bar b2" style="height:38%"></div><div class="bar-x">8.12</div></div>
+              <div class="bar-col"><div class="bar" style="height:52%"></div><div class="bar b2" style="height:22%"></div><div class="bar-x">now</div></div>
+            </div>
+            <div class="legend">
+              <span><span class="sw" style="background:var(--accent)"></span>Claude</span>
+              <span><span class="sw" style="background:var(--run)"></span>Codex</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><span class="panel-no">02</span><div class="panel-title">模型排行</div></div>
+          <div class="rank">
+            <div class="rank-row"><span class="name">claude-fable-5</span><span class="rank-bar"><i style="width:82%"></i></span><span class="rank-val">642K</span></div>
+            <div class="rank-row"><span class="name">gpt-5.6-sol</span><span class="rank-bar"><i style="width:54%"></i></span><span class="rank-val">421K</span></div>
+            <div class="rank-row"><span class="name">composer-2.5</span><span class="rank-bar"><i style="width:22%"></i></span><span class="rank-val">168K</span></div>
+            <div class="rank-row"><span class="name">grok-4.6</span><span class="rank-bar"><i style="width:7%"></i></span><span class="rank-val">49K</span></div>
+          </div>
+        </div>
+
+        <div class="panel span4">
+          <div class="panel-head">
+            <span class="panel-no">03</span>
+            <div class="panel-title">调用明细</div>
+            <div class="panel-hint">1,204 rows · page 1/61</div>
+            <span class="spacer"></span>
+            <button class="btn sm">‹ PREV</button><button class="btn sm">NEXT ›</button>
+          </div>
+          <table>
+            <thead><tr><th>Time</th><th>App</th><th>Model</th><th>In</th><th>Out</th><th style="text-align:right">Cost</th></tr></thead>
+            <tbody>
+              <tr><td class="mono">23:41:52</td><td>Cursor</td><td class="mono">claude-fable-5</td><td class="mono">12.4K</td><td class="mono">3.1K</td><td class="mono" style="text-align:right">¥0.42</td></tr>
+              <tr><td class="mono">23:38:11</td><td>Codex</td><td class="mono">gpt-5.6-sol</td><td class="mono">8.2K</td><td class="mono">1.9K</td><td class="mono" style="text-align:right">¥0.21</td></tr>
+              <tr><td class="mono">23:31:47</td><td>Cursor</td><td class="mono">composer-2.5</td><td class="mono">5.6K</td><td class="mono">0.8K</td><td class="mono" style="text-align:right">¥0.09</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 占位页 ============ -->
+    <section class="page" data-page="placeholder">
+      <div class="placeholder">
+        <div class="ic">▚</div>
+        <div class="tt" id="phTitle">PENDING</div>
+        <div class="ds">此候选为风格探针，已完整制作「应用首页 / 本地运行 / 快捷命令 / 用量统计」四个代表页。你选定风格方向后，全量原型将覆盖全部 13 个页面与关键弹窗。</div>
+      </div>
+    </section>
+
+  </div>
+
+  <div class="statusbar">
+    <span class="item"><span class="ok">●</span> sidecar :13456</span>
+    <span class="item">ws 2 clients</span>
+    <span class="item">sqlite 3.2MB</span>
+    <div class="right">
+      <span class="item">cpu 4.2%</span>
+      <span class="item">mem 182MB</span>
+      <span class="item">23:44:52</span>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="modal-no">DEPLOY::NEW</span>
+      <div class="modal-title">新建部署</div>
+      <div class="modal-sub">2 modules selected</div>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Project</label>
+        <select class="input"><option>ldts — ~/animation/ldts</option><option>drug-mall</option></select>
+      </div>
+      <div class="field">
+        <label>Target Server</label>
+        <select class="input"><option>idc-hz-01 (10.30.1.12) — default</option><option>bozhou-02 (192.168.10.8)</option></select>
+      </div>
+      <div class="field">
+        <label>Modules</label>
+        <div class="checks">
+          <label class="check"><input type="checkbox" checked> backend</label>
+          <label class="check"><input type="checkbox" checked> frontend</label>
+          <label class="check"><input type="checkbox"> admin</label>
+          <label class="check"><input type="checkbox"> cron</label>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" id="closeModal">取消</button>
+      <button class="btn primary">开始部署 →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const root = document.documentElement;
+const pageMeta = {
+  home:        ['应用首页', ''],
+  run:         ['本地运行', '8 projects · 1 running'],
+  terminal:    ['快捷命令', 'exec in new tab'],
+  usage:       ['用量统计', 'month · all apps'],
+  deploy:      ['部署面板', ''], filetransfer: ['文件传输', ''], editor: ['文件编辑', ''],
+  todo:        ['待办事项', ''], notes: ['工时内容', ''], notebook: ['个人笔记', ''],
+  ipcheck:     ['纯净检测', ''], twofa: ['双因验证', ''], settings: ['系统设置', ''],
+};
+const realPages = ['home', 'run', 'terminal', 'usage'];
+
+function go(pageId) {
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.page === pageId));
+  const target = realPages.includes(pageId) ? pageId : 'placeholder';
+  document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.dataset.page === target));
+  document.getElementById('pageTitle').textContent = pageMeta[pageId][0];
+  document.getElementById('pageSub').textContent = pageMeta[pageId][1];
+  if (target === 'placeholder') document.getElementById('phTitle').textContent = '「' + pageMeta[pageId][0] + '」将在全量原型中呈现';
+}
+document.querySelectorAll('.nav-item').forEach(b => b.onclick = () => go(b.dataset.page));
+document.querySelectorAll('[data-goto]').forEach(b => b.onclick = () => go(b.dataset.goto));
+
+const toggleTheme = () => root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark';
+document.getElementById('themeBtn').onclick = toggleTheme;
+document.getElementById('themeBtnSide').onclick = toggleTheme;
+
+document.getElementById('openModal').onclick = () => document.getElementById('overlay').classList.add('open');
+document.getElementById('closeModal').onclick = () => document.getElementById('overlay').classList.remove('open');
+document.getElementById('overlay').onclick = e => { if (e.target.id === 'overlay') e.target.classList.remove('open'); };
+
+document.querySelectorAll('.group-head').forEach(h => h.onclick = () => {
+  h.classList.toggle('closed');
+  document.getElementById(h.dataset.group).classList.toggle('hide');
+});
+</script>
+</body>
+</html>

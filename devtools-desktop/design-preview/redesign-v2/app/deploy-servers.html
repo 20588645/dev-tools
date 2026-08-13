@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>部署面板 · 服务器管理 — DevTools 原型 · 方案 B</title>
+<link rel="stylesheet" href="shared.css">
+</head>
+<body>
+<script src="shared.js"></script>
+
+<div class="main">
+  <div class="page-head">
+    <div class="page-title">部署面板</div>
+    <div class="seg" style="margin-left:6px">
+      <a href="deploy-dashboard.html">项目总览</a>
+      <a class="on" href="deploy-servers.html">服务器管理</a>
+      <a href="deploy-history.html">部署历史</a>
+    </div>
+    <div class="head-actions">
+      <button class="btn" onclick="toggleTheme()">◐ 外观</button>
+      <button class="btn" data-open="#dlg-filezilla">从 FileZilla 导入</button>
+      <button class="btn primary" data-open="#dlg-serverform">＋ 添加服务器</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">服务器</div>
+        <div class="panel-hint">4 台 · 2 台为项目默认</div>
+      </div>
+      <table class="tbl">
+        <thead><tr><th>名称</th><th>主机</th><th>端口</th><th>用户</th><th>默认</th><th style="text-align:right">操作</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><b>idc-hz-01</b><div class="mono" style="color:var(--text-3)">杭州 IDC · 生产</div></td>
+            <td class="mono">10.30.1.12</td><td class="mono">22</td><td class="mono">deploy</td>
+            <td><span class="badge acc">ldts 默认</span></td>
+            <td><div class="row-actions"><button class="btn sm" onclick="toast('连接测试通过 · 84ms')">测试连接</button><button class="btn sm" data-open="#dlg-serverform">编辑</button><button class="btn sm danger" data-open="#dlg-delserver">删除</button></div></td>
+          </tr>
+          <tr>
+            <td><b>bozhou-02</b><div class="mono" style="color:var(--text-3)">亳州机房 · 生产</div></td>
+            <td class="mono">192.168.10.8</td><td class="mono">22</td><td class="mono">root</td>
+            <td><span class="badge acc">drug-mall 默认</span></td>
+            <td><div class="row-actions"><button class="btn sm" onclick="toast('连接测试通过 · 132ms')">测试连接</button><button class="btn sm" data-open="#dlg-serverform">编辑</button><button class="btn sm danger" data-open="#dlg-delserver">删除</button></div></td>
+          </tr>
+          <tr>
+            <td><b>maotai-jump</b><div class="mono" style="color:var(--text-3)">茅台跳板机</div></td>
+            <td class="mono">10.34.2.6</td><td class="mono">22022</td><td class="mono">ldy</td>
+            <td><span style="color:var(--text-3)">—</span></td>
+            <td><div class="row-actions"><button class="btn sm" onclick="toast('连接超时：VPN 未连接','err')">测试连接</button><button class="btn sm" data-open="#dlg-serverform">编辑</button><button class="btn sm danger" data-open="#dlg-delserver">删除</button></div></td>
+          </tr>
+          <tr>
+            <td><b>home-nas</b><div class="mono" style="color:var(--text-3)">家里 NAS · 备份</div></td>
+            <td class="mono">192.168.1.20</td><td class="mono">2222</td><td class="mono">ldy</td>
+            <td><span style="color:var(--text-3)">—</span></td>
+            <td><div class="row-actions"><button class="btn sm" onclick="toast('连接测试通过 · 6ms')">测试连接</button><button class="btn sm" data-open="#dlg-serverform">编辑</button><button class="btn sm danger" data-open="#dlg-delserver">删除</button></div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗：服务器表单 -->
+<div class="overlay" id="dlg-serverform">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">服务器</div>
+      <div class="modal-sub">SSH 连接信息仅保存在本机 SQLite</div>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex; gap:12px">
+        <div class="field" style="flex:1.4"><label>名称</label><input class="input" value="idc-hz-01"></div>
+        <div class="field" style="flex:1"><label>备注</label><input class="input" value="杭州 IDC · 生产"></div>
+      </div>
+      <div style="display:flex; gap:12px">
+        <div class="field" style="flex:2"><label>主机</label><input class="input" value="10.30.1.12"></div>
+        <div class="field" style="flex:1"><label>端口</label><input class="input" value="22"></div>
+      </div>
+      <div style="display:flex; gap:12px">
+        <div class="field" style="flex:1"><label>用户名</label><input class="input" value="deploy"></div>
+        <div class="field" style="flex:1"><label>认证方式</label><select class="input"><option>SSH 私钥（~/.ssh/id_ed25519）</option><option>密码</option></select></div>
+      </div>
+      <div class="field"><label>默认远端目录</label><input class="input" value="/srv/ldts"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn left" onclick="toast('连接测试通过 · 84ms')">测试连接</button>
+      <button class="btn" data-close>取消</button>
+      <button class="btn primary" data-close onclick="toast('服务器已保存')">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗：FileZilla 导入 -->
+<div class="overlay" id="dlg-filezilla">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">从 FileZilla 导入站点</div>
+      <div class="modal-sub">读取本机 FileZilla 配置，勾选要导入的站点</div>
+    </div>
+    <div class="modal-body">
+      <div class="checks" style="flex-direction:column; align-items:stretch">
+        <label class="check" style="justify-content:space-between"><span><input type="checkbox" checked> 杭州生产 <span class="mono">sftp://deploy@10.30.1.12:22</span></span><span class="badge ok">新</span></label>
+        <label class="check" style="justify-content:space-between"><span><input type="checkbox"> 亳州药都 <span class="mono">sftp://root@192.168.10.8:22</span></span><span class="badge off">已存在</span></label>
+        <label class="check" style="justify-content:space-between"><span><input type="checkbox" checked> 测试环境 <span class="mono">sftp://test@10.30.1.40:22</span></span><span class="badge ok">新</span></label>
+      </div>
+      <div class="field"><div class="help">密码不会随配置导入，首次连接时需重新输入或改用密钥。</div></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" data-close>取消</button>
+      <button class="btn primary" data-close onclick="toast('已导入 2 个站点')">导入所选</button>
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗：删除确认 -->
+<div class="overlay" id="dlg-delserver">
+  <div class="modal sm">
+    <div class="modal-head">
+      <div class="modal-title">删除该服务器？</div>
+      <div class="modal-sub">引用它作为默认服务器的项目将改为手动选择</div>
+    </div>
+    <div class="modal-foot" style="padding-top:16px">
+      <button class="btn" data-close>取消</button>
+      <button class="btn danger" data-close onclick="toast('服务器已删除','err')">删除</button>
+    </div>
+  </div>
+</div>
+
+<script>bindOverlays(document);</script>
+</body>
+</html>

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>文件编辑 — DevTools 原型 · 方案 B</title>
+<link rel="stylesheet" href="shared.css">
+<style>
+.ed-wrap { display: flex; flex-direction: column; height: 100%; gap: 0; }
+.ed-tabs { display: flex; align-items: center; gap: 4px; padding: 10px 16px 0; }
+.ed-tab {
+  display: inline-flex; align-items: center; gap: 7px;
+  border-radius: 10px 10px 0 0; padding: 8px 14px 9px;
+  font-size: 12.5px; font-weight: 550; color: var(--text-2);
+  background: var(--surface-2); cursor: pointer; border: 1px solid transparent; border-bottom: none;
+}
+.ed-tab.on { background: var(--surface); color: var(--text-1); font-weight: 650; box-shadow: 0 -4px 12px -8px rgba(30,40,70,.2); }
+.ed-tab .dirty { width: 7px; height: 7px; border-radius: 99px; background: var(--warn); }
+.ed-body { flex: 1; display: flex; min-height: 0; border-radius: 0 var(--r-lg) var(--r-lg) var(--r-lg); overflow: hidden; }
+.ed-code {
+  flex: 1; overflow: auto; background: var(--surface);
+  font-family: var(--font-mono); font-size: 12px; line-height: 1.8;
+  padding: 14px 0; counter-reset: ln;
+}
+.cl { display: flex; }
+.cl::before {
+  counter-increment: ln; content: counter(ln);
+  width: 46px; flex: none; text-align: right; padding-right: 14px;
+  color: var(--text-3); user-select: none; font-size: 11px;
+}
+.cl code { white-space: pre; }
+.k { color: #b04ce6; } .s { color: #2fa464; } .f { color: var(--accent); } .c { color: var(--text-3); font-style: italic; } .n { color: #e08a00; }
+[data-theme="dark"] .k { color: #c792ea; } [data-theme="dark"] .s { color: #7ac977; } [data-theme="dark"] .n { color: #f2b93c; }
+.ed-status {
+  display: flex; align-items: center; gap: 16px;
+  padding: 7px 16px; border-top: 1px solid var(--border-soft);
+  background: var(--surface); font-family: var(--font-mono); font-size: 10.5px; color: var(--text-3);
+}
+</style>
+</head>
+<body>
+<script src="shared.js"></script>
+
+<div class="main">
+  <div class="page-head">
+    <div class="page-title">文件编辑</div>
+    <div class="page-sub">CodeMirror · 支持 Shell / JSON / YAML / JS 等</div>
+    <div class="head-actions">
+      <button class="btn" onclick="toggleTheme()">◐ 外观</button>
+      <button class="btn" data-open="#dlg-browser">打开文件…</button>
+      <button class="btn primary" onclick="toast('已保存 ldts-backend-dev.sh')">保存 ⌘S</button>
+    </div>
+  </div>
+
+  <div class="content" style="display:flex; flex-direction:column; padding-top:0">
+    <div class="ed-wrap">
+      <div class="ed-tabs">
+        <div class="ed-tab on"><span class="dirty"></span> ldts-backend-dev.sh <span onclick="event.stopPropagation(); document.getElementById('dlg-dirty').classList.add('open')">✕</span></div>
+        <div class="ed-tab">nginx.conf ✕</div>
+        <div class="ed-tab">package.json ✕</div>
+        <button class="btn sm" style="margin-bottom:4px" data-open="#dlg-browser">＋</button>
+      </div>
+      <div class="panel ed-body">
+        <div class="ed-code">
+          <div class="cl"><code><span class="c">#!/bin/bash</span></code></div>
+          <div class="cl"><code><span class="c"># LDTS 后端本地开发启动脚本</span></code></div>
+          <div class="cl"><code></code></div>
+          <div class="cl"><code><span class="k">set</span> -euo pipefail</code></div>
+          <div class="cl"><code></code></div>
+          <div class="cl"><code>OFFLINE=<span class="s">"false"</span></code></div>
+          <div class="cl"><code><span class="k">if</span> [[ <span class="s">"${1:-}"</span> == <span class="s">"--offline"</span> ]]; <span class="k">then</span></code></div>
+          <div class="cl"><code>  OFFLINE=<span class="s">"true"</span></code></div>
+          <div class="cl"><code>  <span class="f">echo</span> <span class="s">"[offline] skip remote tunnel check"</span></code></div>
+          <div class="cl"><code><span class="k">fi</span></code></div>
+          <div class="cl"><code></code></div>
+          <div class="cl"><code><span class="k">if</span> [[ <span class="s">"$OFFLINE"</span> != <span class="s">"true"</span> ]]; <span class="k">then</span></code></div>
+          <div class="cl"><code>  ./ldts-tunnel-daemon.sh status || ./ldts-tunnel-daemon.sh restart</code></div>
+          <div class="cl"><code><span class="k">fi</span></code></div>
+          <div class="cl"><code></code></div>
+          <div class="cl"><code><span class="f">echo</span> <span class="s">"backend listening on 127.0.0.1:<span class="n">13900</span>"</span></code></div>
+          <div class="cl"><code><span class="k">exec</span> java -jar target/app.jar --spring.profiles.active=dev</code></div>
+        </div>
+      </div>
+      <div class="ed-status panel" style="border-radius:0 0 var(--r-lg) var(--r-lg); box-shadow:none; margin-top:-1px">
+        <span>shell</span><span>UTF-8</span><span>LF</span><span>17 行</span>
+        <span style="margin-left:auto; color:var(--warn)">● 未保存的修改</span>
+        <span>Ln 9, Col 42</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗：文件浏览 -->
+<div class="overlay" id="dlg-browser">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">打开文件</div>
+      <div class="modal-sub">常用位置与最近打开</div>
+    </div>
+    <div class="modal-body">
+      <input class="input" placeholder="输入路径或搜索文件名…">
+      <div class="field"><label>最近打开</label>
+        <div class="checks" style="flex-direction:column; align-items:stretch">
+          <label class="check" style="justify-content:space-between"><span>📄 ldts-backend-dev.sh</span><span class="mono">~/animation/ldts/script/dev</span></label>
+          <label class="check" style="justify-content:space-between"><span>📄 nginx.conf</span><span class="mono">/srv/ldts（远程）</span></label>
+          <label class="check" style="justify-content:space-between"><span>📄 package.json</span><span class="mono">~/personalTools/devtools-desktop</span></label>
+          <label class="check" style="justify-content:space-between"><span>📄 hosts</span><span class="mono">/etc</span></label>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" data-close>取消</button>
+      <button class="btn primary" data-close onclick="toast('文件已打开')">打开</button>
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗：未保存确认 -->
+<div class="overlay" id="dlg-dirty">
+  <div class="modal sm">
+    <div class="modal-head">
+      <div class="modal-title">有未保存的修改</div>
+      <div class="modal-sub">ldts-backend-dev.sh 已被修改，关闭前要保存吗？</div>
+    </div>
+    <div class="modal-foot" style="padding-top:16px">
+      <button class="btn danger left" data-close onclick="toast('已放弃修改','err')">不保存</button>
+      <button class="btn" data-close>取消</button>
+      <button class="btn primary" data-close onclick="toast('已保存并关闭')">保存并关闭</button>
+    </div>
+  </div>
+</div>
+
+<script>bindOverlays(document);</script>
+</body>
+</html>
