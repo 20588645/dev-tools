@@ -50,19 +50,59 @@
 5. **逐页落地**：页面结构对照原型实现；功能清单以现有 `views/*/` 组件与 sidecar API 为准；每页迁完删除被替代的页面级旧样式。
 6. **Naive UI 适配层**（`adapters/naive-ui.ts`、`plugins/ui-library.ts`）同步新主题变量。
 
+## 3.1 组件先行策略与组件清单
+
+页面批次开始前，先把原型里所有重复出现的 UI 模式封装/重塑为共享组件（批 0 的主体工作）。批 1～4 的页面工作以"组装共享组件 + 页面级布局"为主，禁止页面私造与共享组件同形态的样式——这也是现有「组件架构门禁」持续校验的内容。
+
+**复用重塑（API 不变，只换视觉）**：
+
+| 类别 | 组件 |
+| --- | --- |
+| 壳层/布局 | AppLayout、AppSidebar（分组导航）、PageFrame/PageTop/PageHeader/PageToolbar/PageSection |
+| 基础 | BaseButton、BaseIconButton、BaseBadge、BaseCard、BaseProgress、StatusIndicator |
+| 导航 | BaseTabs、BaseSegmented、FilterChip、BaseSideNav |
+| 表单 | BaseInput/BaseSelect/BaseTextarea/BaseCheckbox/BaseRadio/BaseSwitch/BaseDateTimePicker/FormField |
+| 反馈 | BaseDialog（毛玻璃弹窗）、ConfirmDialog、AppToastHost、EmptyState/LoadingState/ErrorState |
+| 数据/浮层 | BaseDataTable、LogViewer、BaseDropdownMenu、GroupRenameDialog |
+
+**新增共享组件（从原型模式提炼）**：
+
+| 组件 | 来源模式 | 使用页 |
+| --- | --- | --- |
+| ProjectCard | 统一项目方块卡（158px 高、状态渐变顶边、贴底操作栏） | run、deploy（现 RunProjectCard/DeployProjectCard 收敛共享基座） |
+| GroupSection | 可折叠分组 + 重命名入口 | run、deploy |
+| StatCard | 顶部渐变条统计卡 | usage、可扩展 |
+| LogDialog | 按对象日志弹窗（BaseDialog + LogViewer 组合） | run、deploy、deploy-history |
+| SidePanel | 常驻参考侧栏（可收起） | notes（Git 活动参考） |
+| ScoreRing | conic 圆环仪表 | ipcheck、home |
+| RankBar / SplitBar | 排行条 / 分段占比条 | usage、home |
+| Sparkline / AreaChart / BarChart | 轻量 SVG 图表原语 | home、usage、notes |
+
+首页的沉浸卡片（时钟、昼夜日轨、每日一言等）保持页面级组件（沿用 `views/home/components/` 现状），只复用上述图表原语。
+
+## 3.2 第三方组件库决策
+
+现有依赖是 **Naive UI 2.44**（不是 vant），且已按架构规范封装在 Base* 组件后面（页面从不直接引 naive-ui），主题经 `adapters/naive-ui.ts` 的 GlobalThemeOverrides 从 token 注入。
+
+**决策：不新增三方库，沿用 Naive UI。**
+
+- 复杂交互（下拉、日期选择、表格、消息通知等）已由它承载并有 438 项单测覆盖，替换是纯风险无收益。
+- 方案 B 的视觉通过「token → GlobalThemeOverrides + 包装组件样式」可以完整达成（圆角/阴影/配色全部可覆盖，毛玻璃在包装层加）。
+- 若个别组件达不到质感（如弹窗毛玻璃层次），只需替换**该包装组件的内部实现**为自研，页面调用方零改动——这正是当初封装层的意义。
+
 ## 4. 批次划分
 
 每批一个可运行、可验收、可回滚的里程碑，独立提交。
 
 | 批次 | 范围 | 预估 | 出口标准 |
 | --- | --- | --- | --- |
-| 批 0 设计系统与壳层 | tokens/themes/base、公共组件视觉、AppSidebar 分组导航、介绍弹窗、主题色切换服务 | 2～3 人日 | 全局风格整体切到方案 B，所有页面可用无回归 |
+| 批 0 设计系统与组件库 | tokens/themes/base、§3.1 全部组件重塑与新建、AppSidebar 分组导航、介绍弹窗、主题色切换服务、Naive 主题注入 | 3～4 人日 | 全局风格整体切到方案 B，共享组件齐备，所有页面可用无回归 |
 | 批 1 工作台 | home（9 卡全新实现，时钟走秒/色板换肤/日轨 SVG）、run、deploy 三子页 | 3～4 人日 | 三页与原型一致，日志弹窗化，卡片跨页对齐 |
 | 批 2 文件与终端 | filetransfer、editor、terminal | 2～3 人日 | 双栏/多标签/终端视觉切换，第三方组件（CM、xterm）适配新主题 |
 | 批 3 记录 | todo、notes、notebook | 2 人日 | notes 按新三栏结构，参考面板可收起 |
 | 批 4 工具与系统 | ipcheck、twofa、usage、settings | 2 人日 | 设置含全部分类面板（原型仅示意"通用"，按现有功能补全） |
 
-合计约 11～14 人日。批 1～4 内部顺序可按验收反馈调整；批 0 是唯一硬前置。
+合计约 12～15 人日。批 1～4 内部顺序可按验收反馈调整；批 0 是唯一硬前置（组件先行：页面批次以组装共享组件为主）。
 
 ### 每批固定流程
 
