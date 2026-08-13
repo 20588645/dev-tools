@@ -9,9 +9,10 @@ defineOptions({ name: 'PageTop' })
 </template>
 
 <style scoped>
+/* redesign-v2：页头区不再压表面色条，直接坐在渐变画布上 */
 .page-top {
   flex: none;
-  background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
+  background: transparent;
+  border-bottom: none;
 }
 </style>

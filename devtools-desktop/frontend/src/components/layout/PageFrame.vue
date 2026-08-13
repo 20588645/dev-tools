@@ -16,12 +16,13 @@ withDefaults(defineProps<{
 </template>
 
 <style scoped>
+/* redesign-v2：页面骨架透明，让 body 的渐变画布透出（卡片自身承担表面色） */
 .page-frame {
   display: flex;
   flex-direction: column;
   min-height: 100%;
   color: var(--color-text);
-  background: var(--color-page);
+  background: transparent;
 }
 
 .page-frame[data-variant="immersive"] .page-frame__body {

@@ -31,7 +31,7 @@ const rootClass = computed(() => ({
 </script>
 
 <template>
-  <div :class="rootClass" :style="{ '--sidebar-width': collapsed ? '56px' : '140px' }">
+  <div :class="rootClass">
     <div class="app-shell">
       <AppSidebar
         :active-page-id="activePageId"
@@ -62,7 +62,19 @@ const rootClass = computed(() => ({
 .app-layout-root {
   height: 100%;
   min-height: 100vh;
-  --sidebar-width: 140px;
+  --sidebar-width: 224px;
+}
+
+.app-layout-root.is-collapsed {
+  --sidebar-width: 56px;
+}
+
+/* 过渡期：未按 redesign-v2 重建的页面在窄窗下仍按旧内容宽度布局，
+   收窄侧栏避免横向溢出；页面批次全部落地后可回归原型的固定 224px。 */
+@media (max-width: 1080px) {
+  .app-layout-root:not(.is-collapsed) {
+    --sidebar-width: 150px;
+  }
 }
 
 .app-shell {
@@ -90,7 +102,7 @@ const rootClass = computed(() => ({
   min-width: 0;
   margin-left: 0;
   overflow: hidden;
-  background: var(--color-page);
+  background: transparent;
 }
 
 .window-drag-region {
@@ -133,8 +145,8 @@ const rootClass = computed(() => ({
   width: 56px;
   min-width: 56px;
   max-width: 56px;
-  padding-left: 7px;
-  padding-right: 7px;
+  padding-left: 8px;
+  padding-right: 8px;
   align-items: center;
 }
 
@@ -149,45 +161,43 @@ const rootClass = computed(() => ({
   align-items: center;
 }
 
+.app-layout-root.is-collapsed .sidebar-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
 .app-layout-root.is-collapsed .sidebar-item {
-  width: 34px;
-  min-width: 34px;
+  width: 36px;
+  min-width: 36px;
   padding: 0;
+  height: 36px;
   justify-content: center;
   gap: 0;
 }
 
-.app-layout-root.is-collapsed .sidebar-brand span:last-child,
-.app-layout-root.is-collapsed .sidebar-item span:last-child,
+.app-layout-root.is-collapsed .sidebar-group-label,
+.app-layout-root.is-collapsed .brand-name,
+.app-layout-root.is-collapsed .sidebar-item .nav-label,
 .app-layout-root.is-collapsed .sidebar-tool-label {
   display: none;
 }
 
-.app-layout-root:not(.is-collapsed) .app-sidebar .sidebar-footer {
-  width: 100%;
-  align-items: stretch;
-  gap: 7px;
-  padding: 12px 8px 0;
-}
-
-.app-layout-root:not(.is-collapsed) .sidebar-tool-button {
-  width: 100%;
-  justify-content: flex-start;
-  gap: 8px;
-  padding: 0 10px;
-}
-
 .app-layout-root.is-collapsed .app-sidebar .sidebar-footer {
+  flex-direction: column;
   width: 100%;
   align-items: center;
-  gap: 10px;
-  padding: 12px 0 0;
+  gap: 6px;
+  padding: 10px 0 0;
 }
 
 .app-layout-root.is-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
-  width: 34px;
-  min-width: 34px;
-  max-width: 34px;
+  flex: none;
+  width: 36px;
+  min-width: 36px;
+  max-width: 36px;
   height: 34px;
   justify-content: center;
   padding: 0;

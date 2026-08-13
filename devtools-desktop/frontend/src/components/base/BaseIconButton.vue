@@ -33,5 +33,8 @@ const type = computed<'error' | 'default'>(() => props.variant === 'danger' ? 'e
 </template>
 
 <style scoped>
+/* redesign-v2：圆角方形图标钮（28px / 圆角 8），悬停淡底 */
 .base-icon-button { flex: none; }
+
+.base-icon-button.n-button { border-radius: calc(var(--component-control-radius) - 2px); }
 </style>

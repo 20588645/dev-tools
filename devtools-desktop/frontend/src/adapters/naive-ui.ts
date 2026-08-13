@@ -146,7 +146,8 @@ export function createNaiveThemeOverrides(_theme: Theme): GlobalThemeOverrides {
       fontSizeMedium: 'var(--font-size-md)',
       lineHeight: 'var(--line-height-normal)',
       heightSmall: 'var(--component-control-height-sm)',
-      heightMedium: 'var(--component-control-height-md)',
+      /* 表单控件按原型取 34px（按钮走 BaseButton 自持的 32px，不经此值） */
+      heightMedium: 'var(--component-input-height)',
       heightLarge: 'var(--component-control-height-lg)',
     },
     Button: {

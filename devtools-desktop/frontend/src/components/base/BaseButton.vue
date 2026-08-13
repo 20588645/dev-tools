@@ -46,5 +46,25 @@ const variantProps = computed(() => ({
 </template>
 
 <style scoped>
-.base-button { font-family: var(--font-family-sans); font-weight: var(--font-weight-medium); }
+/* redesign-v2 方案 B：默认钮玻璃面 + 细边，主钮蓝紫渐变 + 彩色投影，悬停轻浮起 */
+.base-button {
+  font-family: var(--font-family-sans);
+  font-weight: var(--font-weight-semibold);
+  transition: transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
+}
+
+.base-button.n-button { border-radius: var(--component-control-radius); }
+
+.base-button:not(:disabled):hover { transform: translateY(-1px); }
+
+.base-button--primary.n-button {
+  background-image: var(--color-action-gradient);
+  box-shadow: 0 8px 20px -6px color-mix(in srgb, var(--color-action) 55%, transparent);
+}
+
+.base-button--secondary.n-button,
+.base-button--outline.n-button {
+  background: var(--color-glass-strong);
+  box-shadow: var(--shadow-sm);
+}
 </style>

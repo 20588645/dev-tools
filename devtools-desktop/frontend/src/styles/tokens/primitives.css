@@ -1,5 +1,11 @@
 :root {
-  /* Brand and status color scales */
+  /* Brand scales（redesign-v2 方案 B：蓝紫渐变强调；400 为暗色档、500 为亮色档） */
+  --color-blue-400: #5b8dff;
+  --color-blue-500: #3d7bfd;
+  --color-violet-400: #9678ff;
+  --color-violet-500: #7c5cfc;
+
+  /* Legacy brand and status color scales（仍有零散消费者，保留待页面批次收敛） */
   --color-indigo-400: #818cf8;
   --color-indigo-500: #6366f1;
   --color-indigo-600: #4f46e5;
@@ -44,8 +50,8 @@
   --space-12: 48px;
 
   /* Type scale */
-  --font-family-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
-  --font-family-mono: "SF Mono", "Cascadia Code", Menlo, monospace;
+  --font-family-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "PingFang SC", "Segoe UI", sans-serif;
+  --font-family-mono: "SF Mono", ui-monospace, "Cascadia Code", Menlo, monospace;
   --font-size-xs: 11px;
   --font-size-sm: 13px;
   --font-size-md: 15px;
@@ -60,14 +66,12 @@
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
 
-  /* Shape, elevation and motion */
+  /* Shape and motion（阴影为主题相关值，定义在 semantic/themes 层） */
   --radius-sm: 6px;
   --radius-md: 10px;
-  --radius-lg: 14px;
+  --radius-lg: 16px;
+  --radius-xl: 18px;
   --radius-pill: 999px;
-  --shadow-sm: 0 1px 2px rgb(15 23 42 / 8%);
-  --shadow-md: 0 8px 24px rgb(15 23 42 / 14%);
-  --shadow-lg: 0 20px 40px rgb(15 23 42 / 14%);
   --duration-fast: 120ms;
   --duration-normal: 180ms;
   --duration-slow: 260ms;

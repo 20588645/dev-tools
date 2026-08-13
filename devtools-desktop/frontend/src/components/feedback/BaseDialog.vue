@@ -46,6 +46,7 @@ const close = () => {
 <template>
   <NModal
     v-model:show="visible"
+    class="base-dialog"
     preset="card"
     :closable="false"
     :style="{ width }"
@@ -83,12 +84,12 @@ const close = () => {
 <style scoped>
 .base-dialog__header { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); width: 100%; }
 .base-dialog__heading { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
-.base-dialog__title { color: var(--color-text); font-size: var(--font-size-lg); font-weight: var(--font-weight-semibold); }
+.base-dialog__title { color: var(--color-text); font-size: 16px; font-weight: var(--font-weight-bold); }
 
 .base-dialog__subtitle {
   overflow: hidden;
-  color: var(--color-text-muted);
-  font-size: var(--font-size-xs);
+  color: var(--color-text-subtle);
+  font-size: 12.5px;
   font-weight: var(--font-weight-regular);
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -96,4 +97,26 @@ const close = () => {
 
 /* 内容区自身滚动，头部与底部由 NModal 的 card preset 保持吸附 */
 .base-dialog__body { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+</style>
+
+<style>
+/* redesign-v2 方案 B：毛玻璃弹窗（NModal 传送到 body 下，需组件自有的全局规则接管框体与遮罩） */
+.n-modal.base-dialog {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: var(--color-glass-strong);
+  backdrop-filter: var(--component-glass-blur-strong);
+  -webkit-backdrop-filter: var(--component-glass-blur-strong);
+  box-shadow: var(--shadow-lg);
+}
+
+.n-modal.base-dialog .n-card-header { padding: 18px 22px 0; }
+.n-modal.base-dialog .n-card__content { padding: 16px 22px; }
+.n-modal.base-dialog .n-card__footer { padding: 12px 22px 18px; }
+
+.n-modal-mask {
+  background: var(--color-overlay);
+  backdrop-filter: var(--component-overlay-blur);
+  -webkit-backdrop-filter: var(--component-overlay-blur);
+}
 </style>

@@ -41,7 +41,7 @@ const cardThemeOverrides = {
   colorEmbeddedPopover: 'var(--color-surface-subtle)',
   textColor: 'var(--color-text)',
   titleTextColor: 'var(--color-text)',
-  borderColor: 'var(--color-border)',
+  borderColor: 'var(--color-border-soft)',
 }
 </script>
 
@@ -60,6 +60,9 @@ const cardThemeOverrides = {
 </template>
 
 <style scoped>
+/* redesign-v2：面板卡 = 大圆角 + 细边 + 柔和双层投影；subtle 变体保持扁平 */
 .base-card { color: var(--color-text); }
+.base-card--default.n-card,
+.base-card--raised.n-card { box-shadow: var(--shadow-md); }
 .base-card--fill-height { height: 100%; min-height: 0; }
 </style>

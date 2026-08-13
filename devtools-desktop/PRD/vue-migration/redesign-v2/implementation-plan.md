@@ -1,8 +1,16 @@
 # DevTools Desktop 全新设计落地实施计划（redesign-v2 · 方案 B「柔和玻璃」）
 
-> 文档版本：1.0
-> 状态：**待启动（批 0）**
+> 文档版本：1.1
+> 状态：**批 0 已完成（设计系统与组件库），批 1 待启动**
 > 编制日期：2026-08-13
+>
+> 批 0 落地记录：三层 token 与亮暗主题全量切换到方案 B 变量表；主题色运行时切换服务
+> （`services/theme-accent.ts` + app store `applyAccentColor`，HSL 推导 + 白字对比度自动加深，
+> 状态色不跟随）；AppSidebar 分组导航（224px 毛玻璃，窄窗过渡期收窄至 150px，页面批次完成后回归固定宽）；
+> Base* 组件视觉升级（渐变主按钮/毛玻璃弹窗与 Toast/轻表头表格/胶囊徽标等）；新增共享组件
+> `cards/ProjectCard`、`cards/StatCard`、`layout/SidePanel`、`disclosure/GroupSection`、
+> `charts/{ScoreRing,RankBar,SplitBar,Sparkline,AreaChart,BarChart}`（§3.1 的 LogDialog 由既有
+> `logviewer/LogViewer`（BaseDialog 组合）承担，不另建）。门禁：lint/token/架构全绿，449 单测，66/66 E2E。
 > 设计基准：`design-preview/redesign-v2/`（冻结提交 `c74af73`，入口 `app/index.html`）
 > 前置条件：Vue3 架构迁移已全部完成（执行计划 v1.77，G0～G8 关闭）；全仓样式已 token 化（L1+L2+L3，`885e04c` / `d152538`），硬编码色值 0、`:deep` 0、页面 `!important` 0。
 > 核心原则：功能一项不减，视觉与交互整体切换到方案 B；按批次推进，每批可运行、可验收、可回滚。

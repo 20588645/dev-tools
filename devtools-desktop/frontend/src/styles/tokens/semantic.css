@@ -1,45 +1,66 @@
+/* 语义层默认值即暗色主题（redesign-v2 方案 B「柔和玻璃」暗色变量表）；亮色在 themes/light.css 覆盖 */
 :root {
-  --color-page: var(--color-neutral-950);
-  --color-surface: var(--color-neutral-900);
-  --color-surface-raised: var(--color-neutral-800);
-  --color-surface-subtle: rgb(148 163 184 / 8%);
-  --color-overlay: rgb(2 6 23 / 48%);
-  --color-text: var(--color-neutral-100);
-  --color-text-muted: var(--color-neutral-400);
-  --color-text-subtle: var(--color-neutral-500);
-  --color-border: rgb(148 163 184 / 22%);
-  --color-border-strong: rgb(148 163 184 / 38%);
-  --color-focus-ring: var(--color-indigo-400);
-  --color-action: var(--color-indigo-500);
-  --color-action-hover: var(--color-indigo-400);
+  --color-page: #161822;
+  --color-page-gradient: linear-gradient(160deg, #171923 0%, #14161f 50%, #181a25 100%);
+  --color-surface: #1f2230;
+  --color-surface-raised: #262b3c;
+  --color-surface-subtle: rgb(150 160 200 / 7%);
+  --color-surface-hover: var(--color-surface-subtle);
+  --color-glass: rgb(28 31 44 / 66%);
+  --color-glass-strong: rgb(30 33 48 / 85%);
+  --color-overlay: rgb(15 18 30 / 42%);
+  --color-text: #e9ebf3;
+  --color-text-muted: #a3a9bc;
+  --color-text-subtle: #666d82;
+  --color-border: rgb(190 200 240 / 10%);
+  --color-border-strong: rgb(190 200 240 / 18%);
+  --color-border-soft: rgb(190 200 240 / 6%);
+  --color-focus-ring: var(--color-blue-400);
+
+  /* 强调色体系：主色 + 副色 + 渐变 + 淡化（运行时换肤只覆盖这一组，状态色不跟随） */
+  --color-action: var(--color-blue-400);
+  --color-action-hover: #74a0ff;
   --color-action-contrast: var(--color-neutral-0);
-  --color-success: var(--color-green-400);
-  --color-warning: var(--color-amber-400);
-  --color-danger: var(--color-red-400);
-  --color-info: var(--color-cyan-400);
+  --color-action-secondary: var(--color-violet-400);
+  --color-action-gradient: linear-gradient(135deg, var(--color-action), var(--color-action-secondary));
+  --color-action-subtle: rgb(91 141 255 / 16%);
+
+  /* 状态色 + 淡化底（badge / 徽标 / 状态提示统一取这组） */
+  --color-success: #46c07e;
+  --color-success-subtle: rgb(70 192 126 / 15%);
+  --color-warning: #eea23c;
+  --color-warning-subtle: rgb(238 162 60 / 15%);
+  --color-danger: #ef6a6a;
+  --color-danger-subtle: rgb(239 106 106 / 14%);
+  --color-running: #34b8d2;
+  --color-running-subtle: rgb(52 184 210 / 14%);
+  --color-info: var(--color-running);
+
+  /* 阴影（主题相关：暗色更深更重） */
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 30%);
+  --shadow-md: 0 1px 2px rgb(0 0 0 / 30%), 0 12px 32px -12px rgb(0 0 0 / 50%);
+  --shadow-lg: 0 32px 80px -16px rgb(0 0 0 / 70%), 0 4px 16px rgb(0 0 0 / 40%);
 
   /*
     数据系列色：用于图表/构成条这类「区分维度」的场景，与语义状态色分离。
     语义色（success/warning/danger）只表达状态好坏，把它们当品牌色大面积铺开会
     让「绿色=正常」的含义失效，且高饱和绿在暗色下过曝。
   */
-  --color-series-1: var(--color-indigo-400);
-  --color-series-2: var(--color-teal-400);
-  --color-series-3: var(--color-cyan-400);
+  --color-series-1: var(--color-blue-400);
+  --color-series-2: var(--color-violet-400);
+  --color-series-3: var(--color-running);
   --color-series-muted: var(--color-neutral-500);
 
   /* 终端表面与 xterm 主题（由 runtime getComputedStyle 解析，勿在业务 TS 写死 hex） */
-  --color-terminal: #0c1017;
+  --color-terminal: #12141c;
   --color-terminal-header: color-mix(in srgb, var(--color-surface) 80%, transparent);
   --color-terminal-btn: color-mix(in srgb, var(--color-surface-raised) 60%, transparent);
   --color-terminal-btn-fg: var(--color-text-muted);
   --color-terminal-btn-hover: var(--color-action-hover);
   --color-terminal-btn-hover-bg: color-mix(in srgb, var(--color-action) 12%, transparent);
-  --color-surface-hover: color-mix(in srgb, var(--color-text) 6%, transparent);
-  --color-danger-subtle: color-mix(in srgb, var(--color-danger) 14%, transparent);
 
   --term-xterm-bg: var(--color-terminal);
-  --term-xterm-fg: #aab6c5;
+  --term-xterm-fg: #cfd3dc;
   --term-xterm-cursor: #edf2f8;
   --term-xterm-selection: color-mix(in srgb, var(--color-action) 30%, transparent);
   --term-xterm-black: #000000;

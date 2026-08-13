@@ -54,18 +54,20 @@ withDefaults(defineProps<{
   min-width: 0;
 }
 
+/* redesign-v2 页头排版：21px/750/-0.3px 主标题 + 12.5px 弱化副题 */
 h1 {
   margin: 0;
   color: var(--color-text);
   font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-semibold);
+  font-weight: 750;
+  letter-spacing: -0.3px;
   line-height: var(--line-height-tight);
 }
 
 p {
   margin: var(--space-1) 0 0;
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
+  color: var(--color-text-subtle);
+  font-size: 12.5px;
   line-height: var(--line-height-normal);
 }
 

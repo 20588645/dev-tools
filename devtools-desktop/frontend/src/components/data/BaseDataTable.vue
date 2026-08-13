@@ -58,13 +58,16 @@ const size = computed(() => ({
   comfortable: 'large' as const,
 }[props.density]))
 
+/* redesign-v2：轻表头（透明底 + 弱化小字），行线用 soft 边，悬停淡底 */
 const tableThemeOverrides = {
-  borderColor: 'var(--color-border)',
-  thColor: 'var(--color-surface-subtle)',
-  thColorHover: 'var(--color-surface-subtle)',
-  thColorSorting: 'var(--color-surface-subtle)',
-  thTextColor: 'var(--color-text-muted)',
+  borderColor: 'var(--color-border-soft)',
+  thColor: 'transparent',
+  thColorHover: 'transparent',
+  thColorSorting: 'transparent',
+  thTextColor: 'var(--color-text-subtle)',
   thFontWeight: 'var(--font-weight-semibold)',
+  thFontSizeMedium: 'var(--font-size-xs)',
+  thFontSizeSmall: 'var(--font-size-xs)',
   tdColor: 'transparent',
   tdColorHover: 'var(--color-surface-subtle)',
   tdColorStriped: 'var(--color-surface-subtle)',

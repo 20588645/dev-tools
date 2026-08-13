@@ -2,12 +2,20 @@
 [data-theme="light"],
 [data-theme="dark"] {
   --component-page-padding: var(--space-6);
-  --component-control-height-sm: 28px;
-  --component-control-height-md: 34px;
+  --component-control-height-sm: 26px;
+  --component-control-height-md: 32px;
   --component-control-height-lg: 40px;
   --component-control-radius: var(--radius-md);
+  --component-input-height: 34px;
   --component-card-padding: var(--space-4);
   --component-card-radius: var(--radius-lg);
+
+  /* 柔和玻璃：毛玻璃模糊档位（侧栏/弹窗/浮层/遮罩） */
+  --component-glass-blur: blur(28px) saturate(140%);
+  --component-glass-blur-strong: blur(30px) saturate(140%);
+  --component-glass-blur-soft: blur(20px) saturate(120%);
+  --component-overlay-blur: blur(8px);
+
   /* 实体卡片表面高光：材质受光而非装饰色，只改明度不引入色相 */
   --component-entity-card-sheen: linear-gradient(
     180deg,
@@ -33,13 +41,15 @@
     color-mix(in srgb, var(--color-surface) 72%, transparent),
     color-mix(in srgb, var(--color-surface) 24%, transparent)
   );
-  --component-dialog-width: 520px;
-  --component-focus-outline: 0 0 0 2px color-mix(in srgb, var(--color-focus-ring) 16%, transparent);
-  --component-control-surface: color-mix(in srgb, var(--color-surface) 76%, var(--color-surface-raised));
+  --component-dialog-width: 500px;
+  --component-dialog-width-sm: 400px;
+  --component-dialog-width-lg: 720px;
+  --component-focus-outline: 0 0 0 3px var(--color-action-subtle);
+  --component-control-surface: var(--color-surface);
   --component-control-border: var(--color-border);
   --component-control-border-hover: var(--color-border-strong);
-  --component-control-border-focus: color-mix(in srgb, var(--color-focus-ring) 68%, var(--color-border));
-  --component-control-focus-ring: 0 0 0 2px color-mix(in srgb, var(--color-focus-ring) 14%, transparent);
+  --component-control-border-focus: var(--color-action);
+  --component-control-focus-ring: 0 0 0 3px var(--color-action-subtle);
 
   /* 点击粒子特效色板（装饰性数据组，不表达状态语义） */
   --component-particle-1: rgb(167 139 250 / 90%);

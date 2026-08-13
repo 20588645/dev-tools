@@ -1,26 +1,47 @@
+/* redesign-v2 方案 B「柔和玻璃」亮色变量表（挂在 body[data-theme="light"]） */
 [data-theme="light"] {
-  --color-page: var(--color-neutral-50);
+  --color-page: #edf0f6;
+  --color-page-gradient: linear-gradient(160deg, #eef1f7 0%, #e9ecf5 45%, #eceef4 100%);
   --color-surface: var(--color-neutral-0);
-  --color-surface-raised: var(--color-neutral-100);
-  --color-surface-subtle: rgb(15 23 42 / 4%);
-  --color-text: var(--color-neutral-900);
-  --color-text-muted: var(--color-neutral-600);
-  --color-text-subtle: var(--color-neutral-500);
-  --color-border: rgb(15 23 42 / 14%);
-  --color-border-strong: rgb(15 23 42 / 24%);
-  --color-focus-ring: var(--color-indigo-600);
-  --color-action: var(--color-indigo-600);
-  --color-action-hover: var(--color-indigo-500);
+  --color-surface-raised: #f4f6fb;
+  --color-surface-subtle: rgb(120 130 160 / 8%);
+  --color-surface-hover: var(--color-surface-subtle);
+  --color-glass: rgb(255 255 255 / 62%);
+  --color-glass-strong: rgb(255 255 255 / 82%);
+  --color-overlay: rgb(15 18 30 / 35%);
+  --color-text: #22283a;
+  --color-text-muted: #5a6172;
+  --color-text-subtle: #9aa1b2;
+  --color-border: rgb(30 40 70 / 10%);
+  --color-border-strong: rgb(30 40 70 / 16%);
+  --color-border-soft: rgb(30 40 70 / 6%);
+  --color-focus-ring: var(--color-blue-500);
+
+  --color-action: var(--color-blue-500);
+  --color-action-hover: var(--color-blue-400);
   --color-action-contrast: var(--color-neutral-0);
-  --color-success: #15803d;
-  --color-warning: #b45309;
-  --color-danger: #b91c1c;
-  --color-info: #0e7490;
+  --color-action-secondary: var(--color-violet-500);
+  --color-action-gradient: linear-gradient(135deg, var(--color-action), var(--color-action-secondary));
+  --color-action-subtle: rgb(61 123 253 / 12%);
+
+  --color-success: #2fa464;
+  --color-success-subtle: rgb(47 164 100 / 13%);
+  --color-warning: #e08a00;
+  --color-warning-subtle: rgb(224 138 0 / 13%);
+  --color-danger: #e04b4b;
+  --color-danger-subtle: rgb(224 75 75 / 12%);
+  --color-running: #0d9bb5;
+  --color-running-subtle: rgb(13 155 181 / 12%);
+  --color-info: var(--color-running);
+
+  --shadow-sm: 0 1px 2px rgb(30 40 70 / 5%);
+  --shadow-md: 0 1px 2px rgb(30 40 70 / 5%), 0 8px 24px -12px rgb(30 40 70 / 18%);
+  --shadow-lg: 0 24px 64px -16px rgb(20 30 60 / 35%), 0 4px 12px rgb(20 30 60 / 12%);
 
   /* 亮色下数据系列改用更深的色阶，保证在白底上的对比度 */
-  --color-series-1: var(--color-indigo-600);
-  --color-series-2: var(--color-teal-600);
-  --color-series-3: var(--color-cyan-500);
+  --color-series-1: var(--color-blue-500);
+  --color-series-2: var(--color-violet-500);
+  --color-series-3: var(--color-running);
   --color-series-muted: var(--color-neutral-400);
 
   --color-terminal: #f8fafc;
@@ -29,8 +50,6 @@
   --color-terminal-btn-fg: var(--color-text-muted);
   --color-terminal-btn-hover: var(--color-action);
   --color-terminal-btn-hover-bg: color-mix(in srgb, var(--color-action) 8%, transparent);
-  --color-surface-hover: color-mix(in srgb, var(--color-text) 5%, transparent);
-  --color-danger-subtle: color-mix(in srgb, var(--color-danger) 12%, transparent);
 
   --term-xterm-bg: var(--color-terminal);
   --term-xterm-fg: #0f172a;

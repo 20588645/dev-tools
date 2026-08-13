@@ -15,18 +15,19 @@ const emit = defineEmits<{
   select: [key: string]
 }>()
 
+/* redesign-v2：浮层菜单 = 大投影 + 12px 圆角 + accent 淡底悬停（原型 ctx-menu 视觉） */
 const dropdownThemeOverrides = {
   color: 'var(--color-surface-raised)',
-  textColor: 'var(--color-text-muted)',
+  textColor: 'var(--color-text)',
   optionTextColorHover: 'var(--color-text)',
   optionTextColorActive: 'var(--color-action)',
-  optionColorHover: 'color-mix(in srgb, var(--color-action) 9%, transparent)',
-  optionColorActive: 'color-mix(in srgb, var(--color-action) 12%, transparent)',
-  borderRadius: 'var(--component-control-radius)',
+  optionColorHover: 'var(--color-action-subtle)',
+  optionColorActive: 'var(--color-action-subtle)',
+  borderRadius: '12px',
   padding: 'var(--space-1)',
   optionHeight: 'var(--component-control-height-sm)',
   fontSize: 'var(--font-size-xs)',
-  boxShadow: 'var(--shadow-md)',
+  boxShadow: 'var(--shadow-lg)',
 }
 </script>
 

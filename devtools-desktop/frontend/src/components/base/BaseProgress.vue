@@ -61,6 +61,7 @@ const progressStyle = computed<CSSProperties>(() => ({
     class="base-progress"
     :class="[
       `base-progress--${shape}`,
+      `base-progress--tone-${tone}`,
       { 'base-progress--ticking': Boolean(tickInterval) },
     ]"
     :style="progressStyle"
@@ -85,6 +86,12 @@ const progressStyle = computed<CSSProperties>(() => ({
 <style scoped>
 .base-progress--line {
   width: 100%;
+}
+
+/* redesign-v2：默认（action）进度填充用蓝紫渐变；状态色调保持纯色 */
+.base-progress--tone-action.base-progress--line
+:deep(.n-progress-graph .n-progress-graph-line .n-progress-graph-line-rail .n-progress-graph-line-fill) {
+  background-image: var(--color-action-gradient);
 }
 
 /*

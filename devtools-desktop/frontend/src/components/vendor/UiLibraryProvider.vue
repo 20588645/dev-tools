@@ -16,7 +16,11 @@ import { useAppStore } from '@/stores/app'
 
 const app = useAppStore()
 const theme = computed(() => (app.theme === 'dark' ? darkTheme : lightTheme))
-const themeOverrides = computed(() => createNaiveThemeOverrides(app.theme))
+const themeOverrides = computed(() => {
+  // 依赖 accentColor：运行时换肤后重读 vendor token，Naive 全局主题跟随
+  void app.accentColor
+  return createNaiveThemeOverrides(app.theme)
+})
 const overlayTarget = typeof document !== 'undefined' && document.querySelector('#ui-foundation-preview')
   ? '#ui-foundation-preview'
   : undefined
@@ -33,7 +37,7 @@ onBeforeUnmount(() => {
   <NConfigProvider class="ui-library-provider" :locale="zhCN" :date-locale="dateZhCN" :theme="theme" :theme-overrides="themeOverrides">
     <NMessageProvider
       :to="overlayTarget"
-      placement="bottom-right"
+      placement="top-right"
       closable
       keep-alive-on-hover
       container-class="app-toast-container"

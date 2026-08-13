@@ -5,7 +5,7 @@ import { MENU_ORDER_CHANGED_EVENT } from '@/services/app-events'
 import { readMenuOrder } from '@/services/modules/settings-service'
 import { useAppStore } from '@/stores/app'
 
-import { resolveSidebarNavItems, type SidebarNavItemModel } from './sidebar-nav'
+import { resolveSidebarNavGroups, type SidebarNavItemModel } from './sidebar-nav'
 
 const props = withDefaults(
   defineProps<{
@@ -31,9 +31,9 @@ const emit = defineEmits<{
 const app = useAppStore()
 const menuOrderTick = ref(0)
 
-const items = computed(() => {
+const groups = computed(() => {
   void menuOrderTick.value
-  return resolveSidebarNavItems(readMenuOrder())
+  return resolveSidebarNavGroups(readMenuOrder())
 })
 
 const themeIcon = computed(() => {
@@ -89,39 +89,42 @@ watch(
 <template>
   <aside class="app-sidebar" data-tauri-drag-region="deep">
     <div class="sidebar-brand">
-      <span class="brand-icon">⌘</span>
-      <span>DevTools</span>
+      <span class="brand-mark">⌘</span>
+      <span class="brand-name">DevTools</span>
     </div>
 
     <nav class="sidebar-nav" aria-label="主导航">
-      <button
-        v-for="item in items"
-        :key="item.pageId"
-        type="button"
-        class="sidebar-item"
-        :class="{ active: item.pageId === activePageId }"
-        :data-page="item.pageId"
-        :title="item.title"
-        @click="onNavigate(item)"
-      >
-        <span class="nav-icon" v-html="item.iconSvg" />
-        <span>{{ item.title }}</span>
-      </button>
+      <div v-for="group in groups" :key="group.id" class="sidebar-group">
+        <div class="sidebar-group-label">{{ group.label }}</div>
+        <button
+          v-for="item in group.items"
+          :key="item.pageId"
+          type="button"
+          class="sidebar-item"
+          :class="{ active: item.pageId === activePageId }"
+          :data-page="item.pageId"
+          :title="item.title"
+          @click="onNavigate(item)"
+        >
+          <span class="nav-icon" v-html="item.iconSvg" />
+          <span class="nav-label">{{ item.title }}</span>
+        </button>
+      </div>
     </nav>
 
     <div class="sidebar-footer">
       <button
         type="button"
-        class="theme-toggle sidebar-tool-button"
+        class="sidebar-tool-button"
         title="项目介绍"
         @click="openIntro"
       >
-        <span class="sidebar-tool-icon">i</span>
+        <span class="sidebar-tool-icon">ⓘ</span>
         <span class="sidebar-tool-label">介绍</span>
       </button>
       <button
         type="button"
-        class="theme-toggle sidebar-tool-button"
+        class="sidebar-tool-button"
         data-test="theme-toggle"
         :title="themeTitle"
         :disabled="!enableThemeToggle"
@@ -133,20 +136,20 @@ watch(
       </button>
       <button
         type="button"
-        class="theme-toggle sidebar-tool-button sidebar-collapse-toggle"
+        class="sidebar-tool-button sidebar-collapse-toggle"
         :title="collapsed ? '展开侧栏' : '折叠侧栏'"
         @click="toggleCollapse"
       >
         <span class="sidebar-tool-icon sidebar-collapse-icon">{{ collapsed ? '›' : '‹' }}</span>
-        <span class="sidebar-tool-label sidebar-collapse-label">{{ collapsed ? '展开' : '收起' }}</span>
+        <span class="sidebar-tool-label sidebar-collapse-label">收起</span>
       </button>
     </div>
   </aside>
 </template>
 
 <style>
-/* L2（legacy token 化）：侧栏视觉自 styles/legacy/layout.css 移入自持。
-   非 scoped：与迁移前的全局层叠语义一致；折叠态由 .app-layout-root.is-collapsed 前缀驱动。 */
+/* redesign-v2 方案 B：毛玻璃分组侧栏（非 scoped：与迁移前的全局层叠语义一致；
+   折叠态由 AppLayout 的 .app-layout-root.is-collapsed 前缀驱动）。 */
 .app-sidebar {
   position: relative;
   z-index: 1000;
@@ -159,93 +162,75 @@ watch(
   max-width: var(--sidebar-width);
   height: 100vh;
   min-height: 100vh;
-  padding: 44px 8px 12px;
+  padding: 42px 12px 12px;
   overflow: hidden;
   border: 0;
+  border-right: 1px solid var(--color-border-soft);
   border-radius: 0;
-  background: color-mix(in srgb, var(--color-surface) 94%, transparent);
-  backdrop-filter: blur(24px) saturate(130%);
-  -webkit-backdrop-filter: blur(24px) saturate(130%);
+  background: var(--color-glass);
+  backdrop-filter: var(--component-glass-blur);
+  -webkit-backdrop-filter: var(--component-glass-blur);
   box-shadow: none;
   user-select: none;
   -webkit-app-region: drag;
   transition: width 0.18s ease, min-width 0.18s ease, padding 0.18s ease;
 }
 
-.app-sidebar::after {
-  content: "";
-  position: absolute;
-  top: 58px;
-  right: 0;
-  bottom: 0;
-  width: 1px;
-  background: var(--color-border);
-  pointer-events: none;
-}
-
-.app-layout-root.is-collapsed .app-sidebar::after {
-  top: 64px;
-}
-
-@media (max-height: 700px) {
-  .app-sidebar .sidebar-nav {
-    min-height: 0;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    scrollbar-width: none;
-  }
-
-  .app-sidebar .sidebar-nav::-webkit-scrollbar {
-    display: none;
-  }
-
-  .app-sidebar .sidebar-footer {
-    flex-shrink: 0;
-  }
-}
-
 .sidebar-brand {
   display: flex;
   align-items: center;
-  gap: 7px;
-  height: 24px;
+  gap: 10px;
   min-width: 0;
-  padding: 0 7px 14px;
+  padding: 0 10px 16px;
   overflow: hidden;
   color: var(--color-text);
-  font-size: 11px;
-  font-weight: 650;
-  letter-spacing: 0;
 }
 
-.sidebar-brand span:last-child {
+.brand-mark {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-action-contrast);
+  background: var(--color-action-gradient);
+  border-radius: 9px;
+  box-shadow: 0 4px 12px -2px color-mix(in srgb, var(--color-action) 50%, transparent);
+}
+
+.brand-name {
   overflow: hidden;
+  font-size: 14.5px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.brand-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 17px;
-  height: 17px;
-  font-size: 10px;
-  color: var(--color-text-muted);
-  background: var(--color-surface-raised);
-  border: 1px solid var(--color-border);
-  border-radius: 5px;
 }
 
 .sidebar-nav {
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
-  align-items: stretch;
   flex: 1;
-  gap: 7px;
+  gap: 0;
+  min-height: 0;
   padding: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
   -webkit-app-region: no-drag;
+}
+
+.sidebar-nav::-webkit-scrollbar { display: none; }
+
+.sidebar-group { margin-bottom: 14px; }
+
+.sidebar-group-label {
+  padding: 0 10px 6px;
+  font-size: 10.5px;
+  font-weight: 650;
+  color: var(--color-text-subtle);
 }
 
 .sidebar-item {
@@ -254,64 +239,49 @@ watch(
   align-items: center;
   justify-content: flex-start;
   width: 100%;
-  height: 34px;
-  min-height: 34px;
   min-width: 0;
   gap: 10px;
-  padding: 0 12px;
+  padding: 7px 10px;
   border: 0;
-  border-radius: 6px;
+  border-radius: 10px;
   background: transparent;
   color: var(--color-text-muted);
   box-shadow: none;
   font-family: inherit;
-  font-size: 11px;
-  font-weight: 560;
+  font-size: 13px;
+  font-weight: 500;
   text-align: left;
   cursor: pointer;
   overflow: visible;
   transform: none;
-  transition: all 0.12s;
+  transition: background 0.12s, color 0.12s;
 }
 
 .sidebar-item:hover {
-  background: var(--color-surface-hover);
+  background: var(--color-surface-subtle);
   color: var(--color-text);
 }
 
 .sidebar-item.active {
-  font-weight: 650;
-  background: color-mix(in srgb, var(--color-action) 11%, transparent);
-  color: var(--color-action);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-action) 20%, transparent);
+  font-weight: 600;
+  background: var(--color-action-gradient);
+  color: var(--color-action-contrast);
+  box-shadow: 0 6px 16px -6px color-mix(in srgb, var(--color-action) 55%, transparent);
 }
 
-.sidebar-item.active::before {
-  content: '';
-  position: absolute;
-  left: -6px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 3px;
-  height: 16px;
-  border-radius: 2px;
-  background: var(--color-action);
-  animation: indicatorIn 0.2s ease;
-}
-
-.sidebar-item span:last-child {
+.sidebar-item .nav-label {
   display: inline;
   min-width: 0;
-  overflow: visible;
-  text-overflow: clip;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .sidebar-item .nav-icon,
 .sidebar-item .nav-icon svg {
-  width: 17px;
-  height: 17px;
-  flex: 0 0 17px;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
 }
 
 .sidebar-item .nav-icon {
@@ -320,68 +290,48 @@ watch(
   justify-content: center;
   flex-shrink: 0;
   color: currentcolor;
-  font-size: 15px;
-  text-align: center;
+  opacity: 0.9;
 }
 
-.sidebar-item .nav-icon svg { stroke-width: 2; }
+.sidebar-item .nav-icon svg { stroke-width: 1.8; }
 
 .sidebar-footer {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: stretch;
   width: 100%;
-  gap: 7px;
-  padding: 12px 8px 0;
-  border-top: 1px solid var(--color-border);
+  gap: 6px;
+  padding: 10px 0 0;
+  border-top: 1px solid var(--color-border-soft);
   box-sizing: border-box;
   -webkit-app-region: no-drag;
-}
-
-.theme-toggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  border: 0;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--color-text-subtle);
-  font-size: 12px;
-  box-shadow: none;
-  cursor: pointer;
-  transition: all 0.12s;
-  -webkit-app-region: no-drag;
-}
-
-.theme-toggle:hover {
-  background: var(--color-surface-hover);
-  color: var(--color-text);
-  border-color: transparent;
 }
 
 .sidebar-tool-button {
   display: flex;
+  flex: 1;
   align-items: center;
-  justify-content: flex-start;
-  width: 100%;
+  justify-content: center;
+  min-width: 0;
   height: 32px;
-  min-height: 32px;
-  gap: 8px;
-  padding: 0 10px;
-  border: 1px solid transparent;
-  border-radius: 7px;
+  gap: 6px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 10px;
   background: transparent;
   color: var(--color-text-muted);
-  font-size: 11px;
-  font-weight: 620;
+  font-size: 12px;
+  font-weight: 500;
+  box-shadow: none;
+  cursor: pointer;
   box-sizing: border-box;
+  transition: background 0.12s, color 0.12s;
+  -webkit-app-region: no-drag;
 }
 
 .sidebar-tool-button:hover {
   color: var(--color-text);
-  background: var(--color-surface-hover);
-  border-color: var(--color-border);
+  background: var(--color-surface-subtle);
 }
 
 .sidebar-tool-icon {
@@ -400,8 +350,8 @@ watch(
   white-space: nowrap;
 }
 
-.sidebar-collapse-toggle {
-  font-size: 18px;
+.sidebar-collapse-icon {
+  font-size: 15px;
   line-height: 1;
 }
 </style>

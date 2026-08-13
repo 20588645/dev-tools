@@ -1,4 +1,5 @@
+/* 暗色主题即 semantic.css 的 :root 默认值；body[data-theme="dark"] 仅保留挂载点确认页面底色 */
 :root,
 [data-theme="dark"] {
-  --color-page: #0a1621;
+  --color-page: #161822;
 }
