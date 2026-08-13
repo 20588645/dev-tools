@@ -33,6 +33,7 @@ devtools-desktop/scripts/rebuild.log
 # AI/editor local metadata
 .claude/
 .cursor/
+.pchat-tmp/
 .kiro/
 CLAUDE.md
 # 本地安装的 Agent Skills 包（每个 skill 含数十个文件，不属于项目代码）
