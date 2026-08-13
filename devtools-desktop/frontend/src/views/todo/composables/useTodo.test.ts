@@ -48,7 +48,7 @@ describe('useTodo', () => {
     expect(todoTiming({ ...records[0], status: 'done' }, now)).toBe('none')
   })
 
-  it('loads, searches parsed checklist content and groups tasks', async () => {
+  it('loads, searches parsed checklist content and filters by completion state', async () => {
     const service = services()
     const controller = useTodo({
       services: service,
@@ -57,7 +57,20 @@ describe('useTodo', () => {
     })
     await controller.load(true)
 
-    expect(controller.groups.value.todo).toHaveLength(1)
+    // 默认「进行中」视图不含已完成任务
+    expect(controller.visibleTodos.value.map((todo) => todo.id)).toEqual(['todo-1'])
+    expect(controller.activeCount.value).toBe(1)
+    expect(controller.completedCount.value).toBe(1)
+    expect(controller.todayDueCount.value).toBe(1)
+    controller.filter.value = 'done'
+    await nextTick()
+    expect(controller.visibleTodos.value.map((todo) => todo.id)).toEqual(['todo-2'])
+    controller.filter.value = 'all'
+    await nextTick()
+    // 「全部」视图把已完成压到底部
+    expect(controller.visibleTodos.value.map((todo) => todo.id)).toEqual(['todo-1', 'todo-2'])
+
+    controller.filter.value = 'active'
     expect(controller.currentTodo.value?.description).toBe('保持历史数据')
     controller.search.value = '增加测试'
     await nextTick()

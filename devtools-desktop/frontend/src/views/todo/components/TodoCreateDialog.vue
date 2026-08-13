@@ -59,7 +59,7 @@ function submit() {
   <!-- below-overlays：内含日期选择器，对话框需退到 Naive 浮层之下才能点选提醒时间 -->
   <BaseDialog
     :model-value="modelValue"
-    title="新建任务"
+    title="新建待办"
     width="min(600px, calc(100vw - 32px))"
     below-overlays
     @update:model-value="emit('update:modelValue', $event)"
@@ -93,7 +93,7 @@ function submit() {
     </form>
     <template #footer>
       <BaseButton variant="ghost" @click="emit('update:modelValue', false)">取消</BaseButton>
-      <BaseButton :loading="creating" @click="submit">创建任务</BaseButton>
+      <BaseButton :loading="creating" @click="submit">创建</BaseButton>
     </template>
   </BaseDialog>
 </template>

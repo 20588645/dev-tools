@@ -35,34 +35,6 @@
   box-shadow: 0 0 15px color-mix(in srgb, var(--color-action) 16%, transparent);
 }
 
-.notebook-toolbar {
-  display: flex;
-  width: 100%;
-  min-width: 0;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-}
-
-.notebook-toolbar__search {
-  width: min(410px, 48vw);
-}
-
-.notebook-toolbar__actions {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  gap: var(--space-3);
-}
-
-.notebook-toolbar__result {
-  overflow: hidden;
-  color: var(--color-text-subtle);
-  font-size: var(--font-size-xs);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .notebook-workspace {
   display: grid;
   height: 100%;
@@ -84,40 +56,41 @@
   box-shadow: var(--shadow-md);
 }
 
+/* 原型 .nb-list .panel-head：搜索置于面板头 */
 .notebook-list-panel__header {
   display: flex;
-  min-height: 58px;
+  flex: none;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
-  border-bottom: 1px solid var(--color-border);
+  gap: 8px;
+  padding: 12px 14px 4px;
 }
 
-.notebook-list-panel__header > div {
-  display: grid;
-  gap: 2px;
-}
-
-.notebook-list-panel__header strong {
-  color: var(--color-text);
-  font-size: var(--font-size-sm);
-}
-
-.notebook-list-panel__header span {
-  color: var(--color-text-subtle);
-  font-size: 10px;
+.notebook-list-panel__search {
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .notebook-list-panel__sort {
-  width: 116px;
+  width: 104px;
+  flex: none;
 }
 
 .notebook-list-panel__filters {
   display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
   gap: 6px;
-  padding: 9px;
-  border-bottom: 1px solid var(--color-border);
+  padding: 6px 14px 4px;
+}
+
+.notebook-list-panel__result {
+  overflow: hidden;
+  color: var(--color-text-subtle);
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .notebook-list-panel__state {
@@ -144,21 +117,20 @@
   min-width: 0;
 }
 
+/* 原型 .nb-row：紧凑两行（标题 / 预览·元信息） */
 .notebook-note-item {
-  --base-selectable-min-height: 86px;
-  --base-selectable-padding: 12px;
-  --base-selectable-background: color-mix(in srgb, var(--color-surface-raised) 28%, transparent);
-  --base-selectable-hover-background: color-mix(in srgb, var(--color-surface-raised) 56%, transparent);
-  --base-selectable-hover-transform: translateX(2px);
-  --base-selectable-selected-background:
-    linear-gradient(135deg, color-mix(in srgb, var(--color-action) 11%, transparent), transparent 72%),
-    color-mix(in srgb, var(--color-surface-raised) 52%, transparent);
-  --base-selectable-selected-border: color-mix(in srgb, var(--color-action) 38%, var(--color-border));
-  gap: 7px;
+  --base-selectable-min-height: 58px;
+  --base-selectable-padding: 10px 12px;
+  --base-selectable-background: transparent;
+  --base-selectable-hover-background: var(--color-surface-subtle);
+  --base-selectable-selected-background: color-mix(in srgb, var(--color-action) 11%, transparent);
+  --base-selectable-selected-border: transparent;
+  --base-selectable-selected-shadow: none;
+  gap: 3px;
+  border-radius: 11px;
 }
 
-.notebook-note-item__heading,
-.notebook-note-item__meta {
+.notebook-note-item__heading {
   display: flex;
   min-width: 0;
   align-items: center;
@@ -168,9 +140,9 @@
 
 .notebook-note-item__heading strong {
   overflow: hidden;
-  color: inherit;
-  font-size: 12px;
-  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+  font-size: 12.5px;
+  font-weight: var(--font-weight-bold);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -183,18 +155,16 @@
 }
 
 .notebook-note-item__preview {
-  display: -webkit-box;
   overflow: hidden;
   color: var(--color-text-subtle);
-  font-size: 10px;
-  line-height: 1.45;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  font-size: 11px;
+  line-height: 1.5;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .notebook-note-item__meta {
   color: var(--color-text-subtle);
-  font-size: 9px;
 }
 
 .notebook-note-item__order {
@@ -205,7 +175,7 @@
   z-index: 1;
 }
 
-.notebook-note-row:has(.notebook-note-item__order) .notebook-note-item__meta {
+.notebook-note-row:has(.notebook-note-item__order) .notebook-note-item__preview {
   padding-right: 64px;
 }
 
@@ -264,7 +234,7 @@
   display: grid;
   flex: 1 1 auto;
   min-height: 0;
-  grid-template-rows: auto auto auto minmax(0, 1fr);
+  grid-template-rows: auto auto auto auto minmax(0, 1fr);
   overflow: hidden;
 }
 
@@ -282,7 +252,45 @@
 }
 
 .notebook-editor-title {
-  padding: 14px 18px 8px;
+  padding: 12px 18px 4px;
+}
+
+/* 原型 .nb-toolbar：扁平格式工具条 */
+.notebook-format-toolbar {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 16px 6px;
+}
+
+.notebook-format-toolbar :is(.base-button) {
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-medium);
+}
+
+.notebook-format-toolbar__tool.is-bold {
+  font-weight: var(--font-weight-bold);
+}
+
+.notebook-format-toolbar__tool.is-italic {
+  font-style: italic;
+}
+
+.notebook-format-toolbar__tool.is-underline {
+  text-decoration: underline;
+}
+
+.notebook-format-toolbar__tool:is(.is-heading, .is-bulletList, .is-orderedList) {
+  font-size: 10.5px;
+}
+
+.notebook-format-toolbar__divider {
+  width: 1px;
+  height: 16px;
+  margin: 0 6px;
+  background: var(--color-border);
 }
 
 .notebook-rich-editor {
@@ -630,14 +638,6 @@
 }
 
 @media (max-width: 760px) {
-  .notebook-toolbar__search {
-    width: min(100%, 340px);
-  }
-
-  .notebook-toolbar__result {
-    display: none;
-  }
-
   .notebook-workspace {
     grid-template-columns: minmax(200px, 225px) minmax(0, 1fr);
     gap: 8px;
@@ -648,7 +648,6 @@
   }
 
   .notebook-list-panel__header {
-    min-height: 48px;
     padding-inline: 10px;
   }
 
@@ -656,9 +655,8 @@
     overflow-x: auto;
   }
 
-  .notebook-note-item {
-    --base-selectable-min-height: 76px;
-    --base-selectable-padding: 10px;
+  .notebook-list-panel__result {
+    display: none;
   }
 
   .notebook-editor-panel__header {
@@ -670,7 +668,11 @@
   }
 
   .notebook-editor-title {
-    padding: 10px 12px 6px;
+    padding: 10px 12px 4px;
+  }
+
+  .notebook-format-toolbar {
+    padding-inline: 10px;
   }
 
   .notebook-rich-editor {
@@ -692,12 +694,12 @@
     display: none;
   }
 
-  .notebook-view .page-toolbar {
-    padding-bottom: 10px;
+  .notebook-editor-title {
+    padding-block: 8px 4px;
   }
 
-  .notebook-editor-title {
-    padding-block: 8px 5px;
+  .notebook-format-toolbar {
+    padding-block: 2px 4px;
   }
 
   .notebook-editor-panel__footer {

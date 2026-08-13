@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 
+import BaseButton from '@/components/base/BaseButton.vue'
 import StatusIndicator from '@/components/base/StatusIndicator.vue'
+import BaseSwitch from '@/components/form/BaseSwitch.vue'
 import PageFrame from '@/components/layout/PageFrame.vue'
 import PageHeader from '@/components/layout/PageHeader.vue'
 import PageToolbar from '@/components/layout/PageToolbar.vue'
@@ -115,6 +117,18 @@ function undoReferenceInsert() {
           <template #icon><span class="notes-view__title-dot" /></template>
           <template #actions>
             <StatusIndicator :label="globalStatus.label" :status="globalStatus.status" />
+            <BaseSwitch
+              class="notes-weekend-switch"
+              :model-value="showWeekend"
+              label="显示周末"
+              @update:model-value="setShowWeekend"
+            />
+            <BaseButton
+              variant="secondary"
+              :aria-expanded="referenceOpen"
+              aria-controls="notes-reference-panel"
+              @click="referenceOpen = !referenceOpen"
+            >Git 活动参考</BaseButton>
           </template>
         </PageHeader>
         <PageToolbar>
@@ -122,13 +136,9 @@ function undoReferenceInsert() {
             :week-label="weekLabel"
             :week-caption="weekCaption"
             :is-current-week="weekOffset === 0"
-            :show-weekend="showWeekend"
-            :reference-open="referenceOpen"
             @previous="changeWeek(-1)"
             @next="changeWeek(1)"
             @current="goToCurrentWeek"
-            @update:show-weekend="setShowWeekend"
-            @reference="referenceOpen = !referenceOpen"
           />
         </PageToolbar>
       </PageTop>

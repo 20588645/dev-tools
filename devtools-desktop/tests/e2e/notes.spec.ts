@@ -156,7 +156,9 @@ test('renders the confirmed Vue workspace without the retired legacy implementat
   await expect(page.locator('.notes-view')).toHaveCount(1)
   await expect(page.locator('.legacy-notes-fallback')).toHaveCount(0)
   await expect(page.locator('#notesWeekGrid')).toHaveCount(0)
-  await expect(page.getByText('当前页面 Vue 迁移', { exact: true }).first()).toBeVisible()
+  // 日行预览合并显示「标题 · 内容」（原型 .day-row .p），标题在编辑器内可编辑
+  await expect(page.getByText('当前页面 Vue 迁移', { exact: false }).first()).toBeVisible()
+  await expect(page.getByRole('textbox', { name: '项目 / 标题' })).toHaveValue('当前页面 Vue 迁移')
   await expectNoPageOverflow(page)
   await expectUsableEditor(page)
 
@@ -212,7 +214,7 @@ test('keeps five-day, seven-day, and inline reference layouts usable at 900 by 6
   await secondDay.click()
   await expect(reference).toBeVisible()
 
-  await reference.locator('.notes-reference-panel__body').evaluate((element) => {
+  await reference.locator('.side-panel__body').evaluate((element) => {
     element.scrollTop = element.scrollHeight
   })
   await reference.getByRole('checkbox', { name: '选择提交：feat: 完成工时内容 Git 活动集成' }).check()
@@ -270,7 +272,7 @@ test('distinguishes load failures from empty dates and supports retry', async ({
 test('preserves the active week and selected draft across page navigation', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 })
   const mock = await openNotes(page)
-  await page.getByRole('button', { name: '下一周', exact: true }).click()
+  await page.getByRole('button', { name: '下一周 ›', exact: true }).click()
   await page.getByRole('textbox', { name: '工作内容' }).fill('下周会话草稿')
 
   await page.locator('.sidebar-item[data-page="home"]').click()

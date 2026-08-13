@@ -4,34 +4,31 @@ import { computed, ref } from 'vue'
 import BaseButton from '@/components/base/BaseButton.vue'
 import StatusIndicator from '@/components/base/StatusIndicator.vue'
 import ConfirmDialog from '@/components/feedback/ConfirmDialog.vue'
-import BaseInput from '@/components/form/BaseInput.vue'
 import PageFrame from '@/components/layout/PageFrame.vue'
 import PageHeader from '@/components/layout/PageHeader.vue'
-import PageToolbar from '@/components/layout/PageToolbar.vue'
 import PageTop from '@/components/layout/PageTop.vue'
-import BaseSegmented from '@/components/navigation/BaseSegmented.vue'
 import type { TodoCreateInput, TodoStatus } from '@/services/modules/todo-service'
 import { useNotificationStore } from '@/stores/notification'
 
 import TodoCreateDialog from './components/TodoCreateDialog.vue'
 import TodoTaskDetail from './components/TodoTaskDetail.vue'
 import TodoTaskList from './components/TodoTaskList.vue'
-import { useTodo, type TodoFilter } from './composables/useTodo'
+import { useTodo } from './composables/useTodo'
 import './todo.css'
 
 defineOptions({ name: 'TodoView' })
 
 const {
   visibleTodos,
-  groups,
   currentId,
   currentTodo,
   search,
   filter,
-  collapsed,
   listState,
   listError,
   completedCount,
+  activeCount,
+  todayDueCount,
   globalStatus,
   load,
   selectTodo,
@@ -43,7 +40,6 @@ const {
   addChecklist,
   removeChecklist,
   setStatus,
-  toggleGroup,
   hasIncompleteChecklist,
   retryCurrentSave,
 } = useTodo()
@@ -57,13 +53,10 @@ const confirmComplete = ref(false)
 const pendingStatus = ref<TodoStatus | null>(null)
 const narrowDetailOpen = ref(false)
 
-const filterOptions = [
-  { label: '全部', value: 'all' },
-  { label: '今天', value: 'today' },
-  { label: '已逾期', value: 'overdue' },
-]
-
-const clearMessage = computed(() => `将永久删除 ${completedCount.value} 条已完成任务，此操作无法撤销。`)
+const headerSummary = computed(() => `${activeCount.value} 项进行中 · ${todayDueCount.value} 项今天到期`)
+const incompleteChecklistCount = computed(() =>
+  currentTodo.value?.checklist.filter((item) => !item.done).length ?? 0)
+const clearMessage = computed(() => `将永久清理 ${completedCount.value} 条已完成待办，清理后不可恢复。`)
 
 async function handleSelect(id: string) {
   await selectTodo(id)
@@ -76,9 +69,9 @@ async function handleCreate(input: TodoCreateInput) {
     await create(input)
     createOpen.value = false
     narrowDetailOpen.value = true
-    notifications.push('任务已创建', 'success')
+    notifications.push('待办已创建', 'success')
   } catch (reason) {
-    notifications.push(reason instanceof Error ? reason.message : '创建任务失败', 'error')
+    notifications.push(reason instanceof Error ? reason.message : '创建待办失败', 'error')
   } finally {
     creating.value = false
   }
@@ -99,9 +92,9 @@ async function handleClear() {
   try {
     const deleted = await clearCompleted()
     confirmClear.value = false
-    notifications.push(`已清除 ${deleted} 条完成任务`, 'success')
+    notifications.push(`已清理 ${deleted} 条已完成待办`, 'success')
   } catch (reason) {
-    notifications.push(reason instanceof Error ? reason.message : '清除完成任务失败', 'error')
+    notifications.push(reason instanceof Error ? reason.message : '清理已完成待办失败', 'error')
   }
 }
 
@@ -122,6 +115,11 @@ function requestStatus(status: TodoStatus) {
   void applyStatus(status)
 }
 
+async function handleToggleDone(id: string, done: boolean) {
+  await selectTodo(id)
+  requestStatus(done ? 'done' : 'todo')
+}
+
 async function confirmParentCompletion() {
   const status = pendingStatus.value
   confirmComplete.value = false
@@ -139,55 +137,36 @@ async function confirmParentCompletion() {
   >
     <template #top>
       <PageTop>
-        <PageHeader title="待办事项" description="按状态管理个人任务">
+        <PageHeader title="待办事项" :description="headerSummary">
           <template #icon><span class="todo-view__title-mark">✓</span></template>
           <template #actions>
             <StatusIndicator :label="globalStatus.label" :status="globalStatus.status" />
-            <BaseButton @click="createOpen = true">＋ 新建任务</BaseButton>
-          </template>
-        </PageHeader>
-        <PageToolbar>
-          <div class="todo-toolbar">
-            <div class="todo-toolbar__query">
-              <BaseInput
-                v-model="search"
-                class="todo-toolbar__search"
-                type="search"
-                variant="search"
-                placeholder="搜索任务、描述或清单"
-                aria-label="搜索待办任务"
-              >
-                <template #prefix><span aria-hidden="true">⌕</span></template>
-              </BaseInput>
-              <BaseSegmented
-                :model-value="filter"
-                :options="filterOptions"
-                aria-label="任务筛选"
-                @update:model-value="filter = $event as TodoFilter"
-              />
-            </div>
             <BaseButton
-              variant="ghost"
-              size="sm"
+              variant="secondary"
               :disabled="completedCount === 0"
               @click="confirmClear = true"
-            >清除已完成</BaseButton>
-          </div>
-        </PageToolbar>
+            >清理已完成</BaseButton>
+            <BaseButton @click="createOpen = true">＋ 新建待办</BaseButton>
+          </template>
+        </PageHeader>
       </PageTop>
     </template>
 
     <div class="todo-workspace">
       <TodoTaskList
-        :groups="groups"
+        :todos="visibleTodos"
         :current-id="currentId"
-        :collapsed="collapsed"
-        :visible-count="visibleTodos.length"
+        :search="search"
+        :filter="filter"
+        :active-count="activeCount"
+        :done-count="completedCount"
         :list-state="listState"
         :list-error="listError"
         @select="handleSelect"
-        @toggle-group="toggleGroup"
+        @toggle-done="handleToggleDone"
         @retry="load(true)"
+        @update:search="search = $event"
+        @update:filter="filter = $event"
       />
       <TodoTaskDetail
         :todo="currentTodo"
@@ -218,17 +197,18 @@ async function confirmParentCompletion() {
     />
     <ConfirmDialog
       v-model="confirmClear"
-      title="清除全部已完成任务？"
+      :title="`清理 ${completedCount} 条已完成待办？`"
       :message="clearMessage"
-      confirm-text="全部清除"
+      confirm-text="清理"
       tone="danger"
       @confirm="handleClear"
     />
     <ConfirmDialog
       v-model="confirmComplete"
-      title="仍有子任务未完成"
-      message="将父任务标记为完成时，是否同时完成剩余子任务？"
-      confirm-text="全部完成"
+      :title="`还有 ${incompleteChecklistCount} 个子任务未完成`"
+      message="标记父任务完成会连同未完成的子任务一起完成。"
+      confirm-text="一起完成"
+      cancel-text="再想想"
       @confirm="confirmParentCompletion"
     />
   </PageFrame>

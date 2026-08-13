@@ -3,6 +3,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 
 import BaseButton from '@/components/base/BaseButton.vue'
 import BaseCard from '@/components/base/BaseCard.vue'
+import BaseIconButton from '@/components/base/BaseIconButton.vue'
 import StatusIndicator from '@/components/base/StatusIndicator.vue'
 import BaseDialog from '@/components/feedback/BaseDialog.vue'
 import EmptyState from '@/components/feedback/EmptyState.vue'
@@ -13,7 +14,7 @@ import BaseDropdownMenu from '@/components/overlay/BaseDropdownMenu.vue'
 
 import type { NotebookDraft } from '../composables/useNotebook'
 import { notebookSaveLabel } from '../composables/useNotebook'
-import NotebookRichEditor from './NotebookRichEditor.vue'
+import NotebookRichEditor, { type NotebookInlineFormat } from './NotebookRichEditor.vue'
 
 const props = defineProps<{
   draft: NotebookDraft | null
@@ -63,26 +64,38 @@ const characterCount = computed(() => {
   return (template.content.textContent ?? '').trim().length
 })
 
+function requestLink() {
+  const context = richEditor.value?.selectedLinkContext()
+  if (!context) return
+  if (context.suggestedUrl) {
+    richEditor.value?.applyLinkToSelection(context.suggestedUrl)
+    return
+  }
+  linkLabel.value = context.text
+  linkUrl.value = ''
+  linkError.value = ''
+  linkDialogOpen.value = true
+}
+
 async function handleMoreAction(key: string) {
   if (key === 'align') richEditor.value?.alignSelection()
   if (key === 'normalize') richEditor.value?.normalizeDocument()
-  if (key === 'link') {
-    const context = richEditor.value?.selectedLinkContext()
-    if (!context) return
-    if (context.suggestedUrl) {
-      richEditor.value?.applyLinkToSelection(context.suggestedUrl)
-      return
-    }
-    linkLabel.value = context.text
-    linkUrl.value = ''
-    linkError.value = ''
-    linkDialogOpen.value = true
-  }
+  if (key === 'link') requestLink()
   if (key === 'credential') richEditor.value?.insertCredential()
   if (key === 'copy') await richEditor.value?.copyDocument()
   if (key === 'duplicate') emit('duplicate')
   if (key === 'delete') emit('delete')
 }
+
+/** 原型 .nb-toolbar：常驻格式工具栏（更多菜单保留同名入口） */
+const formatTools: Array<{ format: NotebookInlineFormat; glyph: string; label: string; hint?: string }> = [
+  { format: 'bold', glyph: 'B', label: '加粗' },
+  { format: 'italic', glyph: 'I', label: '斜体' },
+  { format: 'underline', glyph: 'U', label: '下划线' },
+  { format: 'heading', glyph: 'H2', label: '二级标题' },
+  { format: 'bulletList', glyph: '•≡', label: '无序列表' },
+  { format: 'orderedList', glyph: '1.≡', label: '有序列表' },
+]
 
 function closeLinkDialog() {
   linkDialogOpen.value = false
@@ -183,6 +196,27 @@ defineExpose({ focusTitle })
           autocomplete="off"
           @update:model-value="emit('update:title', $event)"
         />
+        <div class="notebook-format-toolbar" role="toolbar" aria-label="笔记格式工具栏">
+          <BaseIconButton
+            v-for="tool in formatTools"
+            :key="tool.format"
+            class="notebook-format-toolbar__tool"
+            :class="`is-${tool.format}`"
+            :label="tool.label"
+            :title="tool.label"
+            size="sm"
+            @click="richEditor?.applyFormat(tool.format)"
+          >{{ tool.glyph }}</BaseIconButton>
+          <span class="notebook-format-toolbar__divider" aria-hidden="true" />
+          <BaseButton variant="ghost" size="sm" title="将选中文字设为链接" @click="requestLink">🔗 链接</BaseButton>
+          <BaseButton variant="ghost" size="sm" title="在光标处插入凭据信息表" @click="richEditor?.insertCredential()">▦ 凭证表格</BaseButton>
+          <BaseIconButton
+            label="统一整篇格式"
+            title="统一整篇格式"
+            size="sm"
+            @click="richEditor?.normalizeDocument()"
+          >🧹</BaseIconButton>
+        </div>
         <NotebookRichEditor
           ref="richEditor"
           :key="draft.id"

@@ -40,13 +40,19 @@ const showBlockingLoadError = computed(() => (
       <div class="notes-selected-day">
         <span class="notes-selected-day__number">{{ day.dayNumber }}</span>
         <span class="notes-selected-day__copy">
-          <strong>{{ day.weekday }}<small v-if="day.isToday"> · 今天</small></strong>
+          <strong>
+            {{ day.weekday }}
+            <small v-if="day.isToday" class="notes-today-badge">今天</small>
+          </strong>
           <span>{{ day.fullDate }}</span>
         </span>
       </div>
-      <div class="notes-editor-save-state" :data-state="day.note.saveState" role="status" aria-live="polite">
-        <i class="notes-save-dot" aria-hidden="true" />
-        <span>{{ noteSaveLabel(day.note) }}</span>
+      <div class="notes-editor-panel__header-meta">
+        <span class="notes-editor-count">字数 {{ characterCount }}</span>
+        <div class="notes-editor-save-state" :data-state="day.note.saveState" role="status" aria-live="polite">
+          <i class="notes-save-dot" aria-hidden="true" />
+          <span>{{ noteSaveLabel(day.note) }}</span>
+        </div>
       </div>
     </header>
 
@@ -91,10 +97,7 @@ const showBlockingLoadError = computed(() => (
     </div>
 
     <footer class="notes-editor-panel__footer">
-      <div>
-        <span>{{ characterCount }} 字</span>
-        <span>停止输入 800ms 后自动保存</span>
-      </div>
+      <span>停止输入 800ms 后自动保存</span>
       <span>切换日期或周次前会先保存当前内容</span>
     </footer>
   </BaseCard>

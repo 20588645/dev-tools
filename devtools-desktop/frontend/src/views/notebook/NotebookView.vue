@@ -1,13 +1,11 @@
 <script setup lang="ts">
-import { nextTick, ref } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 
 import BaseButton from '@/components/base/BaseButton.vue'
 import StatusIndicator from '@/components/base/StatusIndicator.vue'
 import ConfirmDialog from '@/components/feedback/ConfirmDialog.vue'
-import BaseInput from '@/components/form/BaseInput.vue'
 import PageFrame from '@/components/layout/PageFrame.vue'
 import PageHeader from '@/components/layout/PageHeader.vue'
-import PageToolbar from '@/components/layout/PageToolbar.vue'
 import PageTop from '@/components/layout/PageTop.vue'
 import { useNotificationStore } from '@/stores/notification'
 
@@ -47,6 +45,9 @@ const notifications = useNotificationStore()
 const editor = ref<InstanceType<typeof NotebookEditor> | null>(null)
 const listCollapsed = ref(false)
 const confirmDelete = ref(false)
+
+const pinnedCount = computed(() => notes.value.filter((note) => note.pinned).length)
+const mediaCount = computed(() => notes.value.filter((note) => note.hasMedia).length)
 
 async function handleCreate() {
   try {
@@ -89,32 +90,13 @@ async function handleManualSave() {
   <PageFrame class="notebook-view" variant="workspace" data-test="notebook-view">
     <template #top>
       <PageTop>
-        <PageHeader title="个人笔记" description="轻量记录、账号信息与常用链接都保存在本机">
+        <PageHeader title="个人笔记" description="富文本 · 凭证表格 · 自动保存，全部保存在本机">
           <template #icon><span class="notebook-view__title-mark">N</span></template>
           <template #actions>
             <StatusIndicator :label="globalStatus.label" :status="globalStatus.status" />
+            <BaseButton variant="primary" @click="handleCreate">＋ 新建笔记</BaseButton>
           </template>
         </PageHeader>
-        <PageToolbar>
-          <div class="notebook-toolbar">
-            <BaseInput
-              v-model="search"
-              class="notebook-toolbar__search"
-              type="search"
-              variant="search"
-              placeholder="搜索标题或正文…"
-              aria-label="搜索个人笔记"
-            >
-              <template #prefix><span aria-hidden="true">⌕</span></template>
-            </BaseInput>
-            <div class="notebook-toolbar__actions">
-              <span v-if="appliedSearch" class="notebook-toolbar__result">
-                “{{ appliedSearch }}” · {{ visibleNotes.length }} 项
-              </span>
-              <BaseButton variant="primary" @click="handleCreate">＋ 新建笔记</BaseButton>
-            </div>
-          </div>
-        </PageToolbar>
       </PageTop>
     </template>
 
@@ -124,6 +106,9 @@ async function handleManualSave() {
         :notes="visibleNotes"
         :current-id="currentId"
         :total-count="notes.length"
+        :pinned-count="pinnedCount"
+        :media-count="mediaCount"
+        :search="search"
         :applied-search="appliedSearch"
         :filter="filter"
         :sort="sort"
@@ -131,6 +116,7 @@ async function handleManualSave() {
         :list-error="listError"
         @select="selectNote"
         @retry="loadList(true)"
+        @update:search="search = $event"
         @update:filter="filter = $event"
         @update:sort="sort = $event"
         @move="moveNote"

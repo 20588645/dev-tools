@@ -704,6 +704,36 @@ function alignSelection() {
   emitContent()
 }
 
+export type NotebookInlineFormat = 'bold' | 'italic' | 'underline' | 'heading' | 'bulletList' | 'orderedList'
+
+const inlineFormatCommands: Record<Exclude<NotebookInlineFormat, 'heading'>, string> = {
+  bold: 'bold',
+  italic: 'italic',
+  underline: 'underline',
+  bulletList: 'insertUnorderedList',
+  orderedList: 'insertOrderedList',
+}
+
+/** 原型 nb-toolbar 的格式按钮：恢复编辑器选区后执行浏览器富文本命令 */
+function applyFormat(format: NotebookInlineFormat) {
+  const range = restoreSelection()
+  if (!range) return
+  const start = range.startContainer instanceof Element
+    ? range.startContainer
+    : range.startContainer.parentElement
+  if (start?.closest('table[data-notebook-block="credential"]')) {
+    notifications.push('凭据信息表内不支持文本格式', 'warning')
+    return
+  }
+  if (format === 'heading') {
+    document.execCommand('formatBlock', false, start?.closest('h2') ? 'p' : 'h2')
+  } else {
+    document.execCommand(inlineFormatCommands[format])
+  }
+  captureSelection()
+  emitContent()
+}
+
 function normalizeDocument() {
   const root = editor.value
   if (!root) return
@@ -927,6 +957,7 @@ onBeforeUnmount(() => {
 
 defineExpose({
   captureSelection,
+  applyFormat,
   alignSelection,
   selectedLinkContext,
   applyLinkToSelection,

@@ -22,7 +22,7 @@ function handleKeydown(event: KeyboardEvent, index: number) {
 </script>
 
 <template>
-  <div v-if="items.length" class="todo-checklist">
+  <div class="todo-checklist">
     <div
       v-for="(item, index) in items"
       :key="item.id"
@@ -52,8 +52,8 @@ function handleKeydown(event: KeyboardEvent, index: number) {
         @click="emit('remove', index)"
       >×</BaseIconButton>
     </div>
+    <BaseButton class="todo-checklist__add" variant="ghost" size="sm" @click="emit('add')">
+      ＋ 添加子任务
+    </BaseButton>
   </div>
-  <BaseButton v-else class="todo-checklist__empty" variant="ghost" @click="emit('add')">
-    暂无子任务，点击添加第一项
-  </BaseButton>
 </template>

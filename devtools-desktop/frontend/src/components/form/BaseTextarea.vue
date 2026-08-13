@@ -31,17 +31,32 @@ const generatedId = useId()
 const textareaId = computed(() => props.id ?? `base-textarea-${generatedId}`)
 const labelId = computed(() => `${textareaId.value}-label`)
 const messageId = computed(() => `${textareaId.value}-message`)
-const textareaThemeOverrides = computed(() => props.variant === 'default' ? undefined : ({
-  color: 'transparent',
-  colorFocus: 'transparent',
-  border: '1px solid transparent',
-  borderHover: '1px solid var(--component-control-border-hover)',
-  borderFocus: '1px solid var(--component-control-border-focus)',
-  boxShadowFocus: 'var(--component-control-focus-ring)',
-  paddingSmall: props.variant === 'editor' ? '0' : undefined,
-  paddingMedium: props.variant === 'editor' ? '0' : undefined,
-  paddingLarge: props.variant === 'editor' ? '0' : undefined,
-}))
+const textareaThemeOverrides = computed(() => {
+  if (props.variant === 'default') return undefined
+  // redesign-v2 editor 变体 = 原型 .ed-area textarea：白面细边大圆角输入区
+  if (props.variant === 'editor') {
+    return {
+      color: 'var(--color-surface)',
+      colorFocus: 'var(--color-surface)',
+      border: '1px solid var(--component-control-border)',
+      borderHover: '1px solid var(--component-control-border-hover)',
+      borderFocus: '1px solid var(--component-control-border-focus)',
+      boxShadowFocus: 'var(--component-control-focus-ring)',
+      borderRadius: '12px',
+      paddingSmall: '0',
+      paddingMedium: '0',
+      paddingLarge: '0',
+    }
+  }
+  return {
+    color: 'transparent',
+    colorFocus: 'transparent',
+    border: '1px solid transparent',
+    borderHover: '1px solid var(--component-control-border-hover)',
+    borderFocus: '1px solid var(--component-control-border-focus)',
+    boxShadowFocus: 'var(--component-control-focus-ring)',
+  }
+})
 </script>
 
 <template>
@@ -96,14 +111,11 @@ const textareaThemeOverrides = computed(() => props.variant === 'default' ? unde
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
-.field-control--editor :deep(.n-input) { background: transparent; }
-.field-control--editor :deep(.n-input__border),
-.field-control--editor :deep(.n-input__state-border) { display: none; }
 .field-control--editor :deep(.n-input__textarea-el) {
   min-height: 0;
-  padding: 2px 0;
-  color: var(--color-text-muted);
-  font-size: 14px;
+  padding: 10px 13px;
+  color: var(--color-text);
+  font-size: 13px;
   line-height: 1.9;
   overflow-y: auto;
 }

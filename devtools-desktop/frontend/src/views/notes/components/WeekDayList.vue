@@ -12,8 +12,12 @@ defineProps<{
 
 defineEmits<{ select: [date: string] }>()
 
-function preview(content: string) {
-  return content.trim().replace(/\s+/g, ' ') || '还没有记录工作内容'
+function preview(day: WeekDayEntry) {
+  const title = day.note.title.trim()
+  const content = day.note.content.trim().replace(/\s+/g, ' ')
+  if (title && content) return `${title} · ${content}`
+  if (title || content) return title || content
+  return '等待记录 · 还没有记录工作内容'
 }
 </script>
 
@@ -26,11 +30,8 @@ function preview(content: string) {
     fill-height
   >
     <div class="notes-week-panel__header">
-      <div>
-        <strong>本周记录</strong>
-        <span>{{ contentDayCount }} 天已有内容</span>
-      </div>
-      <span>{{ days.length }} DAYS</span>
+      <strong>本周记录</strong>
+      <span>{{ contentDayCount }} 天已有内容 · {{ days.length }} DAYS</span>
     </div>
 
     <div class="notes-day-list" :class="{ 'notes-day-list--weekend': days.length === 7 }">
@@ -38,7 +39,11 @@ function preview(content: string) {
         v-for="day in days"
         :key="day.date"
         class="notes-day-item"
-        :class="{ 'is-active': selectedDate === day.date, 'is-today': day.isToday }"
+        :class="{
+          'is-active': selectedDate === day.date,
+          'is-today': day.isToday,
+          'has-content': hasNoteContent(day.note),
+        }"
         :selected="selectedDate === day.date"
         :pressed="selectedDate === day.date"
         :data-save-state="day.note.saveState"
@@ -46,20 +51,17 @@ function preview(content: string) {
         :aria-label="`${day.weekday} ${day.fullDate}，${noteSaveLabel(day.note)}`"
         @click="$emit('select', day.date)"
       >
-        <span class="notes-day-item__date">
-          <strong>{{ day.dayNumber }}</strong>
-          <span>{{ day.monthDay }}</span>
-        </span>
-        <span class="notes-day-item__copy">
+        <span class="notes-day-item__num">{{ day.dayNumber }}</span>
+        <span class="notes-day-item__info">
           <span class="notes-day-item__heading">
-            <strong>{{ day.weekday }}<small v-if="day.isToday">今天</small></strong>
-            <i class="notes-save-dot" aria-hidden="true" />
+            <strong>{{ day.weekday }}</strong>
+            <small v-if="day.isToday" class="notes-today-badge">今天</small>
           </span>
-          <span class="notes-day-item__title">
-            {{ day.note.title.trim() || (hasNoteContent(day.note) ? '未命名记录' : '等待记录') }}
+          <span class="notes-day-item__preview" :class="{ 'is-empty': !hasNoteContent(day.note) }">
+            {{ preview(day) }}
           </span>
-          <span class="notes-day-item__preview">{{ preview(day.note.content) }}</span>
         </span>
+        <i class="notes-save-dot" :class="{ 'is-empty': !hasNoteContent(day.note) }" aria-hidden="true" />
       </BaseSelectableItem>
     </div>
 
@@ -68,7 +70,7 @@ function preview(content: string) {
       <span class="notes-week-progress" aria-hidden="true">
         <i :style="{ width: `${days.length ? contentDayCount / days.length * 100 : 0}%` }" />
       </span>
-      <span>{{ contentDayCount }} / {{ days.length }}</span>
+      <b>{{ contentDayCount }} / {{ days.length }}</b>
     </div>
   </BaseCard>
 </template>

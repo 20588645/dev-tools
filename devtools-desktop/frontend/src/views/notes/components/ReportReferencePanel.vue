@@ -3,8 +3,10 @@ import { computed, ref, watch } from 'vue'
 
 import BaseBadge from '@/components/base/BaseBadge.vue'
 import BaseButton from '@/components/base/BaseButton.vue'
+import BaseIconButton from '@/components/base/BaseIconButton.vue'
 import BaseCheckbox from '@/components/form/BaseCheckbox.vue'
 import BaseSelect, { type SelectOption } from '@/components/form/BaseSelect.vue'
+import SidePanel from '@/components/layout/SidePanel.vue'
 import BaseSegmented, { type SegmentOption } from '@/components/navigation/BaseSegmented.vue'
 import BaseDropdownMenu, { type DropdownMenuOption } from '@/components/overlay/BaseDropdownMenu.vue'
 import EmptyState from '@/components/feedback/EmptyState.vue'
@@ -278,24 +280,26 @@ watch([() => props.open, weekKey], ([open]) => {
 </script>
 
 <template>
-  <aside
+  <SidePanel
     v-if="open"
     class="notes-reference-panel"
-    aria-labelledby="notes-reference-title"
+    title="Git 活动参考"
+    subtitle="选择后才会写入工时内容"
+    width="100%"
   >
-    <header class="notes-reference-panel__header">
-      <div>
-        <strong id="notes-reference-title">Git 活动参考</strong>
-        <span>保持日期列表可操作，选择后才会写入工时内容</span>
-      </div>
-      <div class="notes-reference-panel__header-actions">
-        <BaseButton variant="ghost" size="sm" @click="emit('openSettings')">仓库设置</BaseButton>
-        <BaseButton variant="outline" size="sm" @click="emit('close')">关闭</BaseButton>
-      </div>
-    </header>
+    <template #actions>
+      <BaseIconButton
+        label="刷新数据"
+        size="sm"
+        :disabled="status === 'loading'"
+        @click="loadActivity(true)"
+      >↻</BaseIconButton>
+      <BaseButton variant="ghost" size="sm" @click="emit('openSettings')">仓库设置</BaseButton>
+      <BaseButton variant="outline" size="sm" @click="emit('close')">关闭</BaseButton>
+    </template>
 
     <div
-      class="notes-reference-panel__body"
+      class="notes-reference-body"
       :class="{ 'is-unconfigured': status === 'unconfigured' }"
     >
       <section class="notes-reference-query">
@@ -303,7 +307,6 @@ watch([() => props.open, weekKey], ([open]) => {
           <strong>当前周代码活动</strong>
           <span>作者 {{ author || '全部' }} · {{ configuredCount }} 个仓库 · 最近更新 {{ lastUpdatedLabel }}</span>
         </div>
-        <BaseButton variant="outline" size="sm" :loading="status === 'loading'" @click="loadActivity(true)">刷新数据</BaseButton>
         <div class="notes-reference-query__meta">
           <BaseBadge>{{ weekDates[0]?.slice(5) }} — {{ weekDates.at(-1)?.slice(5) }}</BaseBadge>
           <BaseBadge>分支：按仓库配置</BaseBadge>
@@ -420,16 +423,18 @@ watch([() => props.open, weekKey], ([open]) => {
       </div>
     </div>
 
-    <footer class="notes-reference-panel__footer">
-      <span class="notes-reference-selection">已选 <strong>{{ selectedIds.size }}</strong> 条</span>
-      <div>
-        <BaseSelect v-model="batchMode" :options="batchOptions" aria-label="批量写入方式" />
-        <BaseButton variant="ghost" size="sm" :disabled="!canUndo" @click="emit('undo')">撤销上次</BaseButton>
-        <BaseDropdownMenu :options="moreOptions" @select="handleMoreAction">
-          <BaseButton variant="ghost" size="sm">更多</BaseButton>
-        </BaseDropdownMenu>
-        <BaseButton size="sm" :disabled="!canInsertSelection" @click="insertSelected">加入所选</BaseButton>
+    <template #footer>
+      <div class="notes-reference-footer">
+        <span class="notes-reference-selection">已选 <strong>{{ selectedIds.size }}</strong> 条</span>
+        <div>
+          <BaseSelect v-model="batchMode" :options="batchOptions" aria-label="批量写入方式" />
+          <BaseButton variant="ghost" size="sm" :disabled="!canUndo" @click="emit('undo')">撤销上次</BaseButton>
+          <BaseDropdownMenu :options="moreOptions" @select="handleMoreAction">
+            <BaseButton variant="ghost" size="sm">更多</BaseButton>
+          </BaseDropdownMenu>
+          <BaseButton size="sm" :disabled="!canInsertSelection" @click="insertSelected">加入所选</BaseButton>
+        </div>
       </div>
-    </footer>
-  </aside>
+    </template>
+  </SidePanel>
 </template>

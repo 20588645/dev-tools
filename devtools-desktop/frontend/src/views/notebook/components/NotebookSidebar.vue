@@ -7,8 +7,9 @@ import BaseSelectableItem from '@/components/base/BaseSelectableItem.vue'
 import EmptyState from '@/components/feedback/EmptyState.vue'
 import ErrorState from '@/components/feedback/ErrorState.vue'
 import LoadingState from '@/components/feedback/LoadingState.vue'
+import BaseInput from '@/components/form/BaseInput.vue'
 import BaseSelect from '@/components/form/BaseSelect.vue'
-import FilterChip from '@/components/navigation/FilterChip.vue'
+import BaseSegmented, { type SegmentOption } from '@/components/navigation/BaseSegmented.vue'
 import type { NotebookSummary } from '@/services/modules/notebook-service'
 
 import type {
@@ -21,6 +22,9 @@ const props = defineProps<{
   notes: NotebookSummary[]
   currentId: string
   totalCount: number
+  pinnedCount: number
+  mediaCount: number
+  search: string
   appliedSearch: string
   filter: NotebookFilter
   sort: NotebookSort
@@ -31,6 +35,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   select: [id: string]
   retry: []
+  'update:search': [value: string]
   'update:filter': [value: NotebookFilter]
   'update:sort': [value: NotebookSort]
   move: [id: string, direction: -1 | 1]
@@ -41,6 +46,12 @@ const sortOptions = [
   { label: '创建时间', value: 'created' },
   { label: '手动排序', value: 'manual' },
 ]
+
+const filterOptions = computed<SegmentOption[]>(() => [
+  { label: `全部 ${props.totalCount}`, value: 'all' },
+  { label: `置顶 ${props.pinnedCount}`, value: 'pinned' },
+  { label: `图片 ${props.mediaCount}`, value: 'media' },
+])
 
 const manualDisabled = computed(() => props.filter !== 'all' || Boolean(props.appliedSearch))
 
@@ -65,10 +76,18 @@ function formatUpdated(value: string) {
     fill-height
   >
     <header class="notebook-list-panel__header">
-      <div>
-        <strong>全部笔记</strong>
-        <span>{{ notes.length }} / {{ totalCount }} 项</span>
-      </div>
+      <BaseInput
+        class="notebook-list-panel__search"
+        :model-value="search"
+        type="search"
+        variant="search"
+        size="sm"
+        placeholder="搜索标题或正文…"
+        aria-label="搜索个人笔记"
+        @update:model-value="emit('update:search', $event)"
+      >
+        <template #prefix><span aria-hidden="true">⌕</span></template>
+      </BaseInput>
       <BaseSelect
         class="notebook-list-panel__sort"
         :model-value="sort"
@@ -79,9 +98,13 @@ function formatUpdated(value: string) {
     </header>
 
     <div class="notebook-list-panel__filters" aria-label="笔记筛选">
-      <FilterChip label="全部" :selected="filter === 'all'" @update:selected="emit('update:filter', 'all')" />
-      <FilterChip label="已置顶" :selected="filter === 'pinned'" @update:selected="emit('update:filter', 'pinned')" />
-      <FilterChip label="含图片" :selected="filter === 'media'" @update:selected="emit('update:filter', 'media')" />
+      <BaseSegmented
+        :model-value="filter"
+        :options="filterOptions"
+        aria-label="笔记筛选"
+        @update:model-value="emit('update:filter', $event as NotebookFilter)"
+      />
+      <span v-if="appliedSearch" class="notebook-list-panel__result">“{{ appliedSearch }}” · {{ notes.length }} 项</span>
     </div>
 
     <div v-if="listState === 'loading' && notes.length === 0" class="notebook-list-panel__state">
@@ -115,10 +138,11 @@ function formatUpdated(value: string) {
             <strong>{{ note.title || '无标题' }}</strong>
             <small v-if="note.pinned">PIN</small>
           </span>
-          <span class="notebook-note-item__preview">{{ note.preview || '暂无正文内容' }}</span>
-          <span class="notebook-note-item__meta">
-            <span>{{ formatUpdated(note.updatedAt) }}</span>
-            <span v-if="note.hasMedia">含图片</span>
+          <span class="notebook-note-item__preview">
+            {{ note.preview || '暂无正文内容' }}
+            <span class="notebook-note-item__meta">
+              · {{ formatUpdated(note.updatedAt) }}<template v-if="note.hasMedia"> · 含图片</template>
+            </span>
           </span>
         </BaseSelectableItem>
         <span v-if="sort === 'manual'" class="notebook-note-item__order" @click.stop>

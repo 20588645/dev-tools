@@ -28,7 +28,7 @@ import {
 
 export type TodoLoadState = 'idle' | 'loading' | 'loaded' | 'error'
 export type TodoSaveState = 'idle' | 'dirty' | 'saving' | 'saved' | 'error'
-export type TodoFilter = 'all' | 'today' | 'overdue'
+export type TodoFilter = 'active' | 'done' | 'all'
 
 export interface TodoDraft extends TodoRecord {
   description: string
@@ -118,12 +118,7 @@ export function useTodo(options: TodoOptions = {}) {
   const todos = ref<TodoDraft[]>([])
   const currentId = ref('')
   const search = ref('')
-  const filter = ref<TodoFilter>('all')
-  const collapsed = reactive<Record<TodoStatus, boolean>>({
-    todo: false,
-    doing: false,
-    done: false,
-  })
+  const filter = ref<TodoFilter>('active')
   const listState = ref<TodoLoadState>('idle')
   const listError = ref('')
   const initialized = ref(false)
@@ -136,10 +131,9 @@ export function useTodo(options: TodoOptions = {}) {
   const currentTodo = computed(() => todos.value.find((todo) => todo.id === currentId.value) ?? null)
   const visibleTodos = computed(() => {
     const query = search.value.trim().toLocaleLowerCase('zh-CN')
-    return todos.value.filter((todo) => {
-      const timing = todoTiming(todo, now())
-      if (filter.value === 'today' && timing !== 'today') return false
-      if (filter.value === 'overdue' && timing !== 'overdue') return false
+    const matched = todos.value.filter((todo) => {
+      if (filter.value === 'active' && todo.status === 'done') return false
+      if (filter.value === 'done' && todo.status !== 'done') return false
       if (!query) return true
       const haystack = [
         todo.title,
@@ -148,13 +142,17 @@ export function useTodo(options: TodoOptions = {}) {
       ].join(' ').toLocaleLowerCase('zh-CN')
       return haystack.includes(query)
     })
+    // 「全部」视图把已完成压到列表底部，进行中的排前（原型行为）
+    return [
+      ...matched.filter((todo) => todo.status !== 'done'),
+      ...matched.filter((todo) => todo.status === 'done'),
+    ]
   })
-  const groups = computed(() => ({
-    todo: visibleTodos.value.filter((todo) => todo.status === 'todo'),
-    doing: visibleTodos.value.filter((todo) => todo.status === 'doing'),
-    done: visibleTodos.value.filter((todo) => todo.status === 'done'),
-  }))
   const completedCount = computed(() => todos.value.filter((todo) => todo.status === 'done').length)
+  const activeCount = computed(() => todos.value.length - completedCount.value)
+  const todayDueCount = computed(() => todos.value
+    .filter((todo) => todoTiming(todo, now()) === 'today')
+    .length)
   const globalStatus = computed(() => {
     if (listState.value === 'error') return { status: 'offline' as const, label: '待办服务暂不可用' }
     if (todos.value.some((todo) => todo.saveState === 'error')) {
@@ -374,10 +372,6 @@ export function useTodo(options: TodoOptions = {}) {
     return deleted
   }
 
-  function toggleGroup(status: TodoStatus) {
-    collapsed[status] = !collapsed[status]
-  }
-
   function hasIncompleteChecklist(todo = currentTodo.value) {
     return Boolean(todo?.checklist.some((item) => !item.done))
   }
@@ -397,15 +391,15 @@ export function useTodo(options: TodoOptions = {}) {
   return {
     todos,
     visibleTodos,
-    groups,
     currentId,
     currentTodo,
     search,
     filter,
-    collapsed,
     listState,
     listError,
     completedCount,
+    activeCount,
+    todayDueCount,
     globalStatus,
     load,
     selectTodo,
@@ -417,7 +411,6 @@ export function useTodo(options: TodoOptions = {}) {
     addChecklist,
     removeChecklist,
     setStatus,
-    toggleGroup,
     hasIncompleteChecklist,
     flushCurrent,
     flushAll,
