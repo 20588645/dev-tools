@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { onActivated, onDeactivated, onMounted, ref } from 'vue'
+import { computed, onActivated, onDeactivated, onMounted, ref } from 'vue'
 
 import BaseButton from '@/components/base/BaseButton.vue'
 import ConfirmDialog from '@/components/feedback/ConfirmDialog.vue'
+import BaseInput from '@/components/form/BaseInput.vue'
 import PageFrame from '@/components/layout/PageFrame.vue'
 import PageHeader from '@/components/layout/PageHeader.vue'
 import PageToolbar from '@/components/layout/PageToolbar.vue'
@@ -30,6 +31,21 @@ const confirmOpen = ref(false)
 const confirmMessage = ref('')
 let confirmResolve: ((ok: boolean) => void) | null = null
 let searchDebounce: ReturnType<typeof setTimeout> | null = null
+
+/** 原型工具栏右侧的命令搜索：纯前端过滤，不动数据。 */
+const cmdQuery = ref('')
+const filteredCommands = computed(() => {
+  const query = cmdQuery.value.trim().toLowerCase()
+  if (!query) return store.commands
+  return store.commands.filter((cmd) => (
+    cmd.name.toLowerCase().includes(query) || cmd.command.toLowerCase().includes(query)
+  ))
+})
+const commandHint = computed(() => (
+  cmdQuery.value.trim()
+    ? `${filteredCommands.value.length} / ${store.commands.length} 条`
+    : `${store.commands.length} 条`
+))
 
 function showConfirm(message: string) {
   confirmMessage.value = message
@@ -127,40 +143,49 @@ function onSearch(direction: 'next' | 'prev', incremental = false) {
             @update:password="store.sudoPasswordDraft = $event"
             @save="store.saveSudoPassword()"
           />
+          <BaseInput
+            v-model="cmdQuery"
+            size="sm"
+            clearable
+            placeholder="搜索命令…"
+            aria-label="搜索命令"
+            class="term-cmd-search"
+          />
         </PageToolbar>
       </PageTop>
     </template>
 
     <div class="term-page__body">
-      <div class="term-cmd-grid-wrapper">
-        <CommandGrid
-          :commands="store.commands"
-          :param-drafts="store.paramDrafts"
-          :loading="store.commandsLoading"
-          @run="onRunCommand"
-          @remove="onRemoveCommand"
-          @update:param="store.setParamDraft($event.id, $event.value)"
-        />
-      </div>
-
-      <div class="term-splitter" aria-hidden="true" />
+      <!-- 原型：预设命令网格装进带头部的面板 -->
+      <section class="term-cmd-panel" aria-labelledby="term-cmd-title">
+        <div class="term-cmd-panel__head">
+          <h2 id="term-cmd-title" class="term-cmd-panel__title">预设命令</h2>
+          <span class="term-cmd-panel__hint">{{ commandHint }}</span>
+        </div>
+        <div class="term-cmd-grid-wrapper">
+          <CommandGrid
+            :commands="filteredCommands"
+            :param-drafts="store.paramDrafts"
+            :loading="store.commandsLoading"
+            :empty-text="cmdQuery.trim() ? '没有匹配的命令' : '暂无命令，点击「添加命令」开始'"
+            @run="onRunCommand"
+            @remove="onRemoveCommand"
+            @update:param="store.setParamDraft($event.id, $event.value)"
+          />
+        </div>
+      </section>
 
       <div class="term-panel" :class="{ fullscreen: store.fullscreen }">
-        <div class="term-panel__header">
-          <TerminalTabs
-            :tabs="store.tabs"
-            :active-tab-id="store.activeTabId"
-            :can-close="store.canCloseTab"
-            @activate="getTerminalRuntime()?.switchTab($event)"
-            @close="getTerminalRuntime()?.closeTab($event)"
-            @create="getTerminalRuntime()?.createTab()"
+        <!-- 原型：面板头（标题 + 状态 + 操作），标签行单独一排 -->
+        <div class="term-panel__head">
+          <h2 class="term-panel__title">终端</h2>
+          <span
+            class="term-status-dot"
+            :class="store.connectionStatus"
+            :title="store.connectionStatus"
           />
+          <span class="term-panel__grow" />
           <div class="term-panel__actions">
-            <span
-              class="term-status-dot"
-              :class="store.connectionStatus"
-              :title="store.connectionStatus"
-            />
             <span
               class="term-action-btn"
               role="button"
@@ -196,6 +221,16 @@ function onSearch(direction: 'next' | 'prev', incremental = false) {
               <span>{{ store.fullscreen ? '还原' : '全屏' }}</span>
             </span>
           </div>
+        </div>
+        <div class="term-panel__tabs">
+          <TerminalTabs
+            :tabs="store.tabs"
+            :active-tab-id="store.activeTabId"
+            :can-close="store.canCloseTab"
+            @activate="getTerminalRuntime()?.switchTab($event)"
+            @close="getTerminalRuntime()?.closeTab($event)"
+            @create="getTerminalRuntime()?.createTab()"
+          />
         </div>
         <div class="term-panel__body">
           <TerminalSearch

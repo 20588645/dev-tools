@@ -334,6 +334,8 @@ onBeforeUnmount(() => {
         @close="onCloseTab"
         @contextmenu="onTabContext"
       />
+      <!-- 原型：标签浮在面板上方，编辑区 + 状态栏合为一块圆角面板（左上角与活跃标签相接） -->
+      <div class="ed-panel">
       <div class="ed-body">
         <CodeMirrorPane
           v-show="store.hasTabs"
@@ -359,6 +361,7 @@ onBeforeUnmount(() => {
         :cursor-col="store.cursorCol"
         :save-status="store.saveStatus"
       />
+      </div>
     </div>
 
     <EditorBrowserDialog

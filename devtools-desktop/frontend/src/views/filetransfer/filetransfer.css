@@ -20,7 +20,7 @@
   flex-direction: column;
   gap: var(--space-3);
   min-height: 0;
-  padding: var(--space-2) var(--space-2) var(--space-2);
+  padding: 0 var(--space-4) var(--space-4);
   overflow: hidden;
 }
 
@@ -88,6 +88,7 @@
   flex: 1 1 0;
 }
 
+/* 原型 .panel.ft-pane：柔和玻璃面板 */
 .ft-pane {
   display: flex;
   flex-direction: column;
@@ -95,8 +96,9 @@
   min-height: 0;
   overflow: hidden;
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
 }
 
 .ft-pane-head {
@@ -105,24 +107,34 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--color-border);
+  padding: 10px 14px 8px;
 }
 
+/* 原型 pathbar 徽标：本地=主色淡底、远程=成功色淡底 */
 .ft-pane-title {
   display: inline-flex;
   flex: none;
   align-items: center;
   gap: 6px;
-  color: var(--color-text);
-  font-size: var(--font-size-sm);
+  padding: 2px 9px;
+  font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
+  border-radius: var(--radius-pill);
+}
+
+.ft-pane--local .ft-pane-title {
+  color: var(--color-action);
+  background: var(--color-action-subtle);
+}
+
+.ft-pane--remote .ft-pane-title {
+  color: var(--color-success);
+  background: var(--color-success-subtle);
 }
 
 .ft-pane-title svg {
-  width: 14px;
-  height: 14px;
-  color: var(--color-text-muted);
+  width: 13px;
+  height: 13px;
 }
 
 .ft-pane-count {
@@ -137,8 +149,7 @@
   flex: none;
   align-items: center;
   gap: 6px;
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--color-border);
+  padding: 0 12px 8px;
 }
 
 .ft-pane-toolbar-spacer {
@@ -160,14 +171,14 @@
 .ft-pane-foot {
   flex: none;
   min-height: 16px;
-  padding: 4px 12px;
+  padding: 4px 14px 6px;
   overflow: hidden;
   color: var(--color-text-subtle);
   font-family: var(--font-family-mono);
   font-size: 11px;
   text-overflow: ellipsis;
   white-space: nowrap;
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid var(--color-border-soft);
 }
 
 .ft-tabs {
@@ -296,11 +307,11 @@
   flex: none;
   grid-template-columns: 22px 1fr 80px 132px;
   gap: 8px;
-  padding: 6px 12px;
+  padding: 6px 18px;
   color: var(--color-text-subtle);
   font-size: 11px;
   user-select: none;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border-soft);
 }
 
 .ft-lh-col {
@@ -331,19 +342,22 @@
 .ft-list {
   display: flex;
   flex-direction: column;
+  padding: 3px 0;
 }
 
+/* 原型 .ft-row：圆角悬停行，无分隔线 */
 .ft-row {
   display: grid;
   grid-template-columns: 22px 1fr 80px 132px;
   gap: 8px;
   align-items: center;
-  padding: 5px 12px;
+  padding: 6px 12px;
+  margin: 0 6px;
   color: var(--color-text-muted);
   font-size: var(--font-size-xs);
   cursor: default;
   user-select: none;
-  border-bottom: 1px solid color-mix(in srgb, var(--color-border) 55%, transparent);
+  border-radius: 8px;
 }
 
 .ft-row:hover {
@@ -356,7 +370,7 @@
 }
 
 .ft-row.is-selected {
-  background: color-mix(in srgb, var(--color-action) 12%, transparent);
+  background: var(--color-action-subtle);
 }
 
 .ft-row.is-selected .ft-row-name {
@@ -416,14 +430,16 @@
   width: 100%;
 }
 
+/* 原型 .panel.ft-queue */
 .ft-queue {
   display: flex;
   flex: none;
   flex-direction: column;
   overflow: hidden;
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
 }
 
 .ft-queue-head {
@@ -432,14 +448,13 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--color-border);
+  padding: 10px 18px 6px;
 }
 
 .ft-queue-title {
   color: var(--color-text);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
+  font-size: 14px;
+  font-weight: var(--font-weight-bold);
 }
 
 .ft-queue-count {
@@ -484,13 +499,14 @@
   flex-direction: column;
 }
 
+/* 原型 .q-row：上分隔线由行自身承担 */
 .ft-task {
   display: grid;
   grid-template-columns: 20px 1fr auto auto;
   gap: 10px;
   align-items: center;
-  padding: 8px 12px;
-  border-bottom: 1px solid color-mix(in srgb, var(--color-border) 55%, transparent);
+  padding: 8px 18px;
+  border-top: 1px solid var(--color-border-soft);
 }
 
 .ft-task-icon {

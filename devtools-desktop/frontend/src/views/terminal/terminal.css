@@ -55,17 +55,20 @@
   overflow: hidden;
 }
 
+/* 原型工具栏：sudo 密码靠左、命令搜索贴右 */
 .term-sudo-bar {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  width: 100%;
-  margin-left: auto;
-  justify-content: flex-end;
+  min-width: 0;
 }
 
 .term-sudo-bar__input {
-  width: min(320px, 48vw);
+  width: min(280px, 42vw);
+}
+
+.term-cmd-search {
+  width: 180px;
 }
 
 .term-sudo-bar__status {
@@ -82,18 +85,50 @@
   color: var(--color-warning);
 }
 
+/* 原型：预设命令面板（panel + panel-head） */
+.term-cmd-panel {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+}
+
+.term-cmd-panel__head {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 18px 9px;
+}
+
+.term-cmd-panel__title {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: var(--font-weight-bold);
+}
+
+.term-cmd-panel__hint {
+  color: var(--color-text-subtle);
+  font-size: 11.5px;
+}
+
 .term-cmd-grid-wrapper {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
-  padding-right: 4px;
+  padding: 0 18px 18px;
 }
 
 .term-cmd-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: var(--space-3);
-  margin-bottom: var(--space-5);
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 11px;
   align-content: start;
 }
 
@@ -104,135 +139,144 @@
   text-align: center;
 }
 
+/* 原型 .cmd-card：柔和玻璃卡 + 悬停浮起 */
 .term-cmd-card {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: var(--space-4);
-  background: var(--color-surface, var(--color-surface));
-  border: 1px solid var(--color-border, var(--color-border));
-  border-radius: var(--radius-md, var(--radius-md));
-  transition: border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
+  gap: 7px;
+  padding: 11px 12px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-soft);
+  border-radius: 13px;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
 }
 
 .term-cmd-card:hover {
-  border-color: var(--color-action, var(--color-action));
-  box-shadow: var(--shadow-sm);
-}
-
-.term-cmd-card__delete {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity var(--duration-fast);
-}
-
-.term-cmd-card:hover .term-cmd-card__delete {
-  opacity: 1;
-  pointer-events: auto;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .term-cmd-card__header {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding-right: 28px;
+  gap: 7px;
+  min-height: 24px;
 }
 
 .term-cmd-card__icon {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  font-size: 20px;
-  background: var(--color-surface-subtle, var(--color-surface-raised));
-  border-radius: 8px;
+  flex: none;
+  font-size: 14px;
+  line-height: 1;
 }
 
 .term-cmd-card__name {
+  overflow: hidden;
   color: var(--color-text);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
+  font-size: 12.5px;
+  font-weight: var(--font-weight-bold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.term-cmd-card__delete {
+  margin-left: auto;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--duration-fast);
+}
+
+.term-cmd-card:hover .term-cmd-card__delete,
+.term-cmd-card:focus-within .term-cmd-card__delete {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .term-cmd-card__command {
   overflow: hidden;
-  padding: 6px 10px;
-  color: var(--color-text-muted);
-  font-family: var(--font-family-mono, var(--font-family-mono));
-  font-size: var(--font-size-xs);
+  padding: 4px 8px;
+  color: var(--color-text-subtle);
+  font-family: var(--font-family-mono);
+  font-size: 10.5px;
   text-overflow: ellipsis;
   white-space: nowrap;
-  background: var(--color-surface-subtle, var(--color-surface-raised));
-  border-radius: 6px;
+  background: var(--color-surface-subtle);
+  border-radius: 8px;
 }
 
-.term-cmd-card__param--spacer {
-  height: 30px;
-}
-
-.term-cmd-card__actions {
+/* 原型 .cmd-foot：参数输入与「执行」同排 */
+.term-cmd-card__foot {
   display: flex;
-  gap: var(--space-2);
+  align-items: center;
+  gap: 7px;
 }
 
-.term-cmd-card__run {
-  flex: 1;
+.term-cmd-card__param {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
-.term-splitter {
-  flex-shrink: 0;
-  height: 1px;
-  margin-top: var(--space-3);
-  background: var(--color-border, var(--color-border));
+.term-cmd-card__spring {
+  flex: 1 1 auto;
 }
 
+/* 原型：终端面板 = panel 头（标题 + 状态 + 操作）+ 标签行 + 圆角深色屏幕 */
 .term-panel {
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
-  height: 380px;
-  min-height: 200px;
+  height: 400px;
+  min-height: 220px;
   max-height: 50vh;
-  padding: var(--space-3) 0 var(--space-4);
+  margin-top: var(--space-3);
   overflow: hidden;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
 }
 
-.term-panel__header {
+.term-panel__head {
   display: flex;
-  flex-shrink: 0;
-  align-items: flex-end;
-  justify-content: space-between;
-  height: 38px;
-  padding: 0 14px;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 18px 8px;
   user-select: none;
-  background: var(--color-terminal-header, var(--color-terminal-header));
-  border: 1px solid var(--color-border, var(--color-border));
-  border-bottom: none;
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+}
+
+.term-panel__title {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: var(--font-weight-bold);
+}
+
+.term-panel__grow {
+  flex: 1 1 auto;
+}
+
+.term-panel__tabs {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  padding: 0 18px 10px;
 }
 
 .term-tabs-wrapper {
   display: flex;
   flex: 1;
-  align-items: flex-end;
-  gap: 4px;
-  height: 100%;
+  align-items: center;
+  gap: 6px;
   min-width: 0;
 }
 
 .term-tabs {
   display: flex;
-  align-items: flex-end;
-  gap: 4px;
-  height: 100%;
+  align-items: center;
+  gap: 6px;
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -241,40 +285,30 @@
   display: none;
 }
 
+/* 原型 .term-tab：圆角胶囊，活跃标签用终端深色底 */
 .term-tab {
-  position: relative;
-  z-index: 1;
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  height: 28px;
-  padding: 0 12px 0 16px;
-  margin-bottom: -1px;
+  gap: 7px;
+  padding: 6px 13px;
   color: var(--color-text-muted);
-  font-family: var(--font-family-mono, var(--font-family-mono));
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
   cursor: pointer;
   user-select: none;
-  background: color-mix(in srgb, var(--color-text-muted) 8%, transparent);
-  border: 1px solid var(--color-border, var(--color-border));
-  border-bottom: none;
-  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  background: var(--color-surface-subtle);
+  border-radius: 9px;
   transition: background var(--duration-normal) var(--ease-standard), color var(--duration-normal) var(--ease-standard);
 }
 
 .term-tab:hover {
-  color: var(--color-text-muted);
-  background: color-mix(in srgb, var(--color-text-muted) 14%, transparent);
+  color: var(--color-text);
 }
 
 .term-tab.active {
-  z-index: 2;
-  color: var(--color-text);
+  color: var(--term-xterm-fg);
   font-weight: var(--font-weight-semibold);
-  background: var(--color-terminal, var(--color-terminal));
-  border-color: var(--color-border-strong, var(--color-border-strong)) var(--color-border-strong, var(--color-border-strong)) transparent;
-  box-shadow: var(--shadow-sm);
+  background: var(--color-terminal);
 }
 
 .term-tab__title {
@@ -288,35 +322,34 @@
   width: 14px;
   height: 14px;
   margin-left: 2px;
-  color: var(--color-text-muted);
+  color: inherit;
   font-size: 8px;
   border-radius: 50%;
-  transition: background var(--duration-fast), color var(--duration-fast);
+  opacity: 0.7;
+  transition: opacity var(--duration-fast);
 }
 
 .term-tab__close:hover {
-  color: var(--color-text);
-  background: var(--color-surface-hover);
+  opacity: 1;
 }
 
 .term-add-tab {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  margin-bottom: -1px;
+  width: 26px;
+  height: 26px;
   color: var(--color-text-muted);
   cursor: pointer;
-  background: transparent;
+  background: var(--color-surface-subtle);
   border: none;
-  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  border-radius: 9px;
   transition: background var(--duration-normal) var(--ease-standard), color var(--duration-normal) var(--ease-standard);
 }
 
 .term-add-tab:hover {
   color: var(--color-text);
-  background: color-mix(in srgb, var(--color-text-muted) 14%, transparent);
+  background: var(--color-surface-hover);
 }
 
 .term-add-tab:active {
@@ -325,11 +358,9 @@
 
 .term-panel__actions {
   display: flex;
+  flex: none;
   align-items: center;
-  justify-content: flex-end;
   gap: var(--space-2);
-  height: 100%;
-  padding-bottom: 5px;
 }
 
 .term-status-dot {
@@ -398,16 +429,16 @@
   transform: scale(1.05);
 }
 
+/* 原型 .term-screen：面板内的独立圆角深色屏幕 */
 .term-panel__body {
   position: relative;
   flex: 1 1 auto;
   min-height: 0;
+  margin: 0 18px 18px;
   padding: 12px 14px;
   overflow: hidden;
-  background: var(--color-terminal, var(--color-terminal));
-  border: 1px solid var(--color-border, var(--color-border));
-  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
-  box-shadow: inset 0 3px 12px color-mix(in srgb, var(--color-text) 12%, transparent), var(--shadow-sm);
+  background: var(--color-terminal);
+  border-radius: 13px;
 }
 
 .term-xterm-host,
@@ -419,7 +450,7 @@
 /* xterm 视口背景：提高选择器优先级以覆盖 addon 默认，避免 !important */
 .term-panel .term-xterm-host .xterm .xterm-viewport {
   background-color: var(--color-terminal, var(--color-terminal));
-  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  border-radius: 9px;
 }
 
 .term-panel .xterm-viewport::-webkit-scrollbar {
@@ -448,10 +479,9 @@
   width: 100vw;
   height: calc(100vh - 32px);
   max-height: calc(100vh - 32px);
-  padding: 0 20px 20px;
-  background: color-mix(in srgb, var(--color-terminal) 80%, transparent);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  margin-top: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .term-search-bar {

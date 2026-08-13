@@ -36,27 +36,36 @@
   vertical-align: -2px;
 }
 
+/* 原型 .ed-wrap：标签行浮在面板上方，容器本身透明 */
 .ed-layout {
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
   min-height: 0;
   overflow: hidden;
-  background: var(--color-surface, var(--color-surface));
-  border: 1px solid var(--color-border, var(--color-border));
-  border-radius: 12px;
-  box-shadow: var(--shadow-sm);
 }
 
+/* 编辑区 + 状态栏的圆角面板：左上角与活跃标签相接（原型 .ed-body 半径） */
+.ed-panel {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-soft);
+  border-radius: 0 var(--radius-xl) var(--radius-xl) var(--radius-xl);
+  box-shadow: var(--shadow-md);
+}
+
+/* 原型 .ed-tabs：圆角顶标签，活跃标签与面板同面色相接 */
 .ed-tabs {
   display: flex;
   flex-shrink: 0;
-  align-items: stretch;
-  gap: 0;
-  min-height: 38px;
+  align-items: flex-end;
+  gap: 4px;
+  min-height: 37px;
   overflow: hidden auto;
-  background: var(--color-surface-raised, var(--color-surface-subtle));
-  border-bottom: 1px solid var(--color-border, var(--color-border));
 }
 
 .ed-tabs::-webkit-scrollbar { height: 0; }
@@ -66,33 +75,26 @@
   display: flex;
   align-items: center;
   max-width: 220px;
-  padding: 0 10px 0 14px;
-  color: var(--color-text-muted, var(--color-text-muted));
+  padding: 8px 10px 9px 14px;
+  color: var(--color-text-muted);
   font-size: 12.5px;
+  font-weight: var(--font-weight-medium);
   white-space: nowrap;
   cursor: pointer;
   user-select: none;
-  border-right: 1px solid var(--color-border, var(--color-border));
-  transition: background 0.12s ease;
+  background: var(--color-surface-subtle);
+  border-radius: 10px 10px 0 0;
+  transition: background 0.12s ease, color 0.12s ease;
   gap: 8px;
 }
 
-.ed-tab:hover { background: var(--color-surface-hover, var(--color-surface-hover)); }
+.ed-tab:hover { color: var(--color-text); }
 
 .ed-tab.active {
-  color: var(--color-text, var(--color-text));
-  font-weight: 600;
-  background: var(--color-surface, var(--color-surface));
-}
-
-.ed-tab.active::after {
-  position: absolute;
-  right: 0;
-  bottom: -1px;
-  left: 0;
-  height: 2px;
-  content: '';
-  background: var(--color-action, var(--color-action));
+  color: var(--color-text);
+  font-weight: var(--font-weight-semibold);
+  background: var(--color-surface);
+  box-shadow: 0 -4px 12px -8px color-mix(in srgb, var(--color-text) 20%, transparent);
 }
 
 .ed-tab-name {
@@ -124,11 +126,12 @@
 
 .ed-tab-close.dirty .ed-tab-x { display: none; }
 
+/* 原型 .dirty：未保存点用警示色 */
 .ed-tab-close.dirty::before {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   content: '';
-  background: var(--color-action, var(--color-action));
+  background: var(--color-warning);
   border-radius: 50%;
 }
 
