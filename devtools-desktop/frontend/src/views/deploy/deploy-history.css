@@ -20,49 +20,6 @@
   gap: var(--space-2);
 }
 
-.deploy-history__filter-group {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-1);
-}
-
-.deploy-history__filter-sep {
-  width: 1px;
-  height: 18px;
-  align-self: center;
-  background: var(--color-border);
-}
-
-/* ---------- 概览摘要条 ---------- */
-/* 与项目总览子页同形态：一行摘要，不占整卡 */
-.deploy-history__stats {
-  display: flex;
-  margin: 0;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-4);
-}
-
-.deploy-history__stat {
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-2);
-}
-
-.deploy-history__stat dt {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-xs);
-}
-
-.deploy-history__stat dd {
-  margin: 0;
-  color: var(--color-text);
-  font-size: var(--font-size-sm);
-  font-variant-numeric: tabular-nums;
-  font-weight: var(--font-weight-semibold);
-}
-
 /* ---------- 表格单元 ---------- */
 .deploy-history__time,
 .deploy-history__server {

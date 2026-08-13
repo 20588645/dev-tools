@@ -10,7 +10,7 @@ import PageFrame from '@/components/layout/PageFrame.vue'
 import PageHeader from '@/components/layout/PageHeader.vue'
 import PageToolbar from '@/components/layout/PageToolbar.vue'
 import PageTop from '@/components/layout/PageTop.vue'
-import FilterChip from '@/components/navigation/FilterChip.vue'
+import BaseSegmented, { type SegmentOption } from '@/components/navigation/BaseSegmented.vue'
 import BaseDropdownMenu, { type DropdownMenuOption } from '@/components/overlay/BaseDropdownMenu.vue'
 import GroupRenameDialog from '@/components/overlay/GroupRenameDialog.vue'
 import { onProjectsChanged, requestAddProject } from '@/views/deploy/add-project-events'
@@ -114,12 +114,23 @@ const { tick } = useRunRealtime({
   onLog: ({ id, text, type }) => actions.appendLog(id, text, type),
 })
 
-const FILTERS: Array<{ key: RunFilter; label: string }> = [
-  { key: 'all', label: '全部' },
-  { key: 'running', label: '运行中' },
-  { key: 'multi', label: '多模块' },
-  { key: 'single', label: '单体项目' },
-]
+/** 原型 .seg 分段筛选：标签随统计带数量（全部 8 / 运行中 1 …）。 */
+const filterOptions = computed<SegmentOption[]>(() => {
+  const stats = page.stats.value
+  return [
+    { label: `全部 ${stats.total}`, value: 'all' },
+    { label: `运行中 ${stats.running}`, value: 'running' },
+    { label: `多模块 ${stats.multiModule}`, value: 'multi' },
+    { label: `单体项目 ${stats.total - stats.multiModule}`, value: 'single' },
+  ]
+})
+
+/** 原型页头副题：把三个统计数并进一句摘要，不再占一行大卡。 */
+const headerSummary = computed(() => {
+  if (page.loading.value) return '正在加载项目…'
+  const stats = page.stats.value
+  return `${stats.total} 个项目 · ${stats.running} 运行中 · ${stats.multiModule} 多模块`
+})
 
 /**
  * P1：窄窗口下「全部停止」出现会把工具栏顶成两行、挤掉「运行历史」。
@@ -208,7 +219,7 @@ onActivated(() => { void page.load({ silent: true }) })
   <PageFrame>
     <template #top>
       <PageTop>
-        <PageHeader title="本地运行" description="快速启动前端开发服务，管理模块、日志和本地地址">
+        <PageHeader title="本地运行" :description="headerSummary">
           <template #icon>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <polygon points="5 3 19 12 5 21 5 3" /><line x1="19" y1="5" x2="19" y2="19" />
@@ -222,15 +233,12 @@ onActivated(() => { void page.load({ silent: true }) })
           <div class="run-toolbar__search">
             <BaseInput v-model="page.query.value" placeholder="搜索可运行项目..." clearable />
           </div>
-          <div class="run-toolbar__filters">
-            <FilterChip
-              v-for="item in FILTERS"
-              :key="item.key"
-              :label="item.label"
-              :selected="page.filter.value === item.key"
-              @update:selected="page.filter.value = item.key"
-            />
-          </div>
+          <BaseSegmented
+            :model-value="page.filter.value"
+            :options="filterOptions"
+            aria-label="按运行状态或项目类型筛选"
+            @update:model-value="page.filter.value = ($event as RunFilter)"
+          />
           <BaseDropdownMenu :options="overflowOptions" @select="onOverflowSelect">
             <BaseButton variant="secondary" aria-label="更多操作" title="运行历史与批量操作">⋯</BaseButton>
           </BaseDropdownMenu>
@@ -250,23 +258,6 @@ onActivated(() => { void page.load({ silent: true }) })
     </ErrorState>
 
     <template v-else>
-      <!--
-        三个数字不值一整行大卡：概览收成一行摘要条，
-        把纵向空间让给真正的内容。项目数量在分组标题里也仍然可见。
-      -->
-      <dl class="run-stats">
-        <div class="run-stats__item">
-          <dt>可运行项目</dt><dd>{{ page.stats.value.total }}</dd>
-        </div>
-        <div class="run-stats__item">
-          <dt>运行中</dt><dd>{{ page.stats.value.running }}</dd>
-        </div>
-        <div class="run-stats__item">
-          <!-- 旧「已保存命令」恒等于项目总数，无信息量；改统计多模块项目数 -->
-          <dt>多模块项目</dt><dd>{{ page.stats.value.multiModule }}</dd>
-        </div>
-      </dl>
-
       <EmptyState
         v-if="page.projects.value.length === 0"
         title="还没有可运行的项目"
@@ -355,53 +346,6 @@ onActivated(() => { void page.load({ silent: true }) })
 
 <style scoped>
 .run-toolbar__search { flex: 1 1 260px; max-width: 360px; min-width: 0; }
-
-.run-toolbar__filters {
-  display: flex;
-  flex: 0 1 auto;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  align-items: center;
-}
-
-.run-stats {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
-  margin: 0 0 var(--space-3);
-  padding: 0 2px;
-}
-
-.run-stats__item {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 6px;
-}
-
-/* 竖线分隔比标点更规整，末项不加 */
-.run-stats__item:not(:last-child)::after {
-  width: 1px;
-  height: 10px;
-  margin-left: var(--space-3);
-  background: var(--color-border-strong);
-  content: "";
-  opacity: .7;
-}
-
-.run-stats__item dt {
-  color: var(--color-text-subtle);
-  font-size: var(--font-size-xs);
-}
-
-.run-stats__item dd {
-  margin: 0;
-  color: var(--color-text);
-  font-family: var(--font-family-mono);
-  font-size: var(--font-size-sm);
-  font-variant-numeric: tabular-nums;
-  font-weight: var(--font-weight-semibold);
-}
 
 /* 自适应列宽，避免固定列宽在少量项目时留大片空白（P6） */
 .run-grid {

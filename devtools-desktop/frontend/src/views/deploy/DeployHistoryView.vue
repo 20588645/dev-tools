@@ -11,7 +11,7 @@ import EmptyState from '@/components/feedback/EmptyState.vue'
 import ErrorState from '@/components/feedback/ErrorState.vue'
 import LoadingState from '@/components/feedback/LoadingState.vue'
 import BaseCheckbox from '@/components/form/BaseCheckbox.vue'
-import FilterChip from '@/components/navigation/FilterChip.vue'
+import BaseSegmented, { type SegmentOption } from '@/components/navigation/BaseSegmented.vue'
 import { getHistoryLog, type HistoryItem } from '@/services/modules/deploy-service'
 import { useLogTaskStore } from '@/stores/log-task'
 import { useNotificationStore } from '@/stores/notification'
@@ -42,17 +42,21 @@ const keepPerProject = ref('5')
 
 const reason = (cause: unknown) => cause instanceof Error ? cause.message : '未知错误'
 
-const TYPE_FILTERS: Array<{ key: HistoryTypeFilter, label: string }> = [
-  { key: 'all', label: '全部' },
-  { key: 'deploy', label: '部署' },
-  { key: 'build-only', label: '构建' },
+const TYPE_FILTERS: SegmentOption[] = [
+  { label: '全部类型', value: 'all' },
+  { label: '部署', value: 'deploy' },
+  { label: '构建', value: 'build-only' },
 ]
 
-const STATUS_FILTERS: Array<{ key: HistoryStatusFilter, label: string }> = [
-  { key: 'all', label: '全部' },
-  { key: 'success', label: '成功' },
-  { key: 'error', label: '失败' },
-]
+/** 原型 .seg：状态筛选标签随统计带数量（全部 128 / 成功 119 / 失败 6），取代独立摘要条。 */
+const statusOptions = computed<SegmentOption[]>(() => {
+  const stats = page.stats.value
+  return [
+    { label: `全部 ${stats.total}`, value: 'all' },
+    { label: `成功 ${stats.success}`, value: 'success' },
+    { label: `失败 ${stats.failed}`, value: 'error' },
+  ]
+})
 
 /** 模块标签只列前 3 个，其余折进 +N（修 H1，与本地运行页、项目总览一致）。 */
 const MODULE_TAG_LIMIT = 3
@@ -238,25 +242,18 @@ onActivated(() => { void refresh({ silent: true }) })
     </div>
 
     <div class="deploy-history__filters">
-      <div class="deploy-history__filter-group" role="group" aria-label="按类型筛选">
-        <FilterChip
-          v-for="f in TYPE_FILTERS"
-          :key="f.key"
-          :label="f.label"
-          :selected="page.typeFilter.value === f.key"
-          @update:selected="page.typeFilter.value = f.key"
-        />
-      </div>
-      <span class="deploy-history__filter-sep" aria-hidden="true"></span>
-      <div class="deploy-history__filter-group" role="group" aria-label="按状态筛选">
-        <FilterChip
-          v-for="f in STATUS_FILTERS"
-          :key="f.key"
-          :label="f.label"
-          :selected="page.statusFilter.value === f.key"
-          @update:selected="page.statusFilter.value = f.key"
-        />
-      </div>
+      <BaseSegmented
+        :model-value="page.typeFilter.value"
+        :options="TYPE_FILTERS"
+        aria-label="按类型筛选"
+        @update:model-value="page.typeFilter.value = ($event as HistoryTypeFilter)"
+      />
+      <BaseSegmented
+        :model-value="page.statusFilter.value"
+        :options="statusOptions"
+        aria-label="按状态筛选"
+        @update:model-value="page.statusFilter.value = ($event as HistoryStatusFilter)"
+      />
     </div>
 
     <LoadingState v-if="page.loading.value" label="正在加载部署历史…" />
@@ -267,21 +264,6 @@ onActivated(() => { void refresh({ silent: true }) })
       @retry="refresh()"
     />
     <template v-else>
-      <dl class="deploy-history__stats">
-        <div class="deploy-history__stat">
-          <dt>记录</dt><dd>{{ page.stats.value.total }}</dd>
-        </div>
-        <div class="deploy-history__stat">
-          <dt>成功</dt><dd>{{ page.stats.value.success }}</dd>
-        </div>
-        <div class="deploy-history__stat">
-          <dt>失败</dt><dd>{{ page.stats.value.failed }}</dd>
-        </div>
-        <div v-if="page.stats.value.filteredCount !== null" class="deploy-history__stat">
-          <dt>当前筛选</dt><dd>{{ page.stats.value.filteredCount }}</dd>
-        </div>
-      </dl>
-
       <EmptyState
         v-if="page.items.value.length === 0"
         title="还没有部署记录"

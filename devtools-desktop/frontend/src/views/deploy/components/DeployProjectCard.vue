@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
+import BaseBadge from '@/components/base/BaseBadge.vue'
 import BaseButton from '@/components/base/BaseButton.vue'
-import BaseEntityCard from '@/components/base/BaseEntityCard.vue'
 import BaseIconButton from '@/components/base/BaseIconButton.vue'
+import ProjectCard, { type ProjectCardStatus } from '@/components/cards/ProjectCard.vue'
 import type { LastDeployInfo } from '@/services/modules/deploy-service'
 import { projectDefaultServerIds, type Project } from '@/services/modules/project-service'
 
@@ -27,104 +28,83 @@ const emit = defineEmits<{
 }>()
 
 const isMulti = computed(() => props.project.type === 'multi-module')
-const moduleCount = computed(() => props.project.modules.length)
 const serverCount = computed(() => projectDefaultServerIds(props.project).length)
 const nodeLabel = computed(() => props.project.nodeVersion || '系统默认')
-const buildCommand = computed(() => props.project.buildCommand || 'npm run build')
 
 /** 模块标签只列前 3 个，其余折进 +N（与本地运行页一致）。 */
 const MODULE_TAG_LIMIT = 3
 const visibleModules = computed(() => props.project.modules.slice(0, MODULE_TAG_LIMIT).map(item => item.name))
-const hiddenModuleCount = computed(() => Math.max(0, moduleCount.value - visibleModules.value.length))
+const hiddenModuleCount = computed(() => Math.max(0, props.project.modules.length - visibleModules.value.length))
+
+const isLastToday = computed(() => {
+  if (!props.last?.timestamp) return false
+  const then = new Date(props.last.timestamp)
+  const now = new Date()
+  return then.getFullYear() === now.getFullYear()
+    && then.getMonth() === now.getMonth()
+    && then.getDate() === now.getDate()
+})
+
+const lastKind = computed(() => props.last?.type === 'deploy' ? '部署' : '构建')
+
+/** 共享 ProjectCard 状态顶边：进行中=暖橙、上次失败=红、今日成功=绿、其余无。 */
+const cardStatus = computed<ProjectCardStatus>(() => {
+  if (props.busy) return 'building'
+  if (!props.last) return 'idle'
+  if (props.last.status === 'error') return 'failed'
+  return isLastToday.value ? 'ready' : 'idle'
+})
+
+const badge = computed<{ tone: 'success' | 'warning' | 'danger' | 'neutral'; text: string }>(() => {
+  if (props.busy) return { tone: 'warning', text: '◌ 任务进行中' }
+  if (props.last?.status === 'error') return { tone: 'danger', text: `✕ 上次${lastKind.value}失败` }
+  if (props.last && isLastToday.value) return { tone: 'success', text: `✓ 今日已${lastKind.value}` }
+  return { tone: 'neutral', text: '◦ 空闲' }
+})
 
 /**
- * 状态区固定两行：主行讲服务器配置，细节行讲最近一次构建/部署。
- * 行数固定后卡片高度与状态无关，未配置服务器的卡片不会矮一截（修 D4）。
+ * 贴底一行状态便签（原型 dp-sum）：服务器配置 + 最近一次构建/部署。
+ * 始终单行，卡片高度与状态无关，未配置服务器的卡片不会矮一截（修 D4）。
  */
-const state = computed<{ tone: 'neutral' | 'active' | 'warning', line: string, detail: string }>(() => {
-  const line = serverCount.value > 0 ? `已配置 ${serverCount.value} 台服务器` : '未配置服务器'
+const footnote = computed(() => {
+  const servers = serverCount.value > 0 ? `已配 ${serverCount.value} 台服务器` : '未配置服务器'
+  if (props.busy) return `${servers} · 任务进行中`
   const last = props.last
-  if (!last) {
-    return { tone: serverCount.value > 0 ? 'active' : 'neutral', line, detail: '暂无构建/部署记录' }
-  }
-  const kind = last.type === 'deploy' ? '部署' : '构建'
+  if (!last) return `${servers} · 暂无构建/部署记录`
   const target = last.type === 'deploy' && last.serverName ? ` → ${last.serverName}` : ''
-  const modules = last.modules.length > 0 ? ` · ${last.modules.join(', ')}` : ''
-  return {
-    tone: last.status === 'success' ? 'active' : 'warning',
-    line,
-    detail: `${formatDeployAgo(last.timestamp)} · ${kind}${target}${modules} · ${last.duration}`,
-  }
+  const state = last.status === 'success' ? '✓' : '✕'
+  return `${servers} · ${formatDeployAgo(last.timestamp)} ${lastKind.value}${target} ${state} · ${last.duration}`
 })
 </script>
 
 <template>
-  <BaseEntityCard
+  <ProjectCard
     class="deploy-card"
     :class="{ 'is-busy': busy }"
     :data-project="project.name"
-    density="compact"
-    surface="sheen"
-    fill-height
-    body-align="stretch"
-    actions-layout="spread"
-    status-placement="body"
-    :status-tone="state.tone"
+    :status="cardStatus"
+    :name="project.displayName"
+    :path="project.path"
     :aria-label="`${project.displayName} 部署卡片`"
   >
-    <template #icon>
-      <span class="deploy-card__icon" aria-hidden="true">
-        <!-- 分层方块表示多模块、单页文档表示单体；不用 emoji，跨系统渲染一致（修 D5） -->
-        <svg
-          v-if="isMulti"
-          width="17"
-          height="17"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.7"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <path d="M12 3 3 7.5l9 4.5 9-4.5L12 3Z" /><path d="M3 12.5 12 17l9-4.5" /><path d="M3 17 12 21.5 21 17" />
-        </svg>
-        <svg
-          v-else
-          width="17"
-          height="17"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.7"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z" /><path d="M14 3v5h5" />
-        </svg>
-      </span>
-    </template>
-    <template #title><span :title="project.path">{{ project.displayName }}</span></template>
-    <template #headerExtra>
-      <span class="deploy-card__kind">{{ isMulti ? '多模块' : '单体' }}</span>
+    <template #name><span :title="project.path">{{ project.displayName }}</span></template>
+    <template #badge>
+      <BaseBadge :tone="badge.tone">{{ badge.text }}</BaseBadge>
     </template>
 
-    <!-- 工具与版本描述同一件事，合并成一枚双段徽标 -->
-    <div class="deploy-card__meta">
-      <span class="deploy-card__stack">
-        <span class="deploy-card__stack-name">{{ project.tool }}</span>
-        <span class="deploy-card__stack-ver">{{ nodeLabel }}</span>
-      </span>
-    </div>
-    <div v-if="isMulti" class="deploy-card__mods">
-      <span v-for="name in visibleModules" :key="name" class="deploy-card__mod">{{ name }}</span>
-      <span v-if="hiddenModuleCount > 0" class="deploy-card__mods-more">+{{ hiddenModuleCount }}</span>
-    </div>
-    <div v-else class="deploy-card__command">
-      <code :title="buildCommand">{{ buildCommand }}</code>
-    </div>
+    <template #meta>
+      <div class="deploy-card__tags">
+        <span class="deploy-card__tag">{{ isMulti ? '多模块' : '单体' }}</span>
+        <span class="deploy-card__tag">{{ project.tool }}</span>
+        <span class="deploy-card__tag">{{ nodeLabel }}</span>
+        <template v-if="isMulti">
+          <span v-for="name in visibleModules" :key="name" class="deploy-card__tag is-soft">{{ name }}</span>
+          <span v-if="hiddenModuleCount > 0" class="deploy-card__more">+{{ hiddenModuleCount }}</span>
+        </template>
+      </div>
+    </template>
 
-    <template #status>{{ state.line }}</template>
-    <template #statusDetail>{{ state.detail }}</template>
+    <template #footnote>{{ footnote }}</template>
 
     <template #actions>
       <!-- 进行中只留查看进度：其余操作此时都会被后端拒绝，露出来只会误导 -->
@@ -148,122 +128,45 @@ const state = computed<{ tone: 'neutral' | 'active' | 'warning', line: string, d
         </BaseIconButton>
       </template>
     </template>
-  </BaseEntityCard>
+  </ProjectCard>
 </template>
 
 <style scoped>
-.deploy-card__icon {
-  display: grid;
-  width: 34px;
-  height: 34px;
-  place-items: center;
-  border-radius: var(--radius-md);
-  background: var(--component-entity-card-icon-face);
-  box-shadow: var(--component-entity-card-edge);
-  color: var(--color-text-muted);
-}
-
-.deploy-card__icon svg {
-  display: block;
-}
-
-.deploy-card__kind {
-  flex: 0 0 auto;
-  padding: 2px 8px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-pill);
-  color: var(--color-text-subtle);
-  font-size: 10px;
-  white-space: nowrap;
-}
-
-.deploy-card__meta {
-  display: flex;
-  min-width: 0;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-1);
-}
-
-/* 双段徽标：左段工具名、右段版本号，中间一条分隔线 */
-.deploy-card__stack {
-  display: inline-flex;
-  overflow: hidden;
-  flex: 0 0 auto;
-  align-items: stretch;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  box-shadow: var(--component-entity-card-edge);
-}
-
-.deploy-card__stack-name {
-  padding: 2px 7px;
-  background: var(--component-entity-card-panel);
-  color: var(--color-text-muted);
-  font-size: 10px;
-  white-space: nowrap;
-}
-
-.deploy-card__stack-ver {
-  padding: 2px 7px;
-  border-left: 1px solid var(--color-border);
-  color: var(--color-text-subtle);
-  font-family: var(--font-family-mono);
-  font-size: 10px;
-  white-space: nowrap;
-}
-
-/* 模块标签不加边框，只留浅底：它们从属于工具版本，不该抢同样的视觉重量 */
-.deploy-card__mods {
+/* 标签只保留一行：多出的模块名靠 +N 表达，不许换行顶高卡片 */
+.deploy-card__tags {
   display: flex;
   overflow: hidden;
   min-width: 0;
   max-height: 22px;
+  flex: 1 1 auto;
   flex-wrap: wrap;
-  gap: var(--space-1);
+  gap: 6px;
+  align-items: center;
 }
 
-.deploy-card__mod {
+/* 原型 .tag：统一 mono 小标签 */
+.deploy-card__tag {
   flex: 0 0 auto;
   padding: 2px 7px;
-  border-radius: var(--radius-sm);
-  background: var(--component-entity-card-panel);
-  color: var(--color-text-subtle);
+  border-radius: 6px;
+  background: var(--color-surface-subtle);
+  color: var(--color-text-muted);
+  font-family: var(--font-family-mono);
   font-size: 10px;
   white-space: nowrap;
 }
 
-.deploy-card__mods-more {
+.deploy-card__tag.is-soft {
+  color: var(--color-text-subtle);
+}
+
+.deploy-card__more {
   flex: 0 0 auto;
-  padding: 2px 6px;
   color: var(--color-action);
   font-size: 10px;
 }
 
-.deploy-card__command {
-  min-width: 0;
-  padding: 6px 10px;
-  border-radius: var(--radius-sm);
-  background: var(--component-entity-card-panel);
-  box-shadow: inset 2px 0 0 color-mix(in srgb, var(--color-action) 42%, var(--color-border));
-}
-
-.deploy-card__command code {
-  display: block;
-  overflow: hidden;
-  color: var(--color-text);
-  font-family: var(--font-family-mono);
-  font-size: 10px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.deploy-card__command code::before {
-  color: var(--color-text-subtle);
-  content: "$ ";
-}
-
-/* 进行中：整卡降低对比度，明确它此刻不接受新操作 */
+/* 进行中：整卡边框偏暖，明确它此刻不接受新操作 */
 .deploy-card.is-busy {
   border-color: color-mix(in srgb, var(--color-warning) 38%, var(--color-border));
 }

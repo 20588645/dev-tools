@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onActivated, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onActivated, onMounted, ref } from 'vue'
 
 import BaseButton from '@/components/base/BaseButton.vue'
 import ConfirmDialog from '@/components/feedback/ConfirmDialog.vue'
@@ -7,7 +7,7 @@ import EmptyState from '@/components/feedback/EmptyState.vue'
 import ErrorState from '@/components/feedback/ErrorState.vue'
 import LoadingState from '@/components/feedback/LoadingState.vue'
 import BaseInput from '@/components/form/BaseInput.vue'
-import FilterChip from '@/components/navigation/FilterChip.vue'
+import BaseSegmented, { type SegmentOption } from '@/components/navigation/BaseSegmented.vue'
 import GroupRenameDialog from '@/components/overlay/GroupRenameDialog.vue'
 import { onProjectsChanged, requestAddProject } from '@/views/deploy/add-project-events'
 import { getServers, removeProject as removeProjectRequest, type DeployServer } from '@/services/modules/deploy-service'
@@ -47,13 +47,17 @@ const servers = ref<DeployServer[]>([])
 const nodeVersions = ref<string[]>([])
 const currentNodeVersion = ref('')
 
-const FILTERS: Array<{ key: DeployFilter, label: string }> = [
-  { key: 'all', label: '全部' },
-  { key: 'multi', label: '多模块' },
-  { key: 'single', label: '单体项目' },
-  { key: 'configured', label: '已配置' },
-  { key: 'unconfigured', label: '未配置' },
-]
+/** 原型 .seg 分段筛选：标签随统计带数量，取代独立一行的摘要条。 */
+const filterOptions = computed<SegmentOption[]>(() => {
+  const stats = page.stats.value
+  return [
+    { label: `全部 ${stats.total}`, value: 'all' },
+    { label: `多模块 ${stats.multiModule}`, value: 'multi' },
+    { label: `单体项目 ${stats.total - stats.multiModule}`, value: 'single' },
+    { label: `已配置 ${stats.configured}`, value: 'configured' },
+    { label: `未配置 ${stats.total - stats.configured}`, value: 'unconfigured' },
+  ]
+})
 
 /** 任务完成后刷新卡片，让「最近部署」摘要跟上。 */
 useDeployRealtime({ onFinished: () => void page.load({ silent: true }) })
@@ -176,15 +180,12 @@ onActivated(() => {
         aria-label="搜索项目"
         placeholder="搜索项目..."
       />
-      <div class="deploy-dashboard__filters" role="group" aria-label="项目筛选">
-        <FilterChip
-          v-for="item in FILTERS"
-          :key="item.key"
-          :label="item.label"
-          :selected="page.filter.value === item.key"
-          @update:selected="page.filter.value = item.key"
-        />
-      </div>
+      <BaseSegmented
+        :model-value="page.filter.value"
+        :options="filterOptions"
+        aria-label="按项目类型或配置状态筛选"
+        @update:model-value="page.filter.value = ($event as DeployFilter)"
+      />
     </div>
 
     <LoadingState v-if="page.loading.value" label="正在加载项目…" />
@@ -196,18 +197,6 @@ onActivated(() => {
     />
 
     <template v-else>
-      <dl class="deploy-dashboard__stats">
-        <div class="deploy-dashboard__stat">
-          <dt>项目</dt><dd>{{ page.stats.value.total }}</dd>
-        </div>
-        <div class="deploy-dashboard__stat">
-          <dt>已配置服务器</dt><dd>{{ page.stats.value.configured }}</dd>
-        </div>
-        <div class="deploy-dashboard__stat">
-          <dt>多模块项目</dt><dd>{{ page.stats.value.multiModule }}</dd>
-        </div>
-      </dl>
-
       <EmptyState
         v-if="page.projects.value.length === 0"
         title="还没有项目"

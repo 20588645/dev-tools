@@ -3,6 +3,10 @@ import { computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 
 import BaseButton from '@/components/base/BaseButton.vue'
+import PageFrame from '@/components/layout/PageFrame.vue'
+import PageHeader from '@/components/layout/PageHeader.vue'
+import PageToolbar from '@/components/layout/PageToolbar.vue'
+import PageTop from '@/components/layout/PageTop.vue'
 import { requestAddProject } from '@/views/deploy/add-project-events'
 
 defineOptions({ name: 'DeployChrome' })
@@ -18,129 +22,76 @@ const tabs = [
 </script>
 
 <template>
-  <div class="deploy-chrome page has-fixed-header" data-test="deploy-chrome">
-    <div class="page-fixed-header">
-      <div class="page-header-bar page-header-simple">
-        <div>
-          <div class="page-title">部署面板</div>
-          <div class="page-subtitle">项目构建与 SFTP 部署管理</div>
-        </div>
-        <div class="page-header-actions">
-          <BaseButton @click="requestAddProject()">+ 添加项目</BaseButton>
-        </div>
-      </div>
-      <div class="page-toolbar">
-        <div class="seg" role="tablist" aria-label="部署子页">
-          <RouterLink
-            v-for="tab in tabs"
-            :key="tab.sub"
-            :to="tab.path"
-            class="seg__item"
-            :class="{ 'is-active': activeSub === tab.sub }"
-            role="tab"
-            :aria-selected="activeSub === tab.sub"
-          >
-            {{ tab.label }}
-          </RouterLink>
-        </div>
-      </div>
-    </div>
-    <div class="page-scroll-body deploy-chrome__body">
-      <slot />
-    </div>
-  </div>
+  <PageFrame class="deploy-chrome" data-test="deploy-chrome">
+    <template #top>
+      <PageTop>
+        <PageHeader title="部署面板" description="项目构建与 SFTP 部署管理">
+          <template #icon>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" /><path d="M12 12v9" /><path d="m16 16-4-4-4 4" />
+            </svg>
+          </template>
+          <template #actions>
+            <BaseButton variant="primary" @click="requestAddProject()">+ 添加项目</BaseButton>
+          </template>
+        </PageHeader>
+        <PageToolbar>
+          <!-- 原型页头 .seg：三个子页在同一分段器里切换 -->
+          <nav class="deploy-chrome__tabs" role="tablist" aria-label="部署子页">
+            <RouterLink
+              v-for="tab in tabs"
+              :key="tab.sub"
+              :to="tab.path"
+              class="deploy-chrome__tab"
+              :class="{ 'is-active': activeSub === tab.sub }"
+              role="tab"
+              :aria-selected="activeSub === tab.sub"
+            >
+              {{ tab.label }}
+            </RouterLink>
+          </nav>
+        </PageToolbar>
+      </PageTop>
+    </template>
+    <slot />
+  </PageFrame>
 </template>
 
 <style scoped>
-/* L3（legacy token 化）：页头与分段切换视觉自 styles/legacy 收编自持。 */
-.deploy-chrome {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  min-height: 0;
-  flex: 1 1 auto;
-}
-
-.deploy-chrome__body {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: auto;
-}
-
-.page-header-bar.page-header-simple {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 48px;
-  margin-bottom: var(--space-3);
-  padding: 0;
-}
-
-.page-title {
-  margin: 0 0 4px;
-  color: var(--color-text);
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-bold);
-  letter-spacing: -0.01em;
-  line-height: 1.25;
-}
-
-.page-subtitle {
-  margin: 2px 0 0;
-  color: var(--color-text-subtle);
-  font-size: var(--font-size-xs);
-}
-
-.page-header-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  flex-shrink: 0;
-}
-
-.page-toolbar {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
-  min-height: 36px;
-  margin-bottom: 14px;
-}
-
-.seg {
+/* redesign-v2 分段器视觉（与 BaseSegmented 同语言）：淡色槽 + 白面浮起活块 */
+.deploy-chrome__tabs {
   display: inline-flex;
   gap: 2px;
-  padding: 2px;
-  background: var(--color-surface-raised);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
+  padding: 3px;
+  background: var(--color-surface-subtle);
+  border-radius: 11px;
 }
 
-.seg__item {
+.deploy-chrome__tab {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  min-height: 28px;
-  padding: 0 13px;
-  border: none;
-  border-radius: calc(var(--radius-sm) - 2px);
-  background: transparent;
+  min-height: 24px;
+  padding: 2px var(--space-3);
+  border-radius: 8px;
   color: var(--color-text-muted);
-  font-family: inherit;
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
+  letter-spacing: 0.01em;
   white-space: nowrap;
   text-decoration: none;
   cursor: pointer;
-  transition: background-color var(--duration-fast) ease, color var(--duration-fast) ease;
+  transition: color var(--duration-fast) var(--ease-standard), background-color var(--duration-fast) var(--ease-standard);
 }
 
-.seg__item:hover { color: var(--color-text); }
+.deploy-chrome__tab:hover {
+  color: var(--color-text);
+}
 
-.seg__item.is-active {
+.deploy-chrome__tab.is-active {
   background: var(--color-surface);
-  color: var(--color-action);
-  box-shadow: var(--shadow-sm);
+  color: var(--color-text);
+  font-weight: var(--font-weight-semibold);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--color-text) 12%, transparent);
 }
 </style>

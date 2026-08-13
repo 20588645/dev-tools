@@ -60,7 +60,7 @@ function hexToHsl(hex: string): [number, number, number] {
   return [h, s * 100, l * 100]
 }
 
-function hslToHex(h: number, s: number, l: number): string {
+export function hslToHex(h: number, s: number, l: number): string {
   const sat = s / 100
   const lig = l / 100
   const k = (n: number) => (n + h / 30) % 12

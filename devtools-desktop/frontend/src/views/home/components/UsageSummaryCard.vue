@@ -1,20 +1,22 @@
 <script setup lang="ts">
 import BaseButton from '@/components/base/BaseButton.vue'
+import AreaChart from '@/components/charts/AreaChart.vue'
+import SplitBar from '@/components/charts/SplitBar.vue'
 import ErrorState from '@/components/feedback/ErrorState.vue'
 import LoadingState from '@/components/feedback/LoadingState.vue'
 
+import type { UsageWeekTrend } from '../composables/useHomeDashboard'
 import HomeCardHeader from './HomeCardHeader.vue'
 
 defineProps<{
   loading: boolean
   error: string
-  tokens: string
-  delta: string
-  cost: string
-  cacheRate: string
-  requests: string
-  heights: number[]
-  hasTrend: boolean
+  monthTokens: string
+  monthCost: string
+  todayTokens: string
+  todayCost: string
+  weekTrend: UsageWeekTrend
+  split: { label: string; percent: number }[]
 }>()
 
 defineEmits<{
@@ -24,30 +26,33 @@ defineEmits<{
 </script>
 
 <template>
-  <section class="g-card home-usage-card" aria-labelledby="home-usage-title">
-    <div class="usage-copy">
-      <HomeCardHeader label="Today · Usage" title="用量统计" title-id="home-usage-title">
-        <template #action>
-          <BaseButton class="g-card-action" variant="ghost" size="sm" @click="$emit('open')">查看详情 →</BaseButton>
-        </template>
-      </HomeCardHeader>
-      <LoadingState v-if="loading" compact label="读取今日用量…" />
+  <section class="hcard usage-card" aria-labelledby="home-usage-title">
+    <HomeCardHeader title="用量摘要" title-id="home-usage-title">
+      <template #action>
+        <BaseButton variant="outline" size="sm" @click="$emit('open')">明细</BaseButton>
+      </template>
+    </HomeCardHeader>
+    <div class="hcard-body">
+      <LoadingState v-if="loading" compact label="读取用量…" />
       <ErrorState v-else-if="error" compact title="用量暂不可用" :description="error" @retry="$emit('retry')" />
       <template v-else>
-        <div class="usage-number"><strong>{{ tokens }}</strong><span>Tokens</span></div>
-        <div class="home-usage-delta">{{ delta }}</div>
-        <div class="usage-metrics">
-          <span>成本<strong>{{ cost }}</strong></span>
-          <span>缓存命中<strong>{{ cacheRate }}</strong></span>
-          <span>请求<strong>{{ requests }}</strong></span>
+        <div class="usage-kpis">
+          <div><div class="usage-value">{{ monthTokens }}</div><div class="usage-label">本月 Token · ≈ {{ monthCost }}</div></div>
+          <div><div class="usage-value">{{ todayTokens }}</div><div class="usage-label">今日 Token · ≈ {{ todayCost }}</div></div>
         </div>
+        <div class="usage-chart">
+          <AreaChart
+            v-if="weekTrend.hasData"
+            :values="weekTrend.values"
+            :labels="weekTrend.labels"
+            :markers="weekTrend.markers"
+            :height="72"
+            aria-label="近 7 天 Token 用量趋势"
+          />
+          <div v-else class="usage-empty">近 7 天暂无用量记录</div>
+        </div>
+        <SplitBar v-if="split.length" :segments="split" aria-label="本月 Token 构成" />
       </template>
-    </div>
-    <div class="usage-chart" :class="{ empty: !hasTrend }">
-      <div class="chart-caption"><span>00:00</span><span>{{ hasTrend ? '今日真实分时趋势' : '暂无分时数据' }}</span><span>NOW</span></div>
-      <div class="spark-bars" :aria-label="hasTrend ? '今日真实用量趋势' : '今日暂无分时用量数据'">
-        <i v-for="(height, index) in heights" :key="index" :style="{ '--bar-height': `${height}%`, '--bar-opacity': hasTrend ? String(.35 + height / 155) : '.16' }" />
-      </div>
     </div>
   </section>
 </template>

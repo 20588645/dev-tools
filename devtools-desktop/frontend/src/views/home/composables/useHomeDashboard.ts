@@ -9,8 +9,9 @@ import {
 import {
   getCurrentIpPurity,
   getDeploymentHistory,
+  getLastDaysRange,
   getLocalDayRange,
-  getPreviousDayRange,
+  getLocalMonthRange,
   getRunHistory,
   getUsageSummary,
   getUsageTrends,
@@ -20,6 +21,7 @@ import {
   type UsageSummary,
   type UsageTrendPoint,
 } from '@/services/modules/home-service'
+import { hslToHex } from '@/services/theme-accent'
 
 const QUOTE_INDEX_KEY = 'devtools-home-quote-index'
 const SAVED_QUOTES_KEY = 'devtools-home-saved-quotes'
@@ -32,40 +34,24 @@ export const HOME_QUOTES = [
   '把注意力放回此刻，世界会重新变得清晰。',
 ] as const
 
-/**
- * 本轮没有建设天气 API。这个常量只用于首页的环境氛围展示，不能被解释为实时天气数据。
- */
-export const HOME_WEATHER_MOCK = {
-  source: 'mock-static' as const,
-  city: '武汉',
-  timezone: 'UTC+8',
-  temperature: 31,
-  feelsLike: 34,
-  condition: '多云',
-  humidity: 68,
-  windSpeed: 2.1,
-  low: 27,
-  high: 34,
-}
-
 export interface DashboardSectionState {
   loading: boolean
   error: string
 }
 
-export interface MoonPhaseData {
-  name: string
-  age: number
-  illumination: number
-  position: number
-  markerTop: number
-  dateLabel: string
-}
-
 export interface DaylightData {
   percent: number
   sunrise: string
+  noon: string
   sunset: string
+  dayLength: string
+  isDay: boolean
+  statusLabel: string
+  countdownLabel: string
+  /** 白天时太阳在日轨上的位置（0~1） */
+  sunT: number
+  /** 夜间时月亮在夜轨上的位置（0~1，跨过整段夜晚） */
+  nightT: number
 }
 
 export interface YearProgressData {
@@ -74,16 +60,26 @@ export interface YearProgressData {
   totalDays: number
   percent: number
   remaining: number
+  monthIndex: number
+  weekNumber: number
+  quarterRemaining: number
 }
 
 export interface WeeklyFootprintData {
   counts: number[]
   heights: number[]
   activeDays: number
-  average: string
+  total: number
   peak: string
   range: string
   currentDay: number
+}
+
+export interface UsageWeekTrend {
+  values: number[]
+  labels: string[]
+  markers: number[]
+  hasData: boolean
 }
 
 const pad = (value: number) => String(value).padStart(2, '0')
@@ -104,11 +100,10 @@ function toTimestamp(value: unknown) {
   return Number.isFinite(timestamp) ? timestamp : null
 }
 
-function activityTimestamps(history: DeploymentHistoryItem[], runHistory: RunHistoryItem[]) {
-  return [
-    ...history.map((item) => item.timestamp),
-    ...runHistory.map((item) => item.startedAt || item.timestamp),
-  ].map(toTimestamp).filter((value): value is number => value !== null)
+function itemTimestamps(items: Array<{ startedAt?: string; timestamp?: string }>) {
+  return items
+    .map((item) => toTimestamp(('startedAt' in item && item.startedAt) || item.timestamp))
+    .filter((value): value is number => value !== null)
 }
 
 function normalizeHeights(values: number[], minimum = 6) {
@@ -117,45 +112,46 @@ function normalizeHeights(values: number[], minimum = 6) {
   return values.map((value) => value ? Math.max(minimum, Math.round(value / max * 100)) : minimum)
 }
 
+/** 今日 24 小时活动分桶（每小时一桶，对应原型的 24 根节奏柱） */
 export function buildActivityBuckets(timestamps: number[], date: Date) {
-  const buckets = Array.from({ length: 12 }, () => 0)
+  const buckets = Array.from({ length: 24 }, () => 0)
   const day = startOfDay(date).getTime()
   timestamps.forEach((timestamp) => {
     const value = new Date(timestamp)
     if (startOfDay(value).getTime() !== day) return
-    buckets[Math.min(11, Math.floor(value.getHours() / 2))] += 1
+    buckets[Math.min(23, value.getHours())] += 1
   })
   return buckets
 }
 
-export function buildUsageTrendBuckets(points: UsageTrendPoint[]) {
-  const buckets = Array.from({ length: 12 }, () => 0)
-  points.forEach((point) => {
-    const match = point.bucket.match(/\s(\d{2}):/)
-    if (!match) return
-    const hour = Number(match[1])
-    if (!Number.isFinite(hour)) return
-    const tokens = point.inputTokens + point.outputTokens + point.cacheReadTokens + point.cacheCreationTokens
-    buckets[Math.min(11, Math.floor(hour / 2))] += tokens
-  })
-  return buckets
+/** ISO 8601 周数（周一为一周开始） */
+export function calculateWeekNumber(date: Date) {
+  const target = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
+  const weekday = target.getUTCDay() || 7
+  target.setUTCDate(target.getUTCDate() + 4 - weekday)
+  const yearStart = Date.UTC(target.getUTCFullYear(), 0, 1)
+  return Math.ceil(((target.getTime() - yearStart) / 86_400_000 + 1) / 7)
 }
 
-export function calculateMoonPhase(date: Date): MoonPhaseData {
-  const knownNewMoon = Date.UTC(2000, 0, 6, 18, 14)
-  const synodicMonth = 29.53058867
-  const daysSince = (date.getTime() - knownNewMoon) / 86_400_000
-  const phase = (((daysSince % synodicMonth) + synodicMonth) % synodicMonth) / synodicMonth
-  const illumination = (1 - Math.cos(phase * Math.PI * 2)) / 2
-  const names = ['新月', '娥眉月', '上弦月', '盈凸月', '满月', '亏凸月', '下弦月', '残月']
-  const phaseIndex = Math.round(phase * 8) % 8
-  return {
-    name: names[phaseIndex],
-    age: phase * synodicMonth,
-    illumination: Math.round(illumination * 100),
-    position: phase * 100,
-    markerTop: ((30 - illumination * 26) / 34) * 100,
-    dateLabel: `${pad(date.getMonth() + 1)}/${pad(date.getDate())}`,
+/** 农历月日（依赖 Intl 中国历，环境不支持时返回空串） */
+export function formatLunarDate(date: Date) {
+  try {
+    const formatted = new Intl.DateTimeFormat('zh-CN-u-ca-chinese', {
+      month: 'long',
+      day: 'numeric',
+    }).format(date)
+    return formatted.replace(/(\d+)$/, (_, day: string) => {
+      const value = Number(day)
+      if (!Number.isFinite(value) || value < 1 || value > 30) return day
+      const ones = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十']
+      if (value <= 10) return `初${ones[value]}`
+      if (value < 20) return `十${ones[value - 10]}`
+      if (value === 20) return '二十'
+      if (value < 30) return `廿${ones[value - 20]}`
+      return '三十'
+    })
+  } catch {
+    return ''
   }
 }
 
@@ -166,25 +162,92 @@ export function calculateYearProgress(date: Date): YearProgressData {
   const nextYear = new Date(year + 1, 0, 1)
   const dayIndex = Math.floor((day.getTime() - yearStart.getTime()) / 86_400_000) + 1
   const totalDays = Math.round((nextYear.getTime() - yearStart.getTime()) / 86_400_000)
+  const quarterEnd = new Date(year, Math.floor(day.getMonth() / 3) * 3 + 3, 1)
   return {
     year,
     dayIndex,
     totalDays,
     percent: dayIndex / totalDays * 100,
     remaining: totalDays - dayIndex,
+    monthIndex: day.getMonth(),
+    weekNumber: calculateWeekNumber(day),
+    quarterRemaining: Math.round((quarterEnd.getTime() - day.getTime()) / 86_400_000),
   }
 }
 
+/** 沿用武汉工作区的静态日出/日落基线；本轮不建设天文位置服务 */
+const SUNRISE_MINUTES = 5 * 60 + 28
+const SUNSET_MINUTES = 18 * 60 + 6
+
+function formatMinutes(minutes: number) {
+  return `${pad(Math.floor(minutes / 60) % 24)}:${pad(minutes % 60)}`
+}
+
+function formatDuration(minutes: number) {
+  const hours = Math.floor(minutes / 60)
+  const rest = Math.round(minutes % 60)
+  return hours > 0 ? `${hours}h${pad(rest)}m` : `${rest}m`
+}
+
 export function calculateDaylight(date: Date): DaylightData {
-  // 与已确认原型一致，沿用武汉工作区的静态日出/日落基线；本轮不建设天文位置服务。
-  const sunrise = 5 * 60 + 28
-  const sunset = 18 * 60 + 6
   const minutes = date.getHours() * 60 + date.getMinutes()
+  const dayLength = SUNSET_MINUTES - SUNRISE_MINUTES
+  const nightLength = 1440 - dayLength
+  const isDay = minutes >= SUNRISE_MINUTES && minutes < SUNSET_MINUTES
+  const sunT = Math.max(0, Math.min(1, (minutes - SUNRISE_MINUTES) / dayLength))
+  const nightElapsed = minutes < SUNRISE_MINUTES
+    ? minutes + (1440 - SUNSET_MINUTES)
+    : minutes - SUNSET_MINUTES
+  const countdownLabel = isDay
+    ? `距日落还有 ${formatDuration(SUNSET_MINUTES - minutes)}`
+    : `距日出还有 ${formatDuration(minutes < SUNRISE_MINUTES ? SUNRISE_MINUTES - minutes : 1440 - minutes + SUNRISE_MINUTES)}`
   return {
-    percent: Math.round(Math.max(0, Math.min(1, (minutes - sunrise) / (sunset - sunrise))) * 100),
-    sunrise: '05:28',
-    sunset: '18:06',
+    percent: Math.round(sunT * 100),
+    sunrise: formatMinutes(SUNRISE_MINUTES),
+    noon: formatMinutes(Math.round((SUNRISE_MINUTES + SUNSET_MINUTES) / 2)),
+    sunset: formatMinutes(SUNSET_MINUTES),
+    dayLength: formatDuration(dayLength),
+    isDay,
+    statusLabel: isDay ? '现在 · 白天' : '现在 · 夜间',
+    countdownLabel,
+    sunT,
+    nightT: Math.max(0, Math.min(1, nightElapsed / nightLength)),
   }
+}
+
+function mulberry32(seed: number) {
+  let state = seed
+  return () => {
+    state |= 0
+    state = (state + 0x6d2b79f5) | 0
+    let t = Math.imul(state ^ (state >>> 15), 1 | state)
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+/** 按日期生成当天固定的 5 色氛围色板（0 点自动换组） */
+export function generateAmbientPalette(date: Date) {
+  const seed = date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate()
+  const random = mulberry32(seed)
+  const baseHue = random() * 360
+  const spreads = [0, 28, 56, 168, 208]
+  return spreads.map((spread) => {
+    const hue = (baseHue + spread + random() * 10) % 360
+    const saturation = 56 + random() * 18
+    const lightness = 44 + random() * 12
+    return hslToHex(hue, saturation, lightness)
+  })
+}
+
+export function greetingForHour(hour: number) {
+  if (hour < 6) return '凌晨好'
+  if (hour < 9) return '早上好'
+  if (hour < 12) return '上午好'
+  if (hour < 14) return '中午好'
+  if (hour < 18) return '下午好'
+  if (hour < 22) return '晚上好'
+  return '夜深了'
 }
 
 function readSavedQuotes() {
@@ -204,6 +267,10 @@ function formatTokens(value: number) {
   return value.toLocaleString('zh-CN')
 }
 
+function trendTokens(point: UsageTrendPoint) {
+  return point.inputTokens + point.outputTokens + point.cacheReadTokens + point.cacheCreationTokens
+}
+
 function errorMessage(reason: unknown) {
   return reason instanceof Error ? reason.message : String(reason || '数据加载失败')
 }
@@ -213,9 +280,10 @@ export function useHomeDashboard(active: Readonly<Ref<boolean>>) {
   const deploymentHistory = ref<DeploymentHistoryItem[]>([])
   const runHistory = ref<RunHistoryItem[]>([])
   const usage = ref<UsageSummary | null>(null)
-  const previousUsage = ref<UsageSummary | null>(null)
-  const usageTrends = ref<UsageTrendPoint[]>([])
+  const monthUsage = ref<UsageSummary | null>(null)
+  const weekTrends = ref<UsageTrendPoint[]>([])
   const purity = ref<IpPuritySummary | null>(null)
+  const purityCheckedAt = ref('')
   const activityState = ref<DashboardSectionState>({ loading: true, error: '' })
   const usageState = ref<DashboardSectionState>({ loading: true, error: '' })
   const purityState = ref<DashboardSectionState>({ loading: true, error: '' })
@@ -231,20 +299,20 @@ export function useHomeDashboard(active: Readonly<Ref<boolean>>) {
 
   const quote = computed(() => HOME_QUOTES[quoteIndex.value])
   const quoteSaved = computed(() => savedQuotes.value.includes(quote.value))
+  const savedCount = computed(() => savedQuotes.value.length)
   const dateLabel = computed(() => new Intl.DateTimeFormat('zh-CN', {
     month: 'long',
     day: 'numeric',
     weekday: 'long',
   }).format(now.value))
-  const clockLabel = computed(() => now.value.toLocaleTimeString('zh-CN', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  }))
+  const greeting = computed(() => greetingForHour(now.value.getHours()))
   const yearProgress = computed(() => calculateYearProgress(now.value))
   const daylight = computed(() => calculateDaylight(now.value))
-  const moon = computed(() => calculateMoonPhase(now.value))
-  const timestamps = computed(() => activityTimestamps(deploymentHistory.value, runHistory.value))
+  const ambientPalette = computed(() => generateAmbientPalette(now.value))
+
+  const deployTimestamps = computed(() => itemTimestamps(deploymentHistory.value))
+  const runTimestamps = computed(() => itemTimestamps(runHistory.value))
+  const timestamps = computed(() => [...deployTimestamps.value, ...runTimestamps.value])
   const activityBuckets = computed(() => buildActivityBuckets(timestamps.value, now.value))
   const activityHeights = computed(() => normalizeHeights(activityBuckets.value))
   const activityTotal = computed(() => activityBuckets.value.reduce((sum, count) => sum + count, 0))
@@ -252,22 +320,51 @@ export function useHomeDashboard(active: Readonly<Ref<boolean>>) {
     const max = Math.max(...activityBuckets.value, 0)
     if (!max) return '今日暂无峰值'
     const index = activityBuckets.value.indexOf(max)
-    return `峰值 ${pad(index * 2)}:00—${pad(index * 2 + 2)}:00`
+    return `峰值 ${pad(index)}—${pad(index + 1)} 点`
   })
-  const usageBuckets = computed(() => buildUsageTrendBuckets(usageTrends.value))
-  const usageHeights = computed(() => normalizeHeights(usageBuckets.value, 4))
-  const usageHasTrend = computed(() => usageBuckets.value.some(Boolean))
-  const usageTokens = computed(() => usage.value ? formatTokens(usage.value.totalTokens) : '—')
-  const usageCost = computed(() => usage.value ? `$${usage.value.costUsd.toFixed(2)}` : '—')
-  const usageCacheRate = computed(() => usage.value ? `${(usage.value.cacheHitRate * 100).toFixed(1)}%` : '—')
-  const usageRequests = computed(() => usage.value ? usage.value.requests.toLocaleString('zh-CN') : '—')
-  const usageDelta = computed(() => {
-    const current = usage.value?.totalTokens || 0
-    const previous = previousUsage.value?.totalTokens || 0
-    if (!previous) return current ? '今日实时' : '今日暂无用量'
-    const delta = (current - previous) / previous * 100
-    return `较昨日 ${delta >= 0 ? '↑' : '↓'}${Math.abs(delta).toFixed(1)}% · 今日实时`
+  const countToday = (values: number[]) => {
+    const day = startOfDay(now.value).getTime()
+    return values.filter((timestamp) => startOfDay(new Date(timestamp)).getTime() === day).length
+  }
+  const runCountToday = computed(() => countToday(runTimestamps.value))
+  const deployCountToday = computed(() => countToday(deployTimestamps.value))
+
+  const todayTokens = computed(() => usage.value ? formatTokens(usage.value.totalTokens) : '—')
+  const todayCost = computed(() => usage.value ? `$${usage.value.costUsd.toFixed(2)}` : '—')
+  const monthTokens = computed(() => monthUsage.value ? formatTokens(monthUsage.value.totalTokens) : '—')
+  const monthCost = computed(() => monthUsage.value ? `$${monthUsage.value.costUsd.toFixed(2)}` : '—')
+  const usageWeekTrend = computed<UsageWeekTrend>(() => {
+    const tokensByDay = new Map<string, number>()
+    weekTrends.value.forEach((point) => {
+      const key = point.bucket.slice(0, 10)
+      tokensByDay.set(key, (tokensByDay.get(key) || 0) + trendTokens(point))
+    })
+    const values: number[] = []
+    const labels: string[] = []
+    for (let offset = 6; offset >= 0; offset -= 1) {
+      const day = startOfDay(now.value)
+      day.setDate(day.getDate() - offset)
+      const key = `${day.getFullYear()}-${pad(day.getMonth() + 1)}-${pad(day.getDate())}`
+      values.push(tokensByDay.get(key) || 0)
+      labels.push(offset === 0 ? '今' : '日一二三四五六'[day.getDay()])
+    }
+    const max = Math.max(...values)
+    const markers = [6]
+    const peakIndex = values.indexOf(max)
+    if (max > 0 && peakIndex !== 6) markers.unshift(peakIndex)
+    return { values, labels, markers, hasData: values.some(Boolean) }
   })
+  const usageSplit = computed(() => {
+    const summary = monthUsage.value
+    if (!summary || !summary.totalTokens) return []
+    const cache = summary.cacheReadTokens + summary.cacheCreationTokens
+    return [
+      { label: '输入', percent: summary.inputTokens / summary.totalTokens * 100 },
+      { label: '输出', percent: summary.outputTokens / summary.totalTokens * 100 },
+      { label: '缓存', percent: cache / summary.totalTokens * 100 },
+    ].filter((segment) => segment.percent >= 0.5)
+  })
+
   const weeklyFootprint = computed<WeeklyFootprintData>(() => {
     const start = startOfWeek(now.value)
     const counts = Array.from({ length: 7 }, () => 0)
@@ -283,36 +380,27 @@ export function useHomeDashboard(active: Readonly<Ref<boolean>>) {
       counts,
       heights: normalizeHeights(counts, 8),
       activeDays,
-      average: counts.reduce((sum, count) => sum + count, 0) ? (counts.reduce((sum, count) => sum + count, 0) / Math.max(activeDays, 1)).toFixed(1) : '0.0',
+      total: counts.reduce((sum, count) => sum + count, 0),
       peak: max ? `周${['一', '二', '三', '四', '五', '六', '日'][counts.indexOf(max)]}` : '—',
-      range: `${start.getMonth() + 1} / ${start.getDate()} — ${end.getMonth() + 1} / ${end.getDate()}`,
+      range: `${start.getMonth() + 1}/${start.getDate()} — ${end.getMonth() + 1}/${end.getDate()}`,
       currentDay: (now.value.getDay() + 6) % 7,
     }
-  })
-  const ambientMessage = computed(() => {
-    const hour = now.value.getHours()
-    if (activityTotal.value >= 40) return '专注，且富有能量。'
-    if (hour < 8 || hour >= 20) return '安静，适合慢下来。'
-    return '冷静，但不失明亮。'
-  })
-  const ambientWave = computed(() => {
-    const base = activityHeights.value.slice(2, 10)
-    return base.length === 8 ? base : [30, 62, 88, 48, 76, 38, 91, 56]
   })
 
   async function loadDashboard() {
     const version = ++refreshVersion
     const currentRange = getLocalDayRange(now.value)
-    const previousRange = getPreviousDayRange(now.value)
+    const monthRange = getLocalMonthRange(now.value)
+    const weekRange = getLastDaysRange(now.value, 7)
     activityState.value = { loading: !deploymentHistory.value.length && !runHistory.value.length, error: '' }
     usageState.value = { loading: !usage.value, error: '' }
 
-    const [deployResult, runResult, usageResult, previousResult, trendsResult] = await Promise.allSettled([
+    const [deployResult, runResult, usageResult, monthResult, trendsResult] = await Promise.allSettled([
       getDeploymentHistory(),
       getRunHistory(),
       getUsageSummary(currentRange),
-      getUsageSummary(previousRange),
-      getUsageTrends(currentRange),
+      getUsageSummary(monthRange),
+      getUsageTrends(weekRange, 'day'),
     ])
     if (version !== refreshVersion) return
 
@@ -326,8 +414,8 @@ export function useHomeDashboard(active: Readonly<Ref<boolean>>) {
     const usageErrors: string[] = []
     if (usageResult.status === 'fulfilled') usage.value = usageResult.value
     else usageErrors.push(errorMessage(usageResult.reason))
-    if (previousResult.status === 'fulfilled') previousUsage.value = previousResult.value
-    if (trendsResult.status === 'fulfilled') usageTrends.value = trendsResult.value
+    if (monthResult.status === 'fulfilled') monthUsage.value = monthResult.value
+    if (trendsResult.status === 'fulfilled') weekTrends.value = trendsResult.value
     else usageErrors.push(errorMessage(trendsResult.reason))
     usageState.value = { loading: false, error: usageErrors.length === 2 ? usageErrors[0] : '' }
   }
@@ -346,6 +434,7 @@ export function useHomeDashboard(active: Readonly<Ref<boolean>>) {
     try {
       purity.value = await getCurrentIpPurity()
       lastPurityLoadedAt = Date.now()
+      purityCheckedAt.value = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false })
       purityState.value = { loading: false, error: '' }
     } catch (reason) {
       purityState.value = { loading: false, error: errorMessage(reason) }
@@ -418,35 +507,35 @@ export function useHomeDashboard(active: Readonly<Ref<boolean>>) {
     active,
     now,
     dateLabel,
-    clockLabel,
-    weather: HOME_WEATHER_MOCK,
+    greeting,
     quote,
     quoteIndex,
     quoteSaved,
+    savedCount,
     quoteSwitching,
     nextQuote,
     toggleQuoteSaved,
     usage,
     usageState,
-    usageTokens,
-    usageCost,
-    usageCacheRate,
-    usageRequests,
-    usageDelta,
-    usageHeights,
-    usageHasTrend,
+    todayTokens,
+    todayCost,
+    monthTokens,
+    monthCost,
+    usageWeekTrend,
+    usageSplit,
     purity,
     purityState,
+    purityCheckedAt,
     activityState,
     activityTotal,
     activityPeak,
     activityHeights,
+    runCountToday,
+    deployCountToday,
     daylight,
     yearProgress,
     weeklyFootprint,
-    ambientMessage,
-    ambientWave,
-    moon,
+    ambientPalette,
     refresh,
     refreshDashboard,
     refreshPurity,

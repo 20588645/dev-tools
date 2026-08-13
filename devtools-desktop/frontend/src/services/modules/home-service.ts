@@ -102,6 +102,18 @@ export function getPreviousDayRange(date: Date): TimeRange {
   return { start: current.start - 86_400, end: current.start }
 }
 
+/** 含今天在内的最近 N 个自然日 */
+export function getLastDaysRange(date: Date, days: number): TimeRange {
+  const today = getLocalDayRange(date)
+  return { start: today.start - (days - 1) * 86_400, end: today.end }
+}
+
+export function getLocalMonthRange(date: Date): TimeRange {
+  const start = new Date(date.getFullYear(), date.getMonth(), 1).getTime()
+  const end = new Date(date.getFullYear(), date.getMonth() + 1, 1).getTime()
+  return { start: Math.floor(start / 1000), end: Math.floor(end / 1000) }
+}
+
 export async function getDeploymentHistory() {
   const value = await apiClient.get<DeploymentHistoryItem[]>('/api/history')
   return Array.isArray(value) ? value : []
@@ -117,8 +129,8 @@ export async function getUsageSummary(range: TimeRange) {
   return normalizeUsageSummary(value)
 }
 
-export async function getUsageTrends(range: TimeRange) {
-  const value = await apiClient.get<Partial<UsageTrendPoint>[]>(`/api/usage/trends?${query(range, { bucket: 'min10' })}`)
+export async function getUsageTrends(range: TimeRange, bucket: 'min10' | 'hour' | 'day' = 'min10') {
+  const value = await apiClient.get<Partial<UsageTrendPoint>[]>(`/api/usage/trends?${query(range, { bucket })}`)
   return Array.isArray(value) ? value.map(normalizeUsageTrend) : []
 }
 

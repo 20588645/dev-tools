@@ -1,8 +1,15 @@
 # DevTools Desktop 全新设计落地实施计划（redesign-v2 · 方案 B「柔和玻璃」）
 
-> 文档版本：1.1
-> 状态：**批 0 已完成（设计系统与组件库），批 1 待启动**
+> 文档版本：1.2
+> 状态：**批 0、批 1 已完成（设计系统与组件库 + 工作台三页），批 2 待启动**
 > 编制日期：2026-08-13
+>
+> 批 1 落地记录：home 按冻结原型全新实现 9 卡沉浸卡片墙（时钟走秒 / 日期种子色板换肤 /
+> 日轨 SVG / 农历与 ISO 周数 / 4 列网格矮窗回退滚动）；run 与 deploy 项目卡收敛到共享
+> `cards/ProjectCard` 基座（状态顶边 + 状态徽标 + 贴底状态便签，跨页等高）；两页筛选统一为
+> `BaseSegmented` 分段器（标签带计数），统计摘要并入页头副题；deploy 壳层
+> （DeployChrome）切换到共享 PageFrame/PageHeader/PageToolbar；日志沿用按对象弹窗的
+> LogViewer（BaseDialog）。截图：`design-preview/screenshots/redesign-v2-batch1/`。
 >
 > 批 0 落地记录：三层 token 与亮暗主题全量切换到方案 B 变量表；主题色运行时切换服务
 > （`services/theme-accent.ts` + app store `applyAccentColor`，HSL 推导 + 白字对比度自动加深，

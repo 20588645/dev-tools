@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
+import BaseBadge from '@/components/base/BaseBadge.vue'
 import BaseButton from '@/components/base/BaseButton.vue'
-import BaseEntityCard from '@/components/base/BaseEntityCard.vue'
 import BaseIconButton from '@/components/base/BaseIconButton.vue'
+import ProjectCard, { type ProjectCardStatus } from '@/components/cards/ProjectCard.vue'
 import BaseDropdownMenu, { type DropdownMenuOption } from '@/components/overlay/BaseDropdownMenu.vue'
 import type { Project } from '@/services/modules/project-service'
 import type { RunJob } from '@/services/modules/run-service'
@@ -42,30 +43,32 @@ const uptime = computed(() => {
 /** 仅完全运行起来后可重启；启动中/停止中禁用，防连点。 */
 const canRestart = computed(() => props.job?.status === 'running')
 
-/**
- * 四种状态统一成「主行 + 细节行」，交给公共卡片的两行状态区渲染。
- * 行数固定后卡片高度与状态无关，异常态不会把同排卡片顶高。
- */
-const state = computed<{ tone: 'neutral' | 'active' | 'warning', line: string, detail: string }>(() => {
+/** 共享 ProjectCard 的状态顶边：运行=青蓝渐变、过渡态=暖橙、端口占用=红、空闲无。 */
+const cardStatus = computed<ProjectCardStatus>(() => {
+  if (props.job) return props.job.status === 'running' ? 'running' : 'building'
+  if (props.alert) return 'failed'
+  return 'idle'
+})
+
+const badge = computed<{ tone: 'info' | 'warning' | 'danger' | 'neutral'; text: string }>(() => {
   const job = props.job
   if (job) {
-    const running = job.status === 'running'
-    return {
-      tone: running ? 'active' : 'neutral',
-      line: `${formatJobStateLabel(job)} · ${formatJobUrl(job)}`,
-      detail: running
-        ? `PID ${job.pid ?? '—'} · 已运行 ${uptime.value}`
-        : '等待服务监听端口',
-    }
+    if (job.status === 'running') return { tone: 'info', text: '● 运行中' }
+    return { tone: 'warning', text: `◌ ${formatJobStateLabel(job)}` }
   }
-  if (props.alert) {
-    return {
-      tone: 'warning',
-      line: `端口 ${props.alert.port} 被占用`,
-      detail: `${props.alert.command} · PID ${props.alert.pid} · 可释放后启动`,
-    }
+  if (props.alert) return { tone: 'danger', text: '⚠ 端口占用' }
+  return { tone: 'neutral', text: '◦ 未运行' }
+})
+
+/** 贴底一行状态便签（原型 .up）：运行时长 / 过渡说明 / 占用详情 / 空闲提示。 */
+const footnote = computed(() => {
+  const job = props.job
+  if (job) {
+    if (job.status === 'running') return `已运行 ${uptime.value} · PID ${job.pid ?? '—'} · ${formatJobUrl(job)}`
+    return job.status === 'stopping' ? '正在结束进程' : '等待服务监听端口'
   }
-  return { tone: 'neutral', line: '尚未运行', detail: '启动时可选择模块与命令' }
+  if (props.alert) return `端口 ${props.alert.port} 被 ${props.alert.command}（PID ${props.alert.pid}）占用`
+  return '尚未运行 · 启动时可选择模块与命令'
 })
 
 /** 模块标签行只展示前 3 个，其余折进 +N，避免标签换行把卡片顶高。 */
@@ -73,6 +76,11 @@ const MODULE_TAG_LIMIT = 3
 const visibleModules = computed(() => props.project.modules.slice(0, MODULE_TAG_LIMIT).map(item => item.name))
 const hiddenModuleCount = computed(() => Math.max(0, props.project.modules.length - visibleModules.value.length))
 
+/** 端口标签（原型 :13900）：优先取运行实态，其次取配置的固定端口。 */
+const portLabel = computed(() => {
+  const port = props.job?.port || props.project.runPort
+  return port ? `:${port}` : ''
+})
 
 /** P2：窄窗口下把次要操作收进菜单，避免四个按钮换行把「打开地址」挤到第二行。 */
 const runningMenuOptions = computed<DropdownMenuOption[]>(() => [
@@ -87,76 +95,33 @@ function onRunningMenuSelect(key: string) {
 </script>
 
 <template>
-  <BaseEntityCard
+  <ProjectCard
     class="run-card"
     :data-project="project.name"
-    density="compact"
-    surface="sheen"
-    fill-height
-    body-align="stretch"
-    actions-layout="spread"
-    status-placement="body"
-    :status-tone="state.tone"
+    :status="cardStatus"
+    :name="project.displayName"
+    :path="project.path"
     :aria-label="`${project.displayName} 运行卡片`"
   >
-    <template #icon>
-      <span class="run-card__icon" aria-hidden="true">
-        <!-- 分层方块表示多模块、单页文档表示单体；不用 emoji，跨系统渲染一致 -->
-        <svg
-          v-if="isMulti"
-          width="17"
-          height="17"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.7"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <path d="M12 3 3 7.5l9 4.5 9-4.5L12 3Z" /><path d="M3 12.5 12 17l9-4.5" /><path d="M3 17 12 21.5 21 17" />
-        </svg>
-        <svg
-          v-else
-          width="17"
-          height="17"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.7"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z" /><path d="M14 3v5h5" />
-        </svg>
-      </span>
-    </template>
-    <!-- 卡片不再单独占一行显示路径，但保留悬浮全名便于确认是哪个目录 -->
-    <template #title><span :title="project.path">{{ project.displayName }}</span></template>
-    <template #headerExtra>
-      <span class="run-card__kind">{{ isMulti ? '多模块' : '单体' }}</span>
+    <template #name><span :title="project.path">{{ project.displayName }}</span></template>
+    <template #badge>
+      <BaseBadge :tone="badge.tone">{{ badge.text }}</BaseBadge>
     </template>
 
-    <!-- 工具与版本描述同一件事，合并成一枚双段徽标，不与模块标签抢视觉重量 -->
-    <div class="run-card__meta">
-      <span class="run-card__stack">
-        <span class="run-card__stack-name">{{ project.tool }}</span>
-        <span class="run-card__stack-ver">{{ nodeLabel }}</span>
-      </span>
-    </div>
-    <!--
-      多模块列出前几个模块名，数量由 +N 表达，不再在头部重复一次；
-      单体项目没有模块行，改用启动命令补位，两种卡片的行数节奏一致。
-    -->
-    <div v-if="isMulti" class="run-card__mods">
-      <span v-for="name in visibleModules" :key="name" class="run-card__mod">{{ name }}</span>
-      <span v-if="hiddenModuleCount > 0" class="run-card__mods-more">+{{ hiddenModuleCount }}</span>
-    </div>
-    <div v-else class="run-card__command">
-      <code :title="command">{{ command }}</code>
-    </div>
+    <template #meta>
+      <div class="run-card__tags">
+        <span class="run-card__tag">{{ isMulti ? '多模块' : '单体' }}</span>
+        <span class="run-card__tag">{{ project.tool }}</span>
+        <span class="run-card__tag">{{ nodeLabel }}</span>
+        <template v-if="isMulti">
+          <span v-for="name in visibleModules" :key="name" class="run-card__tag is-soft">{{ name }}</span>
+          <span v-if="hiddenModuleCount > 0" class="run-card__more">+{{ hiddenModuleCount }}</span>
+        </template>
+        <span v-if="portLabel" class="run-card__tag">{{ portLabel }}</span>
+      </div>
+    </template>
 
-    <template #status>{{ state.line }}</template>
-    <template #statusDetail>{{ state.detail }}</template>
+    <template #footnote>{{ footnote }}</template>
 
     <template #actions>
       <template v-if="job">
@@ -176,128 +141,41 @@ function onRunningMenuSelect(key: string) {
         <BaseButton variant="secondary" size="sm" @click="emit('configure')">配置</BaseButton>
       </template>
     </template>
-  </BaseEntityCard>
+  </ProjectCard>
 </template>
 
 <style scoped>
-/* 内高光 + 微渐变让图标像有厚度的物件，而不是平面色块 */
-.run-card__icon {
-  display: grid;
-  width: 34px;
-  height: 34px;
-  place-items: center;
-  border-radius: var(--radius-md);
-  background: var(--component-entity-card-icon-face);
-  box-shadow: var(--component-entity-card-edge);
-  color: var(--color-text-muted);
-}
-
-.run-card__icon svg {
-  display: block;
-}
-
-.run-card__kind {
-  flex: 0 0 auto;
-  padding: 2px 8px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-pill);
-  color: var(--color-text-subtle);
-  font-size: 10px;
-  white-space: nowrap;
-}
-
-.run-card__meta {
-  display: flex;
-  min-width: 0;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-1);
-}
-
-/* 双段徽标：左段是工具名、右段是版本号，中间一条分隔线 */
-.run-card__stack {
-  display: inline-flex;
-  overflow: hidden;
-  flex: 0 0 auto;
-  align-items: stretch;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  box-shadow: var(--component-entity-card-edge);
-}
-
-.run-card__stack-name {
-  padding: 2px 7px;
-  background: var(--component-entity-card-panel);
-  color: var(--color-text-muted);
-  font-size: 10px;
-  white-space: nowrap;
-}
-
-.run-card__stack-ver {
-  padding: 2px 7px;
-  border-left: 1px solid var(--color-border);
-  color: var(--color-text-subtle);
-  font-family: var(--font-family-mono);
-  font-size: 10px;
-  white-space: nowrap;
-}
-
-/*
-  模块标签不加边框，只留浅底：它们从属于工具版本，
-  同样的边框会让两行抢一样的视觉重量。
-*/
-.run-card__mods {
+/* 标签只保留一行：多出的模块名靠 +N 表达，不许换行顶高卡片 */
+.run-card__tags {
   display: flex;
   overflow: hidden;
   min-width: 0;
   max-height: 22px;
+  flex: 1 1 auto;
   flex-wrap: wrap;
-  gap: var(--space-1);
+  gap: 6px;
+  align-items: center;
 }
 
-.run-card__mod {
+/* 原型 .tag：统一 mono 小标签 */
+.run-card__tag {
   flex: 0 0 auto;
   padding: 2px 7px;
-  border-radius: var(--radius-sm);
-  background: var(--component-entity-card-panel);
-  color: var(--color-text-subtle);
+  border-radius: 6px;
+  background: var(--color-surface-subtle);
+  color: var(--color-text-muted);
+  font-family: var(--font-family-mono);
   font-size: 10px;
   white-space: nowrap;
 }
 
-.run-card__mods-more {
+.run-card__tag.is-soft {
+  color: var(--color-text-subtle);
+}
+
+.run-card__more {
   flex: 0 0 auto;
-  padding: 2px 6px;
   color: var(--color-action);
   font-size: 10px;
 }
-
-/*
-  命令区用左竖线加极淡面表达「终端片段」，
-  不再套一层完整边框，避免卡片里出现框中框。
-*/
-.run-card__command {
-  min-width: 0;
-  padding: 6px 10px;
-  border-radius: var(--radius-sm);
-  background: var(--component-entity-card-panel);
-  /* 竖线带一点动作色，让它读起来像终端提示符区而不是普通浅底块 */
-  box-shadow: inset 2px 0 0 color-mix(in srgb, var(--color-action) 42%, var(--color-border));
-}
-
-.run-card__command code {
-  display: block;
-  overflow: hidden;
-  color: var(--color-text);
-  font-family: var(--font-family-mono);
-  font-size: var(--font-size-xs);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.run-card__command code::before {
-  color: var(--color-text-subtle);
-  content: "$ ";
-}
-
 </style>

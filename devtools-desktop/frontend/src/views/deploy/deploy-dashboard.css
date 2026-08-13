@@ -24,56 +24,6 @@
   min-width: 0;
 }
 
-.deploy-dashboard__filters {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-1);
-}
-
-/* ---------- 概览摘要条 ---------- */
-/*
-  三个数字不值一整行大卡：收成一行摘要条，把纵向空间让给项目卡片。
-  与本地运行页保持同一形态。
-*/
-.deploy-dashboard__stats {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  margin: 0;
-  padding: 0 2px;
-  gap: var(--space-2);
-}
-
-.deploy-dashboard__stat {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 6px;
-}
-
-.deploy-dashboard__stat:not(:last-child)::after {
-  width: 1px;
-  height: 10px;
-  margin-left: var(--space-3);
-  background: var(--color-border-strong);
-  content: "";
-  opacity: .7;
-}
-
-.deploy-dashboard__stat dt {
-  color: var(--color-text-subtle);
-  font-size: var(--font-size-xs);
-}
-
-.deploy-dashboard__stat dd {
-  margin: 0;
-  color: var(--color-text);
-  font-family: var(--font-family-mono);
-  font-size: var(--font-size-sm);
-  font-variant-numeric: tabular-nums;
-  font-weight: var(--font-weight-semibold);
-}
-
 /* ---------- 分组与网格 ---------- */
 /* 组间比组内松，让「标题 + 卡片」成为一个视觉整体 */
 .deploy-dashboard__groups {

@@ -168,13 +168,9 @@ test('mounts one Vue run page without the retired DOM or scripts', async ({ page
 
 test('shows the multi-module count instead of the meaningless saved-command stat', async ({ page }) => {
   await openRun(page)
-  const stats = page.locator('.run-stats__item')
-  await expect(stats).toHaveCount(3)
-  await expect(stats.nth(0)).toContainText('可运行项目')
-  await expect(stats.nth(1)).toContainText('运行中')
-  // 旧「已保存命令」恒等于项目总数，无信息量
-  await expect(stats.nth(2)).toContainText('多模块项目')
-  await expect(stats.nth(2).locator('dd')).toHaveText('1')
+  // redesign-v2：三个统计并进页头副题一句话（原型 page-sub），不再占独立一行
+  const summary = page.locator('#page-run .page-header__copy p')
+  await expect(summary).toHaveText('3 个项目 · 0 运行中 · 1 多模块')
 })
 
 test('filters by keyword and by project kind', async ({ page }) => {
@@ -190,7 +186,8 @@ test('filters by keyword and by project kind', async ({ page }) => {
   await search.fill('')
   await expect(page.locator('.run-card')).toHaveCount(3)
 
-  const filters = page.locator('#page-run .page-toolbar .n-tag')
+  // redesign-v2：筛选从 FilterChip 换成原型的 .seg 分段器
+  const filters = page.locator('#page-run .page-toolbar .base-segmented .n-tabs-tab')
   await filters.filter({ hasText: '多模块' }).click()
   await expect(page.locator('.run-card')).toHaveCount(1)
   await filters.filter({ hasText: '单体项目' }).click()
@@ -205,7 +202,7 @@ test('keeps the toolbar on one row when a service is running', async ({ page }) 
   mock.setStatuses([buildJob()])
   await page.reload()
   await page.locator('.sidebar-item[data-page="run"]').click()
-  await expect(page.locator('.run-card .base-entity-card__state--active')).toHaveCount(1)
+  await expect(page.locator('.run-card.project-card--running')).toHaveCount(1)
 
   const toolbarHeight = await page.locator('#page-run .page-toolbar').evaluate(el => el.getBoundingClientRect().height)
   expect(toolbarHeight).toBeLessThan(60)
@@ -220,10 +217,10 @@ test('keeps running-card actions on one row', async ({ page }) => {
   await page.locator('.sidebar-item[data-page="run"]').click()
 
   const card = page.locator('.run-card[data-project="b8seed-portal"]')
-  await expect(card.locator('.base-entity-card__state--active')).toBeVisible()
+  await expect(card).toHaveClass(/project-card--running/)
   // P2：旧实现四个按钮会换行，「打开地址」掉到第二行。
   // 比较垂直中心而不是 top：图标按钮与 sm 按钮高度不同，top 本就有几像素差。
-  const centers = await card.locator('.base-entity-card__actions button').evaluateAll(
+  const centers = await card.locator('.project-card__actions button').evaluateAll(
     buttons => buttons.map((b) => {
       const rect = b.getBoundingClientRect()
       return Math.round(rect.top + rect.height / 2)
@@ -241,10 +238,9 @@ test('keeps the running total aligned when an older stopped job is also returned
   await page.goto('/?apiPort=13900')
   await page.locator('.sidebar-item[data-page="run"]').click()
 
-  const runningStat = page.locator('.run-stats__item').filter({ hasText: '运行中' })
-  await expect(runningStat.locator('dd')).toHaveText('1')
-  await expect(page.locator('.run-card .base-entity-card__state--active')).toHaveCount(1)
-  await expect(page.locator('.run-card[data-project="b8seed-portal"] .base-entity-card__state')).toHaveClass(/base-entity-card__state--active/)
+  await expect(page.locator('#page-run .page-header__copy p')).toContainText('1 运行中')
+  await expect(page.locator('.run-card.project-card--running')).toHaveCount(1)
+  await expect(page.locator('.run-card[data-project="b8seed-portal"]')).toHaveClass(/project-card--running/)
 })
 
 test('warns with full process details before force-releasing a port', async ({ page }) => {
@@ -367,7 +363,7 @@ test('shows the log viewer on top of the run page, not trapped in the home host'
   await page.locator('.sidebar-item[data-page="run"]').click()
 
   const card = page.locator('.run-card[data-project="b8seed-portal"]')
-  await expect(card.locator('.base-entity-card__state--active')).toBeVisible()
+  await expect(card).toHaveClass(/project-card--running/)
   await card.getByRole('button', { name: '更多操作' }).click()
   await page.getByText('查看日志', { exact: true }).click()
 
@@ -429,18 +425,17 @@ test('keeps every project card the same height regardless of run state', async (
   )
   expect(new Set(heights).size).toBe(1)
 
-  // 三种状态都渲染主行与细节行，行数一致才是等高的根因
-  await expect(page.locator('.base-entity-card__state-line')).toHaveCount(3)
-  await expect(page.locator('.base-entity-card__state-detail')).toHaveCount(3)
+  // 三种状态都渲染贴底状态便签，行数一致才是等高的根因
+  await expect(page.locator('.run-card .project-card__footnote')).toHaveCount(3)
 })
 
 test('drops the boxed command and status panels from project cards', async ({ page }) => {
   await openRun(page)
   const card = page.locator('.run-card[data-project="b8seed-portal"]')
 
-  // 状态贴在主体末尾，不再是带边框的独立面板
-  await expect(card.locator('.base-entity-card__status')).toHaveCount(0)
-  await expect(card.locator('.base-entity-card__body .base-entity-card__state')).toHaveCount(1)
+  // 状态贴底一行便签 + 顶部状态徽标，不再是带边框的独立面板
+  await expect(card.locator('.project-card__footnote')).toHaveCount(1)
+  await expect(card.locator('.base-badge')).toHaveCount(1)
 
   /*
     卡片内部不应再出现「满宽带边框的展示型容器」——旧实现的命令框和状态框就是，
@@ -464,8 +459,8 @@ test('drops the boxed command and status panels from project cards', async ({ pa
   })
   expect(boxed).toEqual([])
 
-  // 图标用 SVG 而非 emoji，跨系统渲染一致
-  await expect(card.locator('.run-card__icon svg')).toHaveCount(1)
+  // redesign-v2：卡片收敛到共享 ProjectCard 基座（与部署面板同基座，跨页等高）
+  await expect(card).toHaveClass(/project-card/)
 })
 
 test('wraps each group and its cards in one shared panel boundary', async ({ page }) => {

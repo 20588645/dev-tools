@@ -6,11 +6,10 @@ import { navigateToPage } from '@/router/navigate'
 
 import ActivityRhythmCard from './components/ActivityRhythmCard.vue'
 import AmbientPaletteCard from './components/AmbientPaletteCard.vue'
+import ClockCard from './components/ClockCard.vue'
 import DailyQuoteCard from './components/DailyQuoteCard.vue'
 import DaylightCard from './components/DaylightCard.vue'
 import IpPurityCard from './components/IpPurityCard.vue'
-import MoonPhaseCard from './components/MoonPhaseCard.vue'
-import TodayOverviewCard from './components/TodayOverviewCard.vue'
 import UsageSummaryCard from './components/UsageSummaryCard.vue'
 import WeeklyFootprintCard from './components/WeeklyFootprintCard.vue'
 import YearProgressCard from './components/YearProgressCard.vue'
@@ -26,34 +25,33 @@ onDeactivated(() => { active.value = false })
 
 const {
   dateLabel,
-  clockLabel,
-  weather,
+  greeting,
   quote,
-  quoteIndex,
   quoteSaved,
+  savedCount,
   quoteSwitching,
   nextQuote,
   toggleQuoteSaved,
   usageState,
-  usageTokens,
-  usageCost,
-  usageCacheRate,
-  usageRequests,
-  usageDelta,
-  usageHeights,
-  usageHasTrend,
+  todayTokens,
+  todayCost,
+  monthTokens,
+  monthCost,
+  usageWeekTrend,
+  usageSplit,
   purity,
   purityState,
+  purityCheckedAt,
   activityState,
   activityTotal,
   activityPeak,
   activityHeights,
+  runCountToday,
+  deployCountToday,
   daylight,
   yearProgress,
   weeklyFootprint,
-  ambientMessage,
-  ambientWave,
-  moon,
+  ambientPalette,
   refreshDashboard,
   refreshPurity,
 } = useHomeDashboard(active)
@@ -61,27 +59,27 @@ const {
 
 <template>
   <PageFrame class="home-view" variant="immersive">
-    <div class="home-gallery-grid">
+    <div class="home-grid">
       <DailyQuoteCard
         :date-label="dateLabel"
         :quote="quote"
-        :quote-index="quoteIndex"
         :saved="quoteSaved"
+        :saved-count="savedCount"
         :switching="quoteSwitching"
+        :greeting="greeting"
+        :activity-total="activityTotal"
         @next="nextQuote"
         @toggle-saved="toggleQuoteSaved"
       />
-      <TodayOverviewCard :clock-label="clockLabel" :weather="weather" />
       <UsageSummaryCard
         :loading="usageState.loading"
         :error="usageState.error"
-        :tokens="usageTokens"
-        :delta="usageDelta"
-        :cost="usageCost"
-        :cache-rate="usageCacheRate"
-        :requests="usageRequests"
-        :heights="usageHeights"
-        :has-trend="usageHasTrend"
+        :month-tokens="monthTokens"
+        :month-cost="monthCost"
+        :today-tokens="todayTokens"
+        :today-cost="todayCost"
+        :week-trend="usageWeekTrend"
+        :split="usageSplit"
         @open="navigateToPage('usage')"
         @retry="refreshDashboard"
       />
@@ -89,27 +87,31 @@ const {
         :loading="purityState.loading"
         :error="purityState.error"
         :purity="purity"
+        :checked-at="purityCheckedAt"
         @open="navigateToPage('ipcheck')"
         @retry="refreshPurity(true)"
       />
+      <ClockCard />
+      <DaylightCard :daylight="daylight" />
+      <YearProgressCard :progress="yearProgress" />
       <ActivityRhythmCard
         :loading="activityState.loading"
         :error="activityState.error"
         :total="activityTotal"
         :peak="activityPeak"
         :heights="activityHeights"
+        :run-count="runCountToday"
+        :deploy-count="deployCountToday"
         @retry="refreshDashboard"
       />
-      <DaylightCard :daylight="daylight" />
-      <YearProgressCard :progress="yearProgress" />
       <WeeklyFootprintCard
         :loading="activityState.loading"
         :error="activityState.error"
         :footprint="weeklyFootprint"
+        @open="navigateToPage('notes')"
         @retry="refreshDashboard"
       />
-      <AmbientPaletteCard :message="ambientMessage" :wave="ambientWave" />
-      <MoonPhaseCard :moon="moon" />
+      <AmbientPaletteCard :palette="ambientPalette" />
     </div>
   </PageFrame>
 </template>
