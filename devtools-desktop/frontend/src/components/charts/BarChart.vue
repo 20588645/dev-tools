@@ -1,5 +1,5 @@
 <script setup lang="ts">
-/** redesign-v2 柱状图原语：渐变圆角柱 + 底部刻度 + 可选柱顶数值（活动节奏 / 每周足迹共用）。 */
+/** redesign-v2 柱状图原语：渐变圆角柱 + 底部刻度 + 可选柱顶数值。 */
 import { computed } from 'vue'
 
 const props = withDefaults(defineProps<{

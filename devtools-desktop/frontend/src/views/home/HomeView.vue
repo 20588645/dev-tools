@@ -4,14 +4,14 @@ import { onActivated, onDeactivated, ref } from 'vue'
 import PageFrame from '@/components/layout/PageFrame.vue'
 import { navigateToPage } from '@/router/navigate'
 
-import ActivityRhythmCard from './components/ActivityRhythmCard.vue'
 import AmbientPaletteCard from './components/AmbientPaletteCard.vue'
+import CalendarCard from './components/CalendarCard.vue'
 import ClockCard from './components/ClockCard.vue'
 import DailyQuoteCard from './components/DailyQuoteCard.vue'
 import DaylightCard from './components/DaylightCard.vue'
 import IpPurityCard from './components/IpPurityCard.vue'
+import PhenologyWeekCard from './components/PhenologyWeekCard.vue'
 import UsageSummaryCard from './components/UsageSummaryCard.vue'
-import WeeklyFootprintCard from './components/WeeklyFootprintCard.vue'
 import YearProgressCard from './components/YearProgressCard.vue'
 import { useHomeDashboard } from './composables/useHomeDashboard'
 import './home.css'
@@ -42,15 +42,10 @@ const {
   purity,
   purityState,
   purityCheckedAt,
-  activityState,
-  activityTotal,
-  activityPeak,
-  activityHeights,
-  runCountToday,
-  deployCountToday,
   daylight,
   yearProgress,
-  weeklyFootprint,
+  now,
+  phenologyWeek,
   ambientPalette,
   refreshDashboard,
   refreshPurity,
@@ -67,7 +62,6 @@ const {
         :saved-count="savedCount"
         :switching="quoteSwitching"
         :greeting="greeting"
-        :activity-total="activityTotal"
         @next="nextQuote"
         @toggle-saved="toggleQuoteSaved"
       />
@@ -94,23 +88,8 @@ const {
       <ClockCard />
       <DaylightCard :daylight="daylight" />
       <YearProgressCard :progress="yearProgress" />
-      <ActivityRhythmCard
-        :loading="activityState.loading"
-        :error="activityState.error"
-        :total="activityTotal"
-        :peak="activityPeak"
-        :heights="activityHeights"
-        :run-count="runCountToday"
-        :deploy-count="deployCountToday"
-        @retry="refreshDashboard"
-      />
-      <WeeklyFootprintCard
-        :loading="activityState.loading"
-        :error="activityState.error"
-        :footprint="weeklyFootprint"
-        @open="navigateToPage('notes')"
-        @retry="refreshDashboard"
-      />
+      <CalendarCard :today="now" />
+      <PhenologyWeekCard :week="phenologyWeek" />
       <AmbientPaletteCard :palette="ambientPalette" />
     </div>
   </PageFrame>

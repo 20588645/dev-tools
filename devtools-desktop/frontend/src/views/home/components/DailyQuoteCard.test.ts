@@ -13,7 +13,6 @@ describe('DailyQuoteCard', () => {
         savedCount: 2,
         switching: false,
         greeting: '下午好',
-        activityTotal: 6,
       },
     })
 

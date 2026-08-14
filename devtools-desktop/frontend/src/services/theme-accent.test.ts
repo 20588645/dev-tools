@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  ACCENT_TOKEN_NAMES,
   contrastRatioAgainstWhite,
   deriveAccentPalette,
   isValidAccentHex,
   normalizeAccentForContrast,
+  writeAccentPalette,
 } from './theme-accent'
 
 const BLUE = ['#', '3d7bfd'].join('')
@@ -40,5 +42,20 @@ describe('theme-accent', () => {
     expect(palette.gradient).toBe(`linear-gradient(135deg, ${palette.accent}, ${palette.secondary})`)
     expect(palette.subtle).toBe(`color-mix(in srgb, ${palette.accent} 13%, transparent)`)
     expect(palette.hover).toMatch(/^#[0-9a-f]{6}$/)
+  })
+
+  it('把 accent 同时写到 html 与 body，避免亮色主题表盖掉 :root 内联值', () => {
+    const palette = deriveAccentPalette(BLUE)
+    writeAccentPalette(palette)
+    for (const node of [document.documentElement, document.body]) {
+      expect(node.style.getPropertyValue('--color-action')).toBe(BLUE)
+      expect(node.style.getPropertyValue('--color-action-secondary')).toBe(palette.secondary)
+    }
+    writeAccentPalette(null)
+    for (const node of [document.documentElement, document.body]) {
+      for (const name of ACCENT_TOKEN_NAMES) {
+        expect(node.style.getPropertyValue(name)).toBe('')
+      }
+    }
   })
 })

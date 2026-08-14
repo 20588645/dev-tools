@@ -10,7 +10,6 @@ defineProps<{
   savedCount: number
   switching: boolean
   greeting: string
-  activityTotal: number
 }>()
 
 defineEmits<{
@@ -29,7 +28,7 @@ defineEmits<{
         <span class="quote-by">— 本地文案 · 手动切换</span>
       </div>
       <div class="quote-foot">
-        <span>{{ greeting }}，今日活动 {{ activityTotal }} 次</span>
+        <span>{{ greeting }}</span>
         <span class="quote-foot-grow" />
         <span>已收藏 {{ savedCount }} 条</span>
         <BaseButton :variant="saved ? 'secondary' : 'outline'" size="sm" @click="$emit('toggleSaved')">

@@ -2,9 +2,9 @@ import { defineStore } from 'pinia'
 
 import { apiClient } from '@/services/api-client'
 import {
-  ACCENT_TOKEN_NAMES,
   deriveAccentPalette,
   isValidAccentHex,
+  writeAccentPalette,
 } from '@/services/theme-accent'
 
 export type Theme = 'dark' | 'light'
@@ -65,6 +65,8 @@ export const useAppStore = defineStore('app', {
         document.body.setAttribute('data-theme-mode', normalizedMode)
         document.body.setAttribute('data-theme', effectiveTheme)
       }
+      // 亮色变量在 body[data-theme="light"]，切主题后把已选 accent 再写一遍，避免被默认蓝紫盖掉
+      if (this.accentColor) this.applyAccentColor(this.accentColor, { persist: false })
       if (options.persist !== false && typeof localStorage !== 'undefined') {
         localStorage.setItem(THEME_KEY, normalizedMode)
       }
@@ -87,22 +89,12 @@ export const useAppStore = defineStore('app', {
     applyAccentColor(color: string | null, options: { persist?: boolean } = {}) {
       const valid = isValidAccentHex(color) ? color : null
       let applied: string | null = null
-      if (typeof document !== 'undefined') {
-        const rootStyle = document.documentElement.style
-        if (valid) {
-          const palette = deriveAccentPalette(valid)
-          applied = palette.accent
-          rootStyle.setProperty('--color-action', palette.accent)
-          rootStyle.setProperty('--color-action-hover', palette.hover)
-          rootStyle.setProperty('--color-action-secondary', palette.secondary)
-          rootStyle.setProperty('--color-action-gradient', palette.gradient)
-          rootStyle.setProperty('--color-action-subtle', palette.subtle)
-          rootStyle.setProperty('--color-focus-ring', palette.accent)
-        } else {
-          for (const name of ACCENT_TOKEN_NAMES) rootStyle.removeProperty(name)
-        }
-      } else if (valid) {
-        applied = deriveAccentPalette(valid).accent
+      if (valid) {
+        const palette = deriveAccentPalette(valid)
+        applied = palette.accent
+        writeAccentPalette(palette)
+      } else {
+        writeAccentPalette(null)
       }
       this.accentColor = applied
       if (options.persist !== false && typeof localStorage !== 'undefined') {

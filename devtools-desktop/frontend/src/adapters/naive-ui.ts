@@ -33,12 +33,14 @@ function readToken(name: string): string | null {
 
   const rootStyle = getComputedStyle(document.documentElement)
   const bodyStyle = getComputedStyle(document.body)
-  let value = bodyStyle.getPropertyValue(name).trim() || rootStyle.getPropertyValue(name).trim()
+  const read = (tokenName: string) =>
+    bodyStyle.getPropertyValue(tokenName).trim() || rootStyle.getPropertyValue(tokenName).trim()
+  let value = read(name)
 
   for (let index = 0; index < 3 && value.startsWith('var('); index += 1) {
     const nestedName = value.match(/^var\((--[^,)]+)/)?.[1]
     if (!nestedName) break
-    value = rootStyle.getPropertyValue(nestedName).trim()
+    value = read(nestedName)
   }
 
   // Naive UI computes alpha variants in JavaScript and cannot consume

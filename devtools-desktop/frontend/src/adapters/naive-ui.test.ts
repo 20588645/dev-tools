@@ -23,7 +23,10 @@ const adapterColorNames = [
 afterEach(() => {
   for (const name of adapterColorNames) {
     document.documentElement.style.removeProperty(name)
+    document.body.style.removeProperty(name)
   }
+  document.documentElement.style.removeProperty('--color-action')
+  document.body.style.removeProperty('--color-action')
 })
 
 describe('Naive UI theme adapter', () => {
@@ -42,5 +45,21 @@ describe('Naive UI theme adapter', () => {
       textColorFocusPrimary: 'contrast-token',
       textColorDisabledPrimary: 'contrast-token',
     })
+  })
+
+  it('resolves vendor action from body accent so light theme does not keep the html default', () => {
+    const bodyAccent = ['#', 'c8b52e'].join('')
+    document.body.style.setProperty('--component-vendor-action', 'var(--color-action)')
+    document.body.style.setProperty('--component-vendor-action-hover', 'var(--color-action)')
+    document.body.style.setProperty('--component-vendor-action-contrast', 'contrast-token')
+    document.documentElement.style.setProperty('--color-action', ['#', '3d7bfd'].join(''))
+    document.body.style.setProperty('--color-action', bodyAccent)
+    for (const name of adapterColorNames) {
+      if (name.includes('action')) continue
+      document.body.style.setProperty(name, 'resolved-token')
+    }
+
+    const common = createNaiveThemeOverrides('light').common
+    expect(common?.primaryColor).toBe(bodyAccent)
   })
 })

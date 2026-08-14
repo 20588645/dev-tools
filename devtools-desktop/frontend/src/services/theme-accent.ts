@@ -24,6 +24,28 @@ export const ACCENT_TOKEN_NAMES = [
   '--color-focus-ring',
 ] as const
 
+/**
+ * 把 accent 写到 html 与 body。
+ * 亮色变量挂在 body[data-theme="light"]，只写 :root 会被主题表盖掉；暗色默认在 :root，html 也要写。
+ */
+export function writeAccentPalette(palette: AccentPalette | null): void {
+  if (typeof document === 'undefined') return
+  const nodes = [document.documentElement, document.body]
+  for (const node of nodes) {
+    const style = node.style
+    if (!palette) {
+      for (const name of ACCENT_TOKEN_NAMES) style.removeProperty(name)
+      continue
+    }
+    style.setProperty('--color-action', palette.accent)
+    style.setProperty('--color-action-hover', palette.hover)
+    style.setProperty('--color-action-secondary', palette.secondary)
+    style.setProperty('--color-action-gradient', palette.gradient)
+    style.setProperty('--color-action-subtle', palette.subtle)
+    style.setProperty('--color-focus-ring', palette.accent)
+  }
+}
+
 const HEX_ACCENT_PATTERN = /^#(?:[0-9a-f]{6})$/i
 
 /** 白字按钮的最低对比度（WCAG 图形与大号文字标准 3:1） */

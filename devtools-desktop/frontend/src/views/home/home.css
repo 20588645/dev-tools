@@ -313,54 +313,108 @@
   color: var(--color-text-subtle);
 }
 
-/* —— 昼夜（日轨） —— */
+/* —— 昼夜（日轨山丘 + 平地平线） —— */
 
-.day-arc {
+.day-sky {
   position: relative;
   flex: 1;
-  min-height: 96px;
+  min-height: 108px;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 80% 70% at 50% 8%, color-mix(in srgb, var(--color-warning) 18%, transparent), transparent 68%),
+    var(--color-surface-subtle);
+  border-radius: var(--radius-md);
 }
 
-.day-arc svg {
+.day-sky.is-night {
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 100%, color-mix(in srgb, var(--color-action-secondary) 14%, transparent), transparent 70%),
+    var(--color-surface-subtle);
+}
+
+.day-sky svg {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
 }
 
-.day-arc-horizon {
-  stroke: var(--color-border);
+.day-sky-fill-strong { stop-color: var(--color-warning); stop-opacity: 0.32; }
+.day-sky-fill-faint { stop-color: var(--color-warning); stop-opacity: 0.04; }
+
+.day-sky-rest {
+  fill: color-mix(in srgb, var(--color-warning) 8%, transparent);
 }
 
-.day-arc-night {
-  stroke: var(--color-action-secondary);
-  opacity: 0.55;
+.day-sky.is-night .day-sky-rest {
+  fill: color-mix(in srgb, var(--color-text-subtle) 12%, transparent);
 }
 
-.day-arc-sunmark {
-  fill: var(--color-warning);
+.day-sky-ground {
+  fill: color-mix(in srgb, var(--color-surface) 82%, var(--color-border));
 }
 
-.day-arc-halo.is-day {
-  fill: var(--color-warning);
-  opacity: 0.18;
+.day-sky-horizon {
+  fill: none;
+  stroke: color-mix(in srgb, var(--color-text-subtle) 35%, transparent);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
 }
 
-.day-arc-halo.is-night {
-  fill: var(--color-action-secondary);
-  opacity: 0.15;
+.day-sky-track {
+  stroke: color-mix(in srgb, var(--color-text-subtle) 22%, transparent);
+  stroke-width: 5;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
 }
 
-.day-arc-marker.is-day {
-  fill: var(--color-warning);
-  stroke: var(--color-surface);
-  stroke-width: 1.8;
+.day-sky-progress {
+  stroke: var(--color-warning);
+  stroke-width: 5;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
 }
 
-.day-arc-marker.is-night {
-  fill: var(--color-action-secondary);
-  stroke: var(--color-surface);
-  stroke-width: 1.8;
+.day-sky.is-night .day-sky-progress {
+  stroke: color-mix(in srgb, var(--color-text-subtle) 45%, transparent);
+}
+
+.day-orb {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 99px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.day-orb.is-day {
+  background: var(--color-warning);
+  box-shadow:
+    0 0 0 5px color-mix(in srgb, var(--color-warning) 22%, transparent),
+    0 0 18px color-mix(in srgb, var(--color-warning) 55%, transparent);
+}
+
+.day-orb.is-night {
+  background: color-mix(in srgb, var(--color-text) 82%, var(--color-action-secondary));
+  box-shadow:
+    inset -5px -2px 0 0 color-mix(in srgb, var(--color-surface) 42%, transparent),
+    0 0 0 5px color-mix(in srgb, var(--color-action-secondary) 20%, transparent),
+    0 0 16px color-mix(in srgb, var(--color-action-secondary) 40%, transparent);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .day-orb.is-day {
+    animation: day-orb-glow 4s var(--ease-standard) infinite;
+  }
+}
+
+@keyframes day-orb-glow {
+  50% {
+    box-shadow:
+      0 0 0 7px color-mix(in srgb, var(--color-warning) 16%, transparent),
+      0 0 22px color-mix(in srgb, var(--color-warning) 62%, transparent);
+  }
 }
 
 .sun-times {
@@ -443,115 +497,206 @@
   color: var(--color-text);
 }
 
-/* —— 活动节奏 —— */
+/* —— 日历 —— */
 
-.act-bars {
-  display: flex;
-  flex: 1;
-  align-items: flex-end;
-  gap: 3px;
-  min-height: 70px;
+.cal-weekdays,
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
 }
 
-.act-bars i {
-  flex: 1;
-  min-height: 3px;
-  border-radius: 3px 3px 2px 2px;
-  background: var(--color-action-gradient);
-  opacity: 0.85;
-}
-
-.act-bars i.dim {
-  background: var(--color-surface-subtle);
-  opacity: 1;
-}
-
-.act-x {
-  display: flex;
-  justify-content: space-between;
-  font-family: var(--font-family-mono);
-  font-size: 10px;
-  color: var(--color-text-subtle);
-}
-
-.act-stats {
-  display: flex;
-  gap: 8px;
-}
-
-.act-stat {
-  flex: 1;
-  padding: 6px 4px;
-  text-align: center;
-  background: var(--color-surface-subtle);
-  border-radius: 10px;
-}
-
-.act-stat b {
-  display: block;
-  font-size: 15px;
-  font-weight: var(--font-weight-bold);
-  line-height: 1.3;
-}
-
-.act-stat span {
+.cal-weekdays {
   font-size: 10.5px;
   color: var(--color-text-subtle);
+  text-align: center;
 }
 
-/* —— 每周足迹 —— */
+.cal-nav {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+}
 
-.week-chart {
+.cal-grid {
+  flex: 1;
+  grid-auto-rows: 1fr;
+  gap: 2px;
+  min-height: 0;
+}
+
+.cal-cell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  min-height: 0;
+  padding: 6px 0 3px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.cal-cell:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 1px;
+}
+
+.cal-badge {
+  position: absolute;
+  top: 2px;
+  right: 3px;
+  font-size: 8px;
+  line-height: 1;
+  color: var(--color-text-subtle);
+}
+
+.cal-day {
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: var(--color-text);
+}
+
+.cal-note {
+  overflow: hidden;
+  max-width: 100%;
+  font-size: 9px;
+  line-height: 1.1;
+  color: var(--color-text-subtle);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cal-cell.is-weekend .cal-day {
+  color: var(--color-text-muted);
+}
+
+.cal-cell.is-out .cal-day,
+.cal-cell.is-out .cal-note,
+.cal-cell.is-out .cal-badge {
+  opacity: 0.45;
+}
+
+.cal-cell.is-off .cal-day,
+.cal-cell.is-off .cal-badge,
+.cal-cell.is-off .cal-note {
+  color: var(--color-danger);
+}
+
+.cal-cell.is-shift .cal-badge {
+  color: var(--color-text);
+}
+
+.cal-cell.is-today {
+  background: var(--color-action-gradient);
+}
+
+.cal-cell.is-today .cal-day,
+.cal-cell.is-today .cal-note,
+.cal-cell.is-today .cal-badge {
+  font-weight: var(--font-weight-bold);
+  color: var(--color-action-contrast);
+}
+
+.cal-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11.5px;
+  color: var(--color-text-subtle);
+}
+
+/* —— 七日物候 —— */
+
+.pheno-week {
   display: flex;
   flex: 1;
-  align-items: stretch;
-  gap: 12px;
-  min-height: 100px;
+  gap: 8px;
+  min-height: 0;
 }
 
-.week-col {
+.pheno-day {
   display: flex;
   flex: 1;
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  min-height: 0;
-}
-
-.week-value {
-  font-size: 11px;
-  font-weight: var(--font-weight-bold);
-  font-variant-numeric: tabular-nums;
-}
-
-.week-track {
-  display: flex;
-  flex: 1;
-  align-items: flex-end;
-  width: 100%;
-}
-
-.week-track i {
-  width: 100%;
-  min-height: 8px;
-  border-radius: 9px 9px 4px 4px;
+  min-width: 0;
+  padding: 12px 8px 10px;
   background: var(--color-surface-subtle);
+  border-radius: var(--component-disclosure-panel-item-radius);
 }
 
-.week-col.hot .week-track i {
-  background: var(--color-action-gradient);
-  opacity: 0.9;
-}
-
-.week-day {
-  font-family: var(--font-family-mono);
+.pheno-weekday {
   font-size: 10.5px;
   color: var(--color-text-subtle);
 }
 
-.week-col.today .week-day {
+.pheno-date {
+  font-size: 22px;
   font-weight: var(--font-weight-bold);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.6px;
+  line-height: 1;
+}
+
+.pheno-caption {
+  overflow: hidden;
+  max-width: 100%;
+  font-size: 12px;
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.3;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pheno-tag {
+  overflow: hidden;
+  max-width: 100%;
+  font-size: 10.5px;
+  color: var(--color-text-subtle);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pheno-advice {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  margin: 2px 0 0;
+  overflow: hidden;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.pheno-advice span {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+}
+
+.pheno-day.is-today {
+  background: color-mix(in srgb, var(--color-action) 12%, var(--color-surface));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-action) 28%, var(--color-border));
+}
+
+.pheno-day.is-today .pheno-date,
+.pheno-day.is-today .pheno-caption,
+.pheno-day.is-term .pheno-tag,
+.pheno-day.is-fest .pheno-caption {
   color: var(--color-action);
+}
+
+.pheno-day.is-today .pheno-advice {
+  color: var(--color-text);
 }
 
 /* —— 氛围色板 —— */

@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
 import {
-  buildActivityBuckets,
   calculateDaylight,
   calculateWeekNumber,
   calculateYearProgress,
@@ -11,23 +10,6 @@ import {
 } from './useHomeDashboard'
 
 describe('home dashboard calculations', () => {
-  it('groups only same-day activity into 24 hourly buckets', () => {
-    const date = new Date(2026, 6, 22, 12)
-    const activity = [
-      new Date(2026, 6, 22, 0, 5).getTime(),
-      new Date(2026, 6, 22, 1, 55).getTime(),
-      new Date(2026, 6, 22, 14, 30).getTime(),
-      new Date(2026, 6, 22, 14, 45).getTime(),
-      new Date(2026, 6, 21, 14, 30).getTime(),
-    ]
-    const buckets = buildActivityBuckets(activity, date)
-    expect(buckets).toHaveLength(24)
-    expect(buckets[0]).toBe(1)
-    expect(buckets[1]).toBe(1)
-    expect(buckets[14]).toBe(2)
-    expect(buckets.reduce((sum, count) => sum + count, 0)).toBe(4)
-  })
-
   it('calculates year progress with week number and quarter remainder', () => {
     const leapDay = calculateYearProgress(new Date(2024, 11, 31, 12))
     expect(leapDay).toMatchObject({ dayIndex: 366, totalDays: 366, remaining: 0 })

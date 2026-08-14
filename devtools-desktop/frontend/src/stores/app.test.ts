@@ -63,6 +63,7 @@ describe('app theme store', () => {
 
   afterEach(() => {
     useAppStore().stopThemeSync()
+    useAppStore().resetAccentColor()
     vi.unstubAllGlobals()
   })
 
@@ -98,6 +99,22 @@ describe('app theme store', () => {
     expect(localStorage.getItem('devtools-theme')).toBe('light')
 
     app.stopThemeSync()
+  })
+
+  it('writes runtime accent onto body so light theme tokens cannot override it', () => {
+    const accent = ['#', '3d7bfd'].join('')
+    const app = useAppStore()
+    app.applyAccentColor(accent)
+    expect(document.body.style.getPropertyValue('--color-action')).toBe(accent)
+    expect(document.documentElement.style.getPropertyValue('--color-action')).toBe(accent)
+
+    app.applyThemeMode('light')
+    expect(document.body.getAttribute('data-theme')).toBe('light')
+    expect(document.body.style.getPropertyValue('--color-action')).toBe(accent)
+
+    app.resetAccentColor()
+    expect(document.body.style.getPropertyValue('--color-action')).toBe('')
+    expect(localStorage.getItem('devtools-accent')).toBeNull()
   })
 
   it('persists theme and emits theme-changed', () => {

@@ -8,20 +8,18 @@ import {
 } from '@/services/app-events'
 import {
   getCurrentIpPurity,
-  getDeploymentHistory,
   getLastDaysRange,
   getLocalDayRange,
   getLocalMonthRange,
-  getRunHistory,
   getUsageSummary,
   getUsageTrends,
-  type DeploymentHistoryItem,
   type IpPuritySummary,
-  type RunHistoryItem,
   type UsageSummary,
   type UsageTrendPoint,
 } from '@/services/modules/home-service'
 import { hslToHex } from '@/services/theme-accent'
+
+import { buildPhenologyWeek } from './home-almanac'
 
 const QUOTE_INDEX_KEY = 'devtools-home-quote-index'
 const SAVED_QUOTES_KEY = 'devtools-home-saved-quotes'
@@ -65,16 +63,6 @@ export interface YearProgressData {
   quarterRemaining: number
 }
 
-export interface WeeklyFootprintData {
-  counts: number[]
-  heights: number[]
-  activeDays: number
-  total: number
-  peak: string
-  range: string
-  currentDay: number
-}
-
 export interface UsageWeekTrend {
   values: number[]
   labels: string[]
@@ -86,42 +74,6 @@ const pad = (value: number) => String(value).padStart(2, '0')
 
 function startOfDay(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate())
-}
-
-function startOfWeek(date: Date) {
-  const value = startOfDay(date)
-  const weekday = value.getDay()
-  value.setDate(value.getDate() - (weekday === 0 ? 6 : weekday - 1))
-  return value
-}
-
-function toTimestamp(value: unknown) {
-  const timestamp = new Date(String(value || '')).getTime()
-  return Number.isFinite(timestamp) ? timestamp : null
-}
-
-function itemTimestamps(items: Array<{ startedAt?: string; timestamp?: string }>) {
-  return items
-    .map((item) => toTimestamp(('startedAt' in item && item.startedAt) || item.timestamp))
-    .filter((value): value is number => value !== null)
-}
-
-function normalizeHeights(values: number[], minimum = 6) {
-  const max = Math.max(...values, 0)
-  if (!max) return values.map(() => minimum)
-  return values.map((value) => value ? Math.max(minimum, Math.round(value / max * 100)) : minimum)
-}
-
-/** 今日 24 小时活动分桶（每小时一桶，对应原型的 24 根节奏柱） */
-export function buildActivityBuckets(timestamps: number[], date: Date) {
-  const buckets = Array.from({ length: 24 }, () => 0)
-  const day = startOfDay(date).getTime()
-  timestamps.forEach((timestamp) => {
-    const value = new Date(timestamp)
-    if (startOfDay(value).getTime() !== day) return
-    buckets[Math.min(23, value.getHours())] += 1
-  })
-  return buckets
 }
 
 /** ISO 8601 周数（周一为一周开始） */
@@ -277,14 +229,11 @@ function errorMessage(reason: unknown) {
 
 export function useHomeDashboard(active: Readonly<Ref<boolean>>) {
   const now = ref(new Date())
-  const deploymentHistory = ref<DeploymentHistoryItem[]>([])
-  const runHistory = ref<RunHistoryItem[]>([])
   const usage = ref<UsageSummary | null>(null)
   const monthUsage = ref<UsageSummary | null>(null)
   const weekTrends = ref<UsageTrendPoint[]>([])
   const purity = ref<IpPuritySummary | null>(null)
   const purityCheckedAt = ref('')
-  const activityState = ref<DashboardSectionState>({ loading: true, error: '' })
   const usageState = ref<DashboardSectionState>({ loading: true, error: '' })
   const purityState = ref<DashboardSectionState>({ loading: true, error: '' })
   const quoteIndex = ref(Math.max(0, Number(localStorage.getItem(QUOTE_INDEX_KEY)) || 0) % HOME_QUOTES.length)
@@ -309,25 +258,7 @@ export function useHomeDashboard(active: Readonly<Ref<boolean>>) {
   const yearProgress = computed(() => calculateYearProgress(now.value))
   const daylight = computed(() => calculateDaylight(now.value))
   const ambientPalette = computed(() => generateAmbientPalette(now.value))
-
-  const deployTimestamps = computed(() => itemTimestamps(deploymentHistory.value))
-  const runTimestamps = computed(() => itemTimestamps(runHistory.value))
-  const timestamps = computed(() => [...deployTimestamps.value, ...runTimestamps.value])
-  const activityBuckets = computed(() => buildActivityBuckets(timestamps.value, now.value))
-  const activityHeights = computed(() => normalizeHeights(activityBuckets.value))
-  const activityTotal = computed(() => activityBuckets.value.reduce((sum, count) => sum + count, 0))
-  const activityPeak = computed(() => {
-    const max = Math.max(...activityBuckets.value, 0)
-    if (!max) return '今日暂无峰值'
-    const index = activityBuckets.value.indexOf(max)
-    return `峰值 ${pad(index)}—${pad(index + 1)} 点`
-  })
-  const countToday = (values: number[]) => {
-    const day = startOfDay(now.value).getTime()
-    return values.filter((timestamp) => startOfDay(new Date(timestamp)).getTime() === day).length
-  }
-  const runCountToday = computed(() => countToday(runTimestamps.value))
-  const deployCountToday = computed(() => countToday(deployTimestamps.value))
+  const phenologyWeek = computed(() => buildPhenologyWeek(now.value))
 
   const todayTokens = computed(() => usage.value ? formatTokens(usage.value.totalTokens) : '—')
   const todayCost = computed(() => usage.value ? `$${usage.value.costUsd.toFixed(2)}` : '—')
@@ -365,51 +296,19 @@ export function useHomeDashboard(active: Readonly<Ref<boolean>>) {
     ].filter((segment) => segment.percent >= 0.5)
   })
 
-  const weeklyFootprint = computed<WeeklyFootprintData>(() => {
-    const start = startOfWeek(now.value)
-    const counts = Array.from({ length: 7 }, () => 0)
-    timestamps.value.forEach((timestamp) => {
-      const index = Math.floor((startOfDay(new Date(timestamp)).getTime() - start.getTime()) / 86_400_000)
-      if (index >= 0 && index < 7) counts[index] += 1
-    })
-    const activeDays = counts.filter(Boolean).length
-    const max = Math.max(...counts, 0)
-    const end = new Date(start)
-    end.setDate(end.getDate() + 6)
-    return {
-      counts,
-      heights: normalizeHeights(counts, 8),
-      activeDays,
-      total: counts.reduce((sum, count) => sum + count, 0),
-      peak: max ? `周${['一', '二', '三', '四', '五', '六', '日'][counts.indexOf(max)]}` : '—',
-      range: `${start.getMonth() + 1}/${start.getDate()} — ${end.getMonth() + 1}/${end.getDate()}`,
-      currentDay: (now.value.getDay() + 6) % 7,
-    }
-  })
-
   async function loadDashboard() {
     const version = ++refreshVersion
     const currentRange = getLocalDayRange(now.value)
     const monthRange = getLocalMonthRange(now.value)
     const weekRange = getLastDaysRange(now.value, 7)
-    activityState.value = { loading: !deploymentHistory.value.length && !runHistory.value.length, error: '' }
     usageState.value = { loading: !usage.value, error: '' }
 
-    const [deployResult, runResult, usageResult, monthResult, trendsResult] = await Promise.allSettled([
-      getDeploymentHistory(),
-      getRunHistory(),
+    const [usageResult, monthResult, trendsResult] = await Promise.allSettled([
       getUsageSummary(currentRange),
       getUsageSummary(monthRange),
       getUsageTrends(weekRange, 'day'),
     ])
     if (version !== refreshVersion) return
-
-    const activityErrors: string[] = []
-    if (deployResult.status === 'fulfilled') deploymentHistory.value = deployResult.value
-    else activityErrors.push(errorMessage(deployResult.reason))
-    if (runResult.status === 'fulfilled') runHistory.value = runResult.value
-    else activityErrors.push(errorMessage(runResult.reason))
-    activityState.value = { loading: false, error: activityErrors.length === 2 ? activityErrors[0] : '' }
 
     const usageErrors: string[] = []
     if (usageResult.status === 'fulfilled') usage.value = usageResult.value
@@ -526,15 +425,9 @@ export function useHomeDashboard(active: Readonly<Ref<boolean>>) {
     purity,
     purityState,
     purityCheckedAt,
-    activityState,
-    activityTotal,
-    activityPeak,
-    activityHeights,
-    runCountToday,
-    deployCountToday,
     daylight,
     yearProgress,
-    weeklyFootprint,
+    phenologyWeek,
     ambientPalette,
     refresh,
     refreshDashboard,
