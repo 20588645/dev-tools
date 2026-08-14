@@ -200,10 +200,10 @@ onActivated(() => {
       <EmptyState
         v-if="page.projects.value.length === 0"
         title="还没有项目"
-        description="点击右上角「+ 添加项目」开始"
+        description="点击右上角「＋ 添加项目」开始"
       >
         <template #actions>
-          <BaseButton @click="requestAddProject()">+ 添加项目</BaseButton>
+          <BaseButton @click="requestAddProject()">＋ 添加项目</BaseButton>
         </template>
       </EmptyState>
       <EmptyState v-else-if="page.filtered.value.length === 0" title="没有匹配的项目" compact />

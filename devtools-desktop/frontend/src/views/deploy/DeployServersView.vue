@@ -2,6 +2,7 @@
 import { computed, h, onActivated, onMounted, ref } from 'vue'
 
 import BaseButton from '@/components/base/BaseButton.vue'
+import BaseCard from '@/components/base/BaseCard.vue'
 import BaseDataTable from '@/components/data/BaseDataTable.vue'
 import type { BaseDataTableColumn, BaseDataTableRow } from '@/components/data/base-data-table'
 import ConfirmDialog from '@/components/feedback/ConfirmDialog.vue'
@@ -57,7 +58,7 @@ const columns = computed<BaseDataTableColumn<ServerRow>[]>(() => [
     render: row => h('span', { class: 'deploy-servers__mono' }, row.defaultRemotePath || '/'),
   },
   {
-    key: 'actions', title: '操作', width: 128, align: 'right',
+    key: 'actions', title: '操作', width: 210, align: 'right',
     render: row => h(ServerRowActions, {
       name: row.name,
       onEdit: () => form.openEdit(row),
@@ -154,36 +155,46 @@ onActivated(() => { void refresh({ silent: true }) })
 <template>
   <DeployChrome>
   <div class="deploy-servers" data-test="deploy-servers">
-    <div class="deploy-servers__toolbar">
-      <BaseButton variant="secondary" @click="importer.show()">从 FileZilla 导入</BaseButton>
-      <BaseButton @click="form.openCreate()">+ 添加服务器</BaseButton>
-    </div>
+    <!-- 原型：表格收进带头面板，工具按钮右置面板头 -->
+    <BaseCard class="deploy-servers__panel" content-padding="0" content-layout="column">
+      <div class="deploy-servers__head">
+        <h2>服务器</h2>
+        <span class="deploy-servers__hint">{{ rows.length }} 台</span>
+        <span class="deploy-servers__grow" aria-hidden="true" />
+        <BaseButton variant="secondary" @click="importer.show()">从 FileZilla 导入</BaseButton>
+        <BaseButton @click="form.openCreate()">＋ 添加服务器</BaseButton>
+      </div>
 
-    <LoadingState v-if="page.loading.value" label="正在加载服务器…" />
-    <ErrorState
-      v-else-if="page.error.value"
-      title="加载服务器失败"
-      :description="page.error.value"
-      @retry="refresh()"
-    />
-    <EmptyState
-      v-else-if="rows.length === 0"
-      title="还没有服务器"
-      description="点击「+ 添加服务器」或从 FileZilla 导入现有配置"
-    >
-      <template #actions>
-        <BaseButton @click="form.openCreate()">+ 添加服务器</BaseButton>
-      </template>
-    </EmptyState>
-    <BaseDataTable
-      v-else
-      :columns="columns"
-      :rows="rows"
-      :row-key="row => row.id"
-      density="compact"
-      :scroll-x="760"
-      aria-label="服务器列表"
-    />
+      <div v-if="page.loading.value" class="deploy-servers__state">
+        <LoadingState label="正在加载服务器…" />
+      </div>
+      <div v-else-if="page.error.value" class="deploy-servers__state">
+        <ErrorState
+          title="加载服务器失败"
+          :description="page.error.value"
+          @retry="refresh()"
+        />
+      </div>
+      <div v-else-if="rows.length === 0" class="deploy-servers__state">
+        <EmptyState
+          title="还没有服务器"
+          description="点击「＋ 添加服务器」或从 FileZilla 导入现有配置"
+        >
+          <template #actions>
+            <BaseButton @click="form.openCreate()">＋ 添加服务器</BaseButton>
+          </template>
+        </EmptyState>
+      </div>
+      <BaseDataTable
+        v-else
+        :columns="columns"
+        :rows="rows"
+        :row-key="row => row.id"
+        density="compact"
+        :scroll-x="760"
+        aria-label="服务器列表"
+      />
+    </BaseCard>
 
     <ServerFormDialog
       :open="form.open.value"

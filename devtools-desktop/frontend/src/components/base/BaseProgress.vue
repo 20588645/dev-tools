@@ -48,7 +48,7 @@ const color = computed(() => ({
 const indicatorVisible = computed(() => props.showIndicator ?? props.shape === 'circle')
 const resolvedStrokeWidth = computed(() => props.strokeWidth ?? (props.shape === 'circle' ? 8 : 7))
 const railColor = computed(() => props.rail === 'visible'
-  ? 'var(--color-border)'
+  ? 'var(--color-border-strong)'
   : 'var(--color-surface-subtle)')
 const progressStyle = computed<CSSProperties>(() => ({
   ...(props.shape === 'circle' ? { width: `${props.size}px`, height: `${props.size}px` } : null),

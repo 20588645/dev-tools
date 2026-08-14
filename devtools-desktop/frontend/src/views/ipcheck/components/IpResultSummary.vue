@@ -3,6 +3,7 @@ import { computed } from 'vue'
 
 import BaseBadge from '@/components/base/BaseBadge.vue'
 import BaseCard from '@/components/base/BaseCard.vue'
+import ScoreRing from '@/components/charts/ScoreRing.vue'
 import type { IpCheckResult } from '@/services/modules/ipcheck-service'
 
 const props = defineProps<{
@@ -16,47 +17,47 @@ const riskTone = computed<'success' | 'warning' | 'danger'>(() => {
   return 'danger'
 })
 
-const riskVerdict = computed(() => {
-  if (props.result.riskScore <= 15) return '当前风险很低'
-  if (props.result.riskScore <= 25) return '当前风险较低'
-  if (props.result.riskScore <= 50) return '建议保持关注'
-  return '当前风险较高'
+/** 原型概览环显示「纯净度」：风险分越低环越满 */
+const purityScore = computed(() => Math.max(0, Math.min(100, 100 - props.result.riskScore)))
+
+const proxyBadge = computed(() => {
+  if (props.result.vpnDetected) return { label: '✕ 检测到 VPN', tone: 'danger' as const }
+  if (props.result.proxyDetected) return { label: '△ 检测到代理', tone: 'warning' as const }
+  return { label: '✓ 无代理特征', tone: 'success' as const }
 })
+
+const nativeBadge = computed(() => (
+  props.result.nativeIp === '原生 IP'
+    ? { label: '✓ 原生 IP', tone: 'success' as const }
+    : { label: props.result.nativeIp, tone: 'neutral' as const }
+))
 </script>
 
 <template>
-  <BaseCard class="ip-result-summary" :data-risk-tone="riskTone">
-    <div class="ip-result-summary__grid">
-      <section class="ip-result-summary__identity" aria-labelledby="ip-result-heading">
-        <span id="ip-result-heading" class="ip-eyebrow">当前网络身份</span>
-        <strong class="ip-result-summary__ip">{{ result.ip }}</strong>
-        <p class="ip-result-summary__location">{{ result.location }}</p>
+  <BaseCard class="ip-result-summary" :data-risk-tone="riskTone" content-padding="18px">
+    <div class="ip-result-summary__layout">
+      <ScoreRing
+        :value="purityScore"
+        :size="96"
+        :stroke-width="11"
+        :tone="riskTone"
+        label="纯净度评分"
+      >
+        <span class="ip-result-summary__score">{{ purityScore }}</span>
+      </ScoreRing>
+      <section class="ip-result-summary__copy" aria-labelledby="ip-result-heading">
+        <strong id="ip-result-heading" class="ip-result-summary__verdict">
+          {{ result.riskLabel }} · {{ result.ipType }}
+        </strong>
+        <p class="ip-result-summary__location">
+          <span class="ip-result-summary__ip">{{ result.ip }}</span>
+          <span>{{ result.location }}</span>
+        </p>
         <div class="ip-result-summary__badges">
-          <BaseBadge :tone="riskTone">{{ result.riskLabel }}</BaseBadge>
-          <BaseBadge tone="info">{{ result.ipType }}</BaseBadge>
-          <BaseBadge>{{ result.nativeIp }}</BaseBadge>
+          <BaseBadge :tone="nativeBadge.tone">{{ nativeBadge.label }}</BaseBadge>
+          <BaseBadge :tone="proxyBadge.tone">{{ proxyBadge.label }}</BaseBadge>
+          <BaseBadge tone="info">{{ result.sharedUsersLevel }}</BaseBadge>
           <BaseBadge v-if="updatedLabel">{{ updatedLabel }} 更新</BaseBadge>
-        </div>
-      </section>
-      <section class="ip-result-summary__risk" aria-label="综合风险">
-        <div class="ip-risk-readout">
-          <div class="ip-risk-readout__number"><strong>{{ result.riskScore }}</strong><span>/ 100</span></div>
-          <span class="ip-risk-readout__verdict">{{ riskVerdict }}</span>
-        </div>
-        <div class="ip-risk-meter-wrap">
-          <div class="ip-risk-meter__head"><span>综合风险</span><span>越低越稳定</span></div>
-          <div
-            class="ip-risk-meter"
-            role="meter"
-            aria-label="综合风险"
-            aria-valuemin="0"
-            aria-valuemax="100"
-            :aria-valuenow="result.riskScore"
-          >
-            <i :style="{ width: `${Math.max(2, result.riskScore)}%` }" />
-          </div>
-          <div class="ip-risk-meter__thresholds"><span>纯净 0</span><span>关注 25</span><span>风险 50</span><span>高风险 100</span></div>
-          <div class="ip-risk-meter__source"><i aria-hidden="true" /><span>数据源 {{ result.providerName }}</span></div>
         </div>
       </section>
     </div>

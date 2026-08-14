@@ -87,71 +87,77 @@
   display: grid;
   width: 100%;
   min-width: 0;
-  gap: var(--space-3);
-}
-
-.usage-dashboard > .base-card,
-.usage-lower-grid > .base-card {
-  min-width: 0;
-  overflow: hidden;
-  box-shadow: var(--shadow-sm);
-}
-
-.usage-overview__grid {
-  display: grid;
-  min-width: 0;
-  grid-template-columns: minmax(0, 1fr) minmax(260px, 30%);
-}
-
-.usage-overview__trend {
-  min-width: 0;
-  padding: var(--space-4);
-  border-right: 1px solid var(--color-border);
-}
-
-.usage-primary-metric {
-  display: flex;
-  min-height: 82px;
-  align-items: flex-start;
-  justify-content: space-between;
   gap: var(--space-4);
 }
 
-.usage-primary-metric > div {
+.usage-dashboard > .base-card,
+.usage-mid-grid > .base-card,
+.usage-lower-grid > .base-card {
+  min-width: 0;
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+
+/* 原型 stat 卡组：四列 */
+.usage-stats {
   display: grid;
-  gap: 3px;
+  min-width: 0;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-4);
 }
 
-.usage-primary-metric span {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-}
-
-.usage-primary-metric strong {
-  color: var(--color-text);
-  font-family: var(--font-family-mono);
-  font-size: clamp(28px, 3vw, 42px);
-  font-weight: var(--font-weight-bold);
-  letter-spacing: -.04em;
-  line-height: 1.05;
-}
-
-.usage-primary-metric small {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  color: var(--color-text-subtle);
-  font-size: 10px;
-}
-
-.usage-primary-metric b {
+.usage-stats :is(.stat-card__meta) b {
+  margin-left: 2px;
   color: var(--color-success);
   font-weight: var(--font-weight-semibold);
 }
 
-.usage-primary-metric b.is-negative {
+.usage-stats :is(.stat-card__meta) b.is-negative {
   color: var(--color-danger);
+}
+
+/* 面板头（原型 .panel-head） */
+.usage-panel-head {
+  display: flex;
+  min-height: 40px;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px 4px;
+}
+
+.usage-panel-head h2 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+}
+
+.usage-panel-head > span {
+  color: var(--color-text-subtle);
+  font-size: 11.5px;
+}
+
+/* 趋势 span3 + 模型排行 */
+.usage-mid-grid {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 3fr) minmax(240px, 1fr);
+  gap: var(--space-4);
+}
+
+.usage-trend-card__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 6px 16px 14px;
+}
+
+.usage-model-rank__list {
+  display: grid;
+  flex: 1 1 auto;
+  align-content: start;
+  gap: 12px;
+  padding: 8px 18px 16px;
 }
 
 .usage-trend {
@@ -166,11 +172,12 @@
   cursor: crosshair;
 }
 
+/* 图例锚在面板头右侧（面板头高 40px + body 上间距） */
 .usage-trend__legend {
   position: absolute;
   z-index: 1;
-  top: -42px;
-  right: 0;
+  top: -34px;
+  right: 2px;
   display: flex;
   gap: var(--space-3);
   color: var(--color-text-subtle);
@@ -283,80 +290,17 @@
   font-weight: var(--font-weight-semibold);
 }
 
-.usage-insights {
-  display: grid;
-  min-width: 0;
-  grid-template-rows: repeat(3, minmax(74px, auto)) auto;
-}
-
-.usage-insights > article {
-  display: grid;
-  grid-template-columns: 32px minmax(0, 1fr);
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
-  border-bottom: 1px solid var(--color-border);
-}
-
-.usage-insights article > div {
-  display: grid;
-  min-width: 0;
-  gap: 2px;
-}
-
-.usage-insights article small,
-.usage-insights article span {
-  color: var(--color-text-subtle);
-  font-size: 10px;
-}
-
-.usage-insights article strong {
-  color: var(--color-text);
-  font-family: var(--font-family-mono);
-  font-size: var(--font-size-xl);
-  line-height: 1.1;
-}
-
-.usage-insight-icon {
-  display: grid;
-  width: 30px;
-  height: 30px;
-  place-items: center;
-  color: var(--color-action);
-  background: color-mix(in srgb, var(--color-action) 10%, transparent);
-  border: 1px solid color-mix(in srgb, var(--color-action) 30%, var(--color-border));
-  border-radius: 9px;
-  font-size: var(--font-size-sm);
-}
-
-.usage-insight-icon.is-series {
-  color: var(--color-series-2);
-  background: color-mix(in srgb, var(--color-series-2) 9%, transparent);
-  border-color: color-mix(in srgb, var(--color-series-2) 28%, var(--color-border));
-}
-
-.usage-insight-icon.is-warning {
-  color: var(--color-warning);
-  background: color-mix(in srgb, var(--color-warning) 9%, transparent);
-  border-color: color-mix(in srgb, var(--color-warning) 28%, var(--color-border));
-}
-
+/* 单价覆盖不完整时的提示条（stat 行下方） */
 .usage-pricing-state {
   display: grid;
-  grid-template-columns: 20px minmax(0, 1fr);
-  gap: var(--space-2);
-  margin: var(--space-3);
-  padding: var(--space-3);
+  grid-template-columns: 20px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-2) var(--space-3);
   color: var(--color-warning);
   background: color-mix(in srgb, var(--color-warning) 7%, var(--color-surface));
   border: 1px solid color-mix(in srgb, var(--color-warning) 28%, var(--color-border));
   border-radius: var(--radius-md);
-}
-
-.usage-pricing-state.is-success {
-  color: var(--color-success);
-  background: color-mix(in srgb, var(--color-success) 7%, var(--color-surface));
-  border-color: color-mix(in srgb, var(--color-success) 28%, var(--color-border));
 }
 
 .usage-pricing-state strong {
@@ -365,9 +309,9 @@
 }
 
 .usage-pricing-state p {
-  margin: 3px 0;
+  margin: 2px 0 0;
   color: var(--color-text-subtle);
-  font-size: 9px;
+  font-size: 10px;
   line-height: 1.45;
 }
 
@@ -464,8 +408,8 @@
 .usage-lower-grid {
   display: grid;
   min-width: 0;
-  grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr);
-  gap: var(--space-3);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-4);
 }
 
 /* 序号是次要信息：不用色块圆点，只做等宽右对齐的弱化排版，前三名靠字重区分 */
@@ -698,30 +642,15 @@
 }
 
 @media (max-width: 1100px) {
-  .usage-overview__grid {
-    grid-template-columns: minmax(0, 1fr);
+  .usage-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3);
   }
 
-  .usage-overview__trend {
-    border-right: 0;
-    border-bottom: 1px solid var(--color-border);
-  }
-
-  .usage-insights {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    grid-template-rows: auto auto;
-  }
-
-  .usage-insights > article {
-    border-right: 1px solid var(--color-border);
-  }
-
-  .usage-pricing-state {
-    grid-column: 1 / -1;
-  }
-
+  .usage-mid-grid,
   .usage-lower-grid {
     grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-3);
   }
 }
 
@@ -754,16 +683,8 @@
     height: 200px;
   }
 
-  .usage-trend__legend {
-    top: -38px;
-  }
-
-  .usage-insights {
+  .usage-stats {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .usage-insights > article {
-    border-right: 0;
   }
 
   .usage-composition__legend {

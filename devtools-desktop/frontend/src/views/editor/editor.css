@@ -54,7 +54,7 @@
   overflow: hidden;
   background: var(--color-surface);
   border: 1px solid var(--color-border-soft);
-  border-radius: 0 var(--radius-xl) var(--radius-xl) var(--radius-xl);
+  border-radius: 0 var(--component-card-radius) var(--component-card-radius) var(--component-card-radius);
   box-shadow: var(--shadow-md);
 }
 
@@ -163,6 +163,7 @@
   border-right: 1px solid var(--color-border, var(--color-border));
 }
 
+/* 空态改由共享 EmptyState 呈现，这里只负责占满编辑区并居中 */
 .ed-empty {
   display: flex;
   flex: 1 1 auto;
@@ -172,24 +173,6 @@
   color: var(--color-text-subtle, var(--color-text-muted));
   text-align: center;
   gap: 4px;
-}
-
-.ed-empty-icon {
-  margin-bottom: 10px;
-  color: var(--color-text-subtle, var(--color-text-muted));
-  opacity: 0.55;
-}
-
-.ed-empty-title {
-  color: var(--color-text-muted, var(--color-text-muted));
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.ed-empty-desc {
-  max-width: 320px;
-  color: var(--color-text-subtle, var(--color-text-muted));
-  font-size: 12px;
 }
 
 .ed-statusbar {
@@ -249,17 +232,18 @@
   border-color: var(--color-border, var(--color-border));
 }
 
+/* 右键菜单浮层：与共享下拉菜单同皮肤（raised 面 / 12px 圆角 / 重投影） */
 .ed-tab-menu {
   position: fixed;
   z-index: 9999;
   min-width: 160px;
   padding: 5px;
-  font-size: 13px;
+  font-size: var(--font-size-xs);
   user-select: none;
-  background: var(--color-surface, var(--color-surface));
-  border: 1px solid var(--color-border, var(--color-border));
-  border-radius: 10px;
-  box-shadow: var(--shadow-md);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
   animation: edMenuIn 0.1s ease;
 }
 
@@ -269,15 +253,15 @@
 }
 
 .ed-tab-menu-item {
-  padding: 7px 12px;
-  color: var(--color-text, var(--color-text));
+  padding: 7px 10px;
+  color: var(--color-text);
   white-space: nowrap;
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: 8px;
   transition: background 0.1s ease;
 }
 
-.ed-tab-menu-item:hover { background: var(--color-surface-hover, var(--color-surface-hover)); }
+.ed-tab-menu-item:hover { background: var(--color-action-subtle); }
 
 .ed-tab-menu-item.disabled {
   color: var(--color-text-subtle, var(--color-text-muted));

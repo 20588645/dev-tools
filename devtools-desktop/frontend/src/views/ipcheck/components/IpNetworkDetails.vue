@@ -8,7 +8,7 @@ defineEmits<{ copy: [] }>()
 </script>
 
 <template>
-  <BaseCard class="ip-section-card">
+  <BaseCard class="ip-section-card" content-padding="0" content-layout="column">
     <section class="ip-section-card__body" aria-labelledby="ip-network-heading">
       <header class="ip-section-heading">
         <h2 id="ip-network-heading">网络与地理信息</h2>

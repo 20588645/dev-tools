@@ -53,7 +53,7 @@
   overflow: hidden;
   background: var(--color-surface);
   border: 1px solid var(--color-border-soft);
-  border-radius: var(--radius-xl);
+  border-radius: var(--component-card-radius);
   box-shadow: var(--shadow-md);
 }
 
@@ -122,6 +122,8 @@
   left: 4px;
   font-size: 88px;
   font-weight: var(--font-weight-bold);
+  /* 锁定苹方的中式大引号字形：全局字体栈会先命中 SF 的窄引号，观感与原型不符 */
+  font-family: "PingFang SC", var(--font-family-sans);
   line-height: 1;
   color: var(--color-action);
   opacity: 0.13;

@@ -120,19 +120,18 @@ function updateExpanded(names: string | number | Array<string | number> | null) 
   圆角走独立 token 而不是 --radius-lg：迁移期 legacy base.css 在主题作用域里
   把 --radius-lg 覆盖成 8px，直接引用会让面板和内层卡片圆角撞成同一档。
 */
+/* 原型 .panel：纯色面板 + 细软边 + 柔和投影，组头素排无分隔线 */
 .base-disclosure--panel {
   overflow: hidden;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-soft);
   border-radius: var(--component-disclosure-panel-radius);
   background: var(--component-disclosure-panel-face);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
 }
 
 /* 标题区横跨整个面板宽度，只能落在组件库的 header 节点上 */
 .base-disclosure--panel.base-disclosure :deep(.n-collapse-item__header) {
-  padding-inline: var(--space-3);
-  border-bottom: 1px solid var(--color-border);
-  background: var(--component-disclosure-panel-head);
+  padding-inline: var(--space-4);
 }
 
 

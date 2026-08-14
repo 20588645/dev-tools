@@ -6,6 +6,12 @@
   --component-control-height-md: 32px;
   --component-control-height-lg: 40px;
   --component-control-radius: var(--radius-md);
+  /* 原型 .btn / .btn.sm：页头主按钮 32×12.5，卡片操作 26×11.5 */
+  --component-button-font-size: 12.5px;
+  --component-button-font-size-sm: 11.5px;
+  --component-button-padding-x: 14px;
+  --component-button-padding-x-sm: 10px;
+  --component-button-radius-sm: 8px;
   --component-input-height: 34px;
   --component-card-padding: var(--space-4);
   --component-card-radius: var(--radius-lg);
@@ -31,16 +37,11 @@
     color-mix(in srgb, var(--color-surface-subtle) 160%, transparent),
     var(--color-surface-subtle)
   );
-  /* 分区容器：面板底与标题条，只用明度差分层，不引入色相 */
-  --component-disclosure-panel-radius: 14px;
+  /* 分区容器：原型 .panel 纯色面板（16px 圆角） */
+  --component-disclosure-panel-radius: 16px;
   /* 面板内嵌卡片收一档，嵌套关系才成立 */
-  --component-disclosure-panel-item-radius: 10px;
-  --component-disclosure-panel-face: color-mix(in srgb, var(--color-surface) 45%, transparent);
-  --component-disclosure-panel-head: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--color-surface) 72%, transparent),
-    color-mix(in srgb, var(--color-surface) 24%, transparent)
-  );
+  --component-disclosure-panel-item-radius: 13px;
+  --component-disclosure-panel-face: var(--color-surface);
   --component-dialog-width: 500px;
   --component-dialog-width-sm: 400px;
   --component-dialog-width-lg: 720px;

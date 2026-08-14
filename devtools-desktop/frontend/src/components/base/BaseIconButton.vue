@@ -17,12 +17,13 @@ const type = computed<'error' | 'default'>(() => props.variant === 'danger' ? 'e
 </script>
 
 <template>
+  <!-- danger 也走 quaternary：原型删除类操作是红字透明底，不用红实底方块 -->
   <NButton
     class="base-icon-button"
     :class="[`base-icon-button--${variant}`]"
     :type="type"
     :size="size === 'sm' ? 'small' : size === 'lg' ? 'large' : 'medium'"
-    :quaternary="variant === 'ghost'"
+    :quaternary="variant === 'ghost' || variant === 'danger'"
     :tertiary="variant === 'outline'"
     :circle="true"
     :disabled="disabled"

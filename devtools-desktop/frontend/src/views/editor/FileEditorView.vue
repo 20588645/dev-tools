@@ -4,6 +4,7 @@ import { computed, nextTick, onActivated, onBeforeUnmount, onDeactivated, onMoun
 import BaseButton from '@/components/base/BaseButton.vue'
 import BaseDialog from '@/components/feedback/BaseDialog.vue'
 import ConfirmDialog from '@/components/feedback/ConfirmDialog.vue'
+import EmptyState from '@/components/feedback/EmptyState.vue'
 import BaseInput from '@/components/form/BaseInput.vue'
 import PageFrame from '@/components/layout/PageFrame.vue'
 import PageHeader from '@/components/layout/PageHeader.vue'
@@ -293,7 +294,7 @@ onBeforeUnmount(() => {
     <template #top>
       <PageTop>
         <PageHeader
-          title="文件编辑器"
+          title="文件编辑"
           description="打开本地文件，语法高亮编辑（⌘S 保存 · ⌘F 查找）"
         >
           <template #actions>
@@ -345,14 +346,17 @@ onBeforeUnmount(() => {
           @cursor="onCmCursor"
         />
         <div v-if="!store.hasTabs" class="ed-empty">
-          <div class="ed-empty-icon" aria-hidden="true">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>
-          </div>
-          <div class="ed-empty-title">未打开任何文件</div>
-          <div class="ed-empty-desc">点击右上角「打开文件」选择一个本地文件开始编辑</div>
-          <BaseButton variant="primary" style="margin-top: 14px" @click="openBrowser('open')">
-            打开文件
-          </BaseButton>
+          <EmptyState
+            title="未打开任何文件"
+            description="点击右上角「打开文件」选择一个本地文件开始编辑"
+          >
+            <template #icon>
+              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>
+            </template>
+            <template #actions>
+              <BaseButton variant="primary" @click="openBrowser('open')">打开文件</BaseButton>
+            </template>
+          </EmptyState>
         </div>
       </div>
       <EditorStatusbar

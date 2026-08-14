@@ -461,17 +461,21 @@ function refreshCredentialControls() {
       key = credentialControlKey
       credentialControlKeys.set(table, key)
     }
-    // 工具栏贴在标题行右上角。getBoundingClientRect 已含滚动偏移，
-    // 与同样是视口坐标的 shellRect 相减即可，不要再叠加 scrollTop。
+    // getBoundingClientRect 已含滚动偏移，与同样是视口坐标的 shellRect 相减即可，不要再叠加 scrollTop。
     const cellRect = projectCell.getBoundingClientRect()
     const shellRect = shell.getBoundingClientRect()
+    const editing = table.dataset.editing === 'true'
+    // 编辑态工具栏较宽，上浮到表格顶边之上，避免盖住可编辑的标题单元格；
+    // 表格贴容器顶时钳回内部（此时正文没有可遮挡内容）。
+    // 非编辑态只有一枚小编辑钮，仍贴在标题行右上角内。
+    const offset = editing ? Math.max(2 - (cellRect.top - shellRect.top), -36) : 4
     return [{
       table,
       key,
       index,
-      editing: table.dataset.editing === 'true',
+      editing,
       style: {
-        top: `${Math.round(cellRect.top - shellRect.top + 4)}px`,
+        top: `${Math.round(cellRect.top - shellRect.top + offset)}px`,
         // 表格可能比容器宽（横向滚动），此时 cellRect.right 会超出容器右界导致负值，
         // 钳到 8px 保证工具栏始终留在可视区内
         right: `${Math.max(8, Math.round(shellRect.right - cellRect.right + 8))}px`,

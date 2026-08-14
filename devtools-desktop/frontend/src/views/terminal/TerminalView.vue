@@ -133,7 +133,7 @@ function onSearch(direction: 'next' | 'prev', incremental = false) {
             </span>
           </template>
           <template #actions>
-            <BaseButton variant="primary" size="sm" @click="addOpen = true">添加命令</BaseButton>
+            <BaseButton variant="primary" @click="addOpen = true">＋ 添加命令</BaseButton>
           </template>
         </PageHeader>
         <PageToolbar>

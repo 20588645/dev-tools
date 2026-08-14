@@ -32,10 +32,10 @@ function onExpandedChange(expanded: boolean) {
     :aria-label="`${group.label}项目分组`"
     :model-value="!group.collapsed"
     variant="panel"
-    header-padding="var(--space-2) 0"
-    header-min-height="26px"
+    header-padding="10px 0 5px"
+    header-min-height="34px"
     content-gap="0"
-    content-padding="var(--space-3)"
+    content-padding="6px 18px 16px"
     @update:model-value="onExpandedChange"
   >
     <template #header>
@@ -86,7 +86,7 @@ function onExpandedChange(expanded: boolean) {
   overflow: hidden;
   color: var(--color-text);
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
+  font-weight: var(--font-weight-bold);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -113,11 +113,19 @@ function onExpandedChange(expanded: boolean) {
   font-size: var(--font-size-xs);
 }
 
+/* 分组排序/重命名是低频操作：悬停或键盘聚焦时才浮现，保持组头干净（原型只有一支淡色铅笔） */
 .deploy-group__ops {
   display: flex;
   flex: none;
   align-items: center;
   gap: var(--space-1);
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease-standard);
+}
+
+.deploy-group:hover .deploy-group__ops,
+.deploy-group:focus-within .deploy-group__ops {
+  opacity: 1;
 }
 
 /*

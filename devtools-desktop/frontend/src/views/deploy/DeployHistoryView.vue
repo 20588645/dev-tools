@@ -3,7 +3,7 @@ import { computed, h, onActivated, onMounted, ref } from 'vue'
 
 import BaseBadge from '@/components/base/BaseBadge.vue'
 import BaseButton from '@/components/base/BaseButton.vue'
-import StatusIndicator from '@/components/base/StatusIndicator.vue'
+import BaseCard from '@/components/base/BaseCard.vue'
 import BaseDataTable from '@/components/data/BaseDataTable.vue'
 import type { BaseDataTableColumn, BaseDataTableRow } from '@/components/data/base-data-table'
 import ConfirmDialog from '@/components/feedback/ConfirmDialog.vue'
@@ -121,11 +121,16 @@ const columns = computed<BaseDataTableColumn<HistoryRow>[]>(() => {
         : h('span', { class: 'deploy-history__muted' }, '—'),
     },
     {
-      key: 'status', title: '状态', width: 104,
-      render: row => h(StatusIndicator, {
-        status: row.status === 'success' ? 'online' : 'offline',
-        label: row.status === 'success' ? row.duration || '成功' : '失败',
-      }),
+      // 原型「结果」列：彩色胶囊徽标 + mono 耗时
+      key: 'status', title: '结果', width: 148,
+      render: row => h('span', { class: 'deploy-history__result' }, [
+        h(
+          BaseBadge,
+          { tone: row.status === 'success' ? 'success' : 'danger' },
+          () => row.status === 'success' ? '✓ 成功' : '✕ 失败',
+        ),
+        row.duration ? h('span', { class: 'deploy-history__duration' }, row.duration) : null,
+      ]),
     },
     {
       // 固定宽度且不参与收缩，修 H2（极端长文本下操作列被挤出可视区）
@@ -256,20 +261,26 @@ onActivated(() => { void refresh({ silent: true }) })
       />
     </div>
 
-    <LoadingState v-if="page.loading.value" label="正在加载部署历史…" />
-    <ErrorState
-      v-else-if="page.error.value"
-      title="加载历史失败"
-      :description="page.error.value"
-      @retry="refresh()"
-    />
-    <template v-else>
-      <EmptyState
-        v-if="page.items.value.length === 0"
-        title="还没有部署记录"
-        description="执行一次构建或部署后，记录会出现在这里"
-      />
-      <EmptyState v-else-if="rows.length === 0" title="没有匹配的部署记录" compact />
+    <BaseCard class="deploy-history__panel" content-padding="0" content-layout="column">
+      <div v-if="page.loading.value" class="deploy-history__state">
+        <LoadingState label="正在加载部署历史…" />
+      </div>
+      <div v-else-if="page.error.value" class="deploy-history__state">
+        <ErrorState
+          title="加载历史失败"
+          :description="page.error.value"
+          @retry="refresh()"
+        />
+      </div>
+      <div v-else-if="page.items.value.length === 0" class="deploy-history__state">
+        <EmptyState
+          title="还没有部署记录"
+          description="执行一次构建或部署后，记录会出现在这里"
+        />
+      </div>
+      <div v-else-if="rows.length === 0" class="deploy-history__state">
+        <EmptyState title="没有匹配的部署记录" compact />
+      </div>
       <BaseDataTable
         v-else
         :columns="columns"
@@ -279,7 +290,7 @@ onActivated(() => { void refresh({ silent: true }) })
         :scroll-x="900"
         aria-label="部署历史"
       />
-    </template>
+    </BaseCard>
 
     <ConfirmDialog
       :model-value="pendingRemove !== null"

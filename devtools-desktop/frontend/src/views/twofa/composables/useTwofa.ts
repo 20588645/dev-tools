@@ -47,7 +47,6 @@ export function useTwofa(options: UseTwofaOptions = {}) {
   const stats = ref<TwofaStats>(emptyStats())
   const query = ref('')
   const activeGroup = ref('')
-  const expandedId = ref('')
   const loading = ref(false)
   const refreshing = ref(false)
   const error = ref('')
@@ -159,13 +158,8 @@ export function useTwofa(options: UseTwofaOptions = {}) {
     tickTimer.start()
   }
 
-  function toggleExpanded(id: string) {
-    expandedId.value = expandedId.value === id ? '' : id
-  }
-
   function setGroup(group: string) {
     activeGroup.value = group
-    expandedId.value = ''
   }
 
   async function copyCode(account: TwofaAccount) {
@@ -226,7 +220,6 @@ export function useTwofa(options: UseTwofaOptions = {}) {
   async function removeAccount(account: TwofaAccount) {
     try {
       await service.deleteTwofaAccount(account.id)
-      if (expandedId.value === account.id) expandedId.value = ''
       notifications.push(`已删除 ${account.issuer}`, 'success')
       await load(true)
       return true
@@ -272,7 +265,6 @@ export function useTwofa(options: UseTwofaOptions = {}) {
     stats,
     query,
     activeGroup,
-    expandedId,
     copiedId,
     loading,
     refreshing,
@@ -287,7 +279,6 @@ export function useTwofa(options: UseTwofaOptions = {}) {
     remainingOf,
     load,
     setGroup,
-    toggleExpanded,
     copyCode,
     toggleFavorite,
     saveAccount,

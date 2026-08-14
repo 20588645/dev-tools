@@ -92,78 +92,70 @@
   box-shadow: var(--shadow-md);
 }
 
+/* 原型 .status-strip：单面板一行状态摘要 */
 .settings-status-overview {
-  display: grid;
   min-width: 0;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 9px;
-}
-
-.settings-status-card {
-  display: grid;
-  min-width: 0;
-  min-height: 58px;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  background: color-mix(in srgb, var(--color-surface) 84%, transparent);
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-}
-
-.settings-status-card__mark {
-  display: grid;
-  width: 30px;
-  height: 30px;
-  place-items: center;
-  color: var(--color-action);
-  background: var(--settings-accent-soft);
-  border: 1px solid color-mix(in srgb, var(--color-action) 20%, var(--color-border));
-  border-radius: 9px;
-  font-family: var(--font-family-mono);
-  font-size: 9px;
-}
-
-.settings-status-card__mark.is-online {
-  color: var(--color-success);
-  background: color-mix(in srgb, var(--color-success) 10%, transparent);
-  border-color: color-mix(in srgb, var(--color-success) 24%, var(--color-border));
-}
-
-.settings-status-card > span:last-child {
-  display: grid;
-  min-width: 0;
-  gap: 3px;
-}
-
-.settings-status-card small {
+  flex: none;
   overflow: hidden;
-  color: var(--color-text-subtle);
-  font-size: 9px;
-  text-overflow: ellipsis;
+  box-shadow: var(--shadow-md);
+}
+
+.settings-status-strip {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: var(--space-2) 20px;
+  padding: 12px 18px;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+}
+
+.settings-status-strip > span {
+  display: inline-flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 6px;
   white-space: nowrap;
 }
 
-.settings-status-card strong {
+.settings-status-strip b {
   overflow: hidden;
   color: var(--color-text);
-  font-size: 11px;
+  font-family: var(--font-family-mono);
   font-weight: var(--font-weight-semibold);
   text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
+.settings-status-strip b.is-online {
+  color: var(--color-success);
+}
+
+.settings-status-strip__dot {
+  width: 7px;
+  height: 7px;
+  align-self: center;
+  background: var(--color-text-subtle);
+  border-radius: var(--radius-pill);
+  opacity: 0.5;
+}
+
+.settings-status-strip__dot.is-online {
+  background: var(--color-success);
+  box-shadow: 0 0 9px color-mix(in srgb, var(--color-success) 45%, transparent);
+  opacity: 1;
+}
+
+/* 主工作区 = 全局同款面板皮肤（surface / 软边框 / 16px / 重投影） */
 .settings-workspace {
   display: grid;
   min-width: 0;
   min-height: 0;
   grid-template-columns: 188px minmax(0, 1fr);
   overflow: hidden;
-  background: color-mix(in srgb, var(--color-surface) 92%, transparent);
-  border: 1px solid var(--color-border);
-  border-radius: 14px;
-  box-shadow: var(--shadow-sm);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--component-card-radius);
+  box-shadow: var(--shadow-md);
 }
 
 .settings-category-nav {
@@ -207,7 +199,7 @@
 .settings-panel-heading h2 {
   margin: 0;
   color: var(--color-text);
-  font-size: 15px;
+  font-size: var(--font-size-md);
   font-weight: var(--font-weight-semibold);
 }
 
@@ -232,13 +224,15 @@
   gap: 10px;
 }
 
+/* 面板内嵌卡 = 与 run/deploy 项目卡同档皮肤（13px + 软边框 + 投影浮起） */
 .settings-card,
 .settings-backup-table {
   min-width: 0;
   overflow: hidden;
-  background: color-mix(in srgb, var(--color-surface) 90%, transparent);
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--component-disclosure-panel-item-radius);
+  box-shadow: var(--shadow-md);
 }
 
 .settings-card__heading {
@@ -393,7 +387,7 @@
   padding: 13px;
   background: linear-gradient(135deg, var(--settings-accent-soft), transparent 70%), var(--color-surface);
   border: 1px solid color-mix(in srgb, var(--color-action) 20%, var(--color-border));
-  border-radius: 12px;
+  border-radius: var(--component-disclosure-panel-item-radius);
 }
 
 .settings-backup-summary strong,
@@ -590,9 +584,10 @@
 .settings-about-grid article {
   min-height: 86px;
   padding: 13px;
-  background: color-mix(in srgb, var(--color-surface) 90%, transparent);
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--component-disclosure-panel-item-radius);
+  box-shadow: var(--shadow-md);
 }
 
 .settings-about-grid small {
@@ -775,14 +770,8 @@
     padding-top: 9px;
   }
 
-  .settings-status-card {
-    min-height: 50px;
-    padding: 6px 9px;
-  }
-
-  .settings-status-card__mark {
-    width: 26px;
-    height: 26px;
+  .settings-status-strip {
+    padding: 9px 12px;
   }
 
   .settings-workspace {
@@ -825,14 +814,6 @@
 }
 
 @media (max-width: 760px) {
-  .settings-status-card {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .settings-status-card__mark {
-    display: none;
-  }
-
   .settings-panel-grid,
   .settings-git-fields {
     grid-template-columns: minmax(0, 1fr);

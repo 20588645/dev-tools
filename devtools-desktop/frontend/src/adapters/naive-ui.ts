@@ -156,6 +156,13 @@ export function createNaiveThemeOverrides(_theme: Theme): GlobalThemeOverrides {
       textColorPressedPrimary: colors.actionContrast,
       textColorFocusPrimary: colors.actionContrast,
       textColorDisabledPrimary: colors.actionContrast,
+      /* 按钮不走 common.heightMedium（34px 输入档），对齐原型 .btn 32 / .btn.sm 26 */
+      heightMedium: 'var(--component-control-height-md)',
+      fontSizeMedium: 'var(--component-button-font-size)',
+      fontSizeSmall: 'var(--component-button-font-size-sm)',
+      paddingMedium: '0 var(--component-button-padding-x)',
+      paddingSmall: '0 var(--component-button-padding-x-sm)',
+      borderRadiusSmall: 'var(--component-button-radius-sm)',
     },
   }
 }

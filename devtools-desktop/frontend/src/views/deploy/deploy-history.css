@@ -10,6 +10,17 @@
   gap: var(--space-3);
 }
 
+.deploy-history__panel {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.deploy-history__state {
+  display: grid;
+  place-items: center;
+  padding: var(--space-6) var(--space-4);
+}
+
 /* ---------- 工具栏与筛选 ---------- */
 .deploy-history__toolbar,
 .deploy-history__filters {
@@ -28,6 +39,21 @@
 }
 
 .deploy-history__muted { color: var(--color-text-subtle); }
+
+/* 原型「结果」列：徽标 + mono 耗时同格 */
+.deploy-history__result {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.deploy-history__duration {
+  color: var(--color-text-subtle);
+  font-family: var(--font-family-mono);
+  font-size: 11px;
+  white-space: nowrap;
+}
 
 /*
   模块标签只列前 3 个 + N（修 H1）。旧实现是 nowrap + 可收缩子项，

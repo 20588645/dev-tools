@@ -13,24 +13,21 @@ import PageFrame from '@/components/layout/PageFrame.vue'
 import PageHeader from '@/components/layout/PageHeader.vue'
 import PageToolbar from '@/components/layout/PageToolbar.vue'
 import PageTop from '@/components/layout/PageTop.vue'
-import FilterChip from '@/components/navigation/FilterChip.vue'
+import BaseSegmented, { type SegmentOption } from '@/components/navigation/BaseSegmented.vue'
 import type { TwofaAccount, TwofaAccountInput } from '@/services/modules/twofa-service'
 
 import TwofaAccountDialog from './components/TwofaAccountDialog.vue'
-import TwofaAccountRow from './components/TwofaAccountRow.vue'
+import TwofaCodeCard from './components/TwofaCodeCard.vue'
 import TwofaImportDialog from './components/TwofaImportDialog.vue'
-import TwofaPinnedCards from './components/TwofaPinnedCards.vue'
 import TwofaQuickDialog from './components/TwofaQuickDialog.vue'
 import { useTwofa } from './composables/useTwofa'
 import './twofa.css'
 
 defineOptions({ name: 'TwofaView' })
 
-
 const {
   query,
   activeGroup,
-  expandedId,
   copiedId,
   loading,
   refreshing,
@@ -44,7 +41,6 @@ const {
   remainingOf,
   load,
   setGroup,
-  toggleExpanded,
   copyCode,
   toggleFavorite,
   saveAccount,
@@ -57,6 +53,7 @@ const importDialogOpen = ref(false)
 const quickDialogOpen = ref(false)
 const editing = ref<TwofaAccount | null>(null)
 const collapsedGroups = ref<string[]>([])
+const pinnedExpanded = ref(true)
 const confirmRemoveOpen = ref(false)
 const pendingRemove = ref<TwofaAccount | null>(null)
 
@@ -69,6 +66,16 @@ const removeMessage = computed(() => (
 const groupNames = computed(() => groupOptions.value.filter((item) => item.value).map((item) => item.value))
 const hasAccounts = computed(() => stats.value.total > 0)
 const hasVisibleResult = computed(() => groupedAccounts.value.length > 0)
+
+/** 原型 toolbar 分段器：全部 N / 分组 N（值用 __all 占位，BaseSegmented 不接受空串） */
+const groupSegments = computed<SegmentOption[]>(() => groupOptions.value.map((option) => ({
+  label: `${option.label} ${option.count}`,
+  value: option.value || '__all',
+})))
+
+function onGroupSegment(value: string) {
+  setGroup(value === '__all' ? '' : value)
+}
 
 function openAdd() {
   editing.value = null
@@ -99,6 +106,13 @@ function askRemove(account: TwofaAccount) {
   confirmRemoveOpen.value = true
 }
 
+/** 编辑弹窗里点「删除账号」：先收起弹窗再走确认 */
+function askRemoveFromDialog() {
+  if (!editing.value) return
+  accountDialogOpen.value = false
+  askRemove(editing.value)
+}
+
 async function onConfirmRemove() {
   const account = pendingRemove.value
   if (!account) return
@@ -106,10 +120,6 @@ async function onConfirmRemove() {
     confirmRemoveOpen.value = false
     pendingRemove.value = null
   }
-}
-
-function selectGroup(name: string, selected: boolean) {
-  if (selected) setGroup(name)
 }
 
 function setGroupExpanded(name: string, expanded: boolean) {
@@ -123,41 +133,33 @@ function setGroupExpanded(name: string, expanded: boolean) {
   <PageFrame class="twofa-view" variant="immersive" data-test="twofa-view">
     <template #top>
       <PageTop>
-        <PageHeader title="双因验证" description="密钥本地加密保存，验证码由本机时间生成">
+        <PageHeader title="双因验证" description="TOTP 验证码 · 本机生成 · 点击验证码复制">
           <template #icon><span class="twofa-view__title-mark">⛨</span></template>
           <template #actions>
             <StatusIndicator :label="status.label" :status="status.status" />
             <BaseButton variant="secondary" @click="quickDialogOpen = true">快捷查询</BaseButton>
             <BaseButton variant="secondary" @click="importDialogOpen = true">批量导入</BaseButton>
-            <BaseButton @click="openAdd">添加账号</BaseButton>
+            <BaseButton @click="openAdd">＋ 添加账号</BaseButton>
           </template>
         </PageHeader>
         <PageToolbar>
           <div class="twofa-toolbar">
-            <div class="twofa-toolbar__filters">
-              <BaseInput
-                v-model="query"
-                type="search"
-                variant="search"
-                class="twofa-toolbar__search"
-                aria-label="搜索账号"
-                placeholder="搜索发行方或账号"
-              />
-              <div class="twofa-chips" role="group" aria-label="分组筛选">
-                <FilterChip
-                  v-for="option in groupOptions"
-                  :key="option.value || 'all'"
-                  :label="option.label"
-                  :count="option.count"
-                  :selected="activeGroup === option.value"
-                  :aria-label="`筛选${option.label}，${option.count} 个账号`"
-                  @update:selected="selectGroup(option.value, $event)"
-                />
-              </div>
-            </div>
-            <div class="twofa-toolbar__actions">
-              <BaseButton variant="ghost" size="sm" :loading="refreshing" @click="load(true)">刷新</BaseButton>
-            </div>
+            <BaseInput
+              v-model="query"
+              type="search"
+              variant="search"
+              class="twofa-toolbar__search"
+              aria-label="搜索账号"
+              placeholder="搜索账号 / 发行方…"
+            />
+            <BaseSegmented
+              :model-value="activeGroup || '__all'"
+              :options="groupSegments"
+              aria-label="分组筛选"
+              @update:model-value="onGroupSegment($event as string)"
+            />
+            <span class="twofa-toolbar__grow" aria-hidden="true" />
+            <BaseButton variant="ghost" size="sm" :loading="refreshing" @click="load(true)">刷新</BaseButton>
           </div>
         </PageToolbar>
       </PageTop>
@@ -182,54 +184,73 @@ function setGroupExpanded(name: string, expanded: boolean) {
       </EmptyState>
 
       <div v-else class="twofa-board">
-        <TwofaPinnedCards :accounts="pinned" :remaining-of="remainingOf" @copy="copyCode" />
-
-        <section aria-label="全部账号">
-          <div class="twofa-section-heading">
-            <h2>全部账号</h2>
-            <span>{{ summaryLabel }}</span>
+        <!-- 置顶与分组共用 run/deploy 同款 panel 分区容器，三页观感一致 -->
+        <BaseDisclosure
+          v-if="pinned.length"
+          v-model="pinnedExpanded"
+          class="twofa-pinned"
+          variant="panel"
+          header-padding="10px 0 5px"
+          header-min-height="34px"
+          content-gap="0"
+          content-padding="6px 18px 16px"
+        >
+          <template #header>
+            <span class="twofa-group__label">
+              <b>📌 置顶</b>
+              <span class="twofa-group__count">{{ pinned.length }}</span>
+            </span>
+          </template>
+          <div class="twofa-grid">
+            <TwofaCodeCard
+              v-for="account in pinned"
+              :key="`pinned-${account.id}`"
+              class="twofa-pinned__card"
+              :account="account"
+              :remaining="remainingOf(account)"
+              :copied="copiedId === account.id"
+              @copy="copyCode(account)"
+              @edit="openEdit(account)"
+              @favorite="toggleFavorite(account)"
+            />
           </div>
+        </BaseDisclosure>
 
-          <EmptyState v-if="!hasVisibleResult" compact title="没有匹配的账号" />
+        <EmptyState v-if="!hasVisibleResult" compact title="没有匹配的账号" />
 
-          <div v-else class="twofa-groups">
-            <BaseDisclosure
-              v-for="group in groupedAccounts"
-              :key="group.name"
-              :model-value="!collapsedGroups.includes(group.name)"
-              class="twofa-group"
-              variant="plain"
-              header-padding="7px 2px"
-              content-gap="0"
-              content-padding="0"
-              @update:model-value="setGroupExpanded(group.name, $event)"
-            >
-              <template #header>
-                <span class="twofa-group__label">
-                  <b>{{ group.name }}</b>
-                  <span>{{ group.accounts.length }}</span>
-                </span>
-              </template>
-              <div class="twofa-group__rows">
-                <TwofaAccountRow
-                  v-for="account in group.accounts"
-                  :key="account.id"
-                  :account="account"
-                  :remaining="remainingOf(account)"
-                  :expanded="expandedId === account.id"
-                  :copied="copiedId === account.id"
-                  @toggle="toggleExpanded(account.id)"
-                  @copy="copyCode(account)"
-                  @edit="openEdit(account)"
-                  @favorite="toggleFavorite(account)"
-                  @remove="askRemove(account)"
-                />
-              </div>
-            </BaseDisclosure>
+        <BaseDisclosure
+          v-for="group in groupedAccounts"
+          :key="group.name"
+          :model-value="!collapsedGroups.includes(group.name)"
+          class="twofa-group"
+          variant="panel"
+          header-padding="10px 0 5px"
+          header-min-height="34px"
+          content-gap="0"
+          content-padding="6px 18px 16px"
+          @update:model-value="setGroupExpanded(group.name, $event)"
+        >
+          <template #header>
+            <span class="twofa-group__label">
+              <b>{{ group.name }}</b>
+              <span class="twofa-group__count">{{ group.accounts.length }}</span>
+            </span>
+          </template>
+          <div class="twofa-grid">
+            <TwofaCodeCard
+              v-for="account in group.accounts"
+              :key="account.id"
+              :account="account"
+              :remaining="remainingOf(account)"
+              :copied="copiedId === account.id"
+              @copy="copyCode(account)"
+              @edit="openEdit(account)"
+              @favorite="toggleFavorite(account)"
+            />
           </div>
-        </section>
+        </BaseDisclosure>
 
-        <p class="twofa-footnote">密钥仅本地加密保存 · 验证码由当前本机时间生成</p>
+        <p class="twofa-footnote">{{ summaryLabel }} · 密钥仅本地加密保存 · 验证码由当前本机时间生成</p>
       </div>
     </div>
 
@@ -238,6 +259,7 @@ function setGroupExpanded(name: string, expanded: boolean) {
       :account="editing"
       :groups="groupNames"
       @submit="onSubmitAccount"
+      @remove="askRemoveFromDialog"
     />
     <TwofaImportDialog v-model="importDialogOpen" @submit="onImport" />
     <TwofaQuickDialog v-model="quickDialogOpen" @save="onSaveFromQuick" />

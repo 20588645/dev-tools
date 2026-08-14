@@ -75,14 +75,19 @@ async function copyDetails() {
           </template>
         </PageHeader>
         <PageToolbar>
-          <IpQueryBar
-            v-model="query"
-            :error="validationError"
-            :loading="loading"
-            @submit="queryTarget"
-            @current="queryCurrent"
-            @clear="clearQuery"
-          />
+          <div class="ip-check-toolbar">
+            <IpQueryBar
+              v-model="query"
+              :error="validationError"
+              :loading="loading"
+              @submit="queryTarget"
+              @current="queryCurrent"
+              @clear="clearQuery"
+            />
+            <span v-if="updatedLabel" class="ip-check-toolbar__hint">
+              上次检测 {{ updatedLabel }} · 结果跨页保留
+            </span>
+          </div>
         </PageToolbar>
       </PageTop>
     </template>
@@ -107,15 +112,15 @@ async function copyDetails() {
           <span>刷新失败：{{ error }}</span>
           <BaseButton variant="ghost" size="sm" @click="retry">重试</BaseButton>
         </div>
-        <IpResultSummary :key="result.ip" :result="result" :updated-label="updatedLabel" />
-        <div class="ip-check-detail-grid">
+        <div class="ip-check-grid">
+          <IpResultSummary :key="result.ip" :result="result" :updated-label="updatedLabel" />
           <IpNetworkDetails :result="result" @copy="copyDetails" />
           <IpRiskDetails :key="result.ip" :result="result" />
+          <IpScenarioGrid v-if="result.scenarios.length" :scenarios="result.scenarios" />
+          <BaseCard v-else variant="subtle" class="ip-scenario-card">
+            <EmptyState compact title="暂无业务场景建议" description="网络身份和风险结果仍可正常参考" />
+          </BaseCard>
         </div>
-        <IpScenarioGrid v-if="result.scenarios.length" :scenarios="result.scenarios" />
-        <BaseCard v-else variant="subtle">
-          <EmptyState compact title="暂无业务场景建议" description="网络身份和风险结果仍可正常参考" />
-        </BaseCard>
         <footer class="ip-check-data-note">
           <span>第三方数据 · 检测结果仅供参考</span>
         </footer>

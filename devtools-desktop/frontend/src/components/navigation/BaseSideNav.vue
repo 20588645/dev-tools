@@ -55,13 +55,14 @@ const options = computed<MenuOption[]>(() => props.items.map(item => ({
   ]),
 })))
 
+/* redesign-v2：选中项 = 主色淡底 + 主色文字（原型 .cat-item.on） */
 const menuThemeOverrides = computed(() => ({
   color: 'transparent',
   borderRadius: 'var(--radius-md)',
   itemHeight: props.density === 'compact' ? '36px' : '44px',
   itemColorHover: 'var(--color-surface-subtle)',
-  itemColorActive: 'var(--color-surface-subtle)',
-  itemColorActiveHover: 'var(--color-surface-subtle)',
+  itemColorActive: 'var(--color-action-subtle)',
+  itemColorActiveHover: 'var(--color-action-subtle)',
   itemTextColor: 'var(--color-text-muted)',
   itemTextColorHover: 'var(--color-text)',
   itemTextColorActive: 'var(--color-action)',

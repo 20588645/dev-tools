@@ -10,12 +10,43 @@
   gap: var(--space-3);
 }
 
-.deploy-servers__toolbar {
-  display: flex;
+.deploy-servers__panel {
   min-width: 0;
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+
+/* 原型 .panel-head：服务器 · N 台 + 右置工具按钮 */
+.deploy-servers__head {
+  display: flex;
+  min-height: 48px;
+  flex: none;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-2);
+  gap: 10px;
+  padding: 10px 18px 6px;
+}
+
+.deploy-servers__head h2 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+}
+
+.deploy-servers__hint {
+  color: var(--color-text-subtle);
+  font-size: 11.5px;
+}
+
+.deploy-servers__grow {
+  flex: 1 1 auto;
+}
+
+.deploy-servers__state {
+  display: grid;
+  place-items: center;
+  padding: var(--space-6) var(--space-4);
 }
 
 .deploy-servers__mono {

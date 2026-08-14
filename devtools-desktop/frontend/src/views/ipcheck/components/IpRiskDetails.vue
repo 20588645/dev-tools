@@ -24,7 +24,7 @@ const supportTone = computed(() => /限制|风险|高危/.test(props.result.open
 </script>
 
 <template>
-  <BaseCard class="ip-section-card">
+  <BaseCard class="ip-section-card" content-padding="0" content-layout="column">
     <section class="ip-section-card__body" aria-labelledby="ip-signal-heading">
       <header class="ip-section-heading">
         <h2 id="ip-signal-heading">网络信号</h2>

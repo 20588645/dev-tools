@@ -44,19 +44,14 @@
   --color-series-3: var(--color-running);
   --color-series-muted: var(--color-neutral-400);
 
-  --color-terminal: #f8fafc;
+  /*
+    redesign-v2：终端屏幕与活跃标签在亮暗两主题下都用深色屏
+    （原型 .term-screen / .term-tab.on 无主题分支）。
+    屏内 xterm 配色、搜索高亮直接继承 semantic 的深屏基准，这里只覆盖面板头与按钮。
+  */
   --color-terminal-header: color-mix(in srgb, var(--color-surface-raised) 85%, transparent);
   --color-terminal-btn: color-mix(in srgb, var(--color-surface) 90%, transparent);
   --color-terminal-btn-fg: var(--color-text-muted);
   --color-terminal-btn-hover: var(--color-action);
   --color-terminal-btn-hover-bg: color-mix(in srgb, var(--color-action) 8%, transparent);
-
-  --term-xterm-bg: var(--color-terminal);
-  --term-xterm-fg: #0f172a;
-  --term-xterm-cursor: #0f172a;
-  --term-xterm-selection: color-mix(in srgb, var(--color-text) 15%, transparent);
-  --term-search-active-bg: var(--color-warning);
-  --term-search-active-border: var(--color-amber-500);
-  --term-search-match-bg: color-mix(in srgb, var(--color-warning) 30%, transparent);
-  --term-search-match-border: color-mix(in srgb, var(--color-warning) 50%, transparent);
 }

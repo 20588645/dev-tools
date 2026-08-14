@@ -3,9 +3,11 @@ import { computed, ref } from 'vue'
 
 import BaseButton from '@/components/base/BaseButton.vue'
 import BaseCard from '@/components/base/BaseCard.vue'
-import BaseProgress from '@/components/base/BaseProgress.vue'
 import StatusIndicator from '@/components/base/StatusIndicator.vue'
+import StatCard from '@/components/cards/StatCard.vue'
+import RankBar from '@/components/charts/RankBar.vue'
 import BaseDialog from '@/components/feedback/BaseDialog.vue'
+import EmptyState from '@/components/feedback/EmptyState.vue'
 import ErrorState from '@/components/feedback/ErrorState.vue'
 import LoadingState from '@/components/feedback/LoadingState.vue'
 import BaseCheckbox from '@/components/form/BaseCheckbox.vue'
@@ -150,21 +152,38 @@ const appOptions = [
 
 const tokenDelta = computed(() => usageDelta(summary.value.totalTokens, previousSummary.value?.totalTokens ?? 0))
 const requestDelta = computed(() => usageDelta(summary.value.requests, previousSummary.value?.requests ?? 0))
-const cacheInputRatio = computed(() => summary.value.cacheHitRate)
-const coverageTone = computed(() => summary.value.pricingCoverage >= 1 ? 'is-success' : summary.value.pricingCoverage > 0 ? 'is-partial' : '')
+const costDelta = computed(() => usageDelta(summary.value.costUsd, previousSummary.value?.costUsd ?? 0))
 
 function deltaLabel(value: number | null) {
   if (value === null) return '暂无对照'
   const arrow = value >= 0 ? '↑' : '↓'
   return `${arrow} ${Math.abs(value * 100).toFixed(1)}%`
 }
+
+const costLabel = computed(() => `$${summary.value.costUsd.toFixed(2)}`)
+const cacheSavedLabel = computed(() => `节省 ≈ $${summary.value.cacheSavedUsd.toFixed(2)}`)
+
+const rangeHint = computed(() => rangeOptions.find((option) => option.value === range.value)?.label ?? '')
+
+/** 原型「模型用量排行」：按总 Token 取前 5 */
+const modelRanking = computed(() => {
+  const rows = models.value
+    .map((model) => ({
+      name: model.displayName || model.model,
+      tokens: model.inputTokens + model.outputTokens + model.cacheReadTokens + model.cacheCreationTokens,
+    }))
+    .sort((a, b) => b.tokens - a.tokens)
+    .slice(0, 5)
+  const max = Math.max(...rows.map((row) => row.tokens), 1)
+  return rows.map((row) => ({ ...row, percent: row.tokens / max * 100 }))
+})
 </script>
 
 <template>
   <PageFrame class="usage-view" variant="immersive" data-test="usage-view">
     <template #top>
       <PageTop>
-        <PageHeader title="用量统计">
+        <PageHeader title="用量统计" description="AI 工具 Token 用量与成本">
           <template #icon><span class="usage-view__title-mark">▥</span></template>
           <template #actions>
             <StatusIndicator :label="status.label" :status="status.status" />
@@ -226,66 +245,79 @@ function deltaLabel(value: number | null) {
         @retry="refresh()"
       />
       <div v-else class="usage-dashboard">
-        <BaseCard class="usage-overview" content-padding="0" content-overflow="hidden">
-          <div class="usage-overview__grid">
-            <section class="usage-overview__trend" aria-labelledby="usage-total-title">
-            <div class="usage-primary-metric">
-              <div>
-                <span id="usage-total-title">总 Token</span>
-                <strong>{{ formatUsageNumber(summary.totalTokens) }}</strong>
-                <small>
-                  ≈ {{ formatUsageCompact(summary.totalTokens) }}
-                  <b :class="{ 'is-negative': tokenDelta !== null && tokenDelta < 0 }">{{ deltaLabel(tokenDelta) }}</b>
-                </small>
-              </div>
-            </div>
-              <UsageTrendChart :claude="claudeTrends" :codex="codexTrends" :range="range" />
-            </section>
+        <!-- 原型 stat 卡组：顶部渐变条统计卡 × 4 -->
+        <div class="usage-stats" aria-label="关键用量指标">
+          <StatCard label="Token 总量" tone="action">
+            {{ formatUsageCompact(summary.totalTokens) }}
+            <template #meta>
+              新增输入 {{ formatUsageCompact(summary.inputTokens) }}
+              · 输出 {{ formatUsageCompact(summary.outputTokens) }}
+              <b :class="{ 'is-negative': tokenDelta !== null && tokenDelta < 0 }">{{ deltaLabel(tokenDelta) }}</b>
+            </template>
+          </StatCard>
+          <StatCard label="估算成本" tone="success">
+            {{ costLabel }}
+            <template #meta>
+              环比 <b :class="{ 'is-negative': costDelta !== null && costDelta < 0 }">{{ deltaLabel(costDelta) }}</b>
+              · 覆盖 {{ formatUsagePercent(summary.pricingCoverage) }}
+            </template>
+          </StatCard>
+          <StatCard label="缓存命中" tone="running">
+            {{ formatUsagePercent(summary.cacheHitRate) }}
+            <template #meta>{{ cacheSavedLabel }}</template>
+          </StatCard>
+          <StatCard label="请求总数" tone="warning">
+            {{ formatUsageNumber(summary.requests) }}
+            <template #meta>
+              计价 {{ formatUsageNumber(summary.pricedRequests) }} 个
+              <b :class="{ 'is-negative': requestDelta !== null && requestDelta < 0 }">{{ deltaLabel(requestDelta) }}</b>
+            </template>
+          </StatCard>
+        </div>
 
-            <aside class="usage-insights" aria-label="关键用量指标">
-            <article>
-              <span class="usage-insight-icon">⌁</span>
-              <div>
-                <small>请求总数</small>
-                <strong>{{ formatUsageNumber(summary.requests) }}</strong>
-                <span>{{ deltaLabel(requestDelta) }}</span>
-              </div>
-            </article>
-            <article>
-              <!-- 缓存占比是中性指标，不是「成功」状态，用系列色而非语义绿 -->
-              <span class="usage-insight-icon is-series">◫</span>
-              <div>
-                <small>缓存输入占比</small>
-                <strong>{{ formatUsagePercent(cacheInputRatio) }}</strong>
-                <BaseProgress :value="cacheInputRatio * 100" label="缓存输入占比" />
-              </div>
-            </article>
-            <article>
-              <span class="usage-insight-icon is-warning">◇</span>
-              <div>
-                <small>单价覆盖率</small>
-                <strong>{{ formatUsagePercent(summary.pricingCoverage) }}</strong>
-                <span>{{ formatUsageNumber(summary.pricedRequests) }} / {{ formatUsageNumber(summary.requests) }} 个请求</span>
-              </div>
-            </article>
-            <div class="usage-pricing-state" :class="coverageTone">
-              <span>{{ summary.pricingCoverage >= 1 ? '✓' : '!' }}</span>
-              <div>
-                <strong>{{ summary.pricingCoverage >= 1 ? '成本数据完整' : '成本暂不可完全计算' }}</strong>
-                <p>{{ summary.pricingCoverage > 0 ? '部分请求已匹配单价，成本只代表已覆盖部分。' : '同步在线价格或手动补充未匹配模型单价。' }}</p>
-                  <BaseButton variant="ghost" size="sm" @click="settingsOpen = true">查看价格设置 →</BaseButton>
-                </div>
-              </div>
-            </aside>
+        <div v-if="summary.pricingCoverage < 1" class="usage-pricing-state" role="status">
+          <span>!</span>
+          <div>
+            <strong>成本暂不可完全计算</strong>
+            <p>{{ summary.pricingCoverage > 0 ? '部分请求已匹配单价，成本只代表已覆盖部分。' : '同步在线价格或手动补充未匹配模型单价。' }}</p>
           </div>
-        </BaseCard>
+          <BaseButton variant="ghost" size="sm" @click="settingsOpen = true">查看价格设置 →</BaseButton>
+        </div>
 
-        <BaseCard><UsageTokenComposition :summary="summary" /></BaseCard>
+        <div class="usage-mid-grid">
+          <BaseCard class="usage-trend-card" content-padding="0" content-layout="column">
+            <div class="usage-panel-head">
+              <h2>Token 用量趋势</h2>
+              <span>{{ rangeHint }} · 按应用</span>
+            </div>
+            <div class="usage-trend-card__body">
+              <UsageTrendChart :claude="claudeTrends" :codex="codexTrends" :range="range" />
+            </div>
+          </BaseCard>
+          <BaseCard class="usage-model-rank" content-padding="0" content-layout="column">
+            <div class="usage-panel-head">
+              <h2>模型用量排行</h2>
+            </div>
+            <div class="usage-model-rank__list">
+              <EmptyState v-if="!modelRanking.length" compact title="暂无模型用量" />
+              <RankBar
+                v-for="row in modelRanking"
+                :key="row.name"
+                :label="row.name"
+                :value="formatUsageCompact(row.tokens)"
+                :percent="row.percent"
+                label-width="118px"
+              />
+            </div>
+          </BaseCard>
+        </div>
 
         <div class="usage-lower-grid">
+          <BaseCard><UsageTokenComposition :summary="summary" /></BaseCard>
           <BaseCard><UsageProjectRanking :projects="sortedProjects" /></BaseCard>
-          <BaseCard><UsageRequestRanking :rows="topRequests" :priced="priced" /></BaseCard>
         </div>
+
+        <BaseCard><UsageRequestRanking :rows="topRequests" :priced="priced" /></BaseCard>
 
         <BaseCard content-padding="0">
           <UsageDataExplorer

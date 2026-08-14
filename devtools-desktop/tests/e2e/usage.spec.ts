@@ -116,7 +116,8 @@ async function openUsage(page: Page, viewport = { width: 1280, height: 800 }) {
   await page.goto('/?apiPort=13900')
   await page.locator('.sidebar-item[data-page="usage"]').click()
   await expect(page.getByRole('heading', { name: '用量统计', exact: true })).toBeVisible()
-  await expect(page.locator('.usage-primary-metric strong')).toHaveText('324,134,964')
+  // redesign-v2：总量落在首张 stat 卡（紧凑格式）
+  await expect(page.locator('.usage-stats .stat-card').first()).toContainText('3.24 亿')
   await expect(page.getByRole('region', { name: '项目用量排名' })).toBeVisible()
   await expect(page.getByRole('region', { name: '高用量请求排名' })).toBeVisible()
   await expect(page.getByRole('region', { name: '模型用量统计' })).toBeVisible()

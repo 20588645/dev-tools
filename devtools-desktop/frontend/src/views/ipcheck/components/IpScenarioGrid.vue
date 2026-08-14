@@ -7,7 +7,7 @@ defineProps<{ scenarios: IpScenario[] }>()
 </script>
 
 <template>
-  <BaseCard class="ip-scenario-card">
+  <BaseCard class="ip-scenario-card" content-padding="0" content-layout="column">
     <section aria-labelledby="ip-scenario-heading">
       <header class="ip-section-heading">
         <h2 id="ip-scenario-heading">业务场景建议</h2>

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import BaseCard from '@/components/base/BaseCard.vue'
+
 defineProps<{
   sidecar: string
   sidecarOnline: boolean
@@ -9,22 +11,17 @@ defineProps<{
 </script>
 
 <template>
-  <section class="settings-status-overview" aria-label="系统状态摘要">
-    <article class="settings-status-card">
-      <span class="settings-status-card__mark" :class="{ 'is-online': sidecarOnline }">SC</span>
-      <span><small>Sidecar</small><strong>{{ sidecar }}</strong></span>
-    </article>
-    <article class="settings-status-card">
-      <span class="settings-status-card__mark">DB</span>
-      <span><small>数据备份</small><strong>{{ backup }}</strong></span>
-    </article>
-    <article class="settings-status-card">
-      <span class="settings-status-card__mark">NT</span>
-      <span><small>系统通知</small><strong>{{ notification }}</strong></span>
-    </article>
-    <article class="settings-status-card">
-      <span class="settings-status-card__mark">GL</span>
-      <span><small>Git 活动</small><strong>{{ repositories }} 个仓库</strong></span>
-    </article>
-  </section>
+  <!-- 原型 .status-strip：单面板一行状态摘要 -->
+  <BaseCard class="settings-status-overview" content-padding="0">
+    <div class="settings-status-strip" aria-label="系统状态摘要">
+      <span>
+        Sidecar
+        <i class="settings-status-strip__dot" :class="{ 'is-online': sidecarOnline }" aria-hidden="true" />
+        <b :class="{ 'is-online': sidecarOnline }">{{ sidecar }}</b>
+      </span>
+      <span>上次备份 <b>{{ backup }}</b></span>
+      <span>系统通知 <b>{{ notification }}</b></span>
+      <span>Git 活动 <b>{{ repositories }} 个仓库</b></span>
+    </div>
+  </BaseCard>
 </template>

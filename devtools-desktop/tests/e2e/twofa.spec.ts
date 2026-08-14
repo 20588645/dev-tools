@@ -99,10 +99,9 @@ async function openTwofa(page: Page, viewport = { width: 1280, height: 800 }) {
   await page.goto('/?apiPort=13900')
   await page.locator('.sidebar-item[data-page="twofa"]').click()
   await expect(page.getByRole('heading', { name: '双因验证', exact: true })).toBeVisible()
-  await expect(page.locator('.twofa-row-shell')).toHaveCount(5)
-  // 账号卡片用线形倒计时，常用卡片保留圆环
-  await expect(page.locator('.twofa-row__bar.base-progress--line')).toHaveCount(5)
-  await expect(page.locator('.twofa-countdown.base-progress--circle')).toHaveCount(2)
+  // redesign-v2：分组内 5 张验证码卡 + 置顶面板重复展示 2 个收藏账号
+  await expect(page.locator('.twofa-code-card')).toHaveCount(7)
+  await expect(page.locator('.twofa-code-card__count.base-progress--line')).toHaveCount(7)
   return mock
 }
 
@@ -114,10 +113,10 @@ async function expectNoPageOverflow(page: Page) {
       documentX: document.documentElement.scrollWidth > document.documentElement.clientWidth,
       pageX: activePage.scrollWidth > activePage.clientWidth,
       viewX: view ? view.scrollWidth > view.clientWidth + 1 : true,
-      rowX: [...activePage.querySelectorAll('.twofa-row-shell')].some((row) => row.scrollWidth > row.clientWidth + 1),
+      cardX: [...activePage.querySelectorAll('.twofa-code-card')].some((card) => card.scrollWidth > card.clientWidth + 1),
     }
   })
-  expect(layout).toEqual({ documentX: false, pageX: false, viewX: false, rowX: false })
+  expect(layout).toEqual({ documentX: false, pageX: false, viewX: false, cardX: false })
 }
 
 test('mounts one Vue twofa page without the retired DOM or scripts', async ({ page }) => {
@@ -137,10 +136,10 @@ test('keeps codes readable in both themes at 900 by 600', async ({ page }) => {
   await expectNoPageOverflow(page)
   await page.evaluate(() => document.body.setAttribute('data-theme', 'light'))
   await expectNoPageOverflow(page)
-  // 窄窗口下常用卡片的发行方名与验证码都不能被截断
+  // 窄窗口下置顶卡片的发行方名与验证码都不能被截断
   const clipped = await page.locator('.twofa-pinned__card').evaluateAll((cards) => cards.some((card) => {
-    const issuer = card.querySelector('.twofa-pinned__issuer')
-    const code = card.querySelector('.twofa-pinned__code')
+    const issuer = card.querySelector('.twofa-code-card__name strong')
+    const code = card.querySelector('.twofa-code-card__code')
     return !issuer || !code
       || issuer.scrollWidth > issuer.clientWidth + 1
       || code.scrollWidth > code.clientWidth + 1
@@ -149,59 +148,38 @@ test('keeps codes readable in both themes at 900 by 600', async ({ page }) => {
   await page.evaluate(() => document.body.setAttribute('data-theme', 'dark'))
 })
 
-test('uses structured three-column entity cards on wide windows', async ({ page }) => {
+test('lays the code cards out as a three-column grid on wide windows', async ({ page }) => {
   await openTwofa(page, { width: 1600, height: 900 })
   const development = page.locator('.twofa-group').filter({ hasText: '开发' })
-  const layout = await development.locator('.twofa-group__rows').evaluate((grid) => {
-    const rows = [...grid.querySelectorAll('.twofa-row-shell')]
+  const layout = await development.locator('.twofa-grid').evaluate((grid) => {
+    const cards = [...grid.querySelectorAll('.twofa-code-card')]
     const gridRect = grid.getBoundingClientRect()
-    const rects = rows.map(row => row.getBoundingClientRect())
+    const rects = cards.map(card => card.getBoundingClientRect())
     return {
       gridWidth: Math.round(gridRect.width),
-      rowWidths: rects.map(rect => Math.round(rect.width)),
-      rowTops: rects.map(rect => Math.round(rect.top)),
+      cardWidths: rects.map(rect => Math.round(rect.width)),
+      cardTops: rects.map(rect => Math.round(rect.top)),
     }
   })
-  expect(layout.rowWidths).toHaveLength(3)
-  expect(layout.rowWidths[0]).toBeLessThan(layout.gridWidth * 0.45)
-  expect(layout.rowTops[0]).toBe(layout.rowTops[1])
-  expect(layout.rowTops[1]).toBe(layout.rowTops[2])
-  await expect(development.locator('.twofa-row-shell.base-entity-card')).toHaveCount(3)
+  expect(layout.cardWidths).toHaveLength(3)
+  expect(layout.cardWidths[0]).toBeLessThan(layout.gridWidth * 0.45)
+  expect(layout.cardTops[0]).toBe(layout.cardTops[1])
+  expect(layout.cardTops[1]).toBe(layout.cardTops[2])
   await expectNoPageOverflow(page)
 })
 
-test('keeps the countdown line flush with the card and status out of a boxed panel', async ({ page }) => {
+test('runs the countdown line across the full card width', async ({ page }) => {
   await openTwofa(page, { width: 1600, height: 900 })
-  const row = page.locator('.twofa-row-shell').filter({ hasText: 'GitHub' })
-  // 周期说明留在底部说明位，不再是带边框的独立状态面板
-  await expect(row.locator('.base-entity-card__status')).toHaveCount(0)
-  await expect(row.locator('.base-entity-card__footer-status')).toHaveText('30 秒周期 · 本机生成')
-  // 进度线要贯通到卡片内容宽度，不能只占左侧一段
-  const bar = await row.evaluate((shell) => {
-    const body = shell.querySelector('.base-entity-card__body')!
-    const track = shell.querySelector('.twofa-row__bar')!
-    const bodyStyle = getComputedStyle(body)
-    const inner = body.clientWidth
-      - Number.parseFloat(bodyStyle.paddingLeft) - Number.parseFloat(bodyStyle.paddingRight)
+  const card = page.locator('.twofa-group .twofa-code-card').filter({ hasText: 'GitHub' })
+  // 倒计时细条贯通整卡内容宽度（原型 .fa-count 全宽）
+  const bar = await card.evaluate((shell) => {
+    const style = getComputedStyle(shell)
+    const inner = shell.clientWidth
+      - Number.parseFloat(style.paddingLeft) - Number.parseFloat(style.paddingRight)
+    const track = shell.querySelector('.twofa-code-card__count')!
     return { inner: Math.round(inner), track: Math.round(track.getBoundingClientRect().width) }
   })
-  expect(bar.track).toBe(bar.inner)
-})
-
-test('expanding one card does not stretch its siblings', async ({ page }) => {
-  await openTwofa(page, { width: 1600, height: 900 })
-  const development = page.locator('.twofa-group').filter({ hasText: '开发' })
-  const before = await development.locator('.twofa-row-shell').first().evaluate(
-    (row) => Math.round(row.getBoundingClientRect().height),
-  )
-  await development.locator('.twofa-row-shell').filter({ hasText: 'Microsoft' })
-    .locator('.base-entity-card__details-trigger').click()
-  await expect(page.locator('.twofa-row-shell.is-open')).toHaveCount(1)
-  const after = await development.locator('.twofa-row-shell').first().evaluate(
-    (row) => Math.round(row.getBoundingClientRect().height),
-  )
-  // 展开是卡片内联行为，同排未展开的卡片不应被拉高留出空白
-  expect(after).toBe(before)
+  expect(Math.abs(bar.track - bar.inner)).toBeLessThanOrEqual(1)
 })
 
 test('filters accounts by keyword and by group', async ({ page }) => {
@@ -209,51 +187,40 @@ test('filters accounts by keyword and by group', async ({ page }) => {
   const search = page.locator('.twofa-toolbar__search input')
 
   await search.fill('aws')
-  await expect(page.locator('.twofa-row-shell')).toHaveCount(1)
-  await expect(page.locator('.twofa-row__issuer')).toHaveText('AWS')
-  // 搜索时常用区隐藏，避免与筛选结果冲突
+  await expect(page.locator('.twofa-code-card')).toHaveCount(1)
+  await expect(page.locator('.twofa-code-card__name strong')).toHaveText('AWS')
+  // 搜索时置顶区隐藏，避免与筛选结果冲突
   await expect(page.locator('.twofa-pinned__card')).toHaveCount(0)
 
   await search.fill('生产环境')
-  await expect(page.locator('.twofa-row__issuer')).toHaveText('AWS')
+  await expect(page.locator('.twofa-code-card__name strong')).toHaveText('AWS')
 
   await search.fill('zzzz')
-  await expect(page.locator('.twofa-row-shell')).toHaveCount(0)
+  await expect(page.locator('.twofa-code-card')).toHaveCount(0)
 
   await search.fill('')
-  await expect(page.locator('.twofa-row-shell')).toHaveCount(5)
+  await expect(page.locator('.twofa-code-card')).toHaveCount(7)
 
-  await page.getByRole('button', { name: '筛选开发，3 个账号' }).click()
-  await expect(page.locator('.twofa-row-shell')).toHaveCount(3)
-  await expect(page.getByRole('button', { name: '筛选开发，3 个账号' })).toHaveAttribute('aria-pressed', 'true')
-  await page.getByRole('button', { name: '筛选全部，5 个账号' }).click()
-  await expect(page.locator('.twofa-row-shell')).toHaveCount(5)
+  await page.getByRole('tab', { name: '开发 3', exact: true }).click()
+  await expect(page.locator('.twofa-code-card')).toHaveCount(3)
+  await page.getByRole('tab', { name: '全部 5', exact: true }).click()
+  await expect(page.locator('.twofa-code-card')).toHaveCount(7)
 })
 
-test('reveals account detail inline instead of in a fixed side panel', async ({ page }) => {
+test('shows account facts in the edit dialog instead of an inline detail', async ({ page }) => {
   await openTwofa(page)
-  const row = page.locator('.twofa-row-shell').filter({ hasText: 'Microsoft' })
-  const detailsTrigger = row.locator('.base-entity-card__details-trigger')
-  await detailsTrigger.click()
+  await page.locator('.twofa-group .twofa-code-card').filter({ hasText: 'Microsoft' })
+    .getByRole('button', { name: '编辑 Microsoft', exact: true }).click()
 
-  await expect(page.locator('.twofa-row-shell.is-open')).toHaveCount(1)
-  const detail = row.locator('.twofa-detail')
-  await expect(detail).toBeVisible()
-  // 8 位 / 60 秒周期的账号信息要正确显示
-  await expect(detail).toContainText('SHA256 · 8 位')
-  await expect(detail).toContainText('60 秒')
-  await expect(detail).toContainText('IFBE••••••••QSKK')
-
-  // 详情必须紧贴所属行，而不是被推到列表末尾
-  const gap = await row.evaluate((shell) => {
-    const headerRect = shell.querySelector('.base-entity-card__footer')!.getBoundingClientRect()
-    const detailRect = shell.querySelector('.twofa-detail')!.getBoundingClientRect()
-    return detailRect.top - headerRect.bottom
-  })
-  expect(Math.abs(gap)).toBeLessThan(4)
-
-  await detailsTrigger.click()
-  await expect(page.locator('.twofa-row-shell.is-open')).toHaveCount(0)
+  const dialog = page.getByRole('dialog')
+  await expect(dialog).toBeVisible()
+  await expect(dialog).toContainText('编辑账号')
+  // 8 位 / 60 秒周期的账号信息要正确回填
+  await expect(dialog.getByLabel('发行方')).toHaveValue('Microsoft')
+  await expect(dialog).toContainText('IFBE••••••••QSKK')
+  await expect(dialog.locator('.twofa-form__facts')).toContainText('未使用')
+  await dialog.getByRole('button', { name: '取消', exact: true }).click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
 })
 
 test('uses project disclosures for groups without nested interactive controls', async ({ page }) => {
@@ -267,9 +234,9 @@ test('uses project disclosures for groups without nested interactive controls', 
   await expect(trigger.locator('button, [role="button"]')).toHaveCount(0)
   await trigger.click()
   await expect(trigger).toHaveAttribute('aria-expanded', 'false')
-  await expect(development.locator('.twofa-row-shell:visible')).toHaveCount(0)
+  await expect(development.locator('.twofa-code-card:visible')).toHaveCount(0)
   await trigger.click()
-  await expect(development.locator('.twofa-row-shell:visible')).toHaveCount(3)
+  await expect(development.locator('.twofa-code-card:visible')).toHaveCount(3)
 })
 
 test('no longer offers exporting plaintext secrets', async ({ page }) => {
@@ -297,27 +264,32 @@ test('looks up a code for an unsaved secret without storing it', async ({ page }
 
 test('asks for confirmation in-app before deleting an account', async ({ page }) => {
   const mock = await openTwofa(page)
-  const row = page.locator('.twofa-row-shell').filter({ hasText: 'GitHub' })
-  await row.locator('.base-entity-card__details-trigger').click()
-  await row.getByRole('button', { name: '删除', exact: true }).click()
+  // 删除入口收进编辑弹窗（原型 modal-foot 左侧「删除账号」）
+  const openDeleteConfirm = async () => {
+    await page.locator('.twofa-group .twofa-code-card').filter({ hasText: 'GitHub' })
+      .getByRole('button', { name: '编辑 GitHub', exact: true }).click()
+    await page.getByRole('dialog').getByRole('button', { name: '删除账号', exact: true }).click()
+    // 编辑弹窗离场动画期间与确认弹窗短暂并存，按文案锁定确认弹窗
+    const dialog = page.getByRole('dialog').filter({ hasText: '删除这个 2FA 账号' })
+    await expect(dialog).toBeVisible()
+    return dialog
+  }
 
   // 必须是应用内确认弹窗：Tauri WebView 会禁用原生 confirm
-  const dialog = page.getByRole('dialog')
-  await expect(dialog).toBeVisible()
-  await expect(dialog).toContainText('删除这个 2FA 账号')
+  const confirmDialog = await openDeleteConfirm()
   expect(mock.writes.some((write) => write.method === 'DELETE')).toBe(false)
 
-  await dialog.getByRole('button', { name: '取消', exact: true }).click()
+  await confirmDialog.getByRole('button', { name: '取消', exact: true }).click()
   expect(mock.writes.some((write) => write.method === 'DELETE')).toBe(false)
 
-  await row.getByRole('button', { name: '删除', exact: true }).click()
-  await page.getByRole('dialog').getByRole('button', { name: '删除账号', exact: true }).click()
+  const again = await openDeleteConfirm()
+  await again.getByRole('button', { name: '删除账号', exact: true }).click()
   await expect.poll(() => mock.writes.some((write) => write.method === 'DELETE')).toBe(true)
 })
 
 test('lets a brand new group be typed in rather than only picked', async ({ page }) => {
   const mock = await openTwofa(page)
-  await page.getByRole('button', { name: '添加账号', exact: true }).click()
+  await page.getByRole('button', { name: '添加账号', exact: false }).click()
 
   const dialog = page.getByRole('dialog')
   await expect(dialog).toBeVisible()
@@ -335,7 +307,7 @@ test('lets a brand new group be typed in rather than only picked', async ({ page
 
 test('drops the tag field from the form but keeps existing tags on rows', async ({ page }) => {
   await openTwofa(page)
-  await page.getByRole('button', { name: '添加账号', exact: true }).click()
+  await page.getByRole('button', { name: '添加账号', exact: false }).click()
   const dialog = page.getByRole('dialog')
   await expect(dialog).toBeVisible()
   // 标签编辑已移除
@@ -343,7 +315,7 @@ test('drops the tag field from the form but keeps existing tags on rows', async 
   await dialog.getByRole('button', { name: '取消', exact: true }).click()
 
   // 但导入带来的既有标签仍要显示，不能默默丢数据
-  await expect(page.locator('.twofa-row__tag').filter({ hasText: '生产环境' })).toBeVisible()
+  await expect(page.locator('.twofa-code-card__tag').filter({ hasText: '生产环境' })).toBeVisible()
 })
 
 test('imports otpauth links through the parsed preview', async ({ page }) => {

@@ -9,6 +9,8 @@ import BaseSelect from '@/components/form/BaseSelect.vue'
 import FilterChip from '@/components/navigation/FilterChip.vue'
 import type { TwofaAccount, TwofaAccountInput, TwofaAlgorithm } from '@/services/modules/twofa-service'
 
+import { formatTwofaTime } from '../twofa-format'
+
 const props = defineProps<{
   modelValue: boolean
   account: TwofaAccount | null
@@ -18,6 +20,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:modelValue': [value: boolean]
   submit: [input: TwofaAccountInput, id: string]
+  remove: []
 }>()
 
 const draft = reactive({
@@ -128,10 +131,17 @@ function submit() {
         <BaseSelect v-model="draft.digits" label="位数" :options="digitsOptions" />
       </div>
 
-      <BaseCheckbox v-model="draft.favorite" label="加入常用（收藏后会置顶显示）" />
+      <BaseCheckbox v-model="draft.favorite" label="加入置顶（会显示在页面顶部的置顶面板）" />
+
+      <div v-if="isEdit && account" class="twofa-form__facts">
+        <span>密钥遮罩 <code>{{ account.secretMasked || '—' }}</code></span>
+        <span>最近使用 {{ account.lastUsedAt ? formatTwofaTime(account.lastUsedAt) : '未使用' }}</span>
+      </div>
     </form>
     <template #footer>
-      <div class="twofa-form__actions">
+      <div class="twofa-form__actions" :class="{ 'has-remove': isEdit }">
+        <BaseButton v-if="isEdit" variant="danger" @click="emit('remove')">删除账号</BaseButton>
+        <span class="twofa-form__actions-grow" aria-hidden="true" />
         <BaseButton variant="secondary" @click="emit('update:modelValue', false)">取消</BaseButton>
         <BaseButton @click="submit">{{ isEdit ? '保存' : '添加' }}</BaseButton>
       </div>

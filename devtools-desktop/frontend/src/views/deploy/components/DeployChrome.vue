@@ -32,7 +32,7 @@ const tabs = [
             </svg>
           </template>
           <template #actions>
-            <BaseButton variant="primary" @click="requestAddProject()">+ 添加项目</BaseButton>
+            <BaseButton variant="primary" @click="requestAddProject()">＋ 添加项目</BaseButton>
           </template>
         </PageHeader>
         <PageToolbar>
