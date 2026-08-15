@@ -13,6 +13,7 @@
 /* ---------- 工具栏 ---------- */
 .deploy-dashboard__toolbar {
   display: flex;
+  width: 100%;
   min-width: 0;
   flex-wrap: wrap;
   align-items: center;
@@ -31,19 +32,6 @@
   flex-direction: column;
   gap: var(--space-4);
 }
-
-/*
-  平铺布局（没有任何项目带分组名时）：auto-fit 折叠空轨道，
-  少量项目时不留大片空白。
-*/
-.deploy-dashboard__grid {
-  display: grid;
-  align-items: stretch;
-  gap: var(--space-3);
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-}
-
-.deploy-dashboard__grid > :only-child { max-width: 420px; }
 
 @media (max-width: 1000px) {
   .deploy-dashboard__search {

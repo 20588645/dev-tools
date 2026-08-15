@@ -22,7 +22,8 @@ const filterChipThemeOverrides = {
   fontWeightStrong: 'var(--font-weight-semibold)',
   padding: '0 var(--space-3)',
   border: '1px solid var(--component-control-border)',
-  colorCheckable: 'transparent',
+  borderCheckable: '1px solid var(--component-control-border)',
+  colorCheckable: 'var(--color-surface)',
   colorHoverCheckable: 'color-mix(in srgb, var(--color-surface-raised) 80%, var(--color-action) 8%)',
   colorPressedCheckable: 'color-mix(in srgb, var(--color-surface-raised) 72%, var(--color-action) 12%)',
   colorChecked: 'color-mix(in srgb, var(--color-action) 12%, var(--color-surface))',
@@ -65,6 +66,7 @@ const filterChipThemeOverrides = {
   color: var(--color-text-muted);
   cursor: pointer;
   letter-spacing: 0.01em;
+  border: 1px solid var(--component-control-border);
   transition: color var(--duration-fast) var(--ease-standard), background-color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 .filter-chip:hover { border-color: var(--component-control-border-hover); }

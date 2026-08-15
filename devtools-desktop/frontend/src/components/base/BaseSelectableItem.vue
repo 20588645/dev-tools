@@ -14,6 +14,16 @@ withDefaults(defineProps<{
 })
 
 const emit = defineEmits<{ click: [event: MouseEvent] }>()
+
+/** 关掉 Naive 按钮自带的 hover/pressed 底色，避免点选后仍被悬停层盖住。 */
+const selectableThemeOverrides = {
+  colorHover: 'transparent',
+  colorPressed: 'transparent',
+  colorFocus: 'transparent',
+  textColorHover: 'inherit',
+  textColorPressed: 'inherit',
+  textColorFocus: 'inherit',
+}
 </script>
 
 <template>
@@ -25,6 +35,7 @@ const emit = defineEmits<{ click: [event: MouseEvent] }>()
     :class="[`base-selectable-item--${appearance}`, { 'is-selected': selected }]"
     :disabled="disabled"
     :aria-pressed="pressed"
+    :theme-overrides="selectableThemeOverrides"
     @click="emit('click', $event)"
   >
     <slot />
@@ -43,7 +54,7 @@ const emit = defineEmits<{ click: [event: MouseEvent] }>()
   text-align: left;
   white-space: normal;
   background: var(--base-selectable-background, transparent);
-  border: 1px solid transparent;
+  border: 1px solid var(--base-selectable-border, transparent);
   border-radius: var(--base-selectable-radius, var(--radius-md));
   transition:
     color var(--duration-normal) var(--ease-standard),
@@ -52,7 +63,8 @@ const emit = defineEmits<{ click: [event: MouseEvent] }>()
     transform var(--duration-normal) var(--ease-standard);
 }
 
-.base-selectable-item.n-button:hover:not(.n-button--disabled) {
+/* 悬停不能压过选中：点选后鼠标还在卡片上时，必须立刻看到选中态 */
+.base-selectable-item.n-button:not(.is-selected):hover:not(.n-button--disabled) {
   color: var(--color-text);
   background: var(--base-selectable-hover-background, var(--color-surface-subtle));
   border-color: var(--base-selectable-hover-border, var(--color-border));
@@ -64,7 +76,9 @@ const emit = defineEmits<{ click: [event: MouseEvent] }>()
   box-shadow: var(--component-focus-outline);
 }
 
-.base-selectable-item.n-button.is-selected {
+.base-selectable-item.n-button.is-selected,
+.base-selectable-item.n-button.is-selected:hover,
+.base-selectable-item.n-button.is-selected:active {
   color: var(--color-text);
   background: var(
     --base-selectable-selected-background,

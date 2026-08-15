@@ -65,7 +65,7 @@ function onExpandedChange(expanded: boolean) {
         </BaseIconButton>
       </div>
     </template>
-    <div class="run-group__body">
+    <div class="run-group__body project-card-grid">
       <slot />
     </div>
   </BaseDisclosure>
@@ -131,22 +131,10 @@ function onExpandedChange(expanded: boolean) {
 }
 
 /*
-  P6：卡片网格自适应列宽。旧实现用固定 348px 列，单项目分组右侧会空掉一半。
-  用 auto-fit 而非 auto-fill：auto-fill 会保留空轨道，只有一个项目时仍占两列宽，
-  空白照样在；auto-fit 会折叠空轨道，让单卡片铺满该分组宽度。
-  同时限制最大宽度，避免宽屏下单卡片被拉成一整条。
-
-  stretch 让同排卡片等高；配合卡片内固定行数的状态区，跨排高度也一致。
+  卡片网格见共享 .project-card-grid（一行 4 张定宽，与部署面板同一套）。
+  容器已经是 14px 圆角，内层卡片收一档才有嵌套关系。
 */
 .run-group__body {
-  /* 容器已经是 14px 圆角，内层卡片收一档才有嵌套关系 */
   --component-card-radius: var(--component-disclosure-panel-item-radius);
-
-  display: grid;
-  align-items: stretch;
-  gap: var(--space-3);
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
 }
-
-.run-group__body > :only-child { max-width: 420px; }
 </style>

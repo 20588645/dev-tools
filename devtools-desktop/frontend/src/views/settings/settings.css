@@ -20,6 +20,7 @@
 
 .settings-view > .page-frame__body {
   min-height: 0;
+  overflow: hidden;
 }
 
 .settings-view :focus-visible {

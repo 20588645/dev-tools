@@ -118,6 +118,7 @@ const logColumns: BaseDataTableColumn<LogTableRow>[] = [
       <div class="usage-explorer__filters">
         <!-- logModel 为空时 BaseSelect 显示 placeholder，需给出「全部模型」而非默认「请选择」 -->
         <BaseSelect
+          size="sm"
           :model-value="logModel"
           :options="modelOptions"
           class="usage-explorer__model-select"

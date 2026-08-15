@@ -61,14 +61,16 @@ function onIntro() {
 </template>
 
 <style>
-/* L2（legacy token 化）：RouterView 根（.page）骨架自 styles/legacy/layout.css 移入自持。 */
+/* L2（legacy token 化）：RouterView 根（.page）骨架自 styles/legacy/layout.css 移入自持。
+   页头由 PageTop 承担、不参与滚动；正文在 PageBody 内独立滚动。 */
 .page {
+  display: flex;
   flex-direction: column;
   width: 100%;
   box-sizing: border-box;
-  height: auto;
-  min-height: calc(100vh - 58px);
-  overflow: visible;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
   padding: 0;
 }
 
@@ -82,7 +84,9 @@ function onIntro() {
   width: 100%;
   min-width: 0;
   flex: 1 1 auto;
+  height: 100%;
   min-height: 0;
+  overflow: hidden;
 }
 
 .main-content.home-active.router-main > .page.active,
@@ -92,34 +96,4 @@ function onIntro() {
   min-height: 0;
   overflow: hidden;
 }
-
-/* 结构约定：.page > .page-fixed-header + .page-scroll-body
-   头部静态置顶、完全不参与滚动，内容在 .page-scroll-body 内独立滚动。 */
-.page.has-fixed-header.active {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  height: auto;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.page.has-fixed-header .page-fixed-header {
-  flex-shrink: 0;
-  margin: 0 0 4px;
-  padding: 2px 2px 10px;
-  border-bottom: 1px solid transparent;
-  transition: border-color .15s ease, box-shadow .15s ease;
-}
-
-.page.has-fixed-header .page-scroll-body {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  padding: 8px 2px 24px;
-}
-
-.page-fixed-header .page-header-bar { margin-bottom: 10px; }
-
-.page-fixed-header .page-toolbar { margin-bottom: 0; }
 </style>

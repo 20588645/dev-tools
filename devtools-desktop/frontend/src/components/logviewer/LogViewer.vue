@@ -191,7 +191,7 @@ function requestClose() {
     :title="title"
     :subtitle="subtitle"
     width="min(980px, 92vw)"
-    body-max-height="min(620px, 74vh)"
+    body-height="min(620px, 74vh)"
     :close-label="running ? '最小化到后台' : '关闭'"
     class="log-viewer"
     @update:model-value="!$event && requestClose()"
@@ -286,6 +286,7 @@ function requestClose() {
   flex: 1 1 auto;
   flex-direction: column;
   min-height: 0;
+  height: 100%;
   gap: var(--space-3);
 }
 
@@ -399,7 +400,7 @@ function requestClose() {
 
 .log-viewer__terminal {
   flex: 1 1 auto;
-  min-height: 180px;
+  min-height: 0;
   overflow: auto;
   padding: var(--space-3);
   border: 1px solid var(--color-border);

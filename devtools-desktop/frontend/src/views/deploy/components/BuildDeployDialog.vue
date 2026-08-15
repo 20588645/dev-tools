@@ -110,12 +110,14 @@ function isSelected(name: string): boolean {
 </script>
 
 <template>
+  <!-- below-overlays：内含 Select 下拉，对话框需退到 Naive 浮层之下才能点选 -->
   <BaseDialog
     :model-value="project !== null"
     :title="title"
     :subtitle="subtitle"
     width="min(640px, 94vw)"
     body-max-height="min(560px, 70vh)"
+    below-overlays
     @update:model-value="!$event && emit('close')"
   >
     <div v-if="project" class="build-deploy">

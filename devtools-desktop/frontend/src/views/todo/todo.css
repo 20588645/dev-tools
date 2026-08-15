@@ -19,6 +19,11 @@
     var(--color-page);
 }
 
+.todo-view > .page-frame__body {
+  min-height: 0;
+  overflow: hidden;
+}
+
 .todo-view__title-mark {
   display: grid;
   width: 25px;

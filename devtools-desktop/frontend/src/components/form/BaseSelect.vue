@@ -19,9 +19,11 @@ const props = withDefaults(defineProps<{
   error?: string
   disabled?: boolean
   required?: boolean
+  /** 默认 md，与 BaseInput 同档；工具栏等紧凑区传 sm。 */
+  size?: 'sm' | 'md'
 }>(), {
   modelValue: '', id: undefined, label: undefined, ariaLabel: undefined, placeholder: undefined, helpText: undefined,
-  error: undefined, disabled: false, required: false,
+  error: undefined, disabled: false, required: false, size: 'md',
 })
 
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
@@ -41,14 +43,22 @@ const hasEmptyOption = computed(() => props.options.some(option => option.value 
 const selectedValue = computed<string | null>(() => (
   props.modelValue === '' && !hasEmptyOption.value ? null : props.modelValue
 ))
-const overlayTarget = ref<HTMLElement | undefined>()
+const naiveSize = computed(() => (props.size === 'sm' ? 'small' : 'medium'))
+/**
+ * 菜单必须传送出弹窗：`:to="undefined"` 会覆盖 Naive 默认的 body，
+ * 下拉就画在对话框内部，被 overflow 裁切，看起来像原生 select。
+ * 预览页挂到 #ui-foundation-preview，应用里挂 body。
+ */
+const overlayTarget = ref<HTMLElement | string>('body')
 const selectThemeOverrides = {
   peers: {
     InternalSelection: {
       heightSmall: 'var(--component-control-height-sm)',
+      heightMedium: 'var(--component-input-height)',
       borderRadius: 'var(--component-control-radius)',
       paddingSingle: '0 var(--space-3)',
       fontSizeSmall: 'var(--font-size-xs)',
+      fontSizeMedium: 'var(--font-size-sm)',
       color: 'var(--component-control-surface)',
       border: '1px solid var(--component-control-border)',
       borderHover: '1px solid var(--component-control-border-hover)',
@@ -61,20 +71,27 @@ const selectThemeOverrides = {
       arrowColor: 'var(--color-text-muted)',
     },
     InternalSelectMenu: {
+      color: 'var(--color-surface-raised)',
+      boxShadow: 'var(--shadow-lg)',
+      borderRadius: 'var(--radius-lg)',
       optionFontSizeSmall: 'var(--font-size-xs)',
+      optionFontSizeMedium: 'var(--font-size-sm)',
       optionHeightSmall: 'var(--component-control-height-sm)',
+      optionHeightMedium: 'var(--component-input-height)',
       optionTextColor: 'var(--color-text-muted)',
       optionTextColorActive: 'var(--color-action)',
       optionColorActive: 'color-mix(in srgb, var(--color-action) 10%, transparent)',
-      borderRadius: 'var(--component-control-radius)',
+      optionColorPending: 'color-mix(in srgb, var(--color-action) 8%, transparent)',
       paddingSmall: 'var(--space-1)',
+      paddingMedium: 'var(--space-2)',
       optionPaddingSmall: '0 var(--space-3)',
+      optionPaddingMedium: '0 var(--space-4)',
     },
   },
 }
 
 onMounted(() => {
-  overlayTarget.value = document.querySelector<HTMLElement>('#ui-foundation-preview') ?? undefined
+  overlayTarget.value = document.querySelector<HTMLElement>('#ui-foundation-preview') ?? 'body'
 })
 </script>
 
@@ -88,9 +105,10 @@ onMounted(() => {
       :value="selectedValue"
       :options="naiveOptions"
       :placeholder="placeholder"
-      size="small"
+      :size="naiveSize"
       :theme-overrides="selectThemeOverrides"
       :to="overlayTarget"
+      consistent-menu-width
       :disabled="disabled"
       :status="error ? 'error' : undefined"
       :virtual-scroll="false"

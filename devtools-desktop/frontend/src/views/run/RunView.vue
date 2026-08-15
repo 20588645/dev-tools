@@ -297,7 +297,7 @@ onActivated(() => { void page.load({ silent: true }) })
         </RunGroupSection>
       </div>
 
-      <div v-else class="run-grid">
+      <div v-else class="run-grid project-card-grid">
         <RunProjectCard
           v-for="project in page.filtered.value"
           :key="project.name"
@@ -346,16 +346,6 @@ onActivated(() => { void page.load({ silent: true }) })
 
 <style scoped>
 .run-toolbar__search { flex: 1 1 260px; max-width: 360px; min-width: 0; }
-
-/* 自适应列宽，避免固定列宽在少量项目时留大片空白（P6） */
-.run-grid {
-  display: grid;
-  align-items: stretch;
-  gap: var(--space-3);
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-}
-
-.run-grid > :only-child { max-width: 420px; }
 
 /* 组间比组内松，让「标题 + 卡片」成为一个视觉整体 */
 .run-groups {

@@ -40,12 +40,14 @@ const nodeOptions = computed(() => [
 </script>
 
 <template>
+  <!-- below-overlays：内含 Select 下拉，对话框需退到 Naive 浮层之下才能点选 -->
   <BaseDialog
     :model-value="project !== null"
     title="项目默认配置"
     :subtitle="project?.name ?? ''"
     width="min(520px, 94vw)"
     body-max-height="min(560px, 70vh)"
+    below-overlays
     @update:model-value="!$event && emit('close')"
   >
     <div v-if="project" class="project-config">

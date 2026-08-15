@@ -51,6 +51,9 @@ const tabs = [
             </RouterLink>
           </nav>
         </PageToolbar>
+        <PageToolbar v-if="$slots.toolbar">
+          <slot name="toolbar" />
+        </PageToolbar>
       </PageTop>
     </template>
     <slot />

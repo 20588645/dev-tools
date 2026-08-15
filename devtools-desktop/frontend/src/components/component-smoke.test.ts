@@ -163,7 +163,7 @@ describe('shared UI foundation', () => {
     })
 
     expect(wrapper.get('[data-test="top"]').element.parentElement?.className).toBe('page-frame')
-    expect(wrapper.get('[data-test="body"]').element.closest('main')).toBeTruthy()
+    expect(wrapper.get('[data-test="body"]').element.closest('main.page-body')).toBeTruthy()
   })
 
   it('switches preview tabs and opens the dialog', async () => {
@@ -360,6 +360,21 @@ describe('shared UI foundation', () => {
     close.dispatchEvent(new MouseEvent('click', { bubbles: true }))
     await dialog.vm.$nextTick()
     expect(dialog.emitted('update:modelValue')).toContainEqual([false])
+    dialog.unmount()
+  })
+
+  it('reserves a fixed body height so streaming dialogs do not jump when content arrives', () => {
+    const dialog = mount(BaseDialog, {
+      props: { modelValue: true, title: '运行日志', bodyHeight: '480px' },
+      slots: { default: '<p>empty</p>' },
+      attachTo: document.body,
+    })
+    const body = document.body.querySelector('.base-dialog__body') as HTMLElement | null
+    if (!body) throw new Error('内容区未渲染')
+    expect(body.style.height).toBe('480px')
+    expect(body.style.minHeight).toBe('480px')
+    expect(body.style.maxHeight).toBe('480px')
+    expect(body.classList.contains('base-dialog__body--fixed')).toBe(true)
     dialog.unmount()
   })
 

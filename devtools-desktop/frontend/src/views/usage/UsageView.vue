@@ -222,6 +222,7 @@ const modelRanking = computed(() => {
             </div>
             <div class="usage-toolbar__actions">
               <BaseSelect
+                size="sm"
                 :model-value="String(refreshSeconds)"
                 :options="USAGE_REFRESH_OPTIONS"
                 aria-label="自动刷新间隔"

@@ -130,3 +130,25 @@ withDefaults(defineProps<{
   margin-left: auto;
 }
 </style>
+
+<style>
+/* 与原型 .proj-grid 一致：常规窗口一行 4 张定宽，少卡时右侧留空，不把单卡拉宽。 */
+.project-card-grid {
+  display: grid;
+  align-items: stretch;
+  gap: var(--space-3);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@media (max-width: 1280px) and (min-width: 981px) {
+  .project-card-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 980px) {
+  .project-card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 720px) {
+  .project-card-grid { grid-template-columns: minmax(0, 1fr); }
+}
+</style>

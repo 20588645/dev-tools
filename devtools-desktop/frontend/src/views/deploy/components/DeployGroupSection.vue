@@ -67,7 +67,7 @@ function onExpandedChange(expanded: boolean) {
         </BaseIconButton>
       </div>
     </template>
-    <div class="deploy-group__body">
+    <div class="deploy-group__body project-card-grid">
       <slot />
     </div>
   </BaseDisclosure>
@@ -129,21 +129,10 @@ function onExpandedChange(expanded: boolean) {
 }
 
 /*
-  auto-fit 而非固定三列（修 D2）：固定列会让单项目分组右侧空掉两列，
-  10 个项目分散 6 组时首屏只能看到 5 张卡。auto-fit 折叠空轨道让单卡片
-  铺满该组宽度；同时限制最大宽度，避免宽屏下单卡被拉成一整条。
-
-  stretch 让同排卡片等高；配合卡片内固定行数的状态区，跨排高度也一致。
+  卡片网格见共享 .project-card-grid（一行 4 张定宽，与本地运行同一套）。
+  容器是 14px 圆角，内层卡片收一档才有嵌套关系。
 */
 .deploy-group__body {
-  display: grid;
-  align-items: stretch;
-  gap: var(--space-3);
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-
-  /* 容器是 14px 圆角，内层卡片收一档才有嵌套关系 */
   --component-card-radius: var(--component-disclosure-panel-item-radius);
 }
-
-.deploy-group__body > :only-child { max-width: 420px; }
 </style>

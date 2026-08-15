@@ -120,10 +120,11 @@ const rootClass = computed(() => ({
   flex: 1;
   flex-direction: column;
   height: 100vh;
+  min-height: 0;
   max-width: none;
   box-sizing: border-box;
   padding: 36px 28px 22px;
-  overflow: auto;
+  overflow: hidden;
   background: transparent;
   scroll-behavior: auto;
 }

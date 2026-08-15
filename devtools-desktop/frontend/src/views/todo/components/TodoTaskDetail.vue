@@ -107,6 +107,7 @@ function nextLabel(status: TodoStatus) {
         </BaseBadge>
         <BaseSelect
           class="todo-detail__status"
+          size="sm"
           :model-value="todo.status"
           :options="statusOptions"
           aria-label="任务状态"

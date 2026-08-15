@@ -284,11 +284,11 @@ test('requires picking a module before a multi-module project can start', async 
 
   // 默认勾上首页模块；取消后必须禁用启动，事前引导而非点了才报错
   const submit = dialog.getByRole('button', { name: '▶ 启动运行' })
-  await dialog.locator('.run-config__chips .n-tag', { hasText: 'home' }).click()
+  await dialog.locator('.run-config__module', { hasText: 'home' }).click()
   await expect(submit).toBeDisabled()
   expect(mock.writes.some(w => w.path === '/api/run/start')).toBe(false)
 
-  await dialog.locator('.run-config__chips .n-tag', { hasText: 'admin' }).click()
+  await dialog.locator('.run-config__module', { hasText: 'admin' }).click()
   await expect(submit).toBeEnabled()
 })
 

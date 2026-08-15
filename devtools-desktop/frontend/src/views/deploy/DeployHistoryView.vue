@@ -221,45 +221,48 @@ onActivated(() => { void refresh({ silent: true }) })
 
 <template>
   <DeployChrome>
+    <template #toolbar>
+      <div class="deploy-history__chrome">
+        <div class="deploy-history__toolbar">
+          <BaseButton
+            :variant="page.batchMode.value ? 'primary' : 'secondary'"
+            @click="page.toggleBatchMode()"
+          >
+            {{ page.batchMode.value ? '取消选择' : '选择' }}
+          </BaseButton>
+          <template v-if="page.batchMode.value">
+            <BaseButton
+              variant="danger"
+              :disabled="page.selectedCount.value === 0"
+              @click="confirmBatch = true"
+            >
+              删除 {{ page.selectedCount.value }}
+            </BaseButton>
+            <BaseCheckbox
+              :model-value="allSelected"
+              label="全选当前筛选结果"
+              @update:model-value="toggleAll"
+            />
+          </template>
+          <BaseButton variant="secondary" @click="cleanupOpen = true">整理</BaseButton>
+        </div>
+        <div class="deploy-history__filters">
+          <BaseSegmented
+            :model-value="page.typeFilter.value"
+            :options="TYPE_FILTERS"
+            aria-label="按类型筛选"
+            @update:model-value="page.typeFilter.value = ($event as HistoryTypeFilter)"
+          />
+          <BaseSegmented
+            :model-value="page.statusFilter.value"
+            :options="statusOptions"
+            aria-label="按状态筛选"
+            @update:model-value="page.statusFilter.value = ($event as HistoryStatusFilter)"
+          />
+        </div>
+      </div>
+    </template>
   <div class="deploy-history" data-test="deploy-history">
-    <div class="deploy-history__toolbar">
-      <BaseButton
-        :variant="page.batchMode.value ? 'primary' : 'secondary'"
-        @click="page.toggleBatchMode()"
-      >
-        {{ page.batchMode.value ? '取消选择' : '选择' }}
-      </BaseButton>
-      <template v-if="page.batchMode.value">
-        <BaseButton
-          variant="danger"
-          :disabled="page.selectedCount.value === 0"
-          @click="confirmBatch = true"
-        >
-          删除 {{ page.selectedCount.value }}
-        </BaseButton>
-        <BaseCheckbox
-          :model-value="allSelected"
-          label="全选当前筛选结果"
-          @update:model-value="toggleAll"
-        />
-      </template>
-      <BaseButton variant="secondary" @click="cleanupOpen = true">整理</BaseButton>
-    </div>
-
-    <div class="deploy-history__filters">
-      <BaseSegmented
-        :model-value="page.typeFilter.value"
-        :options="TYPE_FILTERS"
-        aria-label="按类型筛选"
-        @update:model-value="page.typeFilter.value = ($event as HistoryTypeFilter)"
-      />
-      <BaseSegmented
-        :model-value="page.statusFilter.value"
-        :options="statusOptions"
-        aria-label="按状态筛选"
-        @update:model-value="page.statusFilter.value = ($event as HistoryStatusFilter)"
-      />
-    </div>
 
     <BaseCard class="deploy-history__panel" content-padding="0" content-layout="column">
       <div v-if="page.loading.value" class="deploy-history__state">

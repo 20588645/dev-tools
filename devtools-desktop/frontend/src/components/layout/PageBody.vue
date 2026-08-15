@@ -10,6 +10,7 @@ defineOptions({ name: 'PageBody' })
 .page-body {
   flex: 1;
   min-height: 0;
+  overflow-y: auto;
   padding: var(--component-page-padding);
 }
 </style>

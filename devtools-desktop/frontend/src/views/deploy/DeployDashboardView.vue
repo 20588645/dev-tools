@@ -170,23 +170,25 @@ onActivated(() => {
 
 <template>
   <DeployChrome>
+    <template #toolbar>
+      <div class="deploy-dashboard__toolbar">
+        <BaseInput
+          v-model="page.query.value"
+          type="search"
+          variant="search"
+          class="deploy-dashboard__search"
+          aria-label="搜索项目"
+          placeholder="搜索项目..."
+        />
+        <BaseSegmented
+          :model-value="page.filter.value"
+          :options="filterOptions"
+          aria-label="按项目类型或配置状态筛选"
+          @update:model-value="page.filter.value = ($event as DeployFilter)"
+        />
+      </div>
+    </template>
   <div class="deploy-dashboard" data-test="deploy-dashboard">
-    <div class="deploy-dashboard__toolbar">
-      <BaseInput
-        v-model="page.query.value"
-        type="search"
-        variant="search"
-        class="deploy-dashboard__search"
-        aria-label="搜索项目"
-        placeholder="搜索项目..."
-      />
-      <BaseSegmented
-        :model-value="page.filter.value"
-        :options="filterOptions"
-        aria-label="按项目类型或配置状态筛选"
-        @update:model-value="page.filter.value = ($event as DeployFilter)"
-      />
-    </div>
 
     <LoadingState v-if="page.loading.value" label="正在加载项目…" />
     <ErrorState
@@ -232,7 +234,7 @@ onActivated(() => {
         </DeployGroupSection>
       </div>
 
-      <div v-else class="deploy-dashboard__grid">
+      <div v-else class="deploy-dashboard__grid project-card-grid">
         <DeployProjectCard
           v-for="project in page.filtered.value"
           :key="project.name"

@@ -51,4 +51,18 @@ describe('BaseSelect', () => {
     expect(wrapper.text()).toContain('20.19.2')
     expect(wrapper.text()).not.toContain('请选择')
   })
+
+  it('默认与输入同档 medium，并把菜单挂到 body 以免被弹窗裁切', () => {
+    const wrapper = mountSelect({ modelValue: '20.19.2' })
+    const select = wrapper.getComponent({ name: 'Select' })
+
+    expect(select.props('size')).toBe('medium')
+    expect(select.props('to')).toBe('body')
+  })
+
+  it('紧凑区可降为 small', () => {
+    const wrapper = mountSelect({ modelValue: '20.19.2', size: 'sm' })
+
+    expect(wrapper.getComponent({ name: 'Select' }).props('size')).toBe('small')
+  })
 })

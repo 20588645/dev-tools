@@ -90,6 +90,7 @@ function formatUpdated(value: string) {
       </BaseInput>
       <BaseSelect
         class="notebook-list-panel__sort"
+        size="sm"
         :model-value="sort"
         :options="sortOptions"
         aria-label="笔记排序"

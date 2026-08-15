@@ -16,11 +16,14 @@ withDefaults(defineProps<{
 </template>
 
 <style scoped>
-/* redesign-v2：页面骨架透明，让 body 的渐变画布透出（卡片自身承担表面色） */
+/* redesign-v2：页面骨架透明，让 body 的渐变画布透出（卡片自身承担表面色）
+   页头（#top / PageTop）不参与滚动，正文在 PageBody 内独立滚动。 */
 .page-frame {
   display: flex;
   flex-direction: column;
-  min-height: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
   color: var(--color-text);
   background: transparent;
 }

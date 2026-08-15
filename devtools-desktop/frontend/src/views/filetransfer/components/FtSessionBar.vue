@@ -36,6 +36,7 @@ const hint = computed(() => {
     <span class="ft-session-bar__label">服务器</span>
     <BaseSelect
       class="ft-session-bar__select"
+      size="sm"
       :model-value="store.selectedServerId"
       :options="serverOptions"
       :disabled="!store.servers.length"

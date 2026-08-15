@@ -18,6 +18,7 @@
 
 .notebook-view > .page-frame__body {
   min-height: 0;
+  overflow: hidden;
 }
 
 .notebook-view__title-mark {

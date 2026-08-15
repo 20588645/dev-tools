@@ -20,6 +20,7 @@
 
 .notes-view > .page-frame__body {
   min-height: 0;
+  overflow: hidden;
 }
 
 .notes-view__title-dot {

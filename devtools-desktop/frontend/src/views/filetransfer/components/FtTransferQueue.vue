@@ -66,6 +66,7 @@ const tasks = computed(() => store.taskList)
       <div class="ft-queue-actions">
         <BaseSelect
           class="ft-queue-actions__policy"
+          size="sm"
           :model-value="store.conflictPolicy"
           :options="conflictOptions"
           aria-label="冲突策略"
