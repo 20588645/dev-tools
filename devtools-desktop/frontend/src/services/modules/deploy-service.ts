@@ -128,7 +128,7 @@ export async function updateServer(id: string, payload: ServerInput): Promise<De
 }
 
 export async function deleteServer(id: string): Promise<void> {
-  await apiClient.delete(`/api/servers/${encodeURIComponent(id)}`, DEPLOY_TIMEOUT)
+  await apiClient.delete(`/api/servers/${encodeURIComponent(id)}`, undefined, DEPLOY_TIMEOUT)
 }
 
 /** 连接测试。返回任务 id，进度经 WS 推送到 LogViewer。 */
@@ -445,7 +445,7 @@ export async function getHistoryLog(id: string, signal?: AbortSignal): Promise<H
 }
 
 export async function deleteHistoryItem(id: string): Promise<void> {
-  await apiClient.delete(`/api/history/${encodeURIComponent(id)}`, DEPLOY_TIMEOUT)
+  await apiClient.delete(`/api/history/${encodeURIComponent(id)}`, undefined, DEPLOY_TIMEOUT)
 }
 
 /** 批量删除。后端是 `DELETE /api/history` 带 body，不是独立的 batch 路由。 */
@@ -567,7 +567,7 @@ export async function addProjects(paths: string[]): Promise<AddProjectsResult> {
 }
 
 export async function removeProject(name: string): Promise<void> {
-  await apiClient.delete(`/api/projects/${encodeURIComponent(name)}`, DEPLOY_TIMEOUT)
+  await apiClient.delete(`/api/projects/${encodeURIComponent(name)}`, undefined, DEPLOY_TIMEOUT)
 }
 
 export interface GitLogEntry {

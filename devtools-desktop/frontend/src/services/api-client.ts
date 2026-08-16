@@ -148,10 +148,14 @@ export class ApiClient {
   }
 
   delete<T>(path: string, body?: unknown, timeout?: number) {
+    // 多数删除没有 body。`delete(path, 15_000)` 会把超时当成 JSON 数字发出去，
+    // express.json 严格模式直接 400，且发生在 CORS 之前，WebView 会报成连不上 Sidecar。
+    const timeoutOnly = typeof body === 'number' && timeout === undefined
+    const payload = timeoutOnly ? undefined : body
     return this.request<T>(path, {
       method: 'DELETE',
-      body: body === undefined ? undefined : JSON.stringify(body),
-      timeout,
+      body: payload === undefined ? undefined : JSON.stringify(payload),
+      timeout: timeoutOnly ? body : timeout,
     })
   }
 

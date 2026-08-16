@@ -31,6 +31,40 @@ describe('ApiClient', () => {
     }))
   })
 
+  it('treats a numeric second argument to delete as timeout, not a JSON body', async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response('{"ok":true}', {
+      headers: { 'content-type': 'application/json' },
+    }))
+    const client = new ApiClient({ fetcher })
+
+    await client.delete('/api/servers/abc', 15_000)
+
+    expect(fetcher).toHaveBeenCalledWith(
+      'http://127.0.0.1:13456/api/servers/abc',
+      expect.objectContaining({ method: 'DELETE' }),
+    )
+    const init = fetcher.mock.calls[0]?.[1]
+    expect(init?.body).toBeUndefined()
+    expect(init?.headers).not.toMatchObject({ 'Content-Type': 'application/json' })
+  })
+
+  it('still sends a JSON body when delete is given an object payload', async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response('{"deleted":2}', {
+      headers: { 'content-type': 'application/json' },
+    }))
+    const client = new ApiClient({ fetcher })
+
+    await expect(client.delete('/api/history', { ids: ['a', 'b'] }, 15_000))
+      .resolves.toEqual({ deleted: 2 })
+    expect(fetcher).toHaveBeenCalledWith(
+      'http://127.0.0.1:13456/api/history',
+      expect.objectContaining({
+        method: 'DELETE',
+        body: JSON.stringify({ ids: ['a', 'b'] }),
+      }),
+    )
+  })
+
   it('maps HTTP failures to ApiError with response details', async () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response('{"error":"bad request"}', {
       status: 400,
