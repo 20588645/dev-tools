@@ -1,6 +1,7 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { resetAppUpgradeForTest } from '@/composables/useAppUpgrade'
 import * as settingsService from '@/services/modules/settings-service'
 import { useSettings } from './useSettings'
 
@@ -50,6 +51,7 @@ function createService() {
 describe('useSettings', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
+    resetAppUpgradeForTest()
     window.history.replaceState({}, '', '/?apiPort=13900')
   })
 
@@ -131,28 +133,6 @@ describe('useSettings', () => {
     expect(controller.gitDraft.author).toBe('尚未保存的作者')
     expect(controller.gitDirty.value).toBe(true)
     expect(getReportConfig).toHaveBeenCalledOnce()
-    controller.dispose()
-  })
-
-  it('keeps upgrade progress as an explicit task state machine', async () => {
-    const service = createService()
-    const controller = useSettings({
-      service,
-      getReportConfig: vi.fn().mockResolvedValue({ token: '', author: '', outputDir: '', repos: [] }),
-      saveReportConfig: vi.fn(),
-      storage: createStorage(),
-    })
-
-    await controller.beginUpgrade()
-    expect(service.startUpgrade).toHaveBeenCalledOnce()
-    expect(controller.upgrade.state).toBe('running')
-
-    controller.handleUpgradeProgress({ event: 'Progress', percent: 44, log: 'building\n' })
-    expect(controller.upgrade).toMatchObject({ state: 'running', percent: 44, log: expect.stringContaining('building') })
-
-    controller.handleUpgradeProgress({ event: 'Error', percent: 44, log: 'failed\n' })
-    expect(controller.upgrade.state).toBe('error')
-    expect(controller.upgrade.message).toContain('更新失败')
     controller.dispose()
   })
 })

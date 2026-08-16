@@ -42,9 +42,13 @@
   /* 面板内嵌卡片收一档，嵌套关系才成立 */
   --component-disclosure-panel-item-radius: 13px;
   --component-disclosure-panel-face: var(--color-surface);
-  --component-dialog-width: 500px;
+  /* 弹窗只保留两档，对齐原型 .modal.lg / .modal.sm，避免每页各写一套宽高 */
+  --component-dialog-width: 720px;
   --component-dialog-width-sm: 400px;
-  --component-dialog-width-lg: 720px;
+  --component-dialog-gutter: 48px;
+  --component-dialog-viewport-inset: 64px;
+  --component-dialog-body-max: min(640px, 72vh);
+  --component-dialog-body-log: var(--component-dialog-body-max);
   --component-focus-outline: 0 0 0 3px var(--color-action-subtle);
   --component-control-surface: var(--color-surface);
   --component-control-border: var(--color-border);

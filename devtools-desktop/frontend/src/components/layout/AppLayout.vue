@@ -194,7 +194,15 @@ const rootClass = computed(() => ({
   padding: 10px 0 0;
 }
 
-.app-layout-root.is-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button {
+.app-layout-root.is-collapsed .app-sidebar .sidebar-footer .sidebar-footer__tools {
+  flex-direction: column;
+  width: 100%;
+  align-items: center;
+  gap: 6px;
+}
+
+.app-layout-root.is-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button,
+.app-layout-root.is-collapsed .app-sidebar .sidebar-footer .sidebar-update-button {
   flex: none;
   width: 36px;
   min-width: 36px;

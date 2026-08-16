@@ -18,7 +18,6 @@ import SettingsCategoryNav from './components/SettingsCategoryNav.vue'
 import SettingsGeneralPanel from './components/SettingsGeneralPanel.vue'
 import SettingsGitPanel from './components/SettingsGitPanel.vue'
 import SettingsStatusOverview from './components/SettingsStatusOverview.vue'
-import UpgradeProgressDialog from './components/UpgradeProgressDialog.vue'
 import { settingsCategoryLabel, type SettingsSearchItem, useSettings } from './composables/useSettings'
 import './settings.css'
 
@@ -233,15 +232,5 @@ onBeforeUnmount(() => {
       :tone="confirm.tone"
       @confirm="runConfirmedAction"
     />
-    <ConfirmDialog
-      :model-value="controller.upgrade.state === 'confirming'"
-      title="重新打包并更新应用"
-      message="这会在本机编译最新代码、覆盖 Applications 中的旧程序并自动重启。任务开始后请保持应用开启。"
-      confirm-text="开始更新"
-      tone="danger"
-      @update:model-value="!$event && (controller.upgrade.state = 'idle')"
-      @confirm="controller.beginUpgrade"
-    />
-    <UpgradeProgressDialog :controller="controller" />
   </PageFrame>
 </template>

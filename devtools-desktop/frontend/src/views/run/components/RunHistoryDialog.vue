@@ -116,7 +116,6 @@ async function clearAll() {
     :model-value="open"
     title="📋 本地运行历史"
     subtitle="最近 100 条运行记录"
-    width="min(780px, 94vw)"
     @update:model-value="!$event && emit('close')"
   >
     <LoadingState v-if="loading" title="加载中…" />

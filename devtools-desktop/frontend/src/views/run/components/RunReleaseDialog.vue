@@ -26,7 +26,6 @@ const emit = defineEmits<{
   <BaseDialog
     :model-value="request !== null"
     title="强制释放端口"
-    width="min(520px, 92vw)"
     @update:model-value="!$event && emit('cancel')"
   >
     <template v-if="request">

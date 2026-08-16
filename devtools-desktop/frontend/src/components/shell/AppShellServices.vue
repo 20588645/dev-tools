@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted } from 'vue'
 
+import ConfirmDialog from '@/components/feedback/ConfirmDialog.vue'
 import LogViewer from '@/components/logviewer/LogViewer.vue'
+import { useAppUpgrade } from '@/composables/useAppUpgrade'
 import { installUpgradeProgressBridge } from '@/services/app-events'
 import { showAppToast } from '@/services/app-toast'
 import { createDeployRealtimeService } from '@/services/deploy-realtime-service'
@@ -14,15 +16,17 @@ import { createTerminalRuntimeService } from '@/services/terminal-runtime-servic
 import { createTodoReminderService } from '@/services/todo-reminder-service'
 import { useLogTaskStore } from '@/stores/log-task'
 import { useNotificationStore } from '@/stores/notification'
-import AddProjectDialog from '@/views/deploy/components/AddProjectDialog.vue'
 import { emitProjectsChanged, onAddProjectRequested } from '@/views/deploy/add-project-events'
+import AddProjectDialog from '@/views/deploy/components/AddProjectDialog.vue'
 import { useAddProject } from '@/views/deploy/composables/useAddProject'
+import UpgradeProgressDialog from '@/views/settings/components/UpgradeProgressDialog.vue'
 
 defineOptions({ name: 'AppShellServices' })
 
 const logTask = useLogTaskStore()
 const notify = useNotificationStore()
 const addProject = useAddProject()
+const appUpgrade = useAppUpgrade()
 const todoReminderService = createTodoReminderService()
 const desktopNotificationService = createDesktopNotificationService()
 const experimentalEffectsService = createExperimentalEffectsService()
@@ -144,6 +148,19 @@ onBeforeUnmount(() => {
       :running="logTask.running"
       @minimize="onLogMinimize"
       @open-source="onOpenSource"
+    />
+    <ConfirmDialog
+      :model-value="appUpgrade.upgrade.state === 'confirming'"
+      title="重新打包并更新应用"
+      message="这会在本机编译最新代码、覆盖 Applications 中的旧程序并自动重启。任务开始后请保持应用开启。"
+      confirm-text="开始更新"
+      tone="danger"
+      @update:model-value="!$event && appUpgrade.closeUpgrade()"
+      @confirm="appUpgrade.beginUpgrade"
+    />
+    <UpgradeProgressDialog
+      :upgrade="appUpgrade.upgrade"
+      @close="appUpgrade.closeUpgrade()"
     />
   </div>
 </template>

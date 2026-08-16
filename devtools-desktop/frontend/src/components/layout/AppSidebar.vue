@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 
+import { useAppUpgrade } from '@/composables/useAppUpgrade'
 import { MENU_ORDER_CHANGED_EVENT } from '@/services/app-events'
 import { readMenuOrder } from '@/services/modules/settings-service'
 import { useAppStore } from '@/stores/app'
@@ -29,6 +30,7 @@ const emit = defineEmits<{
 }>()
 
 const app = useAppStore()
+const appUpgrade = useAppUpgrade()
 const menuOrderTick = ref(0)
 
 const groups = computed(() => {
@@ -68,6 +70,12 @@ function cycleTheme() {
 function openIntro() {
   emit('intro')
 }
+
+const updateBusy = computed(() => appUpgrade.running.value)
+const updateTitle = computed(() => (
+  updateBusy.value ? '正在重新打包并更新应用' : '重新打包并更新应用'
+))
+const updateLabel = computed(() => (updateBusy.value ? '更新中' : '立即更新'))
 
 onMounted(() => {
   if (!props.syncMenuOrder) return
@@ -115,34 +123,53 @@ watch(
     <div class="sidebar-footer">
       <button
         type="button"
-        class="sidebar-tool-button"
-        title="项目介绍"
-        @click="openIntro"
+        class="sidebar-update-button"
+        data-test="sidebar-update"
+        :title="updateTitle"
+        :aria-label="updateTitle"
+        :disabled="updateBusy"
+        @click="appUpgrade.requestUpgrade()"
       >
-        <span class="sidebar-tool-icon">ⓘ</span>
-        <span class="sidebar-tool-label">介绍</span>
+        <span class="sidebar-tool-icon" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12a9 9 0 1 1-2.1-5.7" />
+            <path d="M21 3v6h-6" />
+          </svg>
+        </span>
+        <span class="sidebar-tool-label">{{ updateLabel }}</span>
       </button>
-      <button
-        type="button"
-        class="sidebar-tool-button"
-        data-test="theme-toggle"
-        :title="themeTitle"
-        :disabled="!enableThemeToggle"
-        :aria-label="themeTitle"
-        @click="cycleTheme"
-      >
-        <span class="sidebar-tool-icon">{{ themeIcon }}</span>
-        <span class="sidebar-tool-label">外观</span>
-      </button>
-      <button
-        type="button"
-        class="sidebar-tool-button sidebar-collapse-toggle"
-        :title="collapsed ? '展开侧栏' : '折叠侧栏'"
-        @click="toggleCollapse"
-      >
-        <span class="sidebar-tool-icon sidebar-collapse-icon">{{ collapsed ? '›' : '‹' }}</span>
-        <span class="sidebar-tool-label sidebar-collapse-label">收起</span>
-      </button>
+      <div class="sidebar-footer__tools">
+        <button
+          type="button"
+          class="sidebar-tool-button"
+          title="项目介绍"
+          @click="openIntro"
+        >
+          <span class="sidebar-tool-icon">ⓘ</span>
+          <span class="sidebar-tool-label">介绍</span>
+        </button>
+        <button
+          type="button"
+          class="sidebar-tool-button"
+          data-test="theme-toggle"
+          :title="themeTitle"
+          :disabled="!enableThemeToggle"
+          :aria-label="themeTitle"
+          @click="cycleTheme"
+        >
+          <span class="sidebar-tool-icon">{{ themeIcon }}</span>
+          <span class="sidebar-tool-label">外观</span>
+        </button>
+        <button
+          type="button"
+          class="sidebar-tool-button sidebar-collapse-toggle"
+          :title="collapsed ? '展开侧栏' : '折叠侧栏'"
+          @click="toggleCollapse"
+        >
+          <span class="sidebar-tool-icon sidebar-collapse-icon">{{ collapsed ? '›' : '‹' }}</span>
+          <span class="sidebar-tool-label sidebar-collapse-label">收起</span>
+        </button>
+      </div>
     </div>
   </aside>
 </template>
@@ -297,7 +324,7 @@ watch(
 
 .sidebar-footer {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   align-items: stretch;
   width: 100%;
   gap: 6px;
@@ -305,6 +332,45 @@ watch(
   border-top: 1px solid var(--color-border-soft);
   box-sizing: border-box;
   -webkit-app-region: no-drag;
+}
+
+.sidebar-footer__tools {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  width: 100%;
+  gap: 6px;
+}
+
+.sidebar-update-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  height: 34px;
+  gap: 6px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--color-action) 14%, transparent);
+  color: var(--color-action);
+  font-size: 12px;
+  font-weight: 650;
+  box-shadow: none;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: background 0.12s, color 0.12s, opacity 0.12s;
+  -webkit-app-region: no-drag;
+}
+
+.sidebar-update-button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-action) 22%, transparent);
+}
+
+.sidebar-update-button:disabled {
+  cursor: default;
+  opacity: 0.72;
 }
 
 .sidebar-tool-button {

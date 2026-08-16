@@ -134,7 +134,6 @@ watch(() => props.modelValue, (open) => {
   <BaseDialog
     :model-value="modelValue"
     title="快捷查询验证码"
-    width="min(520px, calc(100vw - 32px))"
     below-overlays
     @update:model-value="emit('update:modelValue', $event)"
   >

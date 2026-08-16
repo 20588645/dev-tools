@@ -90,8 +90,6 @@ function confirmSave() {
     :model-value="open"
     :title="title"
     :subtitle="subtitle"
-    width="720px"
-    body-max-height="min(520px, 70vh)"
     @update:model-value="emit('update:open', $event)"
   >
     <div class="ed-browser">

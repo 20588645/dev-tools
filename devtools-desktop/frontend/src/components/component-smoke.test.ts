@@ -363,6 +363,53 @@ describe('shared UI foundation', () => {
     dialog.unmount()
   })
 
+  it('uses the standard dialog width token and a shared body max by default', () => {
+    const dialog = mount(BaseDialog, {
+      props: { modelValue: true, title: '标准弹窗' },
+      slots: { default: '<p>内容</p>' },
+      attachTo: document.body,
+    })
+    const modal = document.body.querySelector('.n-modal.base-dialog') as HTMLElement | null
+    if (!modal) throw new Error('弹窗未渲染')
+    expect(modal.style.width).toBe('var(--component-dialog-width)')
+    expect(modal.classList.contains('base-dialog--standard')).toBe(true)
+    const body = document.body.querySelector('.base-dialog__body') as HTMLElement | null
+    if (!body) throw new Error('内容区未渲染')
+    expect(body.style.maxHeight).toBe('var(--component-dialog-body-max)')
+    dialog.unmount()
+  })
+
+  it('keeps compact dialogs hugging their content at the small width token', () => {
+    const dialog = mount(BaseDialog, {
+      props: { modelValue: true, title: '确认', size: 'compact' },
+      slots: { default: '<p>删除？</p>' },
+      attachTo: document.body,
+    })
+    const modal = document.body.querySelector('.n-modal.base-dialog') as HTMLElement | null
+    if (!modal) throw new Error('弹窗未渲染')
+    expect(modal.style.width).toBe('var(--component-dialog-width-sm)')
+    expect(modal.classList.contains('base-dialog--compact')).toBe(true)
+    expect(document.body.querySelector('.base-dialog__body')).toBeNull()
+    dialog.unmount()
+  })
+
+  it('reserves the shared log body height for streaming work dialogs', () => {
+    const dialog = mount(BaseDialog, {
+      props: { modelValue: true, title: '运行日志', size: 'log' },
+      slots: { default: '<p>empty</p>' },
+      attachTo: document.body,
+    })
+    const modal = document.body.querySelector('.n-modal.base-dialog') as HTMLElement | null
+    if (!modal) throw new Error('弹窗未渲染')
+    expect(modal.style.width).toBe('var(--component-dialog-width)')
+    expect(modal.classList.contains('base-dialog--log')).toBe(true)
+    const body = document.body.querySelector('.base-dialog__body') as HTMLElement | null
+    if (!body) throw new Error('内容区未渲染')
+    expect(body.style.height).toBe('var(--component-dialog-body-log)')
+    expect(body.classList.contains('base-dialog__body--fixed')).toBe(true)
+    dialog.unmount()
+  })
+
   it('reserves a fixed body height so streaming dialogs do not jump when content arrives', () => {
     const dialog = mount(BaseDialog, {
       props: { modelValue: true, title: '运行日志', bodyHeight: '480px' },

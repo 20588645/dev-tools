@@ -117,7 +117,6 @@ const pricingColumns: BaseDataTableColumn<PricingTableRow>[] = [
   <BaseDialog
     :model-value="modelValue"
     title="数据与价格设置"
-    width="min(960px, calc(100vw - 32px))"
     @update:model-value="emit('update:modelValue', $event)"
   >
     <div class="usage-settings">

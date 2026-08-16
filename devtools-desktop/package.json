@@ -17,11 +17,11 @@
     "typecheck": "vue-tsc --noEmit",
     "test": "npm run test:unit && npm run test:architecture",
     "test:unit": "vitest run --config vitest.config.ts",
-    "test:architecture": "node --test scripts/validate-component-architecture.test.mjs",
+    "test:architecture": "node --test scripts/validate-component-architecture.test.mjs scripts/validate-dialog-contract.test.mjs",
     "test:e2e": "playwright test --config playwright.config.ts",
     "lint": "npm run lint:js && npm run lint:css && npm run lint:tokens && npm run lint:architecture",
     "lint:tokens": "node scripts/validate-design-tokens.mjs",
-    "lint:architecture": "node scripts/validate-component-architecture.mjs",
+    "lint:architecture": "node scripts/validate-dialog-contract.mjs && node scripts/validate-component-architecture.mjs",
     "lint:architecture:details": "node scripts/validate-component-architecture.mjs --details",
     "lint:js": "eslint sidecar scripts frontend/src tests vite.config.ts vitest.config.ts playwright.config.ts",
     "lint:css": "stylelint \"frontend/src/**/*.{vue,css}\""

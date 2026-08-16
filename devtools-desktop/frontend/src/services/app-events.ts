@@ -39,7 +39,7 @@ export function requestHomeRefresh(reason: HomeRefreshRequestDetail['reason'] = 
 
 /**
  * WS `upgrade-progress` → window 事件桥。
- * 设置页的升级进度对话框监听 `UPGRADE_PROGRESS_EVENT`，与 WS 解耦；
+ * 应用壳上的更新进度对话框监听 `UPGRADE_PROGRESS_EVENT`，与 WS 解耦；
  * 经共享实时连接（`services/realtime.ts`）订阅。
  */
 export function installUpgradeProgressBridge(): () => void {

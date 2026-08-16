@@ -61,8 +61,6 @@ const SCAN_EMPTY: Record<ScanEmptyKind, { title: string, description?: string }>
     :model-value="open"
     title="添加项目"
     subtitle="从扫描目录挑选，或手动浏览嵌套的项目文件夹"
-    width="min(720px, 94vw)"
-    body-max-height="min(560px, 70vh)"
     @update:model-value="!$event && emit('close')"
   >
     <div class="add-project">
@@ -106,20 +104,7 @@ const SCAN_EMPTY: Record<ScanEmptyKind, { title: string, description?: string }>
               :pressed="scanChecked.has(item.path)"
               @click="emit('toggle-scan', item.path)"
             >
-              <span class="add-project__cell">
-                <!--
-                  整行可点，勾选框自身也可点。两者必须互斥：不 stop 的话点勾选框会
-                  同时触发它的 update 与冒泡到外层行按钮的 click，两次 toggle 相互
-                  抵消，表现为「点勾选框没反应」。
-                -->
-                <span @click.stop>
-                  <BaseCheckbox
-                    :model-value="scanChecked.has(item.path)"
-                    :label="item.name"
-                    @update:model-value="emit('toggle-scan', item.path)"
-                  />
-                </span>
-              </span>
+              <span class="add-project__cell-name" :title="item.name">{{ item.name }}</span>
             </BaseSelectableItem>
           </div>
         </div>
@@ -257,15 +242,33 @@ const SCAN_EMPTY: Record<ScanEmptyKind, { title: string, description?: string }>
   max-height: 340px;
   gap: 8px;
   padding: 10px;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   --base-selectable-min-height: 36px;
   --base-selectable-padding: 7px 10px;
   --base-selectable-radius: 10px;
+  --base-selectable-border: var(--color-border);
   --base-selectable-background: var(--color-surface-subtle);
   --base-selectable-hover-transform: none;
   --base-selectable-selected-shadow: none;
   --base-selectable-selected-background: color-mix(in srgb, var(--color-action) 10%, var(--color-surface));
-  --base-selectable-selected-border: color-mix(in srgb, var(--color-action) 28%, var(--color-border));
+  --base-selectable-selected-border: color-mix(in srgb, var(--color-action) 36%, var(--color-border));
+}
+
+.add-project__cell-name {
+  display: block;
+  overflow: hidden;
+  min-width: 0;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .add-project__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .add-project__list {
@@ -276,7 +279,6 @@ const SCAN_EMPTY: Record<ScanEmptyKind, { title: string, description?: string }>
   padding: 6px 8px 10px;
 }
 
-.add-project__cell,
 .add-project__row {
   display: flex;
   min-width: 0;

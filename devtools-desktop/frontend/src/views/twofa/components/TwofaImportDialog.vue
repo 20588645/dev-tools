@@ -29,7 +29,6 @@ watch(() => props.modelValue, (open) => {
   <BaseDialog
     :model-value="modelValue"
     title="批量导入账号"
-    width="min(560px, calc(100vw - 32px))"
     @update:model-value="emit('update:modelValue', $event)"
   >
     <div class="twofa-import">

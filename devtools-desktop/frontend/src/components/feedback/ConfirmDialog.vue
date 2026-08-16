@@ -25,7 +25,12 @@ const confirm = () => emit('confirm')
 </script>
 
 <template>
-  <BaseDialog :model-value="modelValue" :title="title" @update:model-value="emit('update:modelValue', $event)">
+  <BaseDialog
+    :model-value="modelValue"
+    :title="title"
+    size="compact"
+    @update:model-value="emit('update:modelValue', $event)"
+  >
     <p class="confirm-dialog__message">{{ message }}</p>
     <template #footer>
       <BaseButton variant="ghost" @click="emit('update:modelValue', false)">{{ cancelText }}</BaseButton>

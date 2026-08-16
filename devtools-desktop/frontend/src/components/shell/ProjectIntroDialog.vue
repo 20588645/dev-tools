@@ -37,7 +37,6 @@ function close() {
     v-model="open"
     title="DevTools Desktop"
     subtitle="前端开发全流程效率工具"
-    width="min(720px, 92vw)"
   >
     <div class="intro-hero">
       <div class="intro-mark" aria-hidden="true">⌘</div>

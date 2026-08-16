@@ -89,7 +89,6 @@ function submit() {
   <BaseDialog
     :model-value="modelValue"
     :title="isEdit ? '编辑账号' : '添加账号'"
-    width="min(520px, calc(100vw - 32px))"
     below-overlays
     @update:model-value="emit('update:modelValue', $event)"
   >

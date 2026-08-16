@@ -60,7 +60,6 @@ function submit() {
   <BaseDialog
     :model-value="modelValue"
     title="新建待办"
-    width="min(600px, calc(100vw - 32px))"
     below-overlays
     @update:model-value="emit('update:modelValue', $event)"
   >

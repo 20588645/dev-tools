@@ -236,7 +236,7 @@ defineExpose({ focusTitle })
     </template>
   </BaseCard>
 
-  <BaseDialog v-model="linkDialogOpen" title="设置网页链接" width="420px">
+  <BaseDialog v-model="linkDialogOpen" title="设置网页链接" size="compact">
     <div class="notebook-link-dialog">
       <p>将“{{ linkLabel }}”设置为可点击链接</p>
       <BaseInput

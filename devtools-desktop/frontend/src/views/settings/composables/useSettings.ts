@@ -1,13 +1,15 @@
 import { computed, reactive, ref } from 'vue'
 
 import {
+  useAppUpgrade,
+  type AppUpgradeState,
+} from '@/composables/useAppUpgrade'
+import {
   EXPERIMENTAL_SETTING_CHANGED_EVENT,
   MENU_ORDER_CHANGED_EVENT,
   SIDECAR_RESTARTED_EVENT,
-  UPGRADE_PROGRESS_EVENT,
   type ExperimentalSettingChangedDetail,
   type SidecarRestartedDetail,
-  type UpgradeProgressDetail,
 } from '@/services/app-events'
 import { apiClient } from '@/services/api-client'
 import {
@@ -24,7 +26,7 @@ import { useSettingsStore } from '@/stores/settings'
 
 export type SettingsCategory = 'general' | 'backup' | 'appearance' | 'git' | 'advanced' | 'about'
 export type OperationState = 'idle' | 'working' | 'success' | 'error'
-export type UpgradeState = 'idle' | 'confirming' | 'starting' | 'running' | 'finished' | 'error'
+export type UpgradeState = AppUpgradeState
 
 export interface SettingsSearchItem {
   id: string
@@ -130,6 +132,7 @@ export function useSettings(options: UseSettingsDependencies = {}) {
   const app = useAppStore()
   const settingsStore = useSettingsStore()
   const notifications = useNotificationStore()
+  const appUpgrade = useAppUpgrade()
 
   const activeCategory = ref<SettingsCategory>('general')
   const searchQuery = ref('')
@@ -161,12 +164,6 @@ export function useSettings(options: UseSettingsDependencies = {}) {
     backupDelete: 'idle' as OperationState,
     testSidecarKill: 'idle' as OperationState,
     notification: 'idle' as OperationState,
-  })
-  const upgrade = reactive({
-    state: 'idle' as UpgradeState,
-    percent: 0,
-    log: '',
-    message: '',
   })
 
   let loadController: AbortController | null = null
@@ -273,7 +270,6 @@ export function useSettings(options: UseSettingsDependencies = {}) {
     loadVersion += 1
     loadController?.abort()
     loadController = null
-    window.removeEventListener(UPGRADE_PROGRESS_EVENT, handleUpgradeProgressEvent)
   }
 
   const chooseSearchResult = (item: SettingsSearchItem) => {
@@ -476,61 +472,6 @@ export function useSettings(options: UseSettingsDependencies = {}) {
     }
   }
 
-  function handleUpgradeProgress(detail: UpgradeProgressDetail) {
-    if (typeof detail.percent === 'number') {
-      upgrade.percent = Math.min(Math.max(detail.percent, 0), 100)
-    }
-    if (detail.log) upgrade.log += detail.log
-    if (detail.event === 'Started' || detail.event === 'Progress') upgrade.state = 'running'
-    if (detail.event === 'Error') {
-      upgrade.state = 'error'
-      upgrade.message = '更新失败，请查看任务日志'
-    }
-    if (detail.event === 'Finished') {
-      upgrade.state = 'finished'
-      upgrade.percent = 100
-      upgrade.message = '更新完成，应用即将自动退出并重启'
-      globalThis.setTimeout(() => {
-        void tauriClient.exitApp().catch(() => undefined)
-      }, 500)
-    }
-  }
-
-  function handleUpgradeProgressEvent(event: Event) {
-    handleUpgradeProgress((event as CustomEvent<UpgradeProgressDetail>).detail ?? {})
-  }
-
-  const bindUpgradeProgress = () => {
-    window.removeEventListener(UPGRADE_PROGRESS_EVENT, handleUpgradeProgressEvent)
-    window.addEventListener(UPGRADE_PROGRESS_EVENT, handleUpgradeProgressEvent)
-  }
-
-  const requestUpgrade = () => {
-    upgrade.state = 'confirming'
-  }
-
-  const beginUpgrade = async () => {
-    upgrade.state = 'starting'
-    upgrade.percent = 0
-    upgrade.log = '准备开始本地更新任务…\n'
-    upgrade.message = '正在启动更新任务'
-    try {
-      await service.startUpgrade()
-      if (upgrade.state === 'starting') upgrade.state = 'running'
-    } catch (reason) {
-      upgrade.state = 'error'
-      upgrade.message = errorMessage(reason, '更新任务启动失败')
-      upgrade.log += `[ERROR] ${upgrade.message}\n`
-    }
-  }
-
-  const closeUpgrade = () => {
-    if (upgrade.state === 'starting' || upgrade.state === 'running') return
-    upgrade.state = 'idle'
-  }
-
-  bindUpgradeProgress()
-
   return {
     app,
     settingsStore,
@@ -560,7 +501,7 @@ export function useSettings(options: UseSettingsDependencies = {}) {
     gitSaveState,
     connectionTimeoutDraft,
     operation,
-    upgrade,
+    upgrade: appUpgrade.upgrade,
     latestBackupLabel,
     sidecarLabel,
     showTestSidecars,
@@ -584,10 +525,10 @@ export function useSettings(options: UseSettingsDependencies = {}) {
     removeBackup,
     restartSidecar,
     stopTestSidecars,
-    requestUpgrade,
-    beginUpgrade,
-    closeUpgrade,
-    handleUpgradeProgress,
+    requestUpgrade: appUpgrade.requestUpgrade,
+    beginUpgrade: appUpgrade.beginUpgrade,
+    closeUpgrade: appUpgrade.closeUpgrade,
+    handleUpgradeProgress: appUpgrade.handleUpgradeProgress,
   }
 }
 

@@ -57,7 +57,7 @@ function onSubmit() {
   <BaseDialog
     :model-value="groupKey !== null"
     title="重命名分组"
-    width="min(420px, 92vw)"
+    size="compact"
     @update:model-value="!$event && emit('close')"
   >
     <BaseInput

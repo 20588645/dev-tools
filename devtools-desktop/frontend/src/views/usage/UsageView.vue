@@ -341,7 +341,7 @@ const modelRanking = computed(() => {
     <BaseDialog
       v-model="customOpen"
       title="自定义时间范围"
-      width="min(420px, calc(100vw - 32px))"
+      size="compact"
       below-overlays
     >
       <div class="usage-custom-range">

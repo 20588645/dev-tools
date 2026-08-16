@@ -7,11 +7,19 @@ const props = withDefaults(defineProps<{
   title: string
   /** 标题下方的次要说明，如任务归属、记录条数。 */
   subtitle?: string
+  /**
+   * 两档宽度，第三态只改高度策略：
+   * - `standard`：工作弹窗 720，内容超出后滚动
+   * - `compact`：确认 / 重命名 / 单行输入 400，高度跟着内容
+   * - `log`：同样 720，但预留固定内容区（日志、更新进度），打开时不从小窗长出来
+   * 页面不要再传 `width` / `body-max-height`。
+   */
+  size?: 'standard' | 'compact' | 'log'
   width?: string
   closable?: boolean
   /**
-   * 内容区最大高度（如 `min(760px, 82vh)`）。设置后内容区自身滚动，
-   * 头部与底部保持吸附——用于表单这类内容可能超出视口、但打开时已有完整内容的对话框。
+   * 内容区最大高度。标准弹窗默认用 `--component-dialog-body-max`，
+   * 内容超出后自身滚动，头部与底部保持吸附。
    */
   bodyMaxHeight?: string
   /**
@@ -29,7 +37,8 @@ const props = withDefaults(defineProps<{
   belowOverlays?: boolean
 }>(), {
   subtitle: '',
-  width: 'var(--component-dialog-width)',
+  size: 'standard',
+  width: undefined,
   closable: true,
   bodyMaxHeight: undefined,
   bodyHeight: undefined,
@@ -48,22 +57,48 @@ const close = () => {
   visible.value = false
 }
 
-const bodyStyle = computed(() => {
-  if (props.bodyHeight) {
-    return { height: props.bodyHeight, minHeight: props.bodyHeight, maxHeight: props.bodyHeight }
-  }
-  if (props.bodyMaxHeight) return { maxHeight: props.bodyMaxHeight }
+const dialogClass = computed(() => {
+  if (props.size === 'compact') return 'base-dialog base-dialog--compact'
+  if (props.size === 'log') return 'base-dialog base-dialog--standard base-dialog--log'
+  return 'base-dialog base-dialog--standard'
+})
+
+const resolvedWidth = computed(() => {
+  if (props.width) return props.width
+  return props.size === 'compact'
+    ? 'var(--component-dialog-width-sm)'
+    : 'var(--component-dialog-width)'
+})
+
+const resolvedBodyHeight = computed(() => {
+  if (props.bodyHeight) return props.bodyHeight
+  if (props.size === 'log') return 'var(--component-dialog-body-log)'
   return undefined
+})
+
+const bodyStyle = computed(() => {
+  if (resolvedBodyHeight.value) {
+    return {
+      height: resolvedBodyHeight.value,
+      minHeight: resolvedBodyHeight.value,
+      maxHeight: resolvedBodyHeight.value,
+    }
+  }
+  const maxHeight = props.bodyMaxHeight ?? (
+    props.size === 'compact' ? undefined : 'var(--component-dialog-body-max)'
+  )
+  if (!maxHeight) return undefined
+  return { maxHeight }
 })
 </script>
 
 <template>
   <NModal
     v-model:show="visible"
-    class="base-dialog"
+    :class="dialogClass"
     preset="card"
     :closable="false"
-    :style="{ width }"
+    :style="{ width: resolvedWidth }"
     :mask-closable="closable"
     :z-index="belowOverlays ? 1900 : 20000"
     transform-origin="center"
@@ -90,10 +125,10 @@ const bodyStyle = computed(() => {
     <div
       v-if="bodyStyle"
       class="base-dialog__body"
-      :class="{ 'base-dialog__body--fixed': Boolean(bodyHeight) }"
+      :class="{ 'base-dialog__body--fixed': Boolean(resolvedBodyHeight) }"
       :style="bodyStyle"
     >
-      <div v-if="bodyHeight" class="base-dialog__body-fill">
+      <div v-if="resolvedBodyHeight" class="base-dialog__body-fill">
         <slot />
       </div>
       <slot v-else />
@@ -144,6 +179,8 @@ const bodyStyle = computed(() => {
 <style>
 /* redesign-v2 方案 B：毛玻璃弹窗（NModal 传送到 body 下，需组件自有的全局规则接管框体与遮罩） */
 .n-modal.base-dialog {
+  max-width: calc(100vw - var(--component-dialog-gutter));
+  max-height: calc(100vh - var(--component-dialog-viewport-inset));
   border: 1px solid var(--color-border);
   border-radius: var(--radius-xl);
   background: var(--color-glass-strong);
@@ -152,8 +189,18 @@ const bodyStyle = computed(() => {
   box-shadow: var(--shadow-lg);
 }
 
+.n-modal.base-dialog .n-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
+  max-height: calc(100vh - var(--component-dialog-viewport-inset));
+  overflow: hidden;
+}
+
 .n-modal.base-dialog .n-card-header { padding: 18px 22px 0; }
-.n-modal.base-dialog .n-card__content { min-height: 0; padding: 16px 22px; }
+.n-modal.base-dialog .n-card__content { min-height: 0; overflow: hidden; padding: 16px 22px; }
+.n-modal.base-dialog--compact .n-card__content { overflow: auto; }
 .n-modal.base-dialog .n-card__footer {
   display: flex;
   flex: none;

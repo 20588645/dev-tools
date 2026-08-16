@@ -49,7 +49,7 @@ function submit() {
   <BaseDialog
     :model-value="open"
     title="添加快捷命令"
-    width="440px"
+    size="compact"
     @update:model-value="emit('update:open', $event)"
   >
     <div class="term-add-dialog">

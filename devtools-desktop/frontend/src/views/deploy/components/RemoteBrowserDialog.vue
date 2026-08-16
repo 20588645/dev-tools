@@ -33,8 +33,6 @@ const emit = defineEmits<{
     :model-value="target !== null"
     title="远程目录浏览"
     :subtitle="target ? `${target.serverName} (${target.host})` : ''"
-    width="min(720px, 94vw)"
-    body-max-height="min(520px, 68vh)"
     @update:model-value="!$event && emit('close')"
   >
     <RemoteBrowserPanel

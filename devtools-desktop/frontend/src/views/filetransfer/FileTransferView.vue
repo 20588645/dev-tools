@@ -210,7 +210,7 @@ function onContextmenu(payload: { side: FtSide; event: MouseEvent; item: FtFileI
     <BaseDialog
       :model-value="promptOpen"
       :title="promptTitle"
-      width="400px"
+      size="compact"
       @update:model-value="(v) => { if (!v) closePrompt(null) }"
     >
       <BaseInput

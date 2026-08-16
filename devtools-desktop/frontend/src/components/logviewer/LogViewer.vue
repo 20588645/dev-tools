@@ -58,6 +58,11 @@ const props = withDefaults(defineProps<{
   resultNote?: string
   /** 任务仍在进行：关闭按钮变「最小化」，并发 minimize 而非 update:modelValue。 */
   running?: boolean
+  /**
+   * 更新安装这类不可中断任务：进行中不允许关掉或最小化弹窗。
+   * 结束后仍可关闭。
+   */
+  lockOpen?: boolean
 }>(), {
   subtitle: '',
   steps: () => [],
@@ -69,6 +74,7 @@ const props = withDefaults(defineProps<{
   resultText: '',
   resultNote: '',
   running: false,
+  lockOpen: false,
 })
 
 const emit = defineEmits<{
@@ -180,9 +186,12 @@ useEventListener(window, 'keydown', (event: KeyboardEvent) => {
 
 /** 进行中时关闭即最小化到后台，由父级决定提示文案与后续行为。 */
 function requestClose() {
+  if (props.lockOpen && props.running) return
   if (props.running) emit('minimize')
   else emit('update:modelValue', false)
 }
+
+const showFooter = computed(() => Boolean(props.resultText) || !(props.lockOpen && props.running))
 </script>
 
 <template>
@@ -190,9 +199,9 @@ function requestClose() {
     :model-value="modelValue"
     :title="title"
     :subtitle="subtitle"
-    width="min(980px, 92vw)"
-    body-height="min(620px, 74vh)"
-    :close-label="running ? '最小化到后台' : '关闭'"
+    size="log"
+    :closable="!(lockOpen && running)"
+    :close-label="running && !lockOpen ? '最小化到后台' : '关闭'"
     class="log-viewer"
     @update:model-value="!$event && requestClose()"
   >
@@ -266,14 +275,16 @@ function requestClose() {
 
     </div>
 
-    <template #footer>
+    <template v-if="showFooter" #footer>
       <div class="log-viewer__footer">
         <div v-if="resultText" class="log-viewer__result" :data-tone="progressTone">
           <span v-if="resultIcon" aria-hidden="true">{{ resultIcon }}</span>
           <span>{{ resultText }}</span>
           <span v-if="resultNote" class="log-viewer__result-note">{{ resultNote }}</span>
         </div>
-        <BaseButton variant="secondary" @click="requestClose">{{ running ? '最小化' : '关闭' }}</BaseButton>
+        <BaseButton v-if="!(lockOpen && running)" variant="secondary" @click="requestClose">
+          {{ running ? '最小化' : '关闭' }}
+        </BaseButton>
       </div>
     </template>
   </BaseDialog>

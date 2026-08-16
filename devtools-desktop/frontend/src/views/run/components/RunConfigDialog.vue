@@ -177,8 +177,6 @@ function onSubmit() {
     :model-value="project !== null"
     :title="title"
     :subtitle="project ? `${project.displayName} · ${project.path}` : ''"
-    width="min(720px, 94vw)"
-    body-max-height="min(720px, 78vh)"
     below-overlays
     @update:model-value="!$event && emit('close')"
   >
