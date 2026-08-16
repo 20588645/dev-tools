@@ -58,7 +58,7 @@ h1 {
 p {
   overflow: hidden;
   margin: 0;
-  color: var(--color-text-subtle);
+  color: var(--color-text-muted);
   font-size: 12.5px;
   line-height: var(--line-height-normal);
   text-overflow: ellipsis;

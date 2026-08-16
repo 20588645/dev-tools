@@ -4,7 +4,7 @@ import {
   listTerminalSessions,
 } from '@/services/modules/terminal-service'
 import { realtimeWs } from '@/services/realtime'
-import { createResizeDebouncer, createTerminalSessionId } from '@/services/terminal-helpers'
+import { createResizeDebouncer, createTerminalSessionId, COMMAND_RESTART_INJECT_MS, COMMAND_RESTART_WAIT_MS, partitionTerminalSessions, readThemeCssVar } from '@/services/terminal-helpers'
 import { useNotificationStore } from '@/stores/notification'
 import { useTerminalStore } from '@/stores/terminal'
 
@@ -112,12 +112,7 @@ function getXtermApis(): XtermApis {
 }
 
 function cssVar(name: string, fallback = ''): string {
-  try {
-    const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim()
-    return value || fallback
-  } catch {
-    return fallback
-  }
+  return readThemeCssVar(name, fallback)
 }
 
 function readXtermTheme(): XtermTheme {
@@ -156,6 +151,9 @@ function buildRuntime() {
   const store = useTerminalStore()
   const notify = useNotificationStore()
   const live = new Map<string, LiveTab>()
+  /** tabId → 命令名：只记录本次 Sidecar 会话里注入过、且 PTY 还没退出的快捷命令。 */
+  const liveCommandRuns = new Map<string, string>()
+  const restartingTabs = new Set<string>()
   let hostEl: HTMLElement | null = null
   let pageActive = false
   let started = false
@@ -173,6 +171,27 @@ function buildRuntime() {
         ? store.activeTabId
         : ([...live.keys()][0] ?? null),
     )
+  }
+
+  function syncRunningCommands() {
+    const running: Record<string, string> = {}
+    for (const [tabId, commandName] of liveCommandRuns) {
+      const cmd = store.commands.find(item => item.name === commandName)
+      if (cmd) running[cmd.id] = tabId
+    }
+    store.setRunningByCommandId(running)
+  }
+
+  function markCommandRunning(tabId: string, commandName: string) {
+    const name = commandName.trim()
+    if (!name) return
+    liveCommandRuns.set(tabId, name)
+    syncRunningCommands()
+  }
+
+  function clearCommandRunning(tabId: string) {
+    if (!liveCommandRuns.delete(tabId)) return
+    syncRunningCommands()
   }
 
   function sendWs(type: string, data: Record<string, unknown>) {
@@ -362,6 +381,8 @@ function buildRuntime() {
 
     sendWs('terminal-close', { terminalId: tabId })
     void deleteTerminalSession(tabId).catch(() => { /* ignore */ })
+    clearCommandRunning(tabId)
+    restartingTabs.delete(tabId)
     disposeLiveTab(tab)
     live.delete(tabId)
 
@@ -395,9 +416,15 @@ function buildRuntime() {
     await ensureXtermLoaded()
     booting = (async () => {
       try {
+        if (store.commands.length === 0) await store.loadCommands()
         const sessions = await listTerminalSessions()
-        if (sessions.length > 0) {
-          for (const s of sessions) {
+        const commandNames = store.commands.map(item => item.name)
+        const { restore, staleCommandTabs } = partitionTerminalSessions(sessions, commandNames)
+        for (const stale of staleCommandTabs) {
+          void deleteTerminalSession(stale.id).catch(() => { /* ignore */ })
+        }
+        if (restore.length > 0) {
+          for (const s of restore) {
             createLiveTab({
               tabId: s.id,
               name: s.name,
@@ -464,6 +491,7 @@ function buildRuntime() {
     if (!id) return
     const tab = live.get(id)
     if (!tab) return
+    clearCommandRunning(id)
     tab.term.clear()
     tab.term.write('\x1b[33mReconnecting and spawning new shell...\x1b[0m\r\n')
     sendWs('terminal-init', {
@@ -502,19 +530,65 @@ function buildRuntime() {
     const tab = createLiveTab({
       name,
       announceWebgl: false,
+      persist: false,
     })
     if (!tab) {
       notify.push('无法创建新终端', 'warning')
       return false
     }
     const targetId = tab.id
+    if (name) markCommandRunning(targetId, name)
     // createLiveTab 约 100ms 后发 terminal-init；再留一点时间给登录提示符
     globalThis.setTimeout(() => {
       if (!live.has(targetId)) return
       injectCommand(command, targetId)
       const active = live.get(targetId)
       try { active?.term.focus() } catch { /* ignore */ }
-    }, 450)
+    }, COMMAND_RESTART_INJECT_MS)
+    return true
+  }
+
+  /**
+   * 停掉该标签里的进程树（含后端隧道），再在同一标签里重新执行命令。
+   */
+  function restartCommandInTab(tabId: string, command: string, commandName?: string, onSettled?: () => void) {
+    const tab = live.get(tabId)
+    if (!tab || !realtimeWs()?.connected) {
+      notify.push('终端未连接或未就绪', 'warning')
+      onSettled?.()
+      return false
+    }
+    switchTab(tabId)
+    restartingTabs.add(tabId)
+    if (commandName) markCommandRunning(tabId, commandName)
+    tab.term.write('\r\n\x1b[33m正在停止当前进程并重启…\x1b[0m\r\n')
+    sendWs('terminal-close', { terminalId: tabId })
+    store.setConnectionStatus('disconnected')
+
+    globalThis.setTimeout(() => {
+      const current = live.get(tabId)
+      if (!current || !realtimeWs()?.connected) {
+        restartingTabs.delete(tabId)
+        onSettled?.()
+        return
+      }
+      current.term.write('\x1b[33m正在重新启动…\x1b[0m\r\n')
+      sendWs('terminal-init', {
+        terminalId: tabId,
+        cols: current.term.cols,
+        rows: current.term.rows,
+        cwd: '',
+      })
+      store.setConnectionStatus('connected')
+      globalThis.setTimeout(() => {
+        if (live.has(tabId)) {
+          injectCommand(command, tabId)
+          if (commandName) markCommandRunning(tabId, commandName)
+        }
+        restartingTabs.delete(tabId)
+        onSettled?.()
+      }, COMMAND_RESTART_INJECT_MS)
+    }, COMMAND_RESTART_WAIT_MS)
     return true
   }
 
@@ -568,6 +642,7 @@ function buildRuntime() {
     if (tab) {
       tab.term.write(`\r\n\r\n\x1b[31mSession closed (exit code: ${exitCode || 0})\x1b[0m\r\n`)
     }
+    if (!restartingTabs.has(terminalId)) clearCommandRunning(terminalId)
     if (terminalId === store.activeTabId) {
       store.setConnectionStatus('disconnected')
     }
@@ -575,6 +650,8 @@ function buildRuntime() {
 
   function handleWsOpen() {
     // 重连后对各 tab 再 init：新 shell，不恢复旧进程
+    liveCommandRuns.clear()
+    syncRunningCommands()
     for (const tab of live.values()) {
       sendWs('terminal-init', {
         terminalId: tab.id,
@@ -652,6 +729,9 @@ function buildRuntime() {
       disposeLiveTab(tab)
     }
     live.clear()
+    liveCommandRuns.clear()
+    restartingTabs.clear()
+    store.setRunningByCommandId({})
     store.setTabs([], null)
     store.sessionsBooted = false
     hostEl = null
@@ -671,6 +751,7 @@ function buildRuntime() {
     resetActiveShell,
     injectCommand,
     runCommandInNewTab,
+    restartCommandInTab,
     performSearch,
     closeSearch,
     scheduleResize: () => resizeDebouncer.schedule(),

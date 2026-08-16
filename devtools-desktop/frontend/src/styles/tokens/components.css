@@ -41,7 +41,7 @@
   --component-disclosure-panel-radius: 16px;
   /* 面板内嵌卡片收一档，嵌套关系才成立 */
   --component-disclosure-panel-item-radius: 13px;
-  --component-disclosure-panel-face: var(--color-surface);
+  --component-disclosure-panel-face: var(--color-surface-panel);
   /* 弹窗只保留两档，对齐原型 .modal.lg / .modal.sm，避免每页各写一套宽高 */
   --component-dialog-width: 720px;
   --component-dialog-width-sm: 400px;

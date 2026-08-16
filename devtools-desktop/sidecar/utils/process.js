@@ -1,65 +1,100 @@
-const { exec } = require('child_process');
+const { exec, spawnSync } = require('child_process');
+
+const SESSION_KILL_GRACE_MS = 1500;
+const SESSION_KILL_IMMEDIATE_WAIT_MS = 700;
+
+function sleepSync(ms) {
+  const sab = new SharedArrayBuffer(4);
+  Atomics.wait(new Int32Array(sab), 0, 0, ms);
+}
+
+function isSafePid(pid) {
+  const n = Number(pid);
+  return Number.isInteger(n) && n > 1 && n !== process.pid;
+}
 
 /**
- * 递归获取某个 PID 的所有子 PID（包括子进程的子进程）
- * @param {number} parentPid
- * @returns {Promise<number[]>}
+ * 同步列出 pid 的全部子孙（不含自身）。关 PTY 时必须同步，避免 sidecar 退出后子进程成孤儿。
  */
+function listDescendantPidsSync(parentPid) {
+  if (!isSafePid(parentPid) || process.platform === 'win32') return [];
+  const found = [];
+  const stack = [Number(parentPid)];
+  const seen = new Set(stack);
+  while (stack.length) {
+    const current = stack.pop();
+    const result = spawnSync('pgrep', ['-P', String(current)], { encoding: 'utf8' });
+    const kids = String(result.stdout || '').split(/\s+/).map(Number).filter(isSafePid);
+    for (const kid of kids) {
+      if (seen.has(kid)) continue;
+      seen.add(kid);
+      found.push(kid);
+      stack.push(kid);
+    }
+  }
+  return found;
+}
+
 function getChildPids(parentPid) {
   return new Promise((resolve) => {
-    if (process.platform === 'win32') {
-      // 仅作跨平台防呆，该工具聚焦 macOS
+    if (!isSafePid(parentPid) || process.platform === 'win32') {
       return resolve([]);
     }
     exec(`pgrep -P ${parentPid}`, (err, stdout) => {
       if (err || !stdout) return resolve([]);
-      const pids = stdout.split(/\s+/).map(Number).filter(Boolean);
-      
-      // 递归获取所有子进程的子进程
-      const tasks = pids.map(pid => getChildPids(pid));
-      Promise.all(tasks).then((nested) => {
+      const pids = stdout.split(/\s+/).map(Number).filter(isSafePid);
+      Promise.all(pids.map((pid) => getChildPids(pid))).then((nested) => {
         resolve([...pids, ...nested.flat()]);
       });
     });
   });
 }
 
+function signalPid(pid, signal) {
+  if (!isSafePid(pid)) return;
+  try { process.kill(pid, signal); } catch { /* 已退出 */ }
+}
+
 /**
- * 递归杀掉整个进程树（包含自身）
- * @param {number} pid - 要杀掉的根 PID
- * @param {string} signal - 传递给 kill 的信号（如 'SIGTERM', 'SIGKILL'）
- * @returns {Promise<void>}
+ * 杀掉整棵进程树（含自身）。先打进程组，再自底向上打子孙，避免 npm/java 脱离 shell 后还活着。
  */
-async function killProcessTree(pid, signal = 'SIGTERM') {
-  if (!pid) return;
-  
-  try {
-    const children = await getChildPids(pid);
-    
-    // 1. 先自底向上依次终结所有子进程（防叶子孤儿化）
-    for (const childPid of children) {
-      try {
-        process.kill(childPid, signal);
-      } catch {
-        // 忽略进程已不存在等错误
-      }
-    }
-    
-    // 2. 终结根进程自身
-    try {
-      process.kill(pid, signal);
-    } catch {
-      // 忽略错误
-    }
-  } catch {
-    // 兜底处理
-    try {
-      process.kill(pid, signal);
-    } catch {}
+function killProcessTreeSync(pid, signal = 'SIGTERM') {
+  if (!isSafePid(pid)) return;
+  const children = listDescendantPidsSync(pid);
+  try { process.kill(-Number(pid), signal); } catch { /* 不是组长则忽略 */ }
+  for (let i = children.length - 1; i >= 0; i -= 1) {
+    signalPid(children[i], signal);
   }
+  signalPid(pid, signal);
+}
+
+async function killProcessTree(pid, signal = 'SIGTERM') {
+  killProcessTreeSync(pid, signal);
+}
+
+/**
+ * 关终端会话：先 SIGTERM 让 Vite/Spring 收尾，稍后 SIGKILL 清残留。
+ * sidecar 即将退出时应传 immediate，只打 SIGKILL。
+ */
+function killSession(pid, options = {}) {
+  if (!isSafePid(pid)) return;
+  killProcessTreeSync(pid, 'SIGTERM');
+  if (options.immediate) {
+    // 给 shell 的 EXIT/TERM 陷阱一点时间去停 nohup 的隧道等脱离进程
+    sleepSync(SESSION_KILL_IMMEDIATE_WAIT_MS);
+    killProcessTreeSync(pid, 'SIGKILL');
+    return;
+  }
+  setTimeout(() => {
+    killProcessTreeSync(pid, 'SIGKILL');
+  }, SESSION_KILL_GRACE_MS).unref();
 }
 
 module.exports = {
+  SESSION_KILL_GRACE_MS,
+  listDescendantPidsSync,
+  getChildPids,
+  killProcessTreeSync,
   killProcessTree,
-  getChildPids
+  killSession,
 };

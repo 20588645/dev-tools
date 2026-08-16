@@ -42,6 +42,10 @@ export const useTerminalStore = defineStore('terminal', {
     paramDrafts: {} as Record<string, string>,
     /** cold restore / 首次进页是否已请求过 sessions */
     sessionsBooted: false,
+    /** 正在一键重启的命令 id，避免连点。 */
+    restartingCommandIds: [] as string[],
+    /** 本次 Sidecar 会话里真正执行过、且 PTY 尚未退出的命令。 */
+    runningByCommandId: {} as Record<string, string>,
   }),
 
   getters: {
@@ -51,9 +55,16 @@ export const useTerminalStore = defineStore('terminal', {
     canCloseTab(state): boolean {
       return state.tabs.length > 1
     },
+    runningCommandIds(state): string[] {
+      return Object.keys(state.runningByCommandId)
+    },
   },
 
   actions: {
+    setRunningByCommandId(value: Record<string, string>) {
+      this.runningByCommandId = value
+    },
+
     setTabs(tabs: TerminalTabMeta[], activeTabId: string | null) {
       this.tabs = tabs
       this.activeTabId = activeTabId
@@ -81,6 +92,15 @@ export const useTerminalStore = defineStore('terminal', {
         ...this.paramDrafts,
         [cmd.id]: cmd.paramDefault || '',
       }
+    },
+
+    beginRestart(id: string) {
+      if (this.restartingCommandIds.includes(id)) return
+      this.restartingCommandIds = [...this.restartingCommandIds, id]
+    },
+
+    endRestart(id: string) {
+      this.restartingCommandIds = this.restartingCommandIds.filter(item => item !== id)
     },
 
     setFullscreen(value: boolean) {

@@ -4,6 +4,8 @@
   --color-page-gradient: linear-gradient(160deg, #171923 0%, #14161f 50%, #181a25 100%);
   --color-surface: #1f2230;
   --color-surface-raised: #262b3c;
+  /* 外层面板：暗色与 surface 同级；亮色会略沉一档，好让白卡片浮起来 */
+  --color-surface-panel: var(--color-surface);
   --color-surface-subtle: rgb(150 160 200 / 7%);
   --color-surface-hover: var(--color-surface-subtle);
   --color-glass: rgb(28 31 44 / 66%);
@@ -40,6 +42,8 @@
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 30%);
   --shadow-md: 0 1px 2px rgb(0 0 0 / 30%), 0 12px 32px -12px rgb(0 0 0 / 50%);
   --shadow-lg: 0 32px 80px -16px rgb(0 0 0 / 70%), 0 4px 16px rgb(0 0 0 / 40%);
+  --shadow-action: 0 8px 20px -6px color-mix(in srgb, var(--color-action) 50%, transparent);
+  --shadow-action-sm: 0 4px 12px -2px color-mix(in srgb, var(--color-action) 45%, transparent);
 
   /*
     数据系列色：用于图表/构成条这类「区分维度」的场景，与语义状态色分离。

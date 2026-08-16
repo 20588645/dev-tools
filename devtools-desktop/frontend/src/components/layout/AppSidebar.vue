@@ -224,7 +224,7 @@ watch(
   color: var(--color-action-contrast);
   background: var(--color-action-gradient);
   border-radius: 9px;
-  box-shadow: 0 4px 12px -2px color-mix(in srgb, var(--color-action) 50%, transparent);
+  box-shadow: var(--shadow-action-sm);
 }
 
 .brand-name {
@@ -257,7 +257,7 @@ watch(
   padding: 0 10px 6px;
   font-size: 10.5px;
   font-weight: 650;
-  color: var(--color-text-subtle);
+  color: var(--color-text-muted);
 }
 
 .sidebar-item {
@@ -293,7 +293,7 @@ watch(
   font-weight: 600;
   background: var(--color-action-gradient);
   color: var(--color-action-contrast);
-  box-shadow: 0 6px 16px -6px color-mix(in srgb, var(--color-action) 55%, transparent);
+  box-shadow: var(--shadow-action);
 }
 
 .sidebar-item .nav-label {

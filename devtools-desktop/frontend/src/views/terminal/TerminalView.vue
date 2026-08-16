@@ -64,8 +64,8 @@ function closeConfirm(ok: boolean) {
 async function ensureBoot() {
   xtermHost.value?.rebind()
   const runtime = getTerminalRuntime()
-  await runtime?.bootFromSessions()
   await store.loadCommands()
+  await runtime?.bootFromSessions()
   runtime?.onPageActivate()
 }
 
@@ -75,20 +75,49 @@ onDeactivated(() => {
   getTerminalRuntime()?.onPageDeactivate()
 })
 
-function onRunCommand(cmdId: string) {
-  const cmd = store.commands.find((c) => c.id === cmdId)
-  if (!cmd) return
+function resolveCommand(cmdId: string) {
+  const cmd = store.commands.find((item) => item.id === cmdId)
+  if (!cmd) return null
   let finalCommand = cmd.command
   if (cmd.hasParam && cmd.paramName) {
     const paramValue = (store.paramDrafts[cmdId] ?? cmd.paramDefault ?? '').trim()
     if (!paramValue) {
       notify.push(`请填写参数：${cmd.paramPlaceholder || cmd.paramName}`, 'warning')
-      return
+      return null
     }
     finalCommand = finalCommand.replace(new RegExp(`\\$\\{${cmd.paramName}\\}`, 'g'), paramValue)
   }
-  const ok = getTerminalRuntime()?.runCommandInNewTab(finalCommand, cmd.name)
-  if (ok) notify.push(`已在新终端执行：${cmd.name}`, 'success')
+  return { cmd, finalCommand }
+}
+
+function onRunCommand(cmdId: string) {
+  const resolved = resolveCommand(cmdId)
+  if (!resolved) return
+  const ok = getTerminalRuntime()?.runCommandInNewTab(resolved.finalCommand, resolved.cmd.name)
+  if (ok) notify.push(`已在新终端执行：${resolved.cmd.name}`, 'success')
+}
+
+function onRestartCommand(cmdId: string) {
+  const resolved = resolveCommand(cmdId)
+  if (!resolved) return
+  if (store.restartingCommandIds.includes(cmdId)) return
+  const tabId = store.runningByCommandId[cmdId]
+  if (!tabId) {
+    notify.push(`「${resolved.cmd.name}」当前没有运行中的终端`, 'warning')
+    return
+  }
+  store.beginRestart(cmdId)
+  const ok = getTerminalRuntime()?.restartCommandInTab(
+    tabId,
+    resolved.finalCommand,
+    resolved.cmd.name,
+    () => { store.endRestart(cmdId) },
+  )
+  if (!ok) {
+    store.endRestart(cmdId)
+    return
+  }
+  notify.push(`正在重启：${resolved.cmd.name}`, 'success')
 }
 
 async function onRemoveCommand(id: string) {
@@ -166,9 +195,12 @@ function onSearch(direction: 'next' | 'prev', incremental = false) {
           <CommandGrid
             :commands="filteredCommands"
             :param-drafts="store.paramDrafts"
+            :running-ids="store.runningCommandIds"
+            :restarting-ids="store.restartingCommandIds"
             :loading="store.commandsLoading"
             :empty-text="cmdQuery.trim() ? '没有匹配的命令' : '暂无命令，点击「添加命令」开始'"
             @run="onRunCommand"
+            @restart="onRestartCommand"
             @remove="onRemoveCommand"
             @update:param="store.setParamDraft($event.id, $event.value)"
           />

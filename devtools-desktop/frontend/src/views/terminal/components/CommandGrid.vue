@@ -7,15 +7,20 @@ import type { CommandRecord } from '@/services/modules/commands-service'
 withDefaults(defineProps<{
   commands: CommandRecord[]
   paramDrafts: Record<string, string>
+  runningIds?: string[]
+  restartingIds?: string[]
   loading?: boolean
   emptyText?: string
 }>(), {
+  runningIds: () => [],
+  restartingIds: () => [],
   loading: false,
   emptyText: '暂无命令，点击「添加命令」开始',
 })
 
 const emit = defineEmits<{
   run: [cmdId: string]
+  restart: [cmdId: string]
   remove: [cmdId: string]
   'update:param': [payload: { id: string; value: string }]
 }>()
@@ -57,6 +62,15 @@ const emit = defineEmits<{
           @update:model-value="emit('update:param', { id: cmd.id, value: $event })"
         />
         <span v-else class="term-cmd-card__spring" />
+        <BaseButton
+          v-if="runningIds.includes(cmd.id) || restartingIds.includes(cmd.id)"
+          variant="secondary"
+          size="sm"
+          :disabled="restartingIds.includes(cmd.id)"
+          @click="emit('restart', cmd.id)"
+        >
+          {{ restartingIds.includes(cmd.id) ? '重启中' : '重启' }}
+        </BaseButton>
         <BaseButton variant="primary" size="sm" @click="emit('run', cmd.id)">
           执行
         </BaseButton>

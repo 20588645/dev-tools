@@ -23,6 +23,7 @@ const net = require('net');
 const fs = require('fs');
 const sidecarPackage = require('./package.json');
 const { exec } = require('child_process');
+const { killSession } = require('./utils/process');
 
 // 测试沙箱模式：独立端口 + 独立数据目录 + 不清理正式后端，避免开发测试影响正在运行的 app
 const IS_TEST = process.env.DEVTOOLS_TEST === '1' || process.argv.includes('--test');
@@ -38,6 +39,22 @@ try {
 
 const app = express();
 const server = http.createServer(app);
+
+/** 所有连接上的 PTY。关标签或退出应用时要连 Vite/Java 子进程一起停。 */
+const livePtys = new Map();
+
+function destroyPty(ptyProcess, options = {}) {
+  if (!ptyProcess) return;
+  killSession(ptyProcess.pid, options);
+  try { ptyProcess.kill(); } catch { /* 进程可能已退出 */ }
+}
+
+function destroyAllPtys(options = {}) {
+  for (const ptyProcess of livePtys.values()) {
+    destroyPty(ptyProcess, options);
+  }
+  livePtys.clear();
+}
 
 // WebSocket 服务
 const wss = new WebSocketServer({ server, path: '/ws' });
@@ -56,10 +73,8 @@ function broadcast(type, data) {
 app.set('broadcast', broadcast);
 app.set('pty', pty);
 
-// 中间件
-app.use(express.json({ limit: '20mb' }));
-
-// CORS（允许 Tauri WebView 访问）
+// CORS 必须在 json 解析之前：body-parser 抛错时响应才能带跨域头，
+// 否则 WebView 把 400 收成 TypeError，前端会误报「无法连接 Sidecar」。
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -67,6 +82,8 @@ app.use((req, res, next) => {
   if (req.method === 'OPTIONS') return res.sendStatus(200);
   next();
 });
+
+app.use(express.json({ limit: '20mb' }));
 
 // API 路由
 app.use('/api/projects', require('./routes/projects'));
@@ -144,8 +161,9 @@ wss.on('connection', (ws) => {
 
         let ptyProcess = ptyProcesses.get(terminalId);
         if (ptyProcess) {
-          try { ptyProcess.kill(); } catch {}
+          destroyPty(ptyProcess);
           ptyProcesses.delete(terminalId);
+          livePtys.delete(terminalId);
         }
 
         const shell = process.platform === 'win32'
@@ -181,6 +199,9 @@ wss.on('connection', (ws) => {
             if (ptyProcesses.get(terminalId) === currentPty) {
               ptyProcesses.delete(terminalId);
             }
+            if (livePtys.get(terminalId) === currentPty) {
+              livePtys.delete(terminalId);
+            }
           });
         } else {
           // 降级模式：使用 standard child_process spawn
@@ -205,7 +226,7 @@ wss.on('connection', (ws) => {
               }
             },
             resize: () => {}, // 降级模式不支持 resize
-            kill: () => child.kill()
+            kill: () => killSession(child.pid, { immediate: true })
           };
           ptyProcess = currentPty;
 
@@ -226,10 +247,14 @@ wss.on('connection', (ws) => {
             if (ptyProcesses.get(terminalId) === currentPty) {
               ptyProcesses.delete(terminalId);
             }
+            if (livePtys.get(terminalId) === currentPty) {
+              livePtys.delete(terminalId);
+            }
           });
         }
 
         ptyProcesses.set(terminalId, ptyProcess);
+        livePtys.set(terminalId, ptyProcess);
         console.log(`[PTY] Created shell with pid ${ptyProcess.pid} for terminal ${terminalId} at ${cwd}`);
       } else if (msg.type === 'terminal-input') {
         if (!terminalId) return;
@@ -261,9 +286,10 @@ wss.on('connection', (ws) => {
         if (!terminalId) return;
         const ptyProcess = ptyProcesses.get(terminalId);
         if (ptyProcess) {
-          try { ptyProcess.kill(); } catch {}
+          destroyPty(ptyProcess);
           ptyProcesses.delete(terminalId);
-          console.log(`[PTY] Closed terminal ${terminalId}`);
+          livePtys.delete(terminalId);
+          console.log(`[PTY] Closed terminal ${terminalId} and its process tree`);
         }
       } else if (msg.type === 'frontend-error') {
         console.error('\n[BROWSER FATAL]', msg.data.message, '\nStack:', msg.data.stack);
@@ -278,8 +304,9 @@ wss.on('connection', (ws) => {
   ws.on('close', () => {
     console.log('[WS] 客户端已断开');
     for (const [tid, ptyProc] of ptyProcesses.entries()) {
-      console.log(`[PTY] Killing shell process ${ptyProc.pid} for terminal ${tid}`);
-      try { ptyProc.kill(); } catch {}
+      console.log(`[PTY] Killing process tree ${ptyProc.pid} for terminal ${tid}`);
+      destroyPty(ptyProc);
+      livePtys.delete(tid);
     }
     ptyProcesses.clear();
   });
@@ -415,15 +442,17 @@ process.on('unhandledRejection', (reason) => {
   console.error('[WARN] 未处理的 Promise 拒绝:', reason);
 });
 
-// 优雅退出
-process.on('SIGTERM', () => {
-  console.log('[Sidecar] 收到 SIGTERM，正在关闭...');
+function shutdownSidecar(reason) {
+  console.log(`[Sidecar] ${reason}，正在停止终端进程树...`);
+  destroyAllPtys({ immediate: true });
   server.close(() => process.exit(0));
-});
+  setTimeout(() => process.exit(0), 800).unref();
+}
 
-process.on('SIGINT', () => {
-  console.log('[Sidecar] 收到 SIGINT，正在关闭...');
-  server.close(() => process.exit(0));
+process.on('SIGTERM', () => shutdownSidecar('收到 SIGTERM'));
+process.on('SIGINT', () => shutdownSidecar('收到 SIGINT'));
+process.on('exit', () => {
+  destroyAllPtys({ immediate: true });
 });
 
 // ========== 父进程（Tauri）存活守护定时器 ==========
@@ -432,7 +461,8 @@ if (!IS_TEST) {
   setInterval(() => {
     if (process.ppid === 1) {
       console.error('[Guard] 检测到父进程 (Tauri) 已经非正常关闭 (ppid 变为 1)。正在执行应急清理并自动退出...');
-      process.exit(1); // 触发同步 exit 监听清理子项目进程组
+      destroyAllPtys({ immediate: true });
+      process.exit(1);
     }
   }, 1200);
 }

@@ -3,6 +3,56 @@ export function createTerminalSessionId(now = Date.now(), random = Math.random):
   return `term-${now.toString(36)}${random().toString(36).slice(2, 6)}`
 }
 
+/** 按命令名找标签（调试/兼容用）。运行态不要靠这个：软件重启后同名标签可能只是空壳。 */
+export function tabIdForCommandName(
+  tabs: ReadonlyArray<{ id: string; name: string }>,
+  commandName: string,
+): string | undefined {
+  const name = commandName.trim()
+  if (!name) return undefined
+  for (let i = tabs.length - 1; i >= 0; i -= 1) {
+    if (tabs[i]?.name === name) return tabs[i]?.id
+  }
+  return undefined
+}
+
+/** 命令跑起来时建的标签不应在软件重启后当成「仍在运行」。 */
+export function partitionTerminalSessions<T extends { name: string }>(
+  sessions: readonly T[],
+  commandNames: readonly string[],
+): { restore: T[]; staleCommandTabs: T[] } {
+  const names = new Set(commandNames.map(item => item.trim()).filter(Boolean))
+  const restore: T[] = []
+  const staleCommandTabs: T[] = []
+  for (const session of sessions) {
+    if (names.has(session.name)) staleCommandTabs.push(session)
+    else restore.push(session)
+  }
+  return { restore, staleCommandTabs }
+}
+
+/**
+ * 读主题 CSS 变量：亮色表挂在 body[data-theme]，只读 html 会落到暗色 :root 默认值。
+ */
+export function readThemeCssVar(name: string, fallback = ''): string {
+  try {
+    const body = document.body
+      ? getComputedStyle(document.body).getPropertyValue(name).trim()
+      : ''
+    if (body) return body
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback
+  } catch {
+    return fallback
+  }
+}
+
+/**
+ * 关标签后 sidecar 先 SIGTERM 再约 1.5s SIGKILL。
+ * 重启要等旧进程（含后端隧道）让出端口，再开新壳。
+ */
+export const COMMAND_RESTART_WAIT_MS = 1_800
+export const COMMAND_RESTART_INJECT_MS = 450
+
 export interface ResizeDebouncer {
   schedule: () => void
   cancel: () => void

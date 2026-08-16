@@ -83,7 +83,7 @@ const variantProps = computed(() => ({
 
 .base-button--primary.n-button {
   background-image: var(--color-action-gradient);
-  box-shadow: 0 8px 20px -6px color-mix(in srgb, var(--color-action) 55%, transparent);
+  box-shadow: var(--shadow-action);
 }
 
 .base-button--secondary.n-button,
