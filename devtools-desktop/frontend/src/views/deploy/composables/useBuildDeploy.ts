@@ -74,6 +74,8 @@ export function useBuildDeploy() {
   const project = ref<Project | null>(null)
   /** 部署模式才有意义；构建模式忽略。 */
   const servers = shallowRef<DeployServer[]>([])
+  /** 构建成功后走网关 FileZilla 交接，而不是直连上传。 */
+  const handoff = ref(false)
 
   const selectedModules = ref<string[]>([])
   const favorites = ref<string[]>([])
@@ -106,6 +108,7 @@ export function useBuildDeploy() {
 
   const title = computed(() => {
     if (!project.value) return ''
+    if (handoff.value) return '构建并交接到 FileZilla'
     return mode.value === 'build' ? '构建项目' : '部署项目'
   })
 
@@ -198,6 +201,7 @@ export function useBuildDeploy() {
 
   function openBuild(target: Project) {
     mode.value = 'build'
+    handoff.value = false
     project.value = target
     servers.value = []
     serverIds.value = []
@@ -210,8 +214,14 @@ export function useBuildDeploy() {
     void loadGit(target.name)
   }
 
+  function openHandoff(target: Project) {
+    openBuild(target)
+    handoff.value = true
+  }
+
   function openDeploy(target: Project, serverList: DeployServer[]) {
     mode.value = 'deploy'
+    handoff.value = false
     project.value = target
     servers.value = serverList
     resetTransient()
@@ -530,7 +540,9 @@ export function useBuildDeploy() {
     connBadges,
     error,
     pendingMultiConfirm,
+    handoff,
     openBuild,
+    openHandoff,
     openDeploy,
     close,
     toggleModule,

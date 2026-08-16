@@ -11,7 +11,8 @@ import BaseSegmented, { type SegmentOption } from '@/components/navigation/BaseS
 import GroupRenameDialog from '@/components/overlay/GroupRenameDialog.vue'
 import { onProjectsChanged, requestAddProject } from '@/views/deploy/add-project-events'
 import { getServers, removeProject as removeProjectRequest, type DeployServer } from '@/services/modules/deploy-service'
-import { getNodeRuntime, type Project } from '@/services/modules/project-service'
+import { deviceIpForProject } from '@/services/modules/group-publish-service'
+import { getNodeRuntime, projectDefaultServerIds, type Project } from '@/services/modules/project-service'
 import { useDeployTaskStore } from '@/stores/deploy-task'
 import { useLogTaskStore } from '@/stores/log-task'
 import { useNotificationStore } from '@/stores/notification'
@@ -20,18 +21,29 @@ import BuildDeployDialog from './components/BuildDeployDialog.vue'
 import DeployChrome from './components/DeployChrome.vue'
 import DeployGroupSection from './components/DeployGroupSection.vue'
 import DeployProjectCard from './components/DeployProjectCard.vue'
+import GatewayHandoffDialog from './components/GatewayHandoffDialog.vue'
+import GroupPublishDialog from './components/GroupPublishDialog.vue'
 import ProjectConfigDialog from './components/ProjectConfigDialog.vue'
 import RemoteBrowserDialog from './components/RemoteBrowserDialog.vue'
 import { useBuildDeploy } from './composables/useBuildDeploy'
 import { useDeployDashboard, type DeployFilter } from './composables/useDeployDashboard'
 import { useDeployRealtime } from './composables/useDeployRealtime'
+import { useGroupPublish } from './composables/useGroupPublish'
 import { useProjectConfig } from './composables/useProjectConfig'
 import { useRemoteBrowser } from './composables/useRemoteBrowser'
 import './deploy-dashboard.css'
 
 defineOptions({ name: 'DeployDashboardView' })
 
-const page = useDeployDashboard()
+const publish = useGroupPublish()
+const page = useDeployDashboard({
+  isProjectConfigured: (project) => {
+    if (publish.isGatewayGroup(project.groupName)) {
+      return Boolean(deviceIpForProject(publish.profileOf(project.groupName), project.name))
+    }
+    return projectDefaultServerIds(project).length > 0
+  },
+})
 const task = useDeployTaskStore()
 const log = useLogTaskStore()
 const notify = useNotificationStore()
@@ -59,8 +71,14 @@ const filterOptions = computed<SegmentOption[]>(() => {
   ]
 })
 
-/** 任务完成后刷新卡片，让「最近部署」摘要跟上。 */
-useDeployRealtime({ onFinished: () => void page.load({ silent: true }) })
+/** 任务完成后刷新卡片，让「最近部署」摘要跟上；网关交接在构建成功后打开。 */
+useDeployRealtime({
+  onFinished: (detail) => {
+    void page.load({ silent: true })
+    const project = page.projects.value.find(item => item.name === detail.projectName)
+    void publish.handleBuildFinished(detail, project)
+  },
+})
 
 function askRemove(project: Project) {
   pendingRemove.value = project
@@ -108,6 +126,11 @@ async function onRenameGroup(name: string) {
   if (!from) return
   try {
     await page.renameGroup(from, name)
+    try {
+      await publish.rename(from, name)
+    } catch (cause) {
+      notify.push(`分组已改名，但发布配置迁移失败：${cause instanceof Error ? cause.message : '未知错误'}`, 'warning')
+    }
     renamingGroup.value = null
     notify.push(`分组已重命名：${from} → ${name}`, 'success')
   } catch (cause) {
@@ -116,15 +139,55 @@ async function onRenameGroup(name: string) {
 }
 
 function openBuild(project: Project) {
+  publish.clearArmed()
   buildDeploy.openBuild(project)
 }
 
 function openDeploy(project: Project) {
+  if (publish.isGatewayGroup(project.groupName)) {
+    const readyError = publish.readinessError(project.groupName, project.name)
+    if (readyError) {
+      notify.push(readyError, 'warning')
+      void publish.openConfig(
+        project.groupName,
+        page.projects.value.filter(item => item.groupName === project.groupName),
+      )
+      return
+    }
+    publish.armAfterBuild(project.groupName, project.name)
+    buildDeploy.openHandoff(project)
+    return
+  }
+  publish.clearArmed()
   buildDeploy.openDeploy(project, servers.value)
+}
+
+function onCloseBuildDeploy() {
+  if (!buildDeploy.submitting.value && buildDeploy.handoff.value) {
+    publish.clearArmed()
+  }
+  buildDeploy.close()
 }
 
 async function onSubmitBuildDeploy() {
   await buildDeploy.submit()
+}
+
+async function onOpenPublish(groupName: string) {
+  await publish.openConfig(
+    groupName,
+    page.projects.value.filter(item => item.groupName === groupName),
+  )
+}
+
+async function onSavePublish() {
+  const ok = await publish.saveConfig()
+  if (!ok) return
+  notify.push('分组发布方式已保存', 'success')
+}
+
+function onDeviceIp(projectName: string, deviceIp: string) {
+  publish.setDeviceIp(projectName, deviceIp)
 }
 
 async function onOpenRemoteBrowser() {
@@ -149,6 +212,7 @@ let stopProjectsChanged: (() => void) | null = null
 
 onMounted(() => {
   void page.load()
+  void publish.load()
   void loadConfigOptions()
   stopProjectsChanged = onProjectsChanged(() => { void page.load({ silent: true }) })
 })
@@ -163,6 +227,7 @@ onBeforeUnmount(() => {
  */
 onActivated(() => {
   void page.load({ silent: true })
+  void publish.load()
   // 服务器可能在服务器管理子页被增删，回到本页需重新取
   void loadConfigOptions()
 })
@@ -215,9 +280,11 @@ onActivated(() => {
           v-for="group in page.groupViews.value"
           :key="group.key"
           :group="group"
+          :gateway="publish.isGatewayGroup(group.key)"
           @toggle="page.toggleGroup(group.key)"
           @move="page.moveGroup(group.key, $event)"
           @rename="renamingGroup = group.key"
+          @publish="onOpenPublish(group.key)"
         >
           <DeployProjectCard
             v-for="project in group.projects"
@@ -225,6 +292,8 @@ onActivated(() => {
             :project="project"
             :last="page.lastDeployOf(project.name)"
             :busy="task.isBusy(project.name)"
+            :handoff="publish.isGatewayGroup(group.key)"
+            :handoff-ready="Boolean(publish.deviceIpOf(group.key, project.name))"
             @build="openBuild(project)"
             @deploy="openDeploy(project)"
             @configure="config.openFor(project)"
@@ -291,6 +360,7 @@ onActivated(() => {
     <BuildDeployDialog
       :project="buildDeploy.project.value"
       :mode="buildDeploy.mode.value"
+      :handoff="buildDeploy.handoff.value"
       :title="buildDeploy.title.value"
       :subtitle="buildDeploy.subtitle.value"
       :is-multi="buildDeploy.isMulti.value"
@@ -313,7 +383,7 @@ onActivated(() => {
       :testing="buildDeploy.testing.value"
       :submitting="buildDeploy.submitting.value"
       :error="buildDeploy.error.value"
-      @close="buildDeploy.close()"
+      @close="onCloseBuildDeploy"
       @submit="onSubmitBuildDeploy"
       @update:module-filter="buildDeploy.moduleFilter.value = $event"
       @update:module-query="buildDeploy.moduleQuery.value = $event"
@@ -338,6 +408,25 @@ onActivated(() => {
       @close="remoteBrowser.close()"
       @navigate="remoteBrowser.navigate($event)"
       @confirm="onConfirmRemotePath"
+    />
+    <GroupPublishDialog
+      :draft="publish.draft.value"
+      :saving="publish.saving.value"
+      :error="publish.configError.value"
+      @close="publish.closeConfig()"
+      @save="onSavePublish"
+      @update:publish-mode="publish.patchDraft({ publishMode: $event })"
+      @update:gateway-url="publish.patchDraft({ gatewayUrl: $event })"
+      @update:gateway-username="publish.patchDraft({ gatewayUsername: $event })"
+      @update:gateway-password="publish.patchDraft({ gatewayPassword: $event })"
+      @update:device-ip="onDeviceIp"
+    />
+    <GatewayHandoffDialog
+      :handoff="publish.handoff.value"
+      :copied="publish.copied.value"
+      @close="publish.closeHandoff()"
+      @copy="publish.copyHandoffPath($event)"
+      @retry="publish.connect()"
     />
   </div>
   </DeployChrome>

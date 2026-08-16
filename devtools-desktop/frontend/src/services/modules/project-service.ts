@@ -45,6 +45,8 @@ export interface Project {
    */
   defaultServerIds: string[]
   defaultServerId: string
+  /** 直连部署用的默认远程目录，交接时展示给 FileZilla 粘贴。 */
+  remotePath: string
 }
 
 /**
@@ -124,6 +126,7 @@ export function normalizeProject(value: unknown): Project {
     groupName: text(row.groupName).trim(),
     defaultServerIds: stringList(row.defaultServerIds),
     defaultServerId: text(row.defaultServerId),
+    remotePath: text(row.remotePath),
   }
 }
 

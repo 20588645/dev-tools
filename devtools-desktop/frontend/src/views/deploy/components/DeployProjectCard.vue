@@ -17,6 +17,10 @@ const props = defineProps<{
   last: LastDeployInfo | null
   /** 构建/部署进行中：禁用操作并给出查看进度入口。 */
   busy: boolean
+  /** 分组启用了网关 FileZilla 交接，主按钮改为构建后交接。 */
+  handoff?: boolean
+  /** 网关模式下该项目是否已填写设备 IP。 */
+  handoffReady?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -67,13 +71,15 @@ const badge = computed<{ tone: 'success' | 'warning' | 'danger' | 'neutral'; tex
  * 始终单行，卡片高度与状态无关，未配置服务器的卡片不会矮一截（修 D4）。
  */
 const footnote = computed(() => {
-  const servers = serverCount.value > 0 ? `已配 ${serverCount.value} 台服务器` : '未配置服务器'
-  if (props.busy) return `${servers} · 任务进行中`
+  const targetHint = props.handoff
+    ? (props.handoffReady ? '已配网关设备' : '未配置网关设备')
+    : (serverCount.value > 0 ? `已配 ${serverCount.value} 台服务器` : '未配置服务器')
+  if (props.busy) return `${targetHint} · 任务进行中`
   const last = props.last
-  if (!last) return `${servers} · 暂无构建/部署记录`
+  if (!last) return `${targetHint} · 暂无构建/部署记录`
   const target = last.type === 'deploy' && last.serverName ? ` → ${last.serverName}` : ''
   const state = last.status === 'success' ? '✓' : '✕'
-  return `${servers} · ${formatDeployAgo(last.timestamp)} ${lastKind.value}${target} ${state} · ${last.duration}`
+  return `${targetHint} · ${formatDeployAgo(last.timestamp)} ${lastKind.value}${target} ${state} · ${last.duration}`
 })
 </script>
 
@@ -113,7 +119,9 @@ const footnote = computed(() => {
       </BaseButton>
       <template v-else>
         <BaseButton variant="secondary" size="sm" @click="emit('build')">构建</BaseButton>
-        <BaseButton variant="primary" size="sm" @click="emit('deploy')">部署</BaseButton>
+        <BaseButton variant="primary" size="sm" @click="emit('deploy')">
+          {{ handoff ? '交接发布' : '部署' }}
+        </BaseButton>
         <BaseIconButton label="默认配置" @click="emit('configure')">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="3" />

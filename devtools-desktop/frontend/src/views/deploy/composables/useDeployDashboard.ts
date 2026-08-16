@@ -23,13 +23,15 @@ export interface DeployGroupView {
   isUngrouped: boolean
   projects: Project[]
   collapsed: boolean
-  /** 该组内已配置服务器的项目数，供分组标题给出摘要。 */
+  /** 该组内已配置发布目标的项目数（直连看服务器，网关看设备 IP）。 */
   configuredCount: number
   index: number
   total: number
 }
 
-export function useDeployDashboard() {
+export function useDeployDashboard(options: {
+  isProjectConfigured?: (project: Project) => boolean
+} = {}) {
   const groups = useProjectGroups({ collapsedKey: 'deployCollapsedGroups' })
   const projects = shallowRef<Project[]>([])
   /** projectName → 最近构建/部署摘要。异步补齐，不阻塞卡片首次渲染。 */
@@ -39,6 +41,11 @@ export function useDeployDashboard() {
   const query = ref('')
   const filter = ref<DeployFilter>('all')
 
+  function isProjectConfigured(project: Project) {
+    if (options.isProjectConfigured) return options.isProjectConfigured(project)
+    return projectDefaultServerIds(project).length > 0
+  }
+
   const filtered = computed(() => {
     const keyword = query.value.trim().toLowerCase()
     return projects.value.filter((project) => {
@@ -46,7 +53,7 @@ export function useDeployDashboard() {
         const haystack = `${project.displayName} ${project.name} ${project.path}`.toLowerCase()
         if (!haystack.includes(keyword)) return false
       }
-      const configured = projectDefaultServerIds(project).length > 0
+      const configured = isProjectConfigured(project)
       switch (filter.value) {
         case 'multi': return project.type === 'multi-module'
         case 'single': return project.type === 'single'
@@ -78,7 +85,7 @@ export function useDeployDashboard() {
         isUngrouped,
         projects: items,
         collapsed: groups.isCollapsed(key),
-        configuredCount: items.filter(project => projectDefaultServerIds(project).length > 0).length,
+        configuredCount: items.filter(isProjectConfigured).length,
         index,
         total: keys.length,
       }
@@ -87,7 +94,7 @@ export function useDeployDashboard() {
 
   const stats = computed(() => {
     const total = projects.value.length
-    const configured = projects.value.filter(p => projectDefaultServerIds(p).length > 0).length
+    const configured = projects.value.filter(isProjectConfigured).length
     return {
       total,
       configured,

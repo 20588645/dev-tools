@@ -256,6 +256,16 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_twofa_accounts_groupName ON twofa_accounts(groupName);
   CREATE INDEX IF NOT EXISTS idx_twofa_accounts_lastUsedAt ON twofa_accounts(lastUsedAt);
   CREATE INDEX IF NOT EXISTS idx_twofa_accounts_sortOrder ON twofa_accounts(sortOrder);
+
+  CREATE TABLE IF NOT EXISTS group_publish_profiles (
+    groupName TEXT PRIMARY KEY,
+    publishMode TEXT DEFAULT 'direct-sftp',
+    gatewayUrl TEXT DEFAULT '',
+    gatewayUsername TEXT DEFAULT '',
+    gatewayPassword TEXT DEFAULT '',
+    devicesJson TEXT DEFAULT '[]',
+    updatedAt TEXT DEFAULT (datetime('now'))
+  );
 `);
 
 // 确保 sortOrder 列存在（兼容旧数据库）

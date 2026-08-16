@@ -131,7 +131,7 @@ test('构建弹窗：勾选模块后发起构建（拦截真实请求）', async
   await expect(dialog.getByText('最近提交')).toBeVisible()
   await expect(dialog.getByText('abc1234')).toBeVisible()
 
-  await dialog.getByRole('checkbox', { name: 'admin' }).click()
+  await dialog.locator('.build-deploy__module-name', { hasText: 'admin' }).click()
   await dialog.getByRole('button', { name: '开始构建' }).click()
 
   await expect.poll(() => mock.builds.length).toBe(1)

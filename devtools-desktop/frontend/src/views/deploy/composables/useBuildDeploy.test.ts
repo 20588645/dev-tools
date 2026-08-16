@@ -135,6 +135,21 @@ describe('useBuildDeploy 打开与模块偏好', () => {
     expect(bd.isMulti.value).toBe(false)
   })
 
+  it('交接构建沿用只构建，但标题改为交接到 FileZilla', async () => {
+    const bd = useBuildDeploy()
+    bd.openHandoff(multi())
+    await Promise.resolve()
+
+    expect(bd.mode.value).toBe('build')
+    expect(bd.handoff.value).toBe(true)
+    expect(bd.title.value).toBe('构建并交接到 FileZilla')
+    expect(bd.isDeploy.value).toBe(false)
+
+    bd.openBuild(single())
+    expect(bd.handoff.value).toBe(false)
+    expect(bd.title.value).toBe('构建项目')
+  })
+
   it('部署弹窗勾上项目默认服务器，并据此填充发布目录', () => {
     const bd = useBuildDeploy()
     bd.openDeploy(multi(), [

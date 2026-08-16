@@ -6,12 +6,17 @@ import type { DeployGroupView } from '../composables/useDeployDashboard'
 
 defineOptions({ name: 'DeployGroupSection' })
 
-const props = defineProps<{ group: DeployGroupView }>()
+const props = defineProps<{
+  group: DeployGroupView
+  /** 该组走网关 FileZilla 交接，而不是直连 SFTP。 */
+  gateway?: boolean
+}>()
 
 const emit = defineEmits<{
   toggle: []
   move: [dir: -1 | 1]
   rename: []
+  publish: []
 }>()
 
 function onExpandedChange(expanded: boolean) {
@@ -42,7 +47,8 @@ function onExpandedChange(expanded: boolean) {
       <span class="deploy-group__summary">
         <span class="deploy-group__name" :class="{ 'is-ungrouped': group.isUngrouped }">{{ group.label }}</span>
         <span class="deploy-group__count">{{ group.projects.length }}</span>
-        <span v-if="group.configuredCount > 0" class="deploy-group__configured">
+        <span v-if="gateway" class="deploy-group__configured">网关 FileZilla</span>
+        <span v-else-if="group.configuredCount > 0" class="deploy-group__configured">
           已配置 {{ group.configuredCount }}
         </span>
       </span>
@@ -58,6 +64,12 @@ function onExpandedChange(expanded: boolean) {
         <BaseIconButton label="下移分组" :disabled="group.index >= group.total - 1" @click="emit('move', 1)">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 5v14" /><path d="M19 12l-7 7-7-7" />
+          </svg>
+        </BaseIconButton>
+        <BaseIconButton label="发布方式" @click="emit('publish')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6 1.65 1.65 0 0 0 10 3.09V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06.06a2 2 0 0 1 2.83 2.83l.06.06A1.65 1.65 0 0 0 19.4 9v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" />
           </svg>
         </BaseIconButton>
         <BaseIconButton label="重命名分组" @click="emit('rename')">
