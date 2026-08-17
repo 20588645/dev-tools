@@ -101,7 +101,7 @@ async function openTwofa(page: Page, viewport = { width: 1280, height: 800 }) {
   await expect(page.getByRole('heading', { name: '双因验证', exact: true })).toBeVisible()
   // redesign-v2：分组内 5 张验证码卡 + 置顶面板重复展示 2 个收藏账号
   await expect(page.locator('.twofa-code-card')).toHaveCount(7)
-  await expect(page.locator('.twofa-code-card__count.base-progress--line')).toHaveCount(7)
+  await expect(page.locator('.twofa-code-card__timer')).toHaveCount(7)
   return mock
 }
 
@@ -158,28 +158,43 @@ test('lays the code cards out as a three-column grid on wide windows', async ({ 
     return {
       gridWidth: Math.round(gridRect.width),
       cardWidths: rects.map(rect => Math.round(rect.width)),
+      cardHeights: rects.map(rect => Math.round(rect.height)),
       cardTops: rects.map(rect => Math.round(rect.top)),
     }
   })
   expect(layout.cardWidths).toHaveLength(3)
   expect(layout.cardWidths[0]).toBeLessThan(layout.gridWidth * 0.45)
+  expect(new Set(layout.cardWidths).size).toBe(1)
+  expect(layout.cardHeights).toHaveLength(3)
+  expect(new Set(layout.cardHeights).size).toBe(1)
   expect(layout.cardTops[0]).toBe(layout.cardTops[1])
   expect(layout.cardTops[1]).toBe(layout.cardTops[2])
+
+  const solo = await page.locator('.twofa-group').filter({ hasText: '个人' }).locator('.twofa-code-card').evaluate((card) => ({
+    width: Math.round(card.getBoundingClientRect().width),
+    height: Math.round(card.getBoundingClientRect().height),
+  }))
+  expect(solo.width).toBe(layout.cardWidths[0])
+  expect(solo.height).toBe(layout.cardHeights[0])
   await expectNoPageOverflow(page)
 })
 
-test('runs the countdown line across the full card width', async ({ page }) => {
+test('keeps the countdown timer beside the code', async ({ page }) => {
   await openTwofa(page, { width: 1600, height: 900 })
   const card = page.locator('.twofa-group .twofa-code-card').filter({ hasText: 'GitHub' })
-  // 倒计时细条贯通整卡内容宽度（原型 .fa-count 全宽）
-  const bar = await card.evaluate((shell) => {
-    const style = getComputedStyle(shell)
-    const inner = shell.clientWidth
-      - Number.parseFloat(style.paddingLeft) - Number.parseFloat(style.paddingRight)
-    const track = shell.querySelector('.twofa-code-card__count')!
-    return { inner: Math.round(inner), track: Math.round(track.getBoundingClientRect().width) }
+  const metrics = await card.evaluate((shell) => {
+    const code = shell.querySelector('.twofa-code-card__code')!
+    const timer = shell.querySelector('.twofa-code-card__timer')!
+    const codeRect = code.getBoundingClientRect()
+    const timerRect = timer.getBoundingClientRect()
+    return {
+      gap: Math.round(timerRect.left - codeRect.right),
+      sameRow: Math.abs((codeRect.top + codeRect.height / 2) - (timerRect.top + timerRect.height / 2)) < 12,
+    }
   })
-  expect(Math.abs(bar.track - bar.inner)).toBeLessThanOrEqual(1)
+  expect(metrics.sameRow).toBe(true)
+  expect(metrics.gap).toBeGreaterThanOrEqual(8)
+  expect(metrics.gap).toBeLessThanOrEqual(24)
 })
 
 test('filters accounts by keyword and by group', async ({ page }) => {

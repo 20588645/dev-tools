@@ -46,7 +46,7 @@ const selectableThemeOverrides = {
 .base-selectable-item.n-button {
   display: grid;
   width: 100%;
-  height: auto;
+  height: var(--base-selectable-height, auto);
   min-height: var(--base-selectable-min-height, var(--component-control-height));
   justify-content: normal;
   padding: var(--base-selectable-padding, var(--space-3));
