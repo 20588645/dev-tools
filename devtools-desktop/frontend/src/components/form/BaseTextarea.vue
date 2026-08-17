@@ -42,10 +42,10 @@ const textareaThemeOverrides = computed(() => {
       borderHover: '1px solid var(--component-control-border-hover)',
       borderFocus: '1px solid var(--component-control-border-focus)',
       boxShadowFocus: 'var(--component-control-focus-ring)',
-      borderRadius: '12px',
-      paddingSmall: '0',
-      paddingMedium: '0',
-      paddingLarge: '0',
+      borderRadius: 'var(--radius-md)',
+      paddingSmall: 'var(--space-3) var(--space-4)',
+      paddingMedium: 'var(--space-4)',
+      paddingLarge: 'var(--space-4) var(--space-5)',
     }
   }
   return {
@@ -111,12 +111,24 @@ const textareaThemeOverrides = computed(() => {
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
+.field-control--editor :deep(.n-input) {
+  --n-padding-top: var(--space-4);
+  --n-padding-bottom: var(--space-4);
+  --n-padding-left: var(--space-4);
+  --n-padding-right: var(--space-4);
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+}
+.field-control--editor :deep(.n-input__placeholder),
 .field-control--editor :deep(.n-input__textarea-el) {
+  box-sizing: border-box;
   min-height: 0;
-  padding: 10px 13px;
-  color: var(--color-text);
+  padding: var(--space-4);
   font-size: 13px;
   line-height: 1.9;
+}
+.field-control--editor :deep(.n-input__textarea-el) {
+  color: var(--color-text);
   overflow-y: auto;
 }
 .field-control--text-relaxed :deep(.n-input__textarea-el) { line-height: 1.72; }
@@ -127,8 +139,10 @@ const textareaThemeOverrides = computed(() => {
 .field-control--fill-height :deep(.n-input__textarea) { height: 100%; min-height: 0; }
 .field-control--fill-height :deep(.n-input__textarea-el) { height: 100%; }
 @media (max-width: 980px) {
+  .field-control--editor :deep(.n-input__placeholder),
   .field-control--editor :deep(.n-input__textarea-el) {
     min-height: 42px;
+    padding: var(--space-3);
     font-size: 12px;
     line-height: 1.7;
   }

@@ -212,7 +212,7 @@ const previewTableRowKey = (row: PreviewTableRow) => row.name
             <BaseInput v-model="inputValue" label="明确搜索入口" type="search" variant="search" placeholder="搜索设置，如：备份" />
             <BaseSelect v-model="selectValue" label="默认主题" :options="[{ label: '暗色主题', value: 'dark' }, { label: '亮色主题', value: 'light' }]" />
             <BaseTextarea v-model="textareaValue" label="描述" :rows="3" />
-            <BaseInput v-model="inputValue" label="无边框标题" variant="title" size="lg" />
+            <BaseInput v-model="inputValue" label="标题输入" variant="title" size="lg" />
             <BaseInput v-model="inputValue" label="完成态输入" text-variant="completed" />
             <BaseTextarea v-model="textareaValue" label="编辑器正文" variant="editor" text-variant="relaxed" :rows="3" resize="none" />
             <div class="choice-stack">

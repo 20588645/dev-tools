@@ -47,15 +47,16 @@ const sizeHeights = {
 const inputThemeOverrides = computed(() => {
   if (props.variant === 'title') {
     return {
-      color: 'transparent',
-      colorFocus: 'transparent',
-      border: '1px solid transparent',
+      color: 'color-mix(in srgb, var(--color-surface) 72%, transparent)',
+      colorFocus: 'var(--color-surface)',
+      border: '1px solid var(--color-border-soft)',
       borderHover: '1px solid var(--component-control-border-hover)',
       borderFocus: '1px solid var(--component-control-border-focus)',
       boxShadowFocus: 'var(--component-control-focus-ring)',
-      paddingSmall: '0',
-      paddingMedium: '0',
-      paddingLarge: '0',
+      borderRadius: 'var(--component-control-radius)',
+      paddingSmall: '0 var(--space-3)',
+      paddingMedium: '0 var(--space-3)',
+      paddingLarge: '0 var(--space-4)',
       fontSizeLarge: 'var(--font-size-xl)',
       fontWeight: 'var(--font-weight-semibold)',
     }
@@ -166,26 +167,33 @@ defineExpose({
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
-.field-control--title :deep(.n-input) { background: transparent; border-radius: 0; }
-.field-control--title :deep(.n-input__border) {
-  border: 0;
-  border-bottom: 1px solid var(--color-border);
-  border-radius: 0;
+.field-control--title :deep(.n-input) {
+  --n-padding-left: var(--space-3);
+  --n-padding-right: var(--space-3);
+  background: color-mix(in srgb, var(--color-surface) 72%, transparent);
+  border-radius: var(--component-control-radius);
 }
+.field-control--title :deep(.n-input__border),
 .field-control--title :deep(.n-input__state-border) {
-  border: 0;
-  border-bottom: 1px solid color-mix(in srgb, var(--color-action) 64%, var(--color-border));
-  border-radius: 0;
+  border-radius: var(--component-control-radius);
 }
+.field-control--title :deep(.n-input__placeholder),
 .field-control--title :deep(.n-input__input-el) {
+  box-sizing: border-box;
   height: 40px;
-  padding: 0;
+  padding: 0 var(--space-3);
   font-size: 18px;
   font-weight: var(--font-weight-semibold);
   letter-spacing: -0.025em;
 }
+.field-control--title.field-control--size-lg :deep(.n-input) {
+  --n-padding-left: var(--space-4);
+  --n-padding-right: var(--space-4);
+}
+.field-control--title.field-control--size-lg :deep(.n-input__placeholder),
 .field-control--title.field-control--size-lg :deep(.n-input__input-el) {
   height: 48px;
+  padding: 0 var(--space-4);
   font-size: clamp(20px, 2.1vw, 29px);
 }
 .field-control--text-strong :deep(.n-input__input-el) { font-weight: var(--font-weight-bold); }
@@ -194,6 +202,7 @@ defineExpose({
   text-decoration: line-through;
 }
 @media (max-width: 980px) {
+  .field-control--title.field-control--size-lg :deep(.n-input__placeholder),
   .field-control--title.field-control--size-lg :deep(.n-input__input-el) {
     height: 40px;
     font-size: 19px;

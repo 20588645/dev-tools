@@ -19,6 +19,7 @@ import ReportReferencePanel, {
 import WeekDayList from './components/WeekDayList.vue'
 import WeekNavigator from './components/WeekNavigator.vue'
 import { useWeeklyNotes } from './composables/useWeeklyNotes'
+import { gitActivityAlreadyInserted, gitActivityInsertLine } from './git-activity-text'
 import './notes.css'
 
 defineOptions({ name: 'NotesView' })
@@ -73,14 +74,13 @@ function insertReferenceItems(items: GitActivityItem[], mode: ReferenceInsertMod
     if (!weekDates.value.includes(date)) return
 
     const currentContent = getNoteContent(date)
-    if (currentContent.includes(`（${item.hash}）`) || currentContent.includes(`(${item.hash})`)) return
+    if (gitActivityAlreadyInserted(currentContent, item)) return
     if (!(date in previousContents)) previousContents[date] = currentContent
 
+    const line = gitActivityInsertLine(item.subject)
+    if (!line) return
     const trimmed = currentContent.trimEnd()
-    const heading = trimmed.includes('代码活动参考：')
-      ? trimmed
-      : `${trimmed ? `${trimmed}\n\n` : ''}代码活动参考：`
-    const nextContent = `${heading}\n- [${item.repo}] ${item.subject}（${item.hash}）`
+    const nextContent = trimmed ? `${trimmed}\n${line}` : line
     updateNote(date, 'content', nextContent)
     insertedCount += 1
   })

@@ -116,6 +116,7 @@ async function expectNoPageOverflow(page: Page) {
 async function expectUsableEditor(page: Page) {
   const editor = await page.getByRole('textbox', { name: '工作内容' }).evaluate((element) => {
     const rect = element.getBoundingClientRect()
+    const styles = getComputedStyle(element)
     const panel = element.closest('.notes-editor-panel')?.getBoundingClientRect()
     const field = element.closest('.field-control')?.getBoundingClientRect()
     const label = element.closest('.field-control')?.querySelector('label')?.getBoundingClientRect()
@@ -127,15 +128,28 @@ async function expectUsableEditor(page: Page) {
       width: rect.width,
       height: rect.height,
       visibleHeight,
+      paddingLeft: Number.parseFloat(styles.paddingLeft),
+      paddingTop: Number.parseFloat(styles.paddingTop),
       labelGap: label ? rect.top - label.bottom : Number.POSITIVE_INFINITY,
       fieldBottomGap: field ? field.bottom - rect.bottom : Number.POSITIVE_INFINITY,
       footerGap: footer && footer.height > 0 ? footer.top - rect.bottom : null,
-      resize: getComputedStyle(element).resize,
+      resize: styles.resize,
+    }
+  })
+  const title = await page.getByRole('textbox', { name: '项目 / 标题' }).evaluate((element) => {
+    const styles = getComputedStyle(element)
+    return {
+      paddingLeft: Number.parseFloat(styles.paddingLeft),
+      paddingRight: Number.parseFloat(styles.paddingRight),
     }
   })
   expect(editor.width).toBeGreaterThan(300)
   expect(editor.height).toBeGreaterThanOrEqual(70)
   expect(editor.visibleHeight).toBeGreaterThanOrEqual(70)
+  expect(editor.paddingLeft).toBeGreaterThanOrEqual(12)
+  expect(editor.paddingTop).toBeGreaterThanOrEqual(12)
+  expect(title.paddingLeft).toBeGreaterThanOrEqual(12)
+  expect(title.paddingRight).toBeGreaterThanOrEqual(12)
   expect(editor.labelGap).toBeGreaterThanOrEqual(0)
   expect(editor.labelGap).toBeLessThanOrEqual(16)
   expect(editor.fieldBottomGap).toBeGreaterThanOrEqual(-1)
@@ -221,9 +235,13 @@ test('keeps five-day, seven-day, and inline reference layouts usable at 900 by 6
   await reference.getByLabel('批量写入方式').click()
   await page.getByText('写入目标日期', { exact: true }).click()
   await reference.getByRole('button', { name: '加入所选', exact: true }).click()
-  await expect(page.getByRole('textbox', { name: '工作内容' })).toHaveValue(/a1b2c3d/)
-  await reference.getByRole('button', { name: '撤销上次', exact: true }).click()
+  await expect(page.getByRole('textbox', { name: '工作内容' })).toHaveValue(/完成工时内容 Git 活动集成/)
+  await expect(page.getByRole('textbox', { name: '工作内容' })).not.toHaveValue(/代码活动参考/)
   await expect(page.getByRole('textbox', { name: '工作内容' })).not.toHaveValue(/a1b2c3d/)
+  await expect(page.getByRole('textbox', { name: '工作内容' })).not.toHaveValue(/devtools-desktop/)
+  await expect(page.getByRole('textbox', { name: '工作内容' })).not.toHaveValue(/^feat:/m)
+  await reference.getByRole('button', { name: '撤销上次', exact: true }).click()
+  await expect(page.getByRole('textbox', { name: '工作内容' })).not.toHaveValue(/完成工时内容 Git 活动集成/)
 
   await reference.getByRole('button', { name: '关闭', exact: true }).click()
   await expect(reference).toHaveCount(0)

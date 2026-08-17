@@ -19,6 +19,8 @@ import {
 } from '@/services/modules/report-service'
 import { useNotificationStore } from '@/stores/notification'
 
+import { gitActivityAlreadyInserted } from '../git-activity-text'
+
 export type ReferenceInsertMode = 'commit' | 'current' | 'target'
 
 export interface GitActivityItem {
@@ -148,8 +150,7 @@ function projectName(result: ReportRepoResult) {
 }
 
 function isInserted(item: GitActivityItem, date: string) {
-  const content = props.noteContents[date] ?? ''
-  return content.includes(`（${item.hash}）`) || content.includes(`(${item.hash})`)
+  return gitActivityAlreadyInserted(props.noteContents[date] ?? '', item)
 }
 
 function updateSelection(id: string, checked: boolean) {
