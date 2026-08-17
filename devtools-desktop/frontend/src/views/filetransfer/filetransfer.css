@@ -250,6 +250,7 @@
 .ft-pathbar {
   position: relative;
   flex: none;
+  padding: 0 var(--space-3) var(--space-2);
 }
 
 .ft-pathbar .field-control {
@@ -259,8 +260,8 @@
 .ft-path-suggest {
   position: absolute;
   top: 100%;
-  right: 8px;
-  left: 8px;
+  right: var(--space-3);
+  left: var(--space-3);
   z-index: 60;
   max-height: 240px;
   padding: 4px;
