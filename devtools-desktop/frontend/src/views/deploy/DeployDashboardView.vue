@@ -11,7 +11,7 @@ import BaseSegmented, { type SegmentOption } from '@/components/navigation/BaseS
 import GroupRenameDialog from '@/components/overlay/GroupRenameDialog.vue'
 import { onProjectsChanged, requestAddProject } from '@/views/deploy/add-project-events'
 import { getServers, removeProject as removeProjectRequest, type DeployServer } from '@/services/modules/deploy-service'
-import { deviceIpForProject } from '@/services/modules/group-publish-service'
+import { remotePathForProject } from '@/services/modules/group-publish-service'
 import { getNodeRuntime, projectDefaultServerIds, type Project } from '@/services/modules/project-service'
 import { useDeployTaskStore } from '@/stores/deploy-task'
 import { useLogTaskStore } from '@/stores/log-task'
@@ -39,7 +39,7 @@ const publish = useGroupPublish()
 const page = useDeployDashboard({
   isProjectConfigured: (project) => {
     if (publish.isGatewayGroup(project.groupName)) {
-      return Boolean(deviceIpForProject(publish.profileOf(project.groupName), project.name))
+      return Boolean(remotePathForProject(publish.profileOf(project.groupName), project.name))
     }
     return projectDefaultServerIds(project).length > 0
   },
@@ -186,8 +186,8 @@ async function onSavePublish() {
   notify.push('分组发布方式已保存', 'success')
 }
 
-function onDeviceIp(projectName: string, deviceIp: string) {
-  publish.setDeviceIp(projectName, deviceIp)
+function onRemotePath(projectName: string, remotePath: string) {
+  publish.setRemotePath(projectName, remotePath)
 }
 
 async function onOpenRemoteBrowser() {
@@ -293,7 +293,7 @@ onActivated(() => {
             :last="page.lastDeployOf(project.name)"
             :busy="task.isBusy(project.name)"
             :handoff="publish.isGatewayGroup(group.key)"
-            :handoff-ready="Boolean(publish.deviceIpOf(group.key, project.name))"
+            :handoff-ready="Boolean(publish.remotePathOf(group.key, project.name))"
             @build="openBuild(project)"
             @deploy="openDeploy(project)"
             @configure="config.openFor(project)"
@@ -419,7 +419,7 @@ onActivated(() => {
       @update:gateway-url="publish.patchDraft({ gatewayUrl: $event })"
       @update:gateway-username="publish.patchDraft({ gatewayUsername: $event })"
       @update:gateway-password="publish.patchDraft({ gatewayPassword: $event })"
-      @update:device-ip="onDeviceIp"
+      @update:remote-path="onRemotePath"
     />
     <GatewayHandoffDialog
       :handoff="publish.handoff.value"

@@ -10,7 +10,6 @@ const { encrypt, decrypt } = require('../services/crypto');
 const {
   normalizeProfile,
   toPublicProfile,
-  deviceIpFor,
   distPathFor,
   firstServerId,
   remotePathFor,
@@ -143,35 +142,32 @@ router.post('/:groupName/connect', async (req, res) => {
   const server = serverId
     ? db.prepare('SELECT defaultRemotePath, deployPaths FROM servers WHERE id = ?').get(serverId)
     : null;
-  const remotePath = remotePathFor(project, server);
   const row = readRow(groupName);
   const profile = normalizeProfile(row || { groupName }, groupName);
-  const deviceIp = deviceIpFor(profile, projectName);
+  const remotePath = remotePathFor(project, server, profile);
   const readyError = assertGatewayReady(profile, projectName);
-  if (readyError) return res.status(400).json({ error: readyError, distPath, remotePath, deviceIp });
+  if (readyError) return res.status(400).json({ error: readyError, distPath, remotePath });
 
   const password = decryptPassword(row);
   if (password === null) {
-    return res.status(500).json({ error: '无法读取已保存的网关密码，请重新保存', distPath, remotePath, deviceIp });
+    return res.status(500).json({ error: '无法读取已保存的网关密码，请重新保存', distPath, remotePath });
   }
-  if (!password) return res.status(400).json({ error: '请先保存网关密码', distPath, remotePath, deviceIp });
+  if (!password) return res.status(400).json({ error: '请先保存网关密码', distPath, remotePath });
 
   try {
     const result = await Promise.resolve(runChromeAutomation({
       loginUrl: profile.gatewayUrl,
       username: profile.gatewayUsername,
       password,
-      deviceIp,
     }));
     const ok = result.status === 'done' || result.status === 'timeout';
     const message = result.detail || (ok
-      ? `网关已打开。请在 Chrome 里点设备 ${deviceIp} 的 SFTP 调起 FileZilla。`
+      ? '网关已打开。请在 Chrome 里点 SFTP 调起 FileZilla，并把产物拖到远程路径。'
       : '网关代登失败');
     res.json({
       ok,
       distPath,
       remotePath,
-      deviceIp,
       message,
     });
   } catch (error) {
@@ -179,7 +175,6 @@ router.post('/:groupName/connect', async (req, res) => {
       error: error instanceof Error ? error.message : '网关代登失败',
       distPath,
       remotePath,
-      deviceIp,
     });
   }
 });

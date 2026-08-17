@@ -22,7 +22,7 @@ const emit = defineEmits<{
   'update:gatewayUrl': [value: string]
   'update:gatewayUsername': [value: string]
   'update:gatewayPassword': [value: string]
-  'update:deviceIp': [projectName: string, deviceIp: string]
+  'update:remotePath': [projectName: string, remotePath: string]
 }>()
 
 const modeOptions = [
@@ -81,15 +81,15 @@ const modeOptions = [
           @update:model-value="emit('update:gatewayPassword', $event)"
         />
 
-        <FormField label="项目对应设备 IP" hint="运维页表格里该项目要点的那一行 IP">
+        <FormField label="项目远程路径" hint="交接发布时展示给 FileZilla 粘贴，按项目单独配置">
           <div class="group-publish__devices">
             <BaseInput
               v-for="device in draft.devices"
               :key="device.projectName"
-              :model-value="device.deviceIp"
+              :model-value="device.remotePath"
               :label="device.displayName"
-              :placeholder="`例如 10.10.0.2（${device.projectName}）`"
-              @update:model-value="emit('update:deviceIp', device.projectName, $event)"
+              :placeholder="`例如 /www/${device.projectName}/`"
+              @update:model-value="emit('update:remotePath', device.projectName, $event)"
             />
           </div>
         </FormField>

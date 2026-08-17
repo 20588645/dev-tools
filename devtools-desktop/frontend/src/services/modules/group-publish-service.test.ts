@@ -19,28 +19,29 @@ describe('group publish service', () => {
       groupName: '业务组',
       publishMode: 'mystery',
       gatewayUrl: ' https://gw.example ',
-      devices: [{ projectName: 'portal', deviceIp: ' 10.1.1.1 ' }, { projectName: '' }],
+      devices: [{ projectName: 'portal', remotePath: ' /www/portal/ ' }, { projectName: '' }],
     })
     expect(profile).toMatchObject({
       groupName: '业务组',
       publishMode: 'direct-sftp',
       gatewayUrl: 'https://gw.example',
-      devices: [{ projectName: 'portal', deviceIp: '10.1.1.1' }],
+      devices: [{ projectName: 'portal', remotePath: '/www/portal/' }],
     })
     expect(isGatewayPublish(profile)).toBe(false)
     expect(emptyGroupPublishProfile('x').publishMode).toBe('direct-sftp')
   })
 
-  it('requires password mask and device IP before handing off', () => {
+  it('requires password mask and remote path before handing off', () => {
     const profile = normalizeGroupPublishProfile({
       publishMode: 'gateway-filezilla',
       gatewayUrl: 'https://gw.example/login',
       gatewayUsername: 'ops',
       passwordMasked: '******',
-      devices: [{ projectName: 'portal', deviceIp: '10.10.108.2' }],
+      devices: [{ projectName: 'portal', remotePath: '/www/portal/' }],
     })
     expect(assertGatewayProfileReady(profile, 'portal')).toBe('')
     expect(assertGatewayProfileReady({ ...profile, passwordMasked: '' }, 'portal')).toBe('请先保存网关密码')
+    expect(assertGatewayProfileReady({ ...profile, devices: [] }, 'portal')).toBe('请先为项目「portal」填写远程路径')
   })
 
   it('lists profiles through the API client', async () => {

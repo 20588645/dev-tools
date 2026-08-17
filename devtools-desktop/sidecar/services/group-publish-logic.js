@@ -16,7 +16,7 @@ function normalizeDevice(row) {
   const item = row && typeof row === 'object' ? row : {};
   return {
     projectName: text(item.projectName),
-    deviceIp: text(item.deviceIp),
+    remotePath: text(item.remotePath),
   };
 }
 
@@ -52,10 +52,10 @@ function toPublicProfile(profile, hasPassword) {
   };
 }
 
-function deviceIpFor(profile, projectName) {
+function remotePathForProject(profile, projectName) {
   const name = text(projectName);
-  const match = (profile.devices || []).find((item) => item.projectName === name);
-  return match ? match.deviceIp : '';
+  const match = ((profile && profile.devices) || []).find((item) => item.projectName === name);
+  return match ? text(match.remotePath) : '';
 }
 
 function isGatewayMode(profile) {
@@ -90,7 +90,9 @@ function firstDeployPath(server) {
   return list.map(text).find(Boolean) || '';
 }
 
-function remotePathFor(project, server) {
+function remotePathFor(project, server, profile) {
+  const fromGroup = remotePathForProject(profile, project && project.name);
+  if (fromGroup) return fromGroup;
   const fromProject = text(project && project.remotePath);
   if (fromProject) return fromProject;
   const fromPaths = firstDeployPath(server);
@@ -111,8 +113,9 @@ function assertGatewayReady(profile, projectName) {
   if (!normalized.gatewayUrl) return '请先填写网关登录地址';
   if (!/^https?:\/\//i.test(normalized.gatewayUrl)) return '网关地址必须是 http 或 https 链接';
   if (!normalized.gatewayUsername) return '请先填写网关用户名';
-  const ip = deviceIpFor(normalized, projectName);
-  if (!ip) return `请先为项目「${projectName}」填写对应的设备 IP`;
+  if (!remotePathForProject(normalized, projectName)) {
+    return `请先为项目「${projectName}」填写远程路径`;
+  }
   return '';
 }
 
@@ -120,7 +123,7 @@ module.exports = {
   PASSWORD_MASK,
   normalizeProfile,
   toPublicProfile,
-  deviceIpFor,
+  remotePathForProject,
   isGatewayMode,
   distPathFor,
   firstServerId,

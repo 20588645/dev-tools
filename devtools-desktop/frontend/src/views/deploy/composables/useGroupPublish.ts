@@ -5,9 +5,9 @@ import type { DeployFinishedDetail } from '@/services/deploy-realtime-service'
 import * as groupPublishService from '@/services/modules/group-publish-service'
 import {
   assertGatewayProfileReady,
-  deviceIpForProject,
   emptyGroupPublishProfile,
   isGatewayPublish,
+  remotePathForProject,
   type GroupPublishProfile,
   type PublishMode,
 } from '@/services/modules/group-publish-service'
@@ -18,7 +18,7 @@ export type GatewayHandoffStatus = 'idle' | 'connecting' | 'success' | 'error'
 export interface GroupPublishDraftDevice {
   projectName: string
   displayName: string
-  deviceIp: string
+  remotePath: string
 }
 
 export interface GroupPublishDraft {
@@ -39,7 +39,6 @@ export interface GatewayHandoffState {
   displayName: string
   distPath: string
   remotePath: string
-  deviceIp: string
   status: GatewayHandoffStatus
   message: string
 }
@@ -50,7 +49,7 @@ interface UseGroupPublishOptions {
 }
 
 function draftFrom(profile: GroupPublishProfile, projects: Project[]): GroupPublishDraft {
-  const byName = new Map(profile.devices.map(item => [item.projectName, item.deviceIp]))
+  const byName = new Map(profile.devices.map(item => [item.projectName, item.remotePath]))
   return {
     groupName: profile.groupName,
     publishMode: profile.publishMode,
@@ -61,7 +60,7 @@ function draftFrom(profile: GroupPublishProfile, projects: Project[]): GroupPubl
     devices: projects.map(project => ({
       projectName: project.name,
       displayName: project.displayName || project.name,
-      deviceIp: byName.get(project.name) || '',
+      remotePath: byName.get(project.name) || '',
     })),
   }
 }
@@ -88,8 +87,8 @@ export function useGroupPublish(options: UseGroupPublishOptions = {}) {
     return isGatewayPublish(profileOf(groupName))
   }
 
-  function deviceIpOf(groupName: string, projectName: string): string {
-    return deviceIpForProject(profileOf(groupName), projectName)
+  function remotePathOf(groupName: string, projectName: string): string {
+    return remotePathForProject(profileOf(groupName), projectName)
   }
 
   async function load() {
@@ -118,12 +117,12 @@ export function useGroupPublish(options: UseGroupPublishOptions = {}) {
     draft.value = { ...draft.value, ...patch }
   }
 
-  function setDeviceIp(projectName: string, deviceIp: string) {
+  function setRemotePath(projectName: string, remotePath: string) {
     if (!draft.value) return
     draft.value = {
       ...draft.value,
       devices: draft.value.devices.map(item => (
-        item.projectName === projectName ? { ...item, deviceIp } : item
+        item.projectName === projectName ? { ...item, remotePath } : item
       )),
     }
   }
@@ -159,7 +158,7 @@ export function useGroupPublish(options: UseGroupPublishOptions = {}) {
         gatewayPassword: current.gatewayPassword,
         devices: current.devices.map(item => ({
           projectName: item.projectName,
-          deviceIp: item.deviceIp,
+          remotePath: item.remotePath,
         })),
       })
       profiles.value = { ...profiles.value, [saved.groupName]: saved }
@@ -199,8 +198,7 @@ export function useGroupPublish(options: UseGroupPublishOptions = {}) {
       projectName: project.name,
       displayName: project.displayName || project.name,
       distPath: '',
-      remotePath: project.remotePath || '',
-      deviceIp: deviceIpOf(groupName, project.name),
+      remotePath: remotePathOf(groupName, project.name) || project.remotePath || '',
       status: 'connecting',
       message: '正在打开网关并登录…',
     }
@@ -227,10 +225,9 @@ export function useGroupPublish(options: UseGroupPublishOptions = {}) {
       const result = await service.connectGroupGateway(current.groupName, current.projectName)
       current.distPath = result.distPath || current.distPath
       current.remotePath = result.remotePath || current.remotePath
-      current.deviceIp = result.deviceIp || current.deviceIp
       current.status = result.ok ? 'success' : 'error'
       current.message = result.message || (result.ok
-        ? '网关已打开。请在 Chrome 里点对应设备的 SFTP 调起 FileZilla。'
+        ? '网关已打开。请在 Chrome 里点 SFTP 调起 FileZilla，并把产物拖到远程路径。'
         : '网关代登失败')
     } catch (cause) {
       current.distPath = service.distPathFromConnectError(cause) || current.distPath
@@ -273,11 +270,11 @@ export function useGroupPublish(options: UseGroupPublishOptions = {}) {
     load,
     profileOf,
     isGatewayGroup,
-    deviceIpOf,
+    remotePathOf,
     openConfig,
     closeConfig,
     patchDraft,
-    setDeviceIp,
+    setRemotePath,
     saveConfig,
     rename,
     readinessError,

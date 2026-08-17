@@ -35,9 +35,7 @@ const statusLabel = (status: GatewayHandoffState['status']) => {
   >
     <div v-if="handoff" class="gateway-handoff">
       <p class="gateway-handoff__lead">
-        网关会在系统 Chrome 里打开并尽量自动登录。请你在页面里点
-        <template v-if="handoff.deviceIp">设备 {{ handoff.deviceIp }} 的</template>
-        SFTP 调起 FileZilla，再把本地产物拖到远程目录。
+        网关会在系统 Chrome 里打开并尽量自动登录。请你在页面里点 SFTP 调起 FileZilla，再把本地产物拖到下面的远程目录。
       </p>
 
       <div class="gateway-handoff__path">
@@ -60,7 +58,7 @@ const statusLabel = (status: GatewayHandoffState['status']) => {
           :model-value="handoff.remotePath || (handoff.status === 'connecting' ? '正在获取远程路径…' : '未配置远程路径')"
           label="远程路径"
           readonly
-          help-text="来自项目发布目录，或默认服务器里配置的部署路径，供 FileZilla 粘贴。"
+          help-text="来自分组发布配置里为该项目填写的远程路径，供 FileZilla 粘贴。"
         />
         <BaseButton
           variant="secondary"

@@ -19,7 +19,7 @@ const props = defineProps<{
   busy: boolean
   /** 分组启用了网关 FileZilla 交接，主按钮改为构建后交接。 */
   handoff?: boolean
-  /** 网关模式下该项目是否已填写设备 IP。 */
+  /** 网关模式下该项目是否已填写远程路径。 */
   handoffReady?: boolean
 }>()
 
@@ -72,7 +72,7 @@ const badge = computed<{ tone: 'success' | 'warning' | 'danger' | 'neutral'; tex
  */
 const footnote = computed(() => {
   const targetHint = props.handoff
-    ? (props.handoffReady ? '已配网关设备' : '未配置网关设备')
+    ? (props.handoffReady ? '已配远程路径' : '未配置远程路径')
     : (serverCount.value > 0 ? `已配 ${serverCount.value} 台服务器` : '未配置服务器')
   if (props.busy) return `${targetHint} · 任务进行中`
   const last = props.last

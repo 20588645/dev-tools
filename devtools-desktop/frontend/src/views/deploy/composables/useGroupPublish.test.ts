@@ -14,7 +14,7 @@ function profile(overrides: Partial<GroupPublishProfile> = {}): GroupPublishProf
     gatewayUrl: 'https://gw.example/login',
     gatewayUsername: 'ops',
     passwordMasked: '******',
-    devices: [{ projectName: 'portal', deviceIp: '10.10.108.2' }],
+    devices: [{ projectName: 'portal', remotePath: '/www/portal/' }],
     ...overrides,
   }
 }
@@ -49,8 +49,7 @@ describe('useGroupPublish', () => {
       ok: true,
       distPath: '/apps/portal/dist',
       remotePath: '/www/portal/',
-      deviceIp: '10.10.108.2',
-      message: '网关已打开。请在 Chrome 里点对应设备的 SFTP 调起 FileZilla。',
+      message: '网关已打开。请在 Chrome 里点 SFTP 调起 FileZilla，并把产物拖到远程路径。',
     })
     service.distPathFromConnectError.mockReturnValue('')
     service.remotePathFromConnectError.mockReturnValue('')
@@ -61,7 +60,7 @@ describe('useGroupPublish', () => {
     const page = useGroupPublish({ service: service as never })
     await page.openConfig('业务组', [project()])
     expect(page.draft.value?.devices).toEqual([
-      { projectName: 'portal', displayName: '门户', deviceIp: '10.10.108.2' },
+      { projectName: 'portal', displayName: '门户', remotePath: '/www/portal/' },
     ])
     expect(page.draft.value?.gatewayPassword).toBe('')
     expect(page.draft.value?.passwordMasked).toBe('******')
@@ -70,11 +69,11 @@ describe('useGroupPublish', () => {
   it('saves without sending a password when the field is left blank', async () => {
     const page = useGroupPublish({ service: service as never })
     await page.openConfig('业务组', [project()])
-    page.setDeviceIp('portal', '10.10.100.2')
+    page.setRemotePath('portal', '/www/new/')
     await expect(page.saveConfig()).resolves.toBe(true)
     expect(service.saveGroupPublishProfile).toHaveBeenCalledWith('业务组', expect.objectContaining({
       gatewayPassword: '',
-      devices: [{ projectName: 'portal', deviceIp: '10.10.100.2' }],
+      devices: [{ projectName: 'portal', remotePath: '/www/new/' }],
     }))
     expect(page.draft.value).toBeNull()
   })
@@ -95,9 +94,8 @@ describe('useGroupPublish', () => {
     expect(page.handoff.value).toMatchObject({
       distPath: '/apps/portal/dist',
       remotePath: '/www/portal/',
-      deviceIp: '10.10.108.2',
       status: 'success',
-      message: '网关已打开。请在 Chrome 里点对应设备的 SFTP 调起 FileZilla。',
+      message: '网关已打开。请在 Chrome 里点 SFTP 调起 FileZilla，并把产物拖到远程路径。',
     })
     expect(service.connectGroupGateway).toHaveBeenCalledWith('业务组', 'portal')
   })

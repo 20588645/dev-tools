@@ -8,7 +8,7 @@ const require = createRequire(import.meta.url);
 const {
   normalizeProfile,
   toPublicProfile,
-  deviceIpFor,
+  remotePathForProject,
   isGatewayMode,
   distPathFor,
   firstServerId,
@@ -25,8 +25,8 @@ describe('group publish profile', () => {
       publishMode: 'mystery',
       gatewayUrl: ' https://gw.example/login ',
       devicesJson: JSON.stringify([
-        { projectName: 'portal', deviceIp: ' 10.1.1.1 ' },
-        { projectName: '', deviceIp: '10.1.1.2' },
+        { projectName: 'portal', remotePath: ' /www/portal/ ' },
+        { projectName: '', remotePath: '/www/other/' },
       ]),
     });
 
@@ -34,7 +34,7 @@ describe('group publish profile', () => {
       groupName: '业务组',
       publishMode: 'direct-sftp',
       gatewayUrl: 'https://gw.example/login',
-      devices: [{ projectName: 'portal', deviceIp: '10.1.1.1' }],
+      devices: [{ projectName: 'portal', remotePath: '/www/portal/' }],
     });
     expect(isGatewayMode(profile)).toBe(false);
   });
@@ -45,16 +45,16 @@ describe('group publish profile', () => {
     expect(toPublicProfile({ groupName: 'g' }, false).passwordMasked).toBe('');
   });
 
-  it('finds device IP by project name', () => {
+  it('finds remote path by project name', () => {
     const profile = normalizeProfile({
       publishMode: 'gateway-filezilla',
       devices: [
-        { projectName: 'a', deviceIp: '10.10.108.2' },
-        { projectName: 'b', deviceIp: '10.10.100.2' },
+        { projectName: 'a', remotePath: '/www/a/' },
+        { projectName: 'b', remotePath: '/www/b/' },
       ],
     });
-    expect(deviceIpFor(profile, 'b')).toBe('10.10.100.2');
-    expect(deviceIpFor(profile, 'missing')).toBe('');
+    expect(remotePathForProject(profile, 'b')).toBe('/www/b/');
+    expect(remotePathForProject(profile, 'missing')).toBe('');
   });
 
   it('joins dist path with project distDir', () => {
@@ -63,7 +63,12 @@ describe('group publish profile', () => {
     expect(distPathFor({ path: '/apps/portal' })).toBe(path.join('/apps/portal', 'dist'));
   });
 
-  it('prefers the project remote path, then server deploy paths, then the default path', () => {
+  it('prefers group config, then project remote path, then server deploy paths', () => {
+    expect(remotePathFor(
+      { name: 'portal', remotePath: '/www/old/' },
+      { defaultRemotePath: '/fallback/' },
+      { devices: [{ projectName: 'portal', remotePath: ' /www/portal/ ' }] },
+    )).toBe('/www/portal/');
     expect(remotePathFor({ remotePath: '/www/portal/' }, { defaultRemotePath: '/fallback/' }))
       .toBe('/www/portal/');
     expect(remotePathFor({ remotePath: '  ' }, {
@@ -86,26 +91,26 @@ describe('group publish profile', () => {
     expect(shouldKeepStoredPassword(' new-secret ')).toBe(false);
   });
 
-  it('blocks gateway connect until URL, username and device IP are present', () => {
+  it('blocks gateway connect until URL, username and remote path are present', () => {
     expect(assertGatewayReady({ publishMode: 'direct-sftp' }, 'portal'))
       .toBe('该分组仍是直连 SFTP，未启用网关交接');
     expect(assertGatewayReady({
       publishMode: 'gateway-filezilla',
       gatewayUrl: 'ftp://x',
       gatewayUsername: 'u',
-      devices: [{ projectName: 'portal', deviceIp: '1.1.1.1' }],
+      devices: [{ projectName: 'portal', remotePath: '/www/portal/' }],
     }, 'portal')).toBe('网关地址必须是 http 或 https 链接');
     expect(assertGatewayReady({
       publishMode: 'gateway-filezilla',
       gatewayUrl: 'https://gw.example/login',
       gatewayUsername: 'ops',
-      devices: [{ projectName: 'other', deviceIp: '1.1.1.1' }],
-    }, 'portal')).toBe('请先为项目「portal」填写对应的设备 IP');
+      devices: [{ projectName: 'other', remotePath: '/www/other/' }],
+    }, 'portal')).toBe('请先为项目「portal」填写远程路径');
     expect(assertGatewayReady({
       publishMode: 'gateway-filezilla',
       gatewayUrl: 'https://gw.example/login',
       gatewayUsername: 'ops',
-      devices: [{ projectName: 'portal', deviceIp: '10.10.108.2' }],
+      devices: [{ projectName: 'portal', remotePath: '/www/portal/' }],
     }, 'portal')).toBe('');
   });
 });

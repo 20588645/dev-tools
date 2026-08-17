@@ -7,7 +7,7 @@ export type PublishMode = 'direct-sftp' | 'gateway-filezilla'
 
 export interface GroupPublishDevice {
   projectName: string
-  deviceIp: string
+  remotePath: string
 }
 
 export interface GroupPublishProfile {
@@ -31,7 +31,6 @@ export interface GatewayConnectResult {
   ok: boolean
   distPath: string
   remotePath: string
-  deviceIp: string
   message: string
 }
 
@@ -48,7 +47,7 @@ function normalizeMode(value: unknown): PublishMode {
 
 function normalizeDevice(value: unknown): GroupPublishDevice {
   const row = record(value)
-  return { projectName: text(row.projectName), deviceIp: text(row.deviceIp) }
+  return { projectName: text(row.projectName), remotePath: text(row.remotePath) }
 }
 
 export function emptyGroupPublishProfile(groupName = ''): GroupPublishProfile {
@@ -79,8 +78,8 @@ export function isGatewayPublish(profile: Pick<GroupPublishProfile, 'publishMode
   return profile?.publishMode === 'gateway-filezilla'
 }
 
-export function deviceIpForProject(profile: Pick<GroupPublishProfile, 'devices'> | null | undefined, projectName: string): string {
-  return profile?.devices.find(item => item.projectName === projectName)?.deviceIp ?? ''
+export function remotePathForProject(profile: Pick<GroupPublishProfile, 'devices'> | null | undefined, projectName: string): string {
+  return profile?.devices.find(item => item.projectName === projectName)?.remotePath ?? ''
 }
 
 export function assertGatewayProfileReady(
@@ -92,7 +91,7 @@ export function assertGatewayProfileReady(
   if (!/^https?:\/\//i.test(profile.gatewayUrl)) return '网关地址必须是 http 或 https 链接'
   if (!profile.gatewayUsername) return '请先填写网关用户名'
   if (!profile.passwordMasked) return '请先保存网关密码'
-  if (!deviceIpForProject(profile, projectName)) return `请先为项目「${projectName}」填写对应的设备 IP`
+  if (!remotePathForProject(profile, projectName)) return `请先为项目「${projectName}」填写远程路径`
   return ''
 }
 
@@ -136,7 +135,6 @@ export async function connectGroupGateway(
       ok: Boolean(value.ok),
       distPath: text(value.distPath),
       remotePath: text(value.remotePath),
-      deviceIp: text(value.deviceIp),
       message: text(value.message),
     }
   } catch (cause) {
@@ -148,7 +146,6 @@ export async function connectGroupGateway(
           ...details,
           distPath: text(details.distPath),
           remotePath: text(details.remotePath),
-          deviceIp: text(details.deviceIp),
         },
         cause,
       })
