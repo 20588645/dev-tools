@@ -9,6 +9,7 @@ import { startRealtime } from './services/realtime'
 import './styles/base.css'
 import './styles/effects.css'
 import './styles/tokens/index.css'
+import './styles/control-height.css'
 
 const pinia = createPinia()
 setActivePinia(pinia)

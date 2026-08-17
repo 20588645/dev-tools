@@ -5,14 +5,15 @@
   --component-control-height-sm: 26px;
   --component-control-height-md: 32px;
   --component-control-height-lg: 40px;
+  --component-control-height: var(--component-control-height-md);
   --component-control-radius: var(--radius-md);
-  /* 原型 .btn / .btn.sm：页头主按钮 32×12.5，卡片操作 26×11.5 */
+  /* 原型 .btn / .input-line：同一档控件同高。md 页头与工具栏 32，sm 紧凑区 26 */
   --component-button-font-size: 12.5px;
   --component-button-font-size-sm: 11.5px;
   --component-button-padding-x: 14px;
   --component-button-padding-x-sm: 10px;
   --component-button-radius-sm: 8px;
-  --component-input-height: 34px;
+  --component-input-height: var(--component-control-height-md);
   --component-card-padding: var(--space-4);
   --component-card-radius: var(--radius-lg);
 

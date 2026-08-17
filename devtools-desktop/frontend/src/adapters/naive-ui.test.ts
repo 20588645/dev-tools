@@ -47,6 +47,19 @@ describe('Naive UI theme adapter', () => {
     })
   })
 
+  it('keeps input, select and button medium height on the same control token', () => {
+    for (const name of adapterColorNames) {
+      document.documentElement.style.setProperty(name, 'resolved-token')
+    }
+
+    const overrides = createNaiveThemeOverrides('dark')
+    const height = 'var(--component-control-height-md)'
+
+    expect(overrides.common?.heightMedium).toBe(height)
+    expect(overrides.Button?.heightMedium).toBe(height)
+    expect(overrides.Input?.heightMedium).toBe(height)
+  })
+
   it('resolves vendor action from body accent so light theme does not keep the html default', () => {
     const bodyAccent = ['#', 'c8b52e'].join('')
     document.body.style.setProperty('--component-vendor-action', 'var(--color-action)')

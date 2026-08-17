@@ -1,0 +1,73 @@
+/* stylelint-disable declaration-no-important --
+   Naive 把 --n-height 写在组件根节点 inline style 上，不覆盖这个变量就改不了内部高度。 */
+
+/* 控件同高：Naive 把 --n-height 写在根节点 inline style 上，
+   只改 height 盖不住内部 line-height / min-height / label。必须改掉变量。
+   文字按钮、输入、下拉统一 32px（md 档），不再跟 26px 紧凑档混排。 */
+
+.field-control:not(.field-control--title) .n-input:not(.n-input--textarea),
+.field-control .n-select,
+.field-control .n-base-selection,
+.field-control .n-date-picker,
+.base-button.n-button--small-type:not(.base-icon-button),
+.base-button.n-button--medium-type:not(.base-icon-button) {
+  --n-height: var(--component-control-height-md) !important;
+  --n-font-size: var(--component-button-font-size) !important;
+  --n-border-radius: var(--component-control-radius) !important;
+  height: var(--component-control-height-md) !important;
+  min-height: var(--component-control-height-md) !important;
+  max-height: var(--component-control-height-md) !important;
+  font-size: var(--component-button-font-size);
+  line-height: 1;
+  border-radius: var(--component-control-radius);
+}
+
+.base-button.n-button--small-type:not(.base-icon-button),
+.base-button.n-button--medium-type:not(.base-icon-button) {
+  --n-padding: 0 var(--component-button-padding-x) !important;
+  padding: 0 var(--component-button-padding-x) !important;
+}
+
+.field-control:not(.field-control--title) .n-input:not(.n-input--textarea) .n-input__input-el,
+.field-control:not(.field-control--title) .n-input:not(.n-input--textarea) .n-input-wrapper,
+.field-control .n-base-selection-label,
+.field-control .n-base-selection-overlay {
+  height: var(--component-control-height-md) !important;
+  min-height: var(--component-control-height-md) !important;
+  line-height: var(--component-control-height-md) !important;
+}
+
+.field-control .n-base-selection {
+  display: flex !important;
+  overflow: hidden;
+}
+
+.field-control:not(.field-control--title) .n-input:not(.n-input--textarea) {
+  display: inline-flex !important;
+  align-items: center;
+}
+
+.base-button.n-button--large-type:not(.base-icon-button),
+.field-control--size-lg:not(.field-control--title) .n-input:not(.n-input--textarea) {
+  --n-height: var(--component-control-height-lg) !important;
+  height: var(--component-control-height-lg) !important;
+  min-height: var(--component-control-height-lg) !important;
+  max-height: var(--component-control-height-lg) !important;
+}
+
+.filter-chip.n-tag {
+  --n-height: var(--component-control-height-md) !important;
+  --n-font-size: var(--component-button-font-size) !important;
+  --n-border-radius: var(--component-control-radius) !important;
+  height: var(--component-control-height-md) !important;
+  min-height: var(--component-control-height-md) !important;
+  font-size: var(--component-button-font-size);
+  border-radius: var(--component-control-radius);
+}
+
+.base-icon-button.n-button--medium-type {
+  --n-height: var(--component-control-height-md) !important;
+  width: var(--component-control-height-md) !important;
+  min-width: var(--component-control-height-md) !important;
+  height: var(--component-control-height-md) !important;
+}

@@ -148,8 +148,7 @@ export function createNaiveThemeOverrides(_theme: Theme): GlobalThemeOverrides {
       fontSizeMedium: 'var(--font-size-md)',
       lineHeight: 'var(--line-height-normal)',
       heightSmall: 'var(--component-control-height-sm)',
-      /* 表单控件按原型取 34px（按钮走 BaseButton 自持的 32px，不经此值） */
-      heightMedium: 'var(--component-input-height)',
+      heightMedium: 'var(--component-control-height-md)',
       heightLarge: 'var(--component-control-height-lg)',
     },
     Button: {
@@ -158,13 +157,19 @@ export function createNaiveThemeOverrides(_theme: Theme): GlobalThemeOverrides {
       textColorPressedPrimary: colors.actionContrast,
       textColorFocusPrimary: colors.actionContrast,
       textColorDisabledPrimary: colors.actionContrast,
-      /* 按钮不走 common.heightMedium（34px 输入档），对齐原型 .btn 32 / .btn.sm 26 */
+      heightSmall: 'var(--component-control-height-sm)',
       heightMedium: 'var(--component-control-height-md)',
+      heightLarge: 'var(--component-control-height-lg)',
       fontSizeMedium: 'var(--component-button-font-size)',
       fontSizeSmall: 'var(--component-button-font-size-sm)',
       paddingMedium: '0 var(--component-button-padding-x)',
       paddingSmall: '0 var(--component-button-padding-x-sm)',
       borderRadiusSmall: 'var(--component-button-radius-sm)',
+    },
+    Input: {
+      heightSmall: 'var(--component-control-height-sm)',
+      heightMedium: 'var(--component-control-height-md)',
+      heightLarge: 'var(--component-control-height-lg)',
     },
   }
 }
