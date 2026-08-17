@@ -1,10 +1,12 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+
 import BaseBadge from '@/components/base/BaseBadge.vue'
 import BaseButton from '@/components/base/BaseButton.vue'
 import BaseIconButton from '@/components/base/BaseIconButton.vue'
 import BaseInput from '@/components/form/BaseInput.vue'
 
-import type { SettingsController } from '../composables/useSettings'
+import { formatSidecarUptime, type SettingsController } from '../composables/useSettings'
 
 const props = defineProps<{ controller: SettingsController }>()
 const emit = defineEmits<{
@@ -20,6 +22,12 @@ const {
   operation,
   menuItems,
 } = props.controller
+
+const nodeRuntimeCaption = computed(() => {
+  const versions = nodeRuntime.value?.versions ?? []
+  if (versions.length > 1) return `已安装 ${versions.length} 个版本`
+  return '当前 Sidecar 运行环境'
+})
 </script>
 
 <template>
@@ -35,37 +43,53 @@ const {
           <h3><i class="settings-live-dot" :class="{ 'is-online': Boolean(health) }" />运行与连接</h3>
           <BaseBadge :tone="health ? 'success' : 'danger'">{{ health ? '运行中' : '离线' }}</BaseBadge>
         </header>
-        <div class="settings-row" data-setting-id="sidecar" tabindex="-1">
-          <span class="settings-row__copy"><strong>Sidecar 服务</strong><small>{{ health?.pid ? `PID ${health.pid} · ${sidecarLabel}` : sidecarLabel }}</small></span>
-          <BaseButton
-            size="sm"
-            variant="secondary"
-            :loading="operation.restart === 'working'"
-            @click="emit('request-restart')"
-          >重启</BaseButton>
-        </div>
-        <div class="settings-row" data-setting-id="timeout" tabindex="-1">
-          <span class="settings-row__copy"><strong>连接超时</strong><small>SSH 与远程操作，范围 5–300 秒</small></span>
-          <div class="settings-inline-control">
-            <BaseInput
-              :model-value="String(connectionTimeoutDraft)"
-              type="number"
-              aria-label="连接超时秒数"
-              :disabled="settingsStore.saving"
-              @update:model-value="connectionTimeoutDraft = Number($event)"
-              @blur="controller.saveConnectionTimeout"
-            />
-            <span>秒</span>
+        <div class="settings-card__body">
+          <div class="settings-row" data-setting-id="sidecar" tabindex="-1">
+            <span class="settings-row__copy"><strong>Sidecar 服务</strong><small>{{ health?.pid ? `PID ${health.pid} · ${sidecarLabel}` : sidecarLabel }}</small></span>
+            <BaseButton
+              size="sm"
+              variant="secondary"
+              :loading="operation.restart === 'working'"
+              @click="emit('request-restart')"
+            >重启</BaseButton>
+          </div>
+          <div class="settings-row" data-setting-id="timeout" tabindex="-1">
+            <span class="settings-row__copy"><strong>连接超时</strong><small>SSH 与远程操作，范围 5–300 秒</small></span>
+            <div class="settings-inline-control">
+              <BaseInput
+                :model-value="String(connectionTimeoutDraft)"
+                type="number"
+                aria-label="连接超时秒数"
+                :disabled="settingsStore.saving"
+                @update:model-value="connectionTimeoutDraft = Number($event)"
+                @blur="controller.saveConnectionTimeout"
+              />
+              <span>秒</span>
+            </div>
+          </div>
+          <div class="settings-row" data-setting-id="node" tabindex="-1">
+            <span class="settings-row__copy"><strong>Node 版本</strong><small>{{ nodeRuntimeCaption }}</small></span>
+            <code>{{ nodeRuntime?.current || nodeRuntime?.versions[0] || '未读取' }}</code>
+          </div>
+          <div class="settings-row" data-setting-id="scan" tabindex="-1">
+            <span class="settings-row__copy"><strong>项目扫描目录</strong><small>只读运行信息</small></span>
+            <code>~/project</code>
           </div>
         </div>
-        <div class="settings-row" data-setting-id="node" tabindex="-1">
-          <span class="settings-row__copy"><strong>Node 版本</strong><small>当前 Sidecar 运行环境</small></span>
-          <code>{{ nodeRuntime?.current || nodeRuntime?.versions[0] || '未读取' }}</code>
-        </div>
-        <div class="settings-row" data-setting-id="scan" tabindex="-1">
-          <span class="settings-row__copy"><strong>项目扫描目录</strong><small>只读运行信息</small></span>
-          <code>~/project</code>
-        </div>
+        <footer class="settings-card__meta">
+          <div>
+            <small>运行时长</small>
+            <strong>{{ health ? formatSidecarUptime(health.uptime) : '—' }}</strong>
+          </div>
+          <div>
+            <small>Sidecar 版本</small>
+            <strong>{{ health?.version || '—' }}</strong>
+          </div>
+          <div>
+            <small>数据目录</small>
+            <strong :title="health?.dataDir">{{ health?.dataDir || '—' }}</strong>
+          </div>
+        </footer>
       </article>
 
       <article class="settings-card settings-menu-card" data-setting-id="menu" tabindex="-1">

@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { resetAppUpgradeForTest } from '@/composables/useAppUpgrade'
 import * as settingsService from '@/services/modules/settings-service'
-import { useSettings } from './useSettings'
+import { formatSidecarUptime, useSettings } from './useSettings'
 
 vi.mock('@/services/api-client', () => ({
   apiClient: {
@@ -48,6 +48,17 @@ function createService() {
   }
 }
 
+describe('formatSidecarUptime', () => {
+  it('formats sidecar uptime into a compact Chinese duration', () => {
+    expect(formatSidecarUptime(0)).toBe('0 秒')
+    expect(formatSidecarUptime(45)).toBe('45 秒')
+    expect(formatSidecarUptime(120)).toBe('2 分钟')
+    expect(formatSidecarUptime(3600)).toBe('1 小时')
+    expect(formatSidecarUptime(3725)).toBe('1 小时 2 分钟')
+    expect(formatSidecarUptime(90_000)).toBe('1 天 1 小时')
+  })
+})
+
 describe('useSettings', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
@@ -74,6 +85,7 @@ describe('useSettings', () => {
     await controller.initialize()
 
     expect(controller.health.value?.pid).toBe(48102)
+    expect(controller.uptimeLabel.value).toBe('2 分钟')
     expect(controller.nodeRuntime.value?.current).toBe('v20.19.0')
     expect(controller.backups.value).toHaveLength(1)
     expect(controller.gitDraft.token).toBe('local-token')

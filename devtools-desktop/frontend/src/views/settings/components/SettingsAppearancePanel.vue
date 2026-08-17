@@ -37,14 +37,23 @@ const themeOptions = [
           <h3>界面主题</h3>
           <BaseBadge>{{ app.themeMode === 'system' ? '跟随系统' : app.theme === 'light' ? '亮色' : '暗色' }}</BaseBadge>
         </header>
-        <div class="settings-row">
-          <span class="settings-row__copy"><strong>主题模式</strong><small>系统变化时自动同步</small></span>
-          <BaseSegmented
-            :model-value="app.themeMode"
-            :options="themeOptions"
-            aria-label="主题模式"
-            @update:model-value="controller.setThemeMode"
-          />
+        <div class="settings-card__body">
+          <div class="settings-row">
+            <span class="settings-row__copy"><strong>主题模式</strong><small>系统变化时自动同步</small></span>
+            <BaseSegmented
+              :model-value="app.themeMode"
+              :options="themeOptions"
+              aria-label="主题模式"
+              @update:model-value="controller.setThemeMode"
+            />
+          </div>
+          <div class="settings-row">
+            <span class="settings-row__copy">
+              <strong>当前生效</strong>
+              <small>{{ app.themeMode === 'system' ? '跟随系统外观' : '已手动锁定' }}</small>
+            </span>
+            <code>{{ app.theme === 'light' ? '亮色' : '暗色' }}</code>
+          </div>
         </div>
       </article>
 
@@ -55,23 +64,25 @@ const themeOptions = [
             {{ notificationLabel }}
           </BaseBadge>
         </header>
-        <div class="settings-row">
-          <BaseSwitch
-            class="settings-switch-row"
-            :model-value="notificationEnabled"
-            label="任务通知"
-            description="构建与部署完成后提醒"
-            @update:model-value="controller.toggleNotification"
-          />
-        </div>
-        <div class="settings-row">
-          <span class="settings-row__copy"><strong>权限状态</strong><small>{{ notificationLabel }}</small></span>
-          <BaseButton
-            size="sm"
-            variant="secondary"
-            :loading="operation.notification === 'working'"
-            @click="controller.testNotification"
-          >发送测试</BaseButton>
+        <div class="settings-card__body">
+          <div class="settings-row">
+            <BaseSwitch
+              class="settings-switch-row"
+              :model-value="notificationEnabled"
+              label="任务通知"
+              description="构建与部署完成后提醒"
+              @update:model-value="controller.toggleNotification"
+            />
+          </div>
+          <div class="settings-row">
+            <span class="settings-row__copy"><strong>权限状态</strong><small>{{ notificationLabel }}</small></span>
+            <BaseButton
+              size="sm"
+              variant="secondary"
+              :loading="operation.notification === 'working'"
+              @click="controller.testNotification"
+            >发送测试</BaseButton>
+          </div>
         </div>
       </article>
     </div>

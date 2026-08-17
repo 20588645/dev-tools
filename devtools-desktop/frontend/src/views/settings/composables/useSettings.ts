@@ -123,6 +123,21 @@ export function formatBackupTime(unixSeconds: number, now = new Date()) {
   return `${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${time}`
 }
 
+export function formatSidecarUptime(seconds: number) {
+  const total = Math.max(0, Math.floor(Number.isFinite(seconds) ? seconds : 0))
+  if (total < 60) return `${total} 秒`
+  const minutes = Math.floor(total / 60)
+  if (minutes < 60) return `${minutes} 分钟`
+  const hours = Math.floor(minutes / 60)
+  const remainMinutes = minutes % 60
+  if (hours < 24) {
+    return remainMinutes ? `${hours} 小时 ${remainMinutes} 分钟` : `${hours} 小时`
+  }
+  const days = Math.floor(hours / 24)
+  const remainHours = hours % 24
+  return remainHours ? `${days} 天 ${remainHours} 小时` : `${days} 天`
+}
+
 export function useSettings(options: UseSettingsDependencies = {}) {
   const service = options.service ?? settingsService
   const readReportConfig = options.getReportConfig ?? getReportConfig
@@ -189,6 +204,9 @@ export function useSettings(options: UseSettingsDependencies = {}) {
     const port = app.sidecarPort ?? Number(new URL(apiClient.baseURL || 'http://127.0.0.1').port)
     return port ? `在线 · ${port}` : '在线'
   })
+  const uptimeLabel = computed(() => (
+    health.value ? formatSidecarUptime(health.value.uptime) : '—'
+  ))
   const notificationLabel = computed(() => {
     if (!notificationEnabled.value) return '已关闭'
     if (notificationPermission.value === 'granted') return '已授权'
@@ -504,6 +522,7 @@ export function useSettings(options: UseSettingsDependencies = {}) {
     upgrade: appUpgrade.upgrade,
     latestBackupLabel,
     sidecarLabel,
+    uptimeLabel,
     showTestSidecars,
     initialize,
     dispose,

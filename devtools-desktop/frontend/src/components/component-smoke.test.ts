@@ -308,6 +308,24 @@ describe('shared UI foundation', () => {
     })
     expect(horizontalNav.classes()).toContain('base-side-nav--horizontal')
     expect(horizontalNav.find('.n-menu--horizontal').exists()).toBe(true)
+
+    const settingsTabs = mount(BaseSideNav, {
+      props: {
+        modelValue: 'general',
+        mode: 'horizontal',
+        responsive: false,
+        density: 'compact',
+        items: [
+          { value: 'general', label: '常规' },
+          { value: 'backup', label: '数据与备份' },
+          { value: 'appearance', label: '外观与通知' },
+          { value: 'git', label: 'Git 活动' },
+          { value: 'advanced', label: '高级' },
+          { value: 'about', label: '关于' },
+        ],
+      },
+    })
+    expect(settingsTabs.findAll('[role="menuitem"]')).toHaveLength(6)
   })
 
   it('exposes layout variants without page-level internal selectors', () => {

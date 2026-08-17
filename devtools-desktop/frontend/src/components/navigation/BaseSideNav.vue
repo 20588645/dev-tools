@@ -17,6 +17,8 @@ const props = withDefaults(defineProps<{
   ariaLabel?: string
   mode?: 'vertical' | 'horizontal' | 'responsive'
   responsiveBreakpoint?: number
+  /** 横向溢出时是否收进「更多」。设置分类条需要始终露出全部项。 */
+  responsive?: boolean
   density?: 'default' | 'compact'
   showMetaInHorizontal?: boolean
 }>(), {
@@ -40,6 +42,9 @@ const menuMode = computed<'vertical' | 'horizontal'>(() => {
   if (props.mode === 'responsive' && compactViewport.value) return 'horizontal'
   return 'vertical'
 })
+const collapseOverflow = computed(() => (
+  props.responsive ?? menuMode.value === 'horizontal'
+))
 
 const options = computed<MenuOption[]>(() => props.items.map(item => ({
   key: item.value,
@@ -55,20 +60,23 @@ const options = computed<MenuOption[]>(() => props.items.map(item => ({
   ]),
 })))
 
-/* redesign-v2：选中项 = 主色淡底 + 主色文字（原型 .cat-item.on） */
-const menuThemeOverrides = computed(() => ({
-  color: 'transparent',
-  borderRadius: 'var(--radius-md)',
-  itemHeight: props.density === 'compact' ? '36px' : '44px',
-  itemColorHover: 'var(--color-surface-subtle)',
-  itemColorActive: 'var(--color-action-subtle)',
-  itemColorActiveHover: 'var(--color-action-subtle)',
-  itemTextColor: 'var(--color-text-muted)',
-  itemTextColorHover: 'var(--color-text)',
-  itemTextColorActive: 'var(--color-action)',
-  itemTextColorActiveHover: 'var(--color-action)',
-  fontSize: 'var(--font-size-sm)',
-}))
+/* 竖栏：主色淡底铺满选中行。横栏：底色交给下划线，避免再长出一套侧栏胶囊。 */
+const menuThemeOverrides = computed(() => {
+  const horizontal = menuMode.value === 'horizontal'
+  return {
+    color: 'transparent',
+    borderRadius: horizontal ? '0px' : 'var(--radius-md)',
+    itemHeight: props.density === 'compact' ? '36px' : '44px',
+    itemColorHover: horizontal ? 'transparent' : 'var(--color-surface-subtle)',
+    itemColorActive: horizontal ? 'var(--color-action)' : 'var(--color-action-subtle)',
+    itemColorActiveHover: horizontal ? 'var(--color-action)' : 'var(--color-action-subtle)',
+    itemTextColor: 'var(--color-text-muted)',
+    itemTextColorHover: 'var(--color-text)',
+    itemTextColorActive: 'var(--color-action)',
+    itemTextColorActiveHover: 'var(--color-action)',
+    fontSize: 'var(--font-size-sm)',
+  }
+})
 
 function syncViewport(event?: MediaQueryListEvent) {
   compactViewport.value = event?.matches ?? mediaQuery?.matches ?? false
@@ -105,7 +113,7 @@ function updateValue(value: string | number) {
       :value="modelValue"
       :options="options"
       :mode="menuMode"
-      :responsive="menuMode === 'horizontal'"
+      :responsive="collapseOverflow"
       :indent="0"
       :root-indent="menuMode === 'vertical' ? 8 : 0"
       :theme-overrides="menuThemeOverrides"
@@ -132,11 +140,23 @@ function updateValue(value: string | number) {
 
 .base-side-nav--horizontal {
   display: block;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
 }
 
 .base-side-nav--horizontal .base-side-nav__caption {
   display: none;
+}
+
+/* 横向导航做成顶部分类条：选中态是底部短线，而不是再铺一层侧栏胶囊。 */
+.base-side-nav--horizontal :deep(.n-menu-item-content::before) {
+  top: auto;
+  right: var(--space-2);
+  bottom: 0;
+  left: var(--space-2);
+  height: 2px;
+  border-radius: var(--radius-pill);
 }
 
 /* Naive Menu 默认将状态底色左右各缩进 8px。编号属于项目导航项的

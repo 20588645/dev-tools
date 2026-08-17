@@ -149,6 +149,30 @@ async function expectNoPageOverflow(page: Page) {
   expect(layout).toEqual({ documentX: false, pageX: false, pageY: false, workspaceX: false })
 }
 
+async function expectFilledWorkspace(page: Page) {
+  const metrics = await page.locator('#page-settings').evaluate((root) => {
+    const workspace = root.querySelector('.settings-workspace')
+    if (!workspace) return null
+    const pageRect = root.getBoundingClientRect()
+    const workspaceRect = workspace.getBoundingClientRect()
+    const cards = [...root.querySelectorAll('.settings-panel-grid > .settings-card')]
+      .map((card) => Math.round(card.getBoundingClientRect().height))
+    return {
+      bottomGap: Math.round(pageRect.bottom - workspaceRect.bottom),
+      workspaceHeight: Math.round(workspaceRect.height),
+      pageHeight: Math.round(pageRect.height),
+      cardHeights: cards,
+    }
+  })
+  expect(metrics).not.toBeNull()
+  expect(metrics?.bottomGap).toBeGreaterThanOrEqual(8)
+  expect(metrics?.bottomGap).toBeLessThanOrEqual(28)
+  expect((metrics?.workspaceHeight ?? 0) / (metrics?.pageHeight ?? 1)).toBeGreaterThan(0.5)
+  if ((metrics?.cardHeights.length ?? 0) === 2) {
+    expect(Math.abs((metrics?.cardHeights[0] ?? 0) - (metrics?.cardHeights[1] ?? 0))).toBeLessThanOrEqual(2)
+  }
+}
+
 function categoryButton(page: Page, name: string) {
   return page
     .getByRole('navigation', { name: '设置分类' })
@@ -177,12 +201,16 @@ test('mounts one formal Vue settings page and keeps both themes inside the defau
     resetMenuOrder: 'undefined',
   })
   await expect(page.getByRole('navigation', { name: '设置分类' })).toBeVisible()
+  await expect(page.getByText('已运行 2 分钟', { exact: true })).toBeVisible()
+  await expect(page.getByText('已安装 2 个版本', { exact: true })).toBeVisible()
   await expectNoPageOverflow(page)
+  await expectFilledWorkspace(page)
 
   await categoryButton(page, '外观与通知').click()
   await page.getByRole('tab', { name: '亮色', exact: true }).click()
   await expect(page.locator('body')).toHaveAttribute('data-theme', 'light')
   await expectNoPageOverflow(page)
+  await expectFilledWorkspace(page)
 
   await page.getByRole('tab', { name: '暗色', exact: true }).click()
   await expect(page.locator('body')).toHaveAttribute('data-theme', 'dark')
@@ -211,11 +239,13 @@ test('keeps experimental effects owned by the app shell after removing legacy se
 test('keeps six categories and search usable at 900 by 600', async ({ page }) => {
   await openSettings(page, { width: 900, height: 600 })
   await expectNoPageOverflow(page)
+  await expectFilledWorkspace(page)
 
   for (const category of ['常规', '数据与备份', '外观与通知', 'Git 活动', '高级', '关于']) {
     await categoryButton(page, category).click()
     await expect(page.getByRole('heading', { name: category, exact: true })).toBeVisible()
     await expectNoPageOverflow(page)
+    await expectFilledWorkspace(page)
   }
 
   await page.getByRole('searchbox', { name: '搜索设置' }).fill('备份')
@@ -226,21 +256,33 @@ test('keeps six categories and search usable at 900 by 600', async ({ page }) =>
   await expectNoPageOverflow(page)
 })
 
-test('keeps the full selected navigation row highlighted and exposes settings search clearly', async ({ page }) => {
+test('keeps settings categories on a top tab row and exposes search clearly', async ({ page }) => {
   await openSettings(page)
 
-  const selectedContent = categoryButton(page, '常规').locator('.n-menu-item-content')
-  const selectedLayout = await selectedContent.evaluate((element) => {
-    const content = element.getBoundingClientRect()
-    const meta = element.querySelector('.base-side-nav__meta')?.getBoundingClientRect()
-    const indicator = getComputedStyle(element, '::before')
+  const nav = page.getByRole('navigation', { name: '设置分类' })
+  await expect(nav).toHaveClass(/base-side-nav--horizontal/)
+
+  const layout = await page.locator('#page-settings').evaluate((root) => {
+    const categoryNav = root.querySelector('.settings-category-nav')
+    const content = root.querySelector('.settings-workspace__content')
+    const items = [...(categoryNav?.querySelectorAll('[role="menuitem"]') ?? [])]
+    const selected = categoryNav?.querySelector('.n-menu-item-content--selected')
+    const navRect = categoryNav?.getBoundingClientRect()
+    const contentRect = content?.getBoundingClientRect()
+    const itemRects = items.map((item) => item.getBoundingClientRect())
     return {
-      indicatorLeft: indicator.left,
-      indicatorRight: indicator.right,
-      metaInset: meta ? Math.round(meta.left - content.left) : -1,
+      navAboveContent: Boolean(navRect && contentRect && navRect.bottom <= contentRect.top + 1),
+      itemCount: items.length,
+      sameRow: itemRects.length > 1 && itemRects.every((rect) => Math.abs(rect.top - itemRects[0].top) <= 4),
+      selectedVisible: Boolean(selected),
     }
   })
-  expect(selectedLayout).toEqual({ indicatorLeft: '0px', indicatorRight: '0px', metaInset: 8 })
+  expect(layout).toEqual({
+    navAboveContent: true,
+    itemCount: 6,
+    sameRow: true,
+    selectedVisible: true,
+  })
 
   const search = page.getByRole('searchbox', { name: '搜索设置' })
   await expect(search).toHaveAttribute('placeholder', '搜索设置，如：备份')
@@ -291,26 +333,23 @@ test('uses a two-stage update dialog and only reacts to mocked progress events',
   await expect(page.getByText('这会在本机编译最新代码、覆盖 Applications 中的旧程序并自动重启。任务开始后请保持应用开启。', { exact: true })).toBeVisible()
   await page.getByRole('button', { name: '开始更新', exact: true }).click()
   await expect.poll(() => state.writes.upgrades).toBe(1)
-  await expect(page.getByRole('heading', { name: '正在更新 DevTools', exact: true }).first()).toBeVisible()
+
+  const progressDialog = page.getByRole('dialog').filter({ hasText: '正在更新 DevTools' })
+  await expect(progressDialog).toBeVisible()
 
   await page.evaluate(() => {
     window.dispatchEvent(new CustomEvent('devtools:upgrade-progress', {
       detail: { event: 'Progress', percent: 62, log: '[mock] building frontend\\n' },
     }))
   })
-  await expect(page.getByText('[mock] building frontend', { exact: false })).toBeVisible()
+  await expect(progressDialog.getByText('[mock] building frontend', { exact: false })).toBeVisible()
 
   await page.evaluate(() => {
     window.dispatchEvent(new CustomEvent('devtools:upgrade-progress', {
       detail: { event: 'Error', percent: 62, log: '[mock] stopped safely\\n' },
     }))
   })
-  await expect(page.getByText('更新失败，请查看任务日志', { exact: true })).toBeVisible()
-  await page
-    .getByRole('dialog')
-    .filter({ hasText: '正在更新 DevTools' })
-    .getByRole('button', { name: '关闭', exact: true })
-    .last()
-    .click()
+  await expect(progressDialog.getByText('更新失败，请查看任务日志').first()).toBeVisible()
+  await progressDialog.getByRole('button', { name: '关闭', exact: true }).last().click()
   await expectNoPageOverflow(page)
 })

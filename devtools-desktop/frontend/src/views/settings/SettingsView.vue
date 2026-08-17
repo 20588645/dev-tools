@@ -156,6 +156,7 @@ onBeforeUnmount(() => {
       <SettingsStatusOverview
         :sidecar="controller.sidecarLabel.value"
         :sidecar-online="Boolean(controller.health.value)"
+        :uptime="controller.uptimeLabel.value"
         :backup="controller.latestBackupLabel.value"
         :notification="controller.notificationLabel.value"
         :repositories="controller.gitDraft.repos.length"

@@ -9,7 +9,6 @@ const emit = defineEmits<{ 'update:modelValue': [value: SettingsCategory] }>()
 const items = SETTINGS_CATEGORIES.map(category => ({
   value: category.value,
   label: category.label,
-  meta: category.index,
 }))
 
 function updateValue(value: string) {
@@ -22,10 +21,9 @@ function updateValue(value: string) {
     class="settings-category-nav"
     :model-value="modelValue"
     :items="items"
-    caption="Settings"
     aria-label="设置分类"
-    mode="responsive"
-    :responsive-breakpoint="1050"
+    mode="horizontal"
+    :responsive="false"
     density="compact"
     @update:model-value="updateValue"
   />
