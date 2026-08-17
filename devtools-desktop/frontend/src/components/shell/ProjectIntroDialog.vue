@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
+import introWorkbenchUrl from '@/assets/intro/intro-workbench.webp'
 import BaseButton from '@/components/base/BaseButton.vue'
 import BaseDialog from '@/components/feedback/BaseDialog.vue'
+import { getNavIconSvg } from '@/components/layout/nav-icons'
 import { useProjectIntro } from '@/composables/useProjectIntro'
+import type { AppPageId } from '@/router/page-contract'
 
 defineOptions({ name: 'ProjectIntroDialog' })
 
@@ -17,15 +20,18 @@ const open = computed({
 
 const { version, sidecarLabel, sidecarClass } = useProjectIntro(open)
 
-const features = [
-  { icon: '▶', title: '本地运行', desc: '管理多项目开发服务，快速启动、模块选择、自动重启。' },
-  { icon: '↗', title: '构建部署', desc: '多模块构建 + SFTP 部署，服务器管理，历史记录追踪。' },
-  { icon: '⚡', title: '快捷命令', desc: '预设 Shell 命令一键执行，VPN 路由、杀端口、查 IP。' },
-  { icon: '✓', title: '待办事项', desc: '三列看板管理任务进度，支持定时提醒通知。' },
-  { icon: '✏️', title: '工时内容', desc: '按周记录每日工作内容，直接查询 Git 活动并写入对应日期。' },
-  { icon: '📒', title: '个人笔记', desc: '个人知识库，支持图片粘贴、标签分类、全文搜索。' },
-  { icon: '🔔', title: '系统通知', desc: '构建完成、运行异常、待办到期通过桌面通知提醒。' },
-] as const
+const features: Array<{ page: AppPageId; title: string; desc: string }> = [
+  { page: 'run', title: '本地运行', desc: '多项目开发服务，启动、模块选择与自动重启' },
+  { page: 'deploy', title: '构建部署', desc: '多模块构建与 SFTP 部署，含服务器和历史' },
+  { page: 'terminal', title: '快捷命令', desc: '预设 Shell 一键执行，处理路由、端口和 IP' },
+  { page: 'todo', title: '待办事项', desc: '三列看板管理进度，支持定时提醒' },
+  { page: 'notes', title: '工时内容', desc: '按周记录工作，可查询 Git 活动并写入当天' },
+  { page: 'notebook', title: '个人笔记', desc: '图片粘贴、标签分类与全文搜索' },
+]
+
+function featureIcon(page: AppPageId) {
+  return getNavIconSvg(page)
+}
 
 function close() {
   open.value = false
@@ -38,48 +44,38 @@ function close() {
     title="DevTools Desktop"
     subtitle="前端开发全流程效率工具"
   >
-    <div class="intro-hero">
-      <div class="intro-mark" aria-hidden="true">⌘</div>
-      <div>
-        <div class="intro-title">个人前端开发工作台</div>
-        <div class="intro-desc">集成本地运行、构建部署、快捷命令、任务管理、工时记录和个人笔记，覆盖日常开发全流程。</div>
+    <div class="intro-stage">
+      <aside class="intro-portrait">
+        <img
+          :src="introWorkbenchUrl"
+          alt="开发者在本地工作台前工作"
+          width="768"
+          height="1152"
+        >
+      </aside>
+
+      <div class="intro-copy">
+        <p class="intro-kicker">个人前端开发工作台</p>
+        <p class="intro-desc">
+          把本地运行、构建部署、文件终端和记录工具放在同一处，覆盖日常开发全流程。构建完成与待办到期可通过桌面通知提醒。
+        </p>
+        <ul class="intro-features">
+          <li v-for="item in features" :key="item.page" class="intro-feature">
+            <span class="intro-feature__icon" aria-hidden="true" v-html="featureIcon(item.page)" />
+            <span class="intro-feature__copy">
+              <strong>{{ item.title }}</strong>
+              <small>{{ item.desc }}</small>
+            </span>
+          </li>
+        </ul>
       </div>
     </div>
 
-    <div class="intro-grid">
-      <div v-for="item in features" :key="item.title" class="intro-item">
-        <div class="intro-item-icon" aria-hidden="true">{{ item.icon }}</div>
-        <div>
-          <strong>{{ item.title }}</strong>
-          <span>{{ item.desc }}</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="intro-system-grid">
-      <div class="intro-system-item">
-        <span>版本</span>
-        <strong>{{ version }}</strong>
-      </div>
-      <div class="intro-system-item">
-        <span>Sidecar</span>
-        <strong :class="sidecarClass">{{ sidecarLabel }}</strong>
-      </div>
-      <div class="intro-system-item">
-        <span>存储</span>
-        <strong>SQLite</strong>
-      </div>
-      <div class="intro-system-item">
-        <span>平台</span>
-        <strong>macOS · Tauri</strong>
-      </div>
-    </div>
-
-    <div class="intro-meta">
-      <span>Tauri 2.x</span>
-      <span>Node.js Sidecar</span>
-      <span>SQLite</span>
-      <span>macOS</span>
+    <div class="intro-facts" aria-label="运行环境">
+      <span>版本 <b>{{ version }}</b></span>
+      <span>Sidecar <b :class="sidecarClass">{{ sidecarLabel }}</b></span>
+      <span>存储 <b>SQLite</b></span>
+      <span>平台 <b>macOS · Tauri</b></span>
     </div>
 
     <template #footer>
@@ -89,149 +85,156 @@ function close() {
 </template>
 
 <style scoped>
-/* L3（legacy token 化）：介绍弹窗视觉自 styles/legacy/runtime.css 收编自持。 */
-.intro-hero {
+.intro-stage {
   display: grid;
-  grid-template-columns: 48px minmax(0, 1fr);
-  gap: 14px;
-  align-items: center;
-  padding: 14px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--color-surface-raised) 72%, transparent);
+  min-width: 0;
+  grid-template-columns: minmax(196px, 0.42fr) minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: stretch;
 }
 
-.intro-mark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-md);
-  color: var(--color-action);
-  background: color-mix(in srgb, var(--color-action) 11%, transparent);
-  font-size: 22px;
-  font-weight: var(--font-weight-bold);
+.intro-portrait {
+  overflow: hidden;
+  min-height: 280px;
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--component-disclosure-panel-item-radius);
+  box-shadow: var(--shadow-md);
 }
 
-.intro-title {
-  margin-bottom: 5px;
+.intro-portrait img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 22%;
+}
+
+.intro-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.intro-kicker {
+  margin: 0;
   color: var(--color-text);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
 }
 
 .intro-desc {
+  margin: 0;
   color: var(--color-text-muted);
   font-size: var(--font-size-xs);
   line-height: var(--line-height-relaxed);
 }
 
-.intro-grid {
+.intro-features {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  margin-top: var(--space-3);
-}
-
-@media (max-width: 640px) {
-  .intro-grid { grid-template-columns: 1fr; }
-
-  .intro-system-grid { grid-template-columns: 1fr; }
-}
-
-.intro-item {
-  display: grid;
-  grid-template-columns: 28px minmax(0, 1fr);
-  gap: 9px;
-  min-height: 88px;
-  padding: 11px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-surface);
-}
-
-.intro-item-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 7px;
-  color: var(--color-action);
-  background: color-mix(in srgb, var(--color-action) 11%, transparent);
-  font-size: 15px;
-  line-height: 1;
-}
-
-.intro-item strong {
-  display: block;
-  margin-bottom: 4px;
-  color: var(--color-text);
-  font-size: 12px;
-}
-
-.intro-item span {
-  display: block;
-  color: var(--color-text-subtle);
-  font-size: 10.5px;
-  line-height: 1.5;
-}
-
-.intro-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
-  margin-top: var(--space-3);
-}
-
-.intro-meta span {
-  padding: 5px 9px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-pill);
-  background: var(--color-surface-raised);
-  color: var(--color-text-muted);
-  font-size: 10px;
-  font-weight: 650;
-}
-
-.intro-system-grid {
-  display: grid;
+  min-width: 0;
+  flex: 1 1 auto;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-2);
-  margin-top: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.intro-system-item {
+.intro-feature {
+  display: grid;
   min-width: 0;
-  padding: 10px 12px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-surface-raised);
+  grid-template-columns: 28px minmax(0, 1fr);
+  align-items: start;
+  gap: 8px;
+  padding: 8px 9px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-md);
 }
 
-.intro-system-item span,
-.intro-system-item strong {
-  display: block;
+.intro-feature__icon {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  color: var(--color-action);
+  background: color-mix(in srgb, var(--color-action) 11%, transparent);
+  border-radius: var(--radius-sm);
+}
+
+.intro-feature__icon :deep(svg) {
+  width: 14px;
+  height: 14px;
+}
+
+.intro-feature__copy {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.intro-feature strong {
+  color: var(--color-text);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+}
+
+.intro-feature small {
+  display: -webkit-box;
   overflow: hidden;
-  text-overflow: ellipsis;
+  color: var(--color-text-subtle);
+  font-size: var(--font-size-xs);
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.intro-facts {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: var(--space-2) 18px;
+  margin-top: var(--space-3);
+  padding: 10px 14px;
+  color: var(--color-text-muted);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
+}
+
+.intro-facts > span {
+  display: inline-flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 6px;
   white-space: nowrap;
 }
 
-.intro-system-item span {
-  margin-bottom: 5px;
-  color: var(--color-text-subtle);
-  font-size: 10px;
-  font-weight: 650;
-}
-
-.intro-system-item strong {
+.intro-facts b {
   color: var(--color-text);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-bold);
+  font-family: var(--font-family-mono);
+  font-weight: var(--font-weight-semibold);
 }
 
-.intro-system-item strong.ok { color: var(--color-success); }
-.intro-system-item strong.warn { color: var(--color-warning); }
-.intro-system-item strong.danger { color: var(--color-danger); }
+.intro-facts b.ok { color: var(--color-success); }
+.intro-facts b.warn { color: var(--color-warning); }
+.intro-facts b.danger { color: var(--color-danger); }
+
+@media (max-width: 640px) {
+  .intro-stage {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .intro-portrait {
+    max-height: 180px;
+    min-height: 160px;
+  }
+
+  .intro-features {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
 </style>
