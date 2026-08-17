@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   credentialTemplateHtml,
+  isSecretCredentialField,
   plainTextToNotebookHtml,
   sanitizeNotebookHtml,
 } from './notebook-html'
@@ -31,6 +32,17 @@ describe('notebook HTML boundary', () => {
     expect(result).toContain('href="https://example.com/path"')
     expect(result).not.toContain('evil.example')
     expect(result).toContain('src="/api/notebook/images/0123456789abcdef.png"')
+  })
+
+  it('treats password-like field names as secrets without matching account', () => {
+    expect(isSecretCredentialField('密码')).toBe(true)
+    expect(isSecretCredentialField('SSH Key')).toBe(true)
+    expect(isSecretCredentialField('AccessKey')).toBe(true)
+    expect(isSecretCredentialField('口令')).toBe(true)
+    expect(isSecretCredentialField('password')).toBe(true)
+    expect(isSecretCredentialField('账号')).toBe(false)
+    expect(isSecretCredentialField('主机')).toBe(false)
+    expect(isSecretCredentialField('monkey')).toBe(false)
   })
 
   it('preserves the controlled credential structure and dynamic colspan', () => {

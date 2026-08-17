@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
 
-import BaseButton from '@/components/base/BaseButton.vue'
+import BaseIconButton from '@/components/base/BaseIconButton.vue'
 import {
   resolveNotebookAssetUrl,
   uploadNotebookImage,
@@ -24,6 +24,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'update:modelValue': [value: string]
+  'update:formats': [value: NotebookActiveFormats]
 }>()
 
 const notifications = useNotificationStore()
@@ -32,15 +33,23 @@ const editorShell = ref<HTMLElement | null>(null)
 const activeTable = ref<HTMLTableElement | null>(null)
 const activeRow = ref<HTMLTableRowElement | null>(null)
 const activeColumn = ref(0)
+
 type CredentialControl = {
   table: HTMLTableElement
   key: number
   index: number
-  editing: boolean
-  /** 相对编辑器外层容器的绝对定位，避免把工具栏塞进可编辑单元格 */
+  /** 相对编辑器外层容器贴在标题行右侧，避免把按钮塞进可编辑单元格 */
   style: { top: string; right: string }
 }
+
+type CredentialCopyAffordance = {
+  cell: HTMLTableCellElement
+  copied: boolean
+  style: { top: string; left: string }
+}
+
 const credentialControls = shallowRef<CredentialControl[]>([])
+const copyAffordance = shallowRef<CredentialCopyAffordance | null>(null)
 const credentialControlKeys = new WeakMap<HTMLTableElement, number>()
 let applyingModel = false
 let copyTimer: ReturnType<typeof setTimeout> | null = null
@@ -56,7 +65,7 @@ function serializeContent() {
   const clone = editor.value.cloneNode(true) as HTMLElement
   clone.querySelectorAll('[data-credential-runtime-controls]').forEach((element) => element.remove())
   clone.querySelectorAll(
-    '[contenteditable], [role], [tabindex], [aria-label], [data-editing], [data-copy-state], [data-active-column], [data-placeholder], [data-credential-project-empty]',
+    '[contenteditable], [role], [tabindex], [aria-label], [data-editing], [data-copy-state], [data-active-column], [data-placeholder], [data-credential-project-empty], [data-credential-secret]',
   ).forEach((element) => {
     [
       'contenteditable',
@@ -68,6 +77,7 @@ function serializeContent() {
       'data-active-column',
       'data-placeholder',
       'data-credential-project-empty',
+      'data-credential-secret',
     ].forEach((attribute) => element.removeAttribute(attribute))
   })
   clone.querySelectorAll('table[data-notebook-block="credential"][style]').forEach((table) => {
@@ -130,6 +140,7 @@ function captureSelectionBeforeFocusLeaves(event: PointerEvent) {
 
 function handleDocumentSelectionChange() {
   if (!suppressSelectionCapture) captureSelection()
+  refreshActiveFormats()
 }
 
 function restoreSelection() {
@@ -331,6 +342,44 @@ function isCredentialEditable(element: HTMLElement | null) {
   ))
 }
 
+function focusCredentialEditable(element: HTMLElement) {
+  element.focus()
+  const selection = window.getSelection()
+  const range = document.createRange()
+  range.selectNodeContents(element)
+  range.collapse(false)
+  selection?.removeAllRanges()
+  selection?.addRange(range)
+}
+
+function credentialEditables(table: HTMLTableElement) {
+  const cells: HTMLElement[] = []
+  const project = table.querySelector<HTMLElement>('th[data-credential-project]')
+  if (project) cells.push(project)
+  cells.push(...Array.from(table.querySelectorAll<HTMLElement>('th[data-credential-field]')))
+  Array.from(table.tBodies[0]?.rows ?? []).forEach((row) => {
+    cells.push(...Array.from(row.cells))
+  })
+  return cells
+}
+
+function moveCredentialFocus(table: HTMLTableElement, from: HTMLElement, direction: 1 | -1) {
+  const cells = credentialEditables(table)
+  const index = cells.indexOf(from)
+  if (index < 0 || !cells.length) return
+  const next = cells[(index + direction + cells.length) % cells.length]
+  if (!next) return
+  if (next.matches('td[data-credential-value], th[data-credential-field]')) {
+    activeColumn.value = Array.from(next.parentElement?.children ?? []).indexOf(next)
+    markActiveColumn(table, activeColumn.value)
+  }
+  if (next.matches('td[data-credential-value]')) {
+    activeRow.value = next.closest('tr')
+    syncCopyAffordance(next as HTMLTableCellElement)
+  }
+  focusCredentialEditable(next)
+}
+
 function isTrailingEmptyNode(node: ChildNode) {
   if (node.nodeType === Node.TEXT_NODE) return !node.textContent?.trim()
   if (!(node instanceof HTMLElement)) return false
@@ -338,6 +387,113 @@ function isTrailingEmptyNode(node: ChildNode) {
   return ['DIV', 'P'].includes(node.tagName)
     && !node.textContent?.trim()
     && !node.querySelector('img, table, pre, blockquote, ul, ol')
+}
+
+function isCredentialTable(node: Node | null): node is HTMLTableElement {
+  return node instanceof HTMLTableElement && node.getAttribute('data-notebook-block') === 'credential'
+}
+
+function skipIdleSibling(node: ChildNode | null, direction: -1 | 1) {
+  let current = node
+  while (current && (
+    current.nodeType === Node.COMMENT_NODE
+    || (current.nodeType === Node.TEXT_NODE && !current.textContent?.trim())
+  )) {
+    current = direction < 0 ? current.previousSibling : current.nextSibling
+  }
+  return current
+}
+
+function editorChildBlock(node: Node | null) {
+  const root = editor.value
+  if (!root || !node || node === root || !root.contains(node)) return null
+  let current: Node = node
+  while (current.parentNode && current.parentNode !== root) current = current.parentNode
+  return current instanceof HTMLElement ? current : null
+}
+
+function rangeTouchesBlockEdge(range: Range, block: HTMLElement, edge: 'start' | 'end') {
+  if (!range.collapsed) return false
+  const probe = range.cloneRange()
+  probe.selectNodeContents(block)
+  if (edge === 'start') probe.setEnd(range.startContainer, range.startOffset)
+  else probe.setStart(range.endContainer, range.endOffset)
+  return !probe.toString()
+}
+
+function placeCaretInBlock(block: Node, atStart: boolean) {
+  const root = editor.value
+  const selection = window.getSelection()
+  if (!root || !selection) return
+  const range = document.createRange()
+  if (block instanceof HTMLElement && !isCredentialTable(block)) {
+    range.selectNodeContents(block)
+    range.collapse(atStart)
+  } else {
+    range.selectNode(block)
+    range.collapse(atStart)
+  }
+  selection.removeAllRanges()
+  selection.addRange(range)
+  savedSelection = range.cloneRange()
+  root.focus()
+}
+
+function removeCredentialTable(table: HTMLTableElement, caret: Range | null = null) {
+  const root = editor.value
+  if (!root || !root.contains(table)) return
+  const next = skipIdleSibling(table.nextSibling, 1)
+  const previous = skipIdleSibling(table.previousSibling, -1)
+  table.remove()
+  copyAffordance.value = null
+  if (activeTable.value === table) {
+    activeTable.value = null
+    activeRow.value = null
+  }
+  const selection = window.getSelection()
+  if (caret && selection) {
+    selection.removeAllRanges()
+    selection.addRange(caret)
+    savedSelection = caret.cloneRange()
+    root.focus()
+  } else if (next) {
+    placeCaretInBlock(next, true)
+  } else if (previous) {
+    placeCaretInBlock(previous, false)
+  } else {
+    const paragraph = document.createElement('p')
+    paragraph.append(document.createElement('br'))
+    root.append(paragraph)
+    placeCaretInBlock(paragraph, true)
+  }
+  emitContent()
+  void nextTick(refreshCredentialControls)
+}
+
+function deleteAdjacentCredentialTable(direction: 'backward' | 'forward') {
+  const root = editor.value
+  const selection = window.getSelection()
+  if (!root || !selection?.rangeCount) return false
+  const range = selection.getRangeAt(0)
+  if (!range.collapsed || !root.contains(range.commonAncestorContainer)) return false
+
+  if (range.startContainer === root) {
+    const neighbor = direction === 'backward'
+      ? skipIdleSibling(root.childNodes[range.startOffset - 1] ?? null, -1)
+      : skipIdleSibling(root.childNodes[range.startOffset] ?? null, 1)
+    if (!isCredentialTable(neighbor)) return false
+    removeCredentialTable(neighbor, range.cloneRange())
+    return true
+  }
+
+  const block = editorChildBlock(range.startContainer)
+  if (!block || isCredentialTable(block)) return false
+  const neighbor = direction === 'backward'
+    ? (rangeTouchesBlockEdge(range, block, 'start') ? skipIdleSibling(block.previousSibling, -1) : null)
+    : (rangeTouchesBlockEdge(range, block, 'end') ? skipIdleSibling(block.nextSibling, 1) : null)
+  if (!isCredentialTable(neighbor)) return false
+  removeCredentialTable(neighbor, range.cloneRange())
+  return true
 }
 
 function credentialEditableText(element: HTMLElement) {
@@ -377,8 +533,8 @@ function normalizeCredentialEditable(element: HTMLElement, trimTrailing = false)
   syncCredentialProjectEmptyState(element)
 }
 
-function configureCredentialTable(table: HTMLTableElement, editing = table.dataset.editing === 'true') {
-  table.dataset.editing = String(editing)
+function configureCredentialTable(table: HTMLTableElement) {
+  table.removeAttribute('data-editing')
   table.contentEditable = 'false'
   const project = table.querySelector<HTMLTableCellElement>('th[data-credential-project]')
   const fieldRow = table.tHead?.rows[1]
@@ -392,9 +548,8 @@ function configureCredentialTable(table: HTMLTableElement, editing = table.datas
   }
   project?.setAttribute('colspan', String(fieldCount))
   if (project) {
-    project.contentEditable = String(editing)
-    if (editing) project.dataset.placeholder = '点击填写项目名称'
-    else project.removeAttribute('data-placeholder')
+    project.contentEditable = 'true'
+    project.dataset.placeholder = '项目名称'
     syncCredentialProjectEmptyState(project)
   }
   table.style.setProperty('--credential-columns', String(fieldCount))
@@ -402,14 +557,10 @@ function configureCredentialTable(table: HTMLTableElement, editing = table.datas
   const projectName = project ? credentialEditableText(project) || '当前项目' : '当前项目'
 
   fields.forEach((field, index) => {
-    field.contentEditable = String(editing)
+    field.contentEditable = 'true'
     field.removeAttribute('data-active-column')
     field.dataset.placeholder = `字段 ${index + 1}`
-    if (editing) {
-      field.setAttribute('aria-label', `编辑第 ${index + 1} 个字段名称`)
-    } else {
-      field.removeAttribute('aria-label')
-    }
+    field.setAttribute('aria-label', `第 ${index + 1} 个字段名称`)
   })
 
   table.querySelectorAll<HTMLTableCellElement>('td[data-credential-value]').forEach((cell) => {
@@ -417,23 +568,16 @@ function configureCredentialTable(table: HTMLTableElement, editing = table.datas
     const fieldName = fields[columnNumber]?.textContent?.trim() || `字段 ${columnNumber + 1}`
     const legacyPlaceholders = new Set([`点击填写${fieldName}`, '点击填写内容'])
     if (legacyPlaceholders.has(cell.textContent?.trim() ?? '')) cell.textContent = ''
-    cell.contentEditable = String(editing)
+    cell.contentEditable = 'true'
     cell.removeAttribute('data-copy-state')
     cell.removeAttribute('data-active-column')
-    if (editing) {
-      cell.dataset.placeholder = `点击填写${fieldName}`
-      cell.removeAttribute('role')
-      cell.removeAttribute('tabindex')
-      cell.removeAttribute('aria-label')
-      return
-    }
-    cell.removeAttribute('data-placeholder')
+    cell.removeAttribute('role')
+    cell.removeAttribute('tabindex')
+    cell.dataset.placeholder = fieldName
     const rowNumber = Math.max(1, rows.indexOf(cell.closest('tr') as HTMLTableRowElement) + 1)
-    cell.setAttribute('role', 'button')
-    cell.setAttribute('tabindex', '0')
-    cell.setAttribute('aria-label', `复制${projectName}第 ${rowNumber} 条记录的${fieldName}`)
+    cell.setAttribute('aria-label', `${projectName}第 ${rowNumber} 条的${fieldName}`)
+    cell.removeAttribute('data-credential-secret')
   })
-  if (editing) markActiveColumn(table, activeColumn.value)
 }
 
 function hydrateCredentialBlocks() {
@@ -447,6 +591,7 @@ function refreshCredentialControls() {
   const root = editor.value
   if (!root) {
     credentialControls.value = []
+    copyAffordance.value = null
     return
   }
   credentialControls.value = Array.from(
@@ -462,85 +607,69 @@ function refreshCredentialControls() {
       credentialControlKeys.set(table, key)
     }
     // getBoundingClientRect 已含滚动偏移，与同样是视口坐标的 shellRect 相减即可，不要再叠加 scrollTop。
-    const cellRect = projectCell.getBoundingClientRect()
+    const projectRect = projectCell.getBoundingClientRect()
     const shellRect = shell.getBoundingClientRect()
-    const editing = table.dataset.editing === 'true'
-    // 编辑态工具栏较宽，上浮到表格顶边之上，避免盖住可编辑的标题单元格；
-    // 表格贴容器顶时钳回内部（此时正文没有可遮挡内容）。
-    // 非编辑态只有一枚小编辑钮，仍贴在标题行右上角内。
-    const offset = editing ? Math.max(2 - (cellRect.top - shellRect.top), -36) : 4
     return [{
       table,
       key,
       index,
-      editing,
       style: {
-        top: `${Math.round(cellRect.top - shellRect.top + offset)}px`,
-        // 表格可能比容器宽（横向滚动），此时 cellRect.right 会超出容器右界导致负值，
-        // 钳到 8px 保证工具栏始终留在可视区内
-        right: `${Math.max(8, Math.round(shellRect.right - cellRect.right + 8))}px`,
+        top: `${Math.round(projectRect.top - shellRect.top + Math.max(3, (projectRect.height - 26) / 2))}px`,
+        right: `${Math.max(6, Math.round(shellRect.right - projectRect.right + 6))}px`,
       },
     }]
   })
+  const activeCopyCell = copyAffordance.value?.cell ?? null
+  if (activeCopyCell && root.contains(activeCopyCell)) syncCopyAffordance(activeCopyCell)
+  else copyAffordance.value = null
 }
 
 function activateCredentialTable(table: HTMLTableElement) {
   activeTable.value = table
 }
 
-function clearActiveCredentialTable() {
-  activeTable.value = null
-  activeRow.value = null
-}
-
-function setCredentialEditingFor(
-  table: HTMLTableElement,
-  editing: boolean,
-  restoreEditorFocus = true,
-) {
+function syncCopyAffordance(cell: HTMLTableCellElement | null) {
+  const shell = editorShell.value
   const root = editor.value
-  if (!root || !root.contains(table)) return
-  if (editing) {
-    root.querySelectorAll<HTMLTableElement>(
-      'table[data-notebook-block="credential"][data-editing="true"]',
-    ).forEach((current) => {
-      if (current === table) return
-      current.querySelectorAll<HTMLElement>(
-        '[data-credential-project], [data-credential-field], [data-credential-value]',
-      ).forEach((element) => normalizeCredentialEditable(element, true))
-      configureCredentialTable(current, false)
-    })
-  } else {
-    table.querySelectorAll<HTMLElement>(
-      '[data-credential-project], [data-credential-field], [data-credential-value]',
-    ).forEach((element) => normalizeCredentialEditable(element, true))
-  }
-  activateCredentialTable(table)
-  configureCredentialTable(table, editing)
-  void nextTick(refreshCredentialControls)
-  if (!editing) {
-    emitContent()
-    if (restoreEditorFocus) editor.value?.focus()
+  if (!cell || !shell || !root?.contains(cell) || !cell.innerText.trim()) {
+    copyAffordance.value = null
     return
   }
-  const firstValue = table.querySelector<HTMLTableCellElement>('td[data-credential-value]')
-  if (!firstValue) return
-  activeRow.value = firstValue.closest('tr')
-  activeColumn.value = 0
-  markActiveColumn(table, 0)
-  const selection = window.getSelection()
-  const range = document.createRange()
-  range.selectNodeContents(firstValue)
-  range.collapse(false)
-  selection?.removeAllRanges()
-  selection?.addRange(range)
-  firstValue.focus()
+  const cellRect = cell.getBoundingClientRect()
+  const shellRect = shell.getBoundingClientRect()
+  copyAffordance.value = {
+    cell,
+    copied: copyAffordance.value?.cell === cell ? copyAffordance.value.copied : false,
+    style: {
+      top: `${Math.round(cellRect.top - shellRect.top + Math.max(0, (cellRect.height - 26) / 2))}px`,
+      left: `${Math.round(cellRect.right - shellRect.left - 30)}px`,
+    },
+  }
 }
 
-function setCredentialEditing(editing: boolean, restoreEditorFocus = true) {
-  const table = activeTable.value
-  if (!table) return
-  setCredentialEditingFor(table, editing, restoreEditorFocus)
+function copyUiElement(element: EventTarget | null) {
+  return element instanceof Element
+    ? element.closest('[data-credential-copy], td[data-credential-value]')
+    : null
+}
+
+function handleShellPointerOver(event: PointerEvent) {
+  const target = event.target instanceof Element ? event.target : null
+  if (target?.closest('[data-credential-copy]')) return
+  const cell = target?.closest('td[data-credential-value]')
+  if (cell instanceof HTMLTableCellElement) syncCopyAffordance(cell)
+}
+
+function handleShellPointerOut(event: PointerEvent) {
+  if (copyUiElement(event.relatedTarget)) return
+  const focused = document.activeElement instanceof HTMLElement
+    ? document.activeElement.closest('td[data-credential-value]')
+    : null
+  if (focused instanceof HTMLTableCellElement && editor.value?.contains(focused)) {
+    syncCopyAffordance(focused)
+    return
+  }
+  copyAffordance.value = null
 }
 
 function runCredentialAction(table: HTMLTableElement, action: () => void) {
@@ -552,13 +681,15 @@ function runCredentialAction(table: HTMLTableElement, action: () => void) {
 function finishCredentialEditing() {
   const root = editor.value
   if (!root) return false
-  const editingTable = activeTable.value?.dataset.editing === 'true'
-    ? activeTable.value
-    : root.querySelector<HTMLTableElement>('table[data-notebook-block="credential"][data-editing="true"]')
-  if (!editingTable) return false
-  activeTable.value = editingTable
-  setCredentialEditing(false, false)
-  clearActiveCredentialTable()
+  const tables = root.querySelectorAll<HTMLTableElement>('table[data-notebook-block="credential"]')
+  if (!tables.length) return false
+  tables.forEach((table) => {
+    table.querySelectorAll<HTMLElement>(
+      '[data-credential-project], [data-credential-field], [data-credential-value]',
+    ).forEach((element) => normalizeCredentialEditable(element, true))
+    configureCredentialTable(table)
+  })
+  emitContent()
   void nextTick(refreshCredentialControls)
   return true
 }
@@ -575,27 +706,31 @@ function insertCredential() {
       : null
   }, null)
   if (table) {
-    activeColumn.value = 0
-    setCredentialEditingFor(table, true)
+    configureCredentialTable(table)
+    activateCredentialTable(table)
+    void nextTick(() => {
+      refreshCredentialControls()
+      const project = table.querySelector<HTMLElement>('th[data-credential-project]')
+      if (project) focusCredentialEditable(project)
+    })
   }
   emitContent()
-  notifications.push('已插入凭据信息表，可自由调整字段与记录', 'success')
+  notifications.push('已插入凭据信息表', 'success')
 }
 
 function addCredentialRow() {
   const table = activeTable.value
   const body = table?.tBodies[0]
-  if (!table || !body || table.dataset.editing !== 'true') return
+  if (!table || !body) return
   const row = body.insertRow()
   const fields = Array.from(table.querySelectorAll<HTMLTableCellElement>('th[data-credential-field]'))
-  fields.forEach((field, index) => {
+  fields.forEach(() => {
     const cell = row.insertCell()
     cell.setAttribute('data-credential-value', '')
-    cell.dataset.placeholder = `点击填写${field.textContent?.trim() || `字段 ${index + 1}`}`
   })
   activeRow.value = row
-  configureCredentialTable(table, true)
-  row.cells[0]?.focus()
+  configureCredentialTable(table)
+  if (row.cells[0]) focusCredentialEditable(row.cells[0])
   emitContent()
   void nextTick(refreshCredentialControls)
 }
@@ -603,7 +738,7 @@ function addCredentialRow() {
 function removeCredentialRow() {
   const table = activeTable.value
   const body = table?.tBodies[0]
-  if (!table || !body || table.dataset.editing !== 'true') return
+  if (!table || !body) return
   const rows = Array.from(body.rows)
   if (rows.length <= 1) {
     notifications.push('凭据信息表至少保留一条记录', 'warning')
@@ -613,7 +748,7 @@ function removeCredentialRow() {
   const index = rows.indexOf(target)
   activeRow.value = rows[index + 1] ?? rows[index - 1] ?? null
   target.remove()
-  configureCredentialTable(table, true)
+  configureCredentialTable(table)
   emitContent()
 }
 
@@ -621,27 +756,24 @@ function addCredentialField() {
   const table = activeTable.value
   const fieldRow = table?.tHead?.rows[1]
   const body = table?.tBodies[0]
-  if (!table || !fieldRow || !body || table.dataset.editing !== 'true') return
+  if (!table || !fieldRow || !body) return
   const field = document.createElement('th')
   field.setAttribute('data-credential-field', '')
-  field.textContent = ''
-  field.dataset.placeholder = `字段 ${fieldRow.cells.length + 1}`
   fieldRow.append(field)
   Array.from(body.rows).forEach((row) => {
     const cell = row.insertCell()
     cell.setAttribute('data-credential-value', '')
-    cell.dataset.placeholder = `点击填写字段 ${fieldRow.cells.length}`
   })
   activeColumn.value = fieldRow.cells.length - 1
-  configureCredentialTable(table, true)
-  field.focus()
+  configureCredentialTable(table)
+  focusCredentialEditable(field)
   emitContent()
   void nextTick(refreshCredentialControls)
 }
 
 function removeCredentialField() {
   const table = activeTable.value
-  if (!table || table.dataset.editing !== 'true') return
+  if (!table) return
   const fields = Array.from(table.querySelectorAll<HTMLTableCellElement>('th[data-credential-field]'))
   if (fields.length <= 1) {
     notifications.push('凭据信息表至少保留一个字段', 'warning')
@@ -651,8 +783,14 @@ function removeCredentialField() {
   fields[column].remove()
   Array.from(table.tBodies[0]?.rows ?? []).forEach((row) => row.cells[column]?.remove())
   activeColumn.value = Math.max(0, column - 1)
-  configureCredentialTable(table, true)
+  configureCredentialTable(table)
   emitContent()
+}
+
+function deleteCredentialTable() {
+  const table = activeTable.value
+  if (!table) return
+  removeCredentialTable(table)
 }
 
 async function copyCredentialValue(cell: HTMLTableCellElement) {
@@ -663,13 +801,24 @@ async function copyCredentialValue(cell: HTMLTableCellElement) {
   }
   try {
     await navigator.clipboard.writeText(value)
-    cell.dataset.copyState = 'done'
+    syncCopyAffordance(cell)
+    if (copyAffordance.value?.cell === cell) {
+      copyAffordance.value = { ...copyAffordance.value, copied: true }
+    }
     if (copyTimer) globalThis.clearTimeout(copyTimer)
-    copyTimer = globalThis.setTimeout(() => cell.removeAttribute('data-copy-state'), 1200)
-    notifications.push('已复制此项', 'success')
+    copyTimer = globalThis.setTimeout(() => {
+      if (copyAffordance.value?.cell === cell) {
+        copyAffordance.value = { ...copyAffordance.value, copied: false }
+      }
+    }, 1200)
   } catch {
     notifications.push('未能访问剪贴板，请检查系统权限', 'error')
   }
+}
+
+function copyFromAffordance() {
+  const cell = copyAffordance.value?.cell
+  if (cell) void copyCredentialValue(cell)
 }
 
 function insertTab() {
@@ -710,12 +859,64 @@ function alignSelection() {
 
 export type NotebookInlineFormat = 'bold' | 'italic' | 'underline' | 'heading' | 'bulletList' | 'orderedList'
 
+export type NotebookActiveFormats = Record<NotebookInlineFormat, boolean>
+
+const emptyFormats = (): NotebookActiveFormats => ({
+  bold: false,
+  italic: false,
+  underline: false,
+  heading: false,
+  bulletList: false,
+  orderedList: false,
+})
+
+const activeFormats = ref<NotebookActiveFormats>(emptyFormats())
+
 const inlineFormatCommands: Record<Exclude<NotebookInlineFormat, 'heading'>, string> = {
   bold: 'bold',
   italic: 'italic',
   underline: 'underline',
   bulletList: 'insertUnorderedList',
   orderedList: 'insertOrderedList',
+}
+
+function commandState(command: string) {
+  try {
+    return document.queryCommandState(command)
+  } catch {
+    return false
+  }
+}
+
+function selectionStartElement() {
+  const selection = window.getSelection()
+  const node = selection?.anchorNode
+  if (!node) return null
+  return node instanceof Element ? node : node.parentElement
+}
+
+function refreshActiveFormats() {
+  const start = selectionStartElement()
+  const next = !start || start.closest('table[data-notebook-block="credential"]')
+    ? emptyFormats()
+    : {
+      bold: commandState('bold'),
+      italic: commandState('italic'),
+      underline: commandState('underline'),
+      heading: Boolean(start.closest('h2')),
+      bulletList: commandState('insertUnorderedList'),
+      orderedList: commandState('insertOrderedList'),
+    }
+  if (
+    activeFormats.value.bold === next.bold
+    && activeFormats.value.italic === next.italic
+    && activeFormats.value.underline === next.underline
+    && activeFormats.value.heading === next.heading
+    && activeFormats.value.bulletList === next.bulletList
+    && activeFormats.value.orderedList === next.orderedList
+  ) return
+  activeFormats.value = next
+  emit('update:formats', next)
 }
 
 /** 原型 nb-toolbar 的格式按钮：恢复编辑器选区后执行浏览器富文本命令 */
@@ -735,6 +936,7 @@ function applyFormat(format: NotebookInlineFormat) {
     document.execCommand(inlineFormatCommands[format])
   }
   captureSelection()
+  refreshActiveFormats()
   emitContent()
 }
 
@@ -806,13 +1008,25 @@ async function handlePaste(event: ClipboardEvent) {
   notifications.push('已按笔记样式粘贴', 'success')
 }
 
+function syncCredentialTableFromEditable(target: HTMLElement) {
+  const table = target.closest<HTMLTableElement>('table[data-notebook-block="credential"]')
+  if (!table) return
+  if (target.matches('[data-credential-field], [data-credential-project]')) {
+    configureCredentialTable(table)
+  }
+  void nextTick(refreshCredentialControls)
+}
+
 function handleInput(event: Event) {
   const target = event.target instanceof HTMLElement ? event.target : null
   const input = event instanceof InputEvent ? event : null
   if (composingCredential || input?.isComposing) return
   if (target && isCredentialEditable(target)) {
     normalizeCredentialEditable(target, Boolean(input?.inputType.startsWith('delete')))
-    void nextTick(refreshCredentialControls)
+    syncCredentialTableFromEditable(target)
+    if (target.matches('td[data-credential-value]')) {
+      syncCopyAffordance(target as HTMLTableCellElement)
+    }
   }
   emitContent()
 }
@@ -827,8 +1041,8 @@ function handleCompositionEnd(event: CompositionEvent) {
   if (!isCredentialEditable(target)) return
   composingCredential = false
   normalizeCredentialEditable(target!)
+  syncCredentialTableFromEditable(target!)
   emitContent()
-  void nextTick(refreshCredentialControls)
 }
 
 function handleFocusOut(event: FocusEvent) {
@@ -850,23 +1064,26 @@ async function handleClick(event: MouseEvent) {
     }
     return
   }
+  const table = target?.closest<HTMLTableElement>('table[data-notebook-block="credential"]')
+  if (!table) return
+  activateCredentialTable(table)
   const cell = target?.closest<HTMLTableCellElement>('td[data-credential-value]')
-  const table = cell?.closest<HTMLTableElement>('table[data-notebook-block="credential"]')
-  if (cell && table?.dataset.editing !== 'true') {
-    event.preventDefault()
-    await copyCredentialValue(cell)
-  } else if (cell && table) {
-    activeRow.value = cell.closest('tr')
-    activeColumn.value = Array.from(cell.parentElement?.children ?? []).indexOf(cell)
+  const field = target?.closest<HTMLTableCellElement>('th[data-credential-field]')
+  const selected = cell ?? field
+  if (selected) {
+    activeColumn.value = Array.from(selected.parentElement?.children ?? []).indexOf(selected)
     markActiveColumn(table, activeColumn.value)
-    activateCredentialTable(table)
+  }
+  if (cell) {
+    activeRow.value = cell.closest('tr')
+    syncCopyAffordance(cell)
   }
 }
 
 function handleFocusIn(event: FocusEvent) {
   captureSelection()
   const target = event.target instanceof Element ? event.target : null
-  const table = target?.closest<HTMLTableElement>('table[data-notebook-block="credential"][data-editing="true"]')
+  const table = target?.closest<HTMLTableElement>('table[data-notebook-block="credential"]')
   if (!table) return
   const row = target?.closest<HTMLTableRowElement>('tbody tr')
   const field = target?.closest<HTMLTableCellElement>('th[data-credential-field]')
@@ -878,6 +1095,16 @@ function handleFocusIn(event: FocusEvent) {
     markActiveColumn(table, activeColumn.value)
   }
   activateCredentialTable(table)
+  if (cell) syncCopyAffordance(cell)
+}
+
+function handleBeforeInputDelete(event: InputEvent) {
+  if (event.inputType !== 'deleteContentBackward' && event.inputType !== 'deleteContentForward') return
+  const target = event.target instanceof HTMLElement ? event.target : null
+  if (target && isCredentialEditable(target)) return
+  if (deleteAdjacentCredentialTable(event.inputType === 'deleteContentBackward' ? 'backward' : 'forward')) {
+    event.preventDefault()
+  }
 }
 
 function handleKeydown(event: KeyboardEvent) {
@@ -889,8 +1116,8 @@ function handleKeydown(event: KeyboardEvent) {
     alignSelection()
     return
   }
+  const target = event.target instanceof HTMLElement ? event.target : null
   if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key.toLowerCase() === 'c') {
-    const target = event.target instanceof Element ? event.target : null
     const value = target?.closest<HTMLTableCellElement>('td[data-credential-value]')
     if (value) {
       event.preventDefault()
@@ -898,18 +1125,24 @@ function handleKeydown(event: KeyboardEvent) {
       return
     }
   }
-  if (event.key === 'Tab') {
-    event.preventDefault()
-    insertTab()
-    return
+  if (event.key === 'Backspace' || event.key === 'Delete') {
+    if (!(target && isCredentialEditable(target))
+      && deleteAdjacentCredentialTable(event.key === 'Backspace' ? 'backward' : 'forward')) {
+      event.preventDefault()
+      return
+    }
   }
-  const target = event.target instanceof Element ? event.target : null
-  const cell = target?.closest<HTMLTableCellElement>('td[data-credential-value]')
-  const table = cell?.closest<HTMLTableElement>('table[data-notebook-block="credential"]')
-  if (cell && table?.dataset.editing !== 'true' && (event.key === 'Enter' || event.key === ' ')) {
+  if (event.key === 'Tab') {
+    const cred = target?.closest<HTMLElement>(
+      '[data-credential-project], [data-credential-field], [data-credential-value]',
+    )
+    const table = cred?.closest<HTMLTableElement>('table[data-notebook-block="credential"]')
     event.preventDefault()
-    void copyCredentialValue(cell)
-    return
+    if (cred && table) {
+      moveCredentialFocus(table, cred, event.shiftKey ? -1 : 1)
+      return
+    }
+    insertTab()
   }
 }
 
@@ -969,11 +1202,17 @@ defineExpose({
   normalizeDocument,
   insertCredential,
   copyDocument,
+  activeFormats,
 })
 </script>
 
 <template>
-  <div ref="editorShell" class="notebook-rich-editor">
+  <div
+    ref="editorShell"
+    class="notebook-rich-editor"
+    @pointerover="handleShellPointerOver"
+    @pointerout="handleShellPointerOut"
+  >
     <article
       ref="editor"
       class="notebook-rich-editor__content"
@@ -986,6 +1225,7 @@ defineExpose({
       @keyup="captureSelection"
       @pointerup="captureSelection"
       @paste="handlePaste"
+      @beforeinput="handleBeforeInputDelete"
       @click="handleClick"
       @focusin="handleFocusIn"
       @focusout="handleFocusOut"
@@ -993,15 +1233,13 @@ defineExpose({
     />
     <!--
       工具栏不能放进 th[data-credential-project]：
-      contenteditable="false" 的子节点会让整个标题单元格在 WebKit 下失去可编辑性
-      （字段名与值单元格没有该子节点，所以只有标题受影响）。
-      改为渲染在非可编辑的外层容器里，按表格位置绝对定位到卡片右上角。
+      contenteditable="false" 的子节点会让整个标题单元格在 WebKit 下失去可编辑性。
+      贴在标题行右侧的外层容器里，按单元格实测坐标绝对定位。
     -->
     <div
       v-for="control in credentialControls"
       :key="control.key"
       class="notebook-credential-toolbar"
-      :class="{ 'is-editing': control.editing }"
       :style="control.style"
       :data-credential-control-index="control.index"
       data-credential-runtime-controls
@@ -1010,59 +1248,110 @@ defineExpose({
       @pointerdown.prevent.stop
       @click.stop
     >
-        <BaseButton
-          v-if="control.editing"
-          variant="ghost"
-          size="sm"
-          aria-label="删除当前记录"
-          @click="runCredentialAction(control.table, removeCredentialRow)"
-        >− 记录</BaseButton>
-        <BaseButton
-          v-if="control.editing"
-          variant="ghost"
-          size="sm"
-          aria-label="新增记录"
-          @click="runCredentialAction(control.table, addCredentialRow)"
-        >＋ 记录</BaseButton>
-        <BaseButton
-          v-if="control.editing"
-          variant="ghost"
-          size="sm"
-          aria-label="删除当前字段"
-          @click="runCredentialAction(control.table, removeCredentialField)"
-        >− 字段</BaseButton>
-        <BaseButton
-          v-if="control.editing"
-          variant="ghost"
-          size="sm"
-          aria-label="新增字段"
-          @click="runCredentialAction(control.table, addCredentialField)"
-        >＋ 字段</BaseButton>
-        <BaseButton
-          class="notebook-credential-toolbar__mode"
-          variant="secondary"
-          size="sm"
-          :aria-label="control.editing ? '完成' : '编辑'"
-          :title="control.editing ? '完成' : '编辑凭据信息表'"
-          @click="setCredentialEditingFor(control.table, !control.editing)"
+      <BaseIconButton
+        size="sm"
+        label="新增记录"
+        title="新增记录"
+        @click="runCredentialAction(control.table, addCredentialRow)"
+      >
+        <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 5v14" /><path d="M5 12h14" />
+        </svg>
+      </BaseIconButton>
+      <BaseIconButton
+        size="sm"
+        label="新增字段"
+        title="新增字段"
+        @click="runCredentialAction(control.table, addCredentialField)"
+      >
+        <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="4" y="5" width="16" height="14" rx="2" />
+          <path d="M9 5v14" /><path d="M12 10v4" /><path d="M10 12h4" />
+        </svg>
+      </BaseIconButton>
+      <BaseIconButton
+        size="sm"
+        variant="danger"
+        label="删除当前记录"
+        title="删除当前记录"
+        @click="runCredentialAction(control.table, removeCredentialRow)"
+      >
+        <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 12h14" />
+        </svg>
+      </BaseIconButton>
+      <BaseIconButton
+        size="sm"
+        variant="danger"
+        label="删除当前字段"
+        title="删除当前字段"
+        @click="runCredentialAction(control.table, removeCredentialField)"
+      >
+        <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="4" y="5" width="16" height="14" rx="2" />
+          <path d="M9 5v14" /><path d="M10 12h4" />
+        </svg>
+      </BaseIconButton>
+      <BaseIconButton
+        size="sm"
+        variant="danger"
+        label="删除凭证表"
+        title="删除整张凭证表"
+        @click="runCredentialAction(control.table, deleteCredentialTable)"
+      >
+        <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 7h16" />
+          <path d="M9 7V5h6v2" />
+          <path d="M7 7l1 12h8l1-12" />
+        </svg>
+      </BaseIconButton>
+    </div>
+    <div
+      v-if="copyAffordance"
+      class="notebook-credential-copy"
+      :class="{ 'is-copied': copyAffordance.copied }"
+      :style="copyAffordance.style"
+      data-credential-copy
+      data-credential-runtime-controls
+      @pointerdown.prevent.stop
+      @click.stop
+    >
+      <BaseIconButton
+        size="sm"
+        :label="copyAffordance.copied ? '已复制' : '复制此项'"
+        :title="copyAffordance.copied ? '已复制' : '复制此项'"
+        @click="copyFromAffordance"
+      >
+        <svg
+          v-if="copyAffordance.copied"
+          aria-hidden="true"
+          viewBox="0 0 24 24"
+          width="14"
+          height="14"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
         >
-          <span v-if="control.editing">完成</span>
-          <svg
-            v-else
-            aria-hidden="true"
-            viewBox="0 0 24 24"
-            width="14"
-            height="14"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.8"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path d="M12 20h9" />
-            <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
-          </svg>
-      </BaseButton>
+          <path d="M5 12.5 9.5 17 19 7" />
+        </svg>
+        <svg
+          v-else
+          aria-hidden="true"
+          viewBox="0 0 24 24"
+          width="14"
+          height="14"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <rect x="8" y="8" width="12" height="12" rx="2" />
+          <path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" />
+        </svg>
+      </BaseIconButton>
     </div>
   </div>
 </template>

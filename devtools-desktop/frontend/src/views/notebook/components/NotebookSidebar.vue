@@ -137,7 +137,7 @@ function formatUpdated(value: string) {
         >
           <span class="notebook-note-item__heading">
             <strong>{{ note.title || '无标题' }}</strong>
-            <small v-if="note.pinned">PIN</small>
+            <small v-if="note.pinned" class="notebook-note-item__pin">置顶</small>
           </span>
           <span class="notebook-note-item__preview">
             {{ note.preview || '暂无正文内容' }}

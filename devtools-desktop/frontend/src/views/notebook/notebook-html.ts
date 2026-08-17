@@ -101,6 +101,10 @@ export function plainTextToNotebookHtml(text: string) {
   }).join('')
 }
 
+export function isSecretCredentialField(name: string) {
+  return /密码|口令|密匙|密钥|token|secret|password|passwd|accesskey|(?:^|[^a-z])key(?:$|[^a-z])/i.test(name.trim())
+}
+
 export function credentialTemplateHtml() {
   return '<table data-notebook-block="credential"><thead><tr><th data-credential-project colspan="2"></th></tr><tr><th data-credential-field>账号</th><th data-credential-field>密码</th></tr></thead><tbody><tr><td data-credential-value></td><td data-credential-value></td></tr></tbody></table><p><br></p>'
 }

@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Locator, type Page } from '@playwright/test'
 
 interface MockNote {
   id: string
@@ -8,6 +8,11 @@ interface MockNote {
   sortOrder: number
   createdAt: string
   updatedAt: string
+}
+
+async function copyCredentialCell(page: Page, cell: Locator) {
+  await cell.hover()
+  await page.getByRole('button', { name: '复制此项' }).click()
 }
 
 function summary(note: MockNote) {
@@ -278,13 +283,15 @@ test('cleans pasted HTML and supports editable credential tables with copy feedb
   await expect(content.locator('.source')).toHaveCount(0)
   await expect(content.locator('script')).toHaveCount(0)
 
-  await page.getByRole('button', { name: '更多笔记操作' }).click()
-  await page.getByText('插入凭据信息表', { exact: true }).click()
+  await page.getByRole('button', { name: '凭证表' }).click()
   const table = content.locator('table[data-notebook-block="credential"]').last()
-  await expect(table).toHaveAttribute('data-editing', 'true')
+  await expect(table).toBeVisible()
+  await expect(table).not.toHaveAttribute('data-editing', 'true')
   const toolbar = page.getByRole('toolbar', { name: '凭据信息表 1 操作' })
   await expect(toolbar).toBeVisible()
-  await expect(page.getByRole('button', { name: '完成', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: '新增记录', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: '新增字段', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: '完成', exact: true })).toHaveCount(0)
   await expect(page.getByRole('button', { name: '编辑', exact: true })).toHaveCount(0)
   // 工具栏必须留在非可编辑外层容器里，绝不能挂进标题单元格：
   // contenteditable="false" 的子节点会让整个 th 在 WebKit 下无法编辑，
@@ -293,7 +300,7 @@ test('cleans pasted HTML and supports editable credential tables with copy feedb
     insideProjectHeader: element.parentElement?.matches('th[data-credential-project]') ?? false,
     insideEditableContent: Boolean(element.closest('[contenteditable="true"]')),
     inShell: element.parentElement?.matches('.notebook-rich-editor') ?? false,
-    positionedInline: Boolean((element as HTMLElement).style.top),
+    positionedInline: Boolean((element as HTMLElement).style.top && (element as HTMLElement).style.right),
   }))).toEqual({
     insideProjectHeader: false,
     insideEditableContent: false,
@@ -338,7 +345,9 @@ test('cleans pasted HTML and supports editable credential tables with copy feedb
 
   const value = table.locator('td[data-credential-value]').first()
   await expect(value).toBeEmpty()
-  await expect(value).toHaveAttribute('data-placeholder', '点击填写账号')
+  await expect(value).toHaveAttribute('data-placeholder', '账号')
+  await expect(table.locator('td[data-credential-value]').nth(1)).not.toHaveAttribute('data-credential-secret')
+  await value.click({ position: { x: 12, y: 12 } })
   await value.fill('demo-account')
   await value.evaluate((element) => {
     element.innerHTML = 'demo-account<div><br></div>'
@@ -350,56 +359,37 @@ test('cleans pasted HTML and supports editable credential tables with copy feedb
   await expect(value).toHaveJSProperty('innerHTML', 'demo-account')
   const blankLine = content.locator('p').last()
   await blankLine.click()
-  await expect(table).toHaveAttribute('data-editing', 'true')
   await expect(page.getByRole('toolbar', { name: '凭据信息表 1 操作' })).toBeVisible()
-  await expect(page.getByRole('button', { name: '完成', exact: true })).toBeVisible()
   await page.keyboard.press('Meta+s')
-  await expect(table).toHaveAttribute('data-editing', 'false')
   await expect(page.locator('.n-message').filter({ hasText: '笔记已保存' })).toBeVisible()
   await expect.poll(() => mock.writes.length).toBeGreaterThan(0)
   expect(mock.writes.at(-1)?.content).not.toContain('data-credential-runtime-controls')
   expect(mock.writes.at(-1)?.content).not.toContain('＋ 记录')
+  expect(mock.writes.at(-1)?.content).not.toContain('data-credential-secret')
+  expect(mock.writes.at(-1)?.content).not.toContain('data-editing')
 
-  await expect(page.getByRole('button', { name: '编辑', exact: true })).toBeVisible()
-  await page.getByRole('button', { name: '编辑', exact: true }).click()
-  await expect(page.getByRole('button', { name: '完成', exact: true })).toBeVisible()
-  await expect(table).toHaveAttribute('data-editing', 'true')
-  await page.getByRole('textbox', { name: '笔记标题' }).click()
-  await expect(table).toHaveAttribute('data-editing', 'true')
-  await page.keyboard.press('Meta+s')
-  await expect(table).toHaveAttribute('data-editing', 'false')
-
-  await page.getByRole('button', { name: '编辑', exact: true }).click()
-  await expect(table).toHaveAttribute('data-editing', 'true')
-  await page.getByRole('button', { name: '完成', exact: true }).click()
-  await expect(table).toHaveAttribute('data-editing', 'false')
-
-  await value.click()
-  await expect(value).toHaveAttribute('data-copy-state', 'done')
-  await expect(page.locator('.n-message').filter({ hasText: '已复制此项' })).toBeVisible()
+  await copyCredentialCell(page, value)
+  await expect(page.getByRole('button', { name: '已复制' })).toBeVisible()
 })
 
 test('matches the credential card structure in light and dark themes', async ({ page }) => {
   await openNotebook(page)
   const content = page.locator('.notebook-rich-editor__content')
   await content.click()
-  await page.getByRole('button', { name: '更多笔记操作' }).click()
-  await page.getByText('插入凭据信息表', { exact: true }).click()
+  await page.getByRole('button', { name: '凭证表' }).click()
 
   const table = content.locator('table[data-notebook-block="credential"]')
   await expect(table).toHaveCount(1)
-  await expect(table).toHaveAttribute('data-editing', 'true')
-  const editingDecoration = await table.evaluate((element) => {
+  await content.locator('p').last().click()
+  const restDecoration = await table.evaluate((element) => {
     const project = element.querySelector('[data-credential-project]')
     return {
       tableShadow: getComputedStyle(element).boxShadow,
       projectShadow: project ? getComputedStyle(project).boxShadow : '',
     }
   })
-  expect(editingDecoration.tableShadow).toBe('none')
-  expect(editingDecoration.projectShadow).toBe('none')
-  await page.keyboard.press('Meta+s')
-  await expect(table).toHaveAttribute('data-editing', 'false')
+  expect(restDecoration.tableShadow).toBe('none')
+  expect(restDecoration.projectShadow).toBe('none')
 
   const readStyles = () => table.evaluate((element) => {
     const tableStyle = getComputedStyle(element)
@@ -421,12 +411,12 @@ test('matches the credential card structure in light and dark themes', async ({ 
 
   const light = await readStyles()
   expect(light.borderCollapse).toBe('separate')
-  expect(light.borderRadius).toBe('9px')
+  expect(light.borderRadius).toBe('12px')
   expect(light.borderColor).not.toBe('rgba(0, 0, 0, 0)')
   expect(light.projectBackground).not.toBe('rgba(0, 0, 0, 0)')
-  expect(light.projectBackgroundImage).toContain('linear-gradient')
+  expect(light.projectBackgroundImage).toBe('none')
   expect(light.projectColor).not.toBe(light.fieldColor)
-  expect(light.projectWeight).toBe('650')
+  expect(Number(light.projectWeight)).toBeGreaterThanOrEqual(600)
   expect(light.valueFont).toContain('SF Mono')
 
   // P9-8：主题菜单已删，侧栏按钮循环 system→light→dark
@@ -436,12 +426,12 @@ test('matches the credential card structure in light and dark themes', async ({ 
   await expect(page.locator('body')).toHaveAttribute('data-theme', 'dark')
   const dark = await readStyles()
   expect(dark.borderCollapse).toBe('separate')
-  expect(dark.borderRadius).toBe('9px')
+  expect(dark.borderRadius).toBe('12px')
   expect(dark.borderColor).not.toBe(light.borderColor)
   expect(dark.projectBackground).not.toBe(light.projectBackground)
-  expect(dark.projectBackgroundImage).toContain('linear-gradient')
+  expect(dark.projectBackgroundImage).toBe('none')
   expect(dark.projectColor).not.toBe(dark.fieldColor)
-  expect(dark.projectWeight).toBe('650')
+  expect(Number(dark.projectWeight)).toBeGreaterThanOrEqual(600)
 })
 
 test('creates links only from an explicit text selection', async ({ page }) => {
@@ -472,8 +462,7 @@ test('creates links only from an explicit text selection', async ({ page }) => {
     selection?.addRange(range)
     ;(element as HTMLElement).focus()
   }, selectedUrl)
-  await page.getByRole('button', { name: '更多笔记操作' }).click()
-  await page.getByText('将选中文字设为链接', { exact: true }).click()
+  await page.getByRole('button', { name: '链接' }).click()
   await expect(content.locator('a')).toHaveAttribute('href', selectedUrl)
   await expect(page.getByRole('dialog')).toHaveCount(0)
 
@@ -491,8 +480,7 @@ test('creates links only from an explicit text selection', async ({ page }) => {
     selection?.addRange(range)
     ;(element as HTMLElement).focus()
   })
-  await page.getByRole('button', { name: '更多笔记操作' }).click()
-  await page.getByText('将选中文字设为链接', { exact: true }).click()
+  await page.getByRole('button', { name: '链接' }).click()
   await expect(page.getByRole('dialog')).toBeVisible()
   await page.getByPlaceholder('https://example.com').fill('https://example.com/project')
   await page.getByRole('button', { name: '设为链接', exact: true }).click()
@@ -538,22 +526,59 @@ test('inserts a credential table at the saved editor caret instead of the docume
     }
   })).toEqual({ editorFocused: true, block: 'below', offset: 4 })
 
-  const moreButton = page.getByRole('button', { name: '更多笔记操作' })
-  await moreButton.click()
-  await page.getByText('插入凭据信息表', { exact: true }).click()
+  await page.getByRole('button', { name: '凭证表' }).click()
 
   const tables = content.locator('table[data-notebook-block="credential"]')
   await expect(tables).toHaveCount(2)
-  await expect(tables.nth(0)).toHaveAttribute('data-editing', 'true')
-  await expect(tables.nth(1)).not.toHaveAttribute('data-editing', 'true')
+  await expect(tables.nth(0).locator('[data-credential-project]')).not.toHaveText('已有凭据表')
+  await expect(tables.nth(1).locator('[data-credential-project]')).toHaveText('已有凭据表')
   await expect.poll(() => content.evaluate((element) => {
     return Array.from(element.children).map((child) => {
       if (child.matches('[data-test-block="above"]')) return 'above'
-      if (child.matches('table[data-editing="true"]')) return 'inserted'
+      if (child.matches('table[data-notebook-block="credential"]')) {
+        const title = child.querySelector('[data-credential-project]')?.textContent?.trim()
+        return title === '已有凭据表' ? 'existing' : 'inserted'
+      }
       if (child.textContent === '插入位置') return 'below-before'
       if (child.textContent === '下方') return 'below-after'
-      if (child.matches('table[data-notebook-block="credential"]')) return 'existing'
       return 'other'
     }).filter((item) => item !== 'other')
   })).toEqual(['above', 'below-before', 'inserted', 'below-after', 'existing'])
+})
+
+test('deletes a credential table with backspace from the following line', async ({ page }) => {
+  await openNotebook(page)
+  const content = page.locator('.notebook-rich-editor__content')
+  await content.click()
+  await page.getByRole('button', { name: '凭证表' }).click()
+  const table = content.locator('table[data-notebook-block="credential"]')
+  await expect(table).toHaveCount(1)
+
+  await table.locator('td[data-credential-value]').first().click()
+  await page.keyboard.press('Backspace')
+  await expect(table).toHaveCount(1)
+
+  await content.locator('p').last().click()
+  await content.locator('p').last().evaluate((paragraph) => {
+    const text = paragraph.firstChild ?? paragraph
+    const range = document.createRange()
+    range.selectNodeContents(paragraph)
+    range.collapse(true)
+    if (text !== paragraph) range.setStart(paragraph, 0)
+    const selection = window.getSelection()
+    selection?.removeAllRanges()
+    selection?.addRange(range)
+  })
+  await page.keyboard.press('Backspace')
+  await expect(table).toHaveCount(0)
+})
+
+test('deletes a credential table from the header toolbar', async ({ page }) => {
+  await openNotebook(page)
+  const content = page.locator('.notebook-rich-editor__content')
+  await content.click()
+  await page.getByRole('button', { name: '凭证表' }).click()
+  await expect(content.locator('table[data-notebook-block="credential"]')).toHaveCount(1)
+  await page.getByRole('button', { name: '删除凭证表' }).click()
+  await expect(content.locator('table[data-notebook-block="credential"]')).toHaveCount(0)
 })

@@ -89,7 +89,7 @@
 .notebook-list-panel__result {
   overflow: hidden;
   color: var(--color-text-subtle);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -120,14 +120,14 @@
 
 /* 原型 .nb-row：紧凑两行（标题 / 预览·元信息） */
 .notebook-note-item {
-  --base-selectable-min-height: 58px;
+  --base-selectable-min-height: 64px;
   --base-selectable-padding: 10px 12px;
   --base-selectable-background: transparent;
   --base-selectable-hover-background: var(--color-surface-subtle);
-  --base-selectable-selected-background: color-mix(in srgb, var(--color-action) 11%, transparent);
-  --base-selectable-selected-border: transparent;
-  --base-selectable-selected-shadow: none;
-  gap: 3px;
+  --base-selectable-selected-background: color-mix(in srgb, var(--color-action) 10%, var(--color-surface));
+  --base-selectable-selected-border: color-mix(in srgb, var(--color-action) 22%, transparent);
+  --base-selectable-selected-shadow: inset 3px 0 0 var(--color-action);
+  gap: 4px;
   border-radius: 11px;
 }
 
@@ -148,20 +148,27 @@
   white-space: nowrap;
 }
 
-.notebook-note-item__heading small {
-  color: var(--color-action-hover);
-  font-family: var(--font-family-mono);
-  font-size: 8px;
-  letter-spacing: .08em;
+.notebook-note-item__heading small,
+.notebook-note-item__pin {
+  flex: none;
+  padding: 1px 6px;
+  color: var(--color-action);
+  background: var(--color-action-subtle);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-family-sans);
+  font-size: 10px;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.04em;
 }
 
 .notebook-note-item__preview {
+  display: -webkit-box;
   overflow: hidden;
   color: var(--color-text-subtle);
-  font-size: 11px;
-  line-height: 1.5;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: var(--font-size-xs);
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .notebook-note-item__meta {
@@ -183,8 +190,8 @@
 .notebook-list-panel__footer {
   padding: 8px 12px;
   color: var(--color-text-subtle);
-  border-top: 1px solid var(--color-border);
-  font-size: 9px;
+  border-top: 1px solid var(--color-border-soft);
+  font-size: var(--font-size-xs);
   text-align: center;
 }
 
@@ -199,13 +206,13 @@
 
 .notebook-editor-panel__header {
   display: flex;
-  min-height: 58px;
+  min-height: 48px;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  padding: 10px var(--space-4);
+  padding: 8px var(--space-4);
   background: color-mix(in srgb, var(--color-surface-raised) 24%, transparent);
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border-soft);
 }
 
 .notebook-editor-context,
@@ -227,15 +234,11 @@
   gap: var(--space-1);
 }
 
-.notebook-more-menu-trigger {
-  display: inline-flex;
-}
-
 .notebook-editor-panel__body {
-  display: grid;
+  display: flex;
   flex: 1 1 auto;
+  flex-direction: column;
   min-height: 0;
-  grid-template-rows: auto auto auto auto minmax(0, 1fr);
   overflow: hidden;
 }
 
@@ -253,17 +256,18 @@
 }
 
 .notebook-editor-title {
-  padding: 12px 18px 4px;
+  padding: 8px 22px 0;
 }
 
-/* 原型 .nb-toolbar：扁平格式工具条 */
+/* 格式条贴在标题下，和正文同一条写作带 */
 .notebook-format-toolbar {
   display: flex;
   flex: none;
   flex-wrap: wrap;
   align-items: center;
   gap: 2px;
-  padding: 4px 16px 6px;
+  padding: 8px 18px 10px;
+  border-bottom: 1px solid var(--color-border-soft);
 }
 
 .notebook-format-toolbar :is(.base-button) {
@@ -271,51 +275,55 @@
   font-weight: var(--font-weight-medium);
 }
 
-.notebook-format-toolbar__tool.is-bold {
-  font-weight: var(--font-weight-bold);
+.notebook-format-toolbar__tool.is-active,
+.notebook-format-toolbar__tool.is-active:hover {
+  color: var(--color-action);
+  background: var(--color-action-subtle);
 }
 
-.notebook-format-toolbar__tool.is-italic {
-  font-style: italic;
-}
-
-.notebook-format-toolbar__tool.is-underline {
-  text-decoration: underline;
-}
-
-.notebook-format-toolbar__tool:is(.is-heading, .is-bulletList, .is-orderedList) {
-  font-size: 10.5px;
+.notebook-format-toolbar__action {
+  gap: 6px;
 }
 
 .notebook-format-toolbar__divider {
   width: 1px;
-  height: 16px;
-  margin: 0 6px;
+  height: 18px;
+  margin: 0 8px;
   background: var(--color-border);
+}
+
+.notebook-format-toolbar__tool {
+  min-width: var(--component-control-height-md);
+}
+
+.notebook-format-toolbar svg {
+  display: block;
+  flex: none;
 }
 
 .notebook-rich-editor {
   position: relative;
-  grid-row: -2 / -1;
+  display: flex;
+  flex: 1 1 auto;
   min-width: 0;
   min-height: 0;
-  margin: 0 18px 14px;
+  margin: 0 0 14px;
   overflow: hidden;
-  background: color-mix(in srgb, var(--color-surface-raised) 18%, transparent);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
+  background: transparent;
+  border: 0;
+  border-radius: 0;
 }
 
 .notebook-rich-editor__content {
   width: 100%;
-  height: 100%;
+  flex: 1 1 auto;
   min-height: 0;
-  padding: 19px 21px 72px;
+  padding: 16px 22px 48px;
   overflow: auto;
   color: var(--color-text);
   caret-color: var(--color-action-hover);
-  font-size: 13px;
-  line-height: 1.72;
+  font-size: 13.5px;
+  line-height: 1.8;
   outline: 0;
   overflow-wrap: anywhere;
   scrollbar-width: thin;
@@ -329,7 +337,7 @@
 }
 
 .notebook-rich-editor__content :is(p, ul, ol, blockquote, pre, table) {
-  margin: 0 0 13px;
+  margin: 0 0 14px;
 }
 
 .notebook-rich-editor__content :is(h2, h3) {
@@ -355,11 +363,19 @@
 }
 
 .notebook-rich-editor__content pre {
-  padding: 12px;
+  padding: 12px 14px;
   overflow: auto;
   background: color-mix(in srgb, var(--color-page) 78%, var(--color-surface-raised));
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-soft);
   border-radius: var(--radius-md);
+}
+
+.notebook-rich-editor__content code {
+  padding: 0.1em 0.35em;
+  background: var(--color-surface-subtle);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-family-mono);
+  font-size: 0.92em;
 }
 
 .notebook-rich-editor__content img {
@@ -376,16 +392,18 @@
   border-collapse: separate;
   border-spacing: 0;
   overflow: hidden;
-  border: 1px solid var(--color-border);
-  border-radius: 9px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-soft);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
 }
 
 .notebook-rich-editor__content th,
 .notebook-rich-editor__content td {
-  padding: 8px 10px;
+  padding: 9px 12px;
   text-align: left;
-  border-right: 1px solid var(--color-border);
-  border-bottom: 1px solid var(--color-border);
+  border-right: 1px solid var(--color-border-soft);
+  border-bottom: 1px solid var(--color-border-soft);
 }
 
 .notebook-rich-editor__content tr:last-child > * {
@@ -398,154 +416,85 @@
 
 .notebook-rich-editor__content table[data-notebook-block="credential"] {
   table-layout: fixed;
-  min-width: max(100%, calc(var(--credential-columns, 2) * 150px));
+  min-width: max(100%, calc(var(--credential-columns, 2) * 148px));
+  margin-bottom: 18px;
+  box-shadow: none;
+}
+
+.notebook-rich-editor__content table[data-notebook-block="credential"] th,
+.notebook-rich-editor__content table[data-notebook-block="credential"] td {
+  padding: 7px 10px;
 }
 
 .notebook-rich-editor__content table[data-notebook-block="credential"] th {
   color: var(--color-text-muted);
-  background: color-mix(in srgb, var(--color-surface-raised) 42%, transparent);
-  font-weight: 650;
-  vertical-align: top;
+  background: color-mix(in srgb, var(--color-surface-subtle) 88%, transparent);
+  font-weight: var(--font-weight-medium);
+  vertical-align: middle;
 }
 
 .notebook-rich-editor__content table[data-notebook-block="credential"] th[data-credential-project] {
   position: relative;
-  padding: 11px 52px 11px 12px;
+  padding: 8px 144px 8px 12px;
   color: var(--color-text);
-  background:
-    linear-gradient(90deg, color-mix(in srgb, var(--color-action) 10%, transparent), transparent 62%),
-    color-mix(in srgb, var(--color-surface-raised) 52%, transparent);
+  background: color-mix(in srgb, var(--color-action) 8%, var(--color-surface));
   font-size: 13px;
+  font-weight: var(--font-weight-semibold);
   letter-spacing: -.01em;
-}
-
-.notebook-rich-editor__content table[data-notebook-block="credential"][data-editing="true"] th[data-credential-project] {
-  padding-right: 306px;
+  cursor: text;
+  outline: 0;
 }
 
 .notebook-rich-editor__content thead tr:last-child th {
-  padding-block: 7px;
+  padding-block: 6px;
   color: var(--color-text-subtle);
-  font-size: 9px;
-  letter-spacing: .08em;
+  font-size: 10px;
+  letter-spacing: .06em;
   text-transform: uppercase;
+}
+
+.notebook-rich-editor__content table[data-notebook-block="credential"] thead tr:last-child th {
+  font-size: 12px;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .notebook-rich-editor__content td[data-credential-value] {
   position: relative;
-  padding-right: 68px;
+  padding-right: 36px;
   font-family: var(--font-family-mono);
-  font-size: 12px;
-  vertical-align: top;
-  transition:
-    color var(--duration-fast) var(--ease-standard),
-    background-color var(--duration-fast) var(--ease-standard),
-    box-shadow var(--duration-fast) var(--ease-standard);
-}
-
-.notebook-rich-editor__content table[data-notebook-block="credential"]:not([data-editing="true"]) td[data-credential-value] {
-  cursor: pointer;
+  font-size: 12.5px;
+  vertical-align: middle;
+  cursor: text;
   outline: 0;
 }
 
-.notebook-rich-editor__content table[data-notebook-block="credential"]:not([data-editing="true"]) td[data-credential-value]::after {
-  position: absolute;
-  top: 50%;
-  right: 10px;
-  padding: 3px 6px;
-  color: var(--color-text-subtle);
-  background: color-mix(in srgb, var(--color-surface-raised) 72%, transparent);
-  border: 1px solid transparent;
-  border-radius: 5px;
-  content: "复制";
-  font-family: var(--font-family-sans);
-  font-size: 8px;
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(-50%);
-  transition:
-    opacity var(--duration-fast) var(--ease-standard),
-    color var(--duration-fast) var(--ease-standard),
-    border-color var(--duration-fast) var(--ease-standard);
-}
-
-.notebook-rich-editor__content table[data-notebook-block="credential"]:not([data-editing="true"]) td[data-credential-value]:is(:hover, :focus-visible) {
-  color: var(--color-action-hover);
-  background: color-mix(in srgb, var(--color-action) 7%, transparent);
-  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--color-action) 52%, transparent);
-}
-
-.notebook-rich-editor__content table[data-notebook-block="credential"]:not([data-editing="true"]) td[data-credential-value]:is(:hover, :focus-visible)::after,
-.notebook-rich-editor__content td[data-copy-state="done"]::after {
-  opacity: 1;
-}
-
-.notebook-rich-editor__content td[data-copy-state="done"]::after {
-  color: var(--color-success);
-  border-color: color-mix(in srgb, var(--color-success) 28%, transparent);
-  content: "已复制";
-}
-
-.notebook-rich-editor__content table[data-editing="true"] {
-  border-color: var(--color-border);
-  box-shadow: none;
-}
-
-.notebook-rich-editor__content table[data-editing="true"] td[data-credential-value] {
-  cursor: text;
+.notebook-rich-editor__content table[data-notebook-block="credential"] tbody tr:hover td {
   background: color-mix(in srgb, var(--color-action) 4%, transparent);
-  outline: 0;
 }
 
-.notebook-rich-editor__content table[data-editing="true"] th[data-credential-project] {
+.notebook-rich-editor__content table[data-notebook-block="credential"] th[data-credential-field] {
   cursor: text;
   outline: 0;
-  box-shadow: none;
 }
 
-.notebook-rich-editor__content table[data-editing="true"] th[data-credential-field] {
-  cursor: text;
-  outline: 0;
-  transition:
-    color var(--duration-fast) var(--ease-standard),
-    background-color var(--duration-fast) var(--ease-standard),
-    box-shadow var(--duration-fast) var(--ease-standard);
+.notebook-rich-editor__content table[data-notebook-block="credential"] [data-active-column] {
+  background: color-mix(in srgb, var(--color-action) 5%, transparent);
 }
 
-.notebook-rich-editor__content table[data-editing="true"] [data-active-column] {
-  color: var(--color-action-hover);
-  background: color-mix(in srgb, var(--color-action) 7%, transparent);
-  box-shadow: none;
-}
-
-.notebook-rich-editor__content table[data-editing="true"] [contenteditable="true"]:focus {
+.notebook-rich-editor__content table[data-notebook-block="credential"] [contenteditable="true"]:focus {
   position: relative;
   z-index: 1;
-  background: color-mix(in srgb, var(--color-action) 8%, transparent);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-action) 68%, transparent);
+  background: color-mix(in srgb, var(--color-action) 7%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-action) 42%, transparent);
 }
 
-.notebook-rich-editor__content table[data-editing="true"] [data-placeholder]:empty::before {
+.notebook-rich-editor__content table[data-notebook-block="credential"] [data-placeholder]:empty::before,
+.notebook-rich-editor__content table[data-notebook-block="credential"] th[data-credential-project][data-credential-project-empty="true"]::before {
   color: var(--color-text-subtle);
   content: attr(data-placeholder);
   font-family: var(--font-family-sans);
-  font-weight: var(--font-weight-normal);
-  pointer-events: none;
-}
-
-.notebook-rich-editor__content table[data-editing="true"] th[data-credential-project][data-credential-project-empty="true"]::before {
-  color: var(--color-text-subtle);
-  content: attr(data-placeholder);
-  font-family: var(--font-family-sans);
-  font-weight: var(--font-weight-normal);
-  pointer-events: none;
-}
-
-.notebook-rich-editor__content table[data-notebook-block="credential"] th[data-credential-field][data-placeholder]:empty::before {
-  color: var(--color-text-subtle);
-  content: attr(data-placeholder);
-  font-family: var(--font-family-sans);
-  font-weight: var(--font-weight-normal);
+  font-weight: var(--font-weight-regular);
   pointer-events: none;
 }
 
@@ -558,7 +507,7 @@
 }
 
 /*
-  定位相对 .notebook-rich-editor（非可编辑外层），top/right 由脚本按标题单元格实测写入内联样式。
+  定位相对 .notebook-rich-editor（非可编辑外层），top/right 由脚本按标题单元格实测写入。
   不能再挂进 th[data-credential-project]：contenteditable="false" 的子节点
   会让整个标题单元格在 WebKit 下无法编辑。
 */
@@ -567,41 +516,21 @@
   z-index: 4;
   display: flex;
   align-items: center;
-  gap: 2px;
-  padding: 3px;
-  background: color-mix(in srgb, var(--color-surface) 96%, transparent);
-  border: 1px solid var(--color-border-strong);
+  gap: 0;
+  padding: 1px;
+  background: color-mix(in srgb, var(--color-surface) 92%, transparent);
+  border: 1px solid var(--color-border-soft);
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-lg);
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(10px);
 }
 
-.notebook-credential-toolbar:not(.is-editing) {
-  width: 32px;
-  height: 30px;
-  justify-content: center;
-  padding: 2px;
-  background: color-mix(in srgb, var(--color-surface-raised) 90%, transparent);
-  box-shadow: var(--shadow-sm);
+.notebook-credential-copy {
+  position: absolute;
+  z-index: 5;
 }
 
-.notebook-credential-toolbar:not(.is-editing) .notebook-credential-toolbar__mode {
-  width: 26px;
-  min-width: 26px;
-  height: 24px;
-  padding: 0;
-  color: var(--color-text-muted);
-  border-color: transparent;
-}
-
-.notebook-credential-toolbar:not(.is-editing) .notebook-credential-toolbar__mode:hover {
-  color: var(--color-action-hover);
-  background: color-mix(in srgb, var(--color-action) 10%, transparent);
-}
-
-.notebook-credential-toolbar .base-button--ghost:nth-child(1),
-.notebook-credential-toolbar .base-button--ghost:nth-child(3) {
-  color: var(--color-danger);
+.notebook-credential-copy.is-copied {
+  color: var(--color-success);
 }
 
 .notebook-editor-panel__footer {
@@ -610,11 +539,11 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  padding: 8px 18px;
+  padding: 8px 22px;
   color: var(--color-text-subtle);
   background: color-mix(in srgb, var(--color-surface-raised) 22%, transparent);
-  border-top: 1px solid var(--color-border);
-  font-size: 9px;
+  border-top: 1px solid var(--color-border-soft);
+  font-size: var(--font-size-xs);
 }
 
 @media (max-width: 1040px) {
@@ -669,19 +598,19 @@
   }
 
   .notebook-editor-title {
-    padding: 10px 12px 4px;
+    padding: 8px 14px 0;
   }
 
   .notebook-format-toolbar {
-    padding-inline: 10px;
+    padding-inline: 12px;
   }
 
   .notebook-rich-editor {
-    margin: 0 12px 10px;
+    margin: 0 0 12px;
   }
 
   .notebook-rich-editor__content {
-    padding: 15px 16px 64px;
+    padding: 14px 16px 40px;
   }
 }
 

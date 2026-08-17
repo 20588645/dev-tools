@@ -3,18 +3,16 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 
 import BaseButton from '@/components/base/BaseButton.vue'
 import BaseCard from '@/components/base/BaseCard.vue'
-import BaseIconButton from '@/components/base/BaseIconButton.vue'
 import StatusIndicator from '@/components/base/StatusIndicator.vue'
 import BaseDialog from '@/components/feedback/BaseDialog.vue'
 import EmptyState from '@/components/feedback/EmptyState.vue'
 import ErrorState from '@/components/feedback/ErrorState.vue'
 import LoadingState from '@/components/feedback/LoadingState.vue'
 import BaseInput from '@/components/form/BaseInput.vue'
-import BaseDropdownMenu from '@/components/overlay/BaseDropdownMenu.vue'
 
 import type { NotebookDraft } from '../composables/useNotebook'
 import { notebookSaveLabel } from '../composables/useNotebook'
-import NotebookRichEditor, { type NotebookInlineFormat } from './NotebookRichEditor.vue'
+import NotebookRichEditor, { type NotebookActiveFormats, type NotebookInlineFormat } from './NotebookRichEditor.vue'
 
 const props = defineProps<{
   draft: NotebookDraft | null
@@ -39,16 +37,6 @@ const linkDialogOpen = ref(false)
 const linkLabel = ref('')
 const linkUrl = ref('')
 const linkError = ref('')
-
-const moreOptions = computed(() => [
-  { label: '文本对齐（⌘⇧L）', key: 'align' },
-  { label: '统一整篇格式', key: 'normalize' },
-  { label: '将选中文字设为链接', key: 'link' },
-  { label: '插入凭据信息表', key: 'credential' },
-  { label: '复制正文', key: 'copy' },
-  { label: '创建副本', key: 'duplicate' },
-  { label: '删除笔记', key: 'delete' },
-])
 
 const saveStatus = computed(() => {
   if (!props.draft) return 'idle' as const
@@ -77,25 +65,35 @@ function requestLink() {
   linkDialogOpen.value = true
 }
 
-async function handleMoreAction(key: string) {
-  if (key === 'align') richEditor.value?.alignSelection()
-  if (key === 'normalize') richEditor.value?.normalizeDocument()
-  if (key === 'link') requestLink()
-  if (key === 'credential') richEditor.value?.insertCredential()
-  if (key === 'copy') await richEditor.value?.copyDocument()
-  if (key === 'duplicate') emit('duplicate')
-  if (key === 'delete') emit('delete')
+/** 原型 .nb-toolbar：常驻格式工具栏；图标 + 快捷键提示，激活态跟选区走 */
+const formatTools: Array<{ format: NotebookInlineFormat; label: string; shortcut?: string }> = [
+  { format: 'bold', label: '加粗', shortcut: '⌘B' },
+  { format: 'italic', label: '斜体', shortcut: '⌘I' },
+  { format: 'underline', label: '下划线', shortcut: '⌘U' },
+  { format: 'heading', label: '二级标题', shortcut: '⌘⌥2' },
+  { format: 'bulletList', label: '无序列表' },
+  { format: 'orderedList', label: '有序列表' },
+]
+
+const emptyFormats: NotebookActiveFormats = {
+  bold: false,
+  italic: false,
+  underline: false,
+  heading: false,
+  bulletList: false,
+  orderedList: false,
 }
 
-/** 原型 .nb-toolbar：常驻格式工具栏（更多菜单保留同名入口） */
-const formatTools: Array<{ format: NotebookInlineFormat; glyph: string; label: string; hint?: string }> = [
-  { format: 'bold', glyph: 'B', label: '加粗' },
-  { format: 'italic', glyph: 'I', label: '斜体' },
-  { format: 'underline', glyph: 'U', label: '下划线' },
-  { format: 'heading', glyph: 'H2', label: '二级标题' },
-  { format: 'bulletList', glyph: '•≡', label: '无序列表' },
-  { format: 'orderedList', glyph: '1.≡', label: '有序列表' },
-]
+const formats = ref<NotebookActiveFormats>({ ...emptyFormats })
+const activeFormats = computed(() => formats.value)
+
+function onFormats(next: NotebookActiveFormats) {
+  formats.value = next
+}
+
+function formatTitle(tool: (typeof formatTools)[number]) {
+  return tool.shortcut ? `${tool.label} ${tool.shortcut}` : tool.label
+}
 
 function closeLinkDialog() {
   linkDialogOpen.value = false
@@ -111,16 +109,28 @@ function confirmLink() {
   closeLinkDialog()
 }
 
-function handleSaveShortcut(event: KeyboardEvent) {
-  if (
-    event.defaultPrevented
-    || (!event.metaKey && !event.ctrlKey)
-    || event.shiftKey
-    || event.key.toLowerCase() !== 's'
-  ) return
-  event.preventDefault()
-  richEditor.value?.finishCredentialEditing()
-  emit('save')
+function handleEditorShortcut(event: KeyboardEvent) {
+  if (event.defaultPrevented) return
+  const meta = event.metaKey || event.ctrlKey
+  if (!meta) return
+  const typingInField = event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement
+
+  if (event.key.toLowerCase() === 's' && !event.shiftKey && !event.altKey) {
+    event.preventDefault()
+    richEditor.value?.finishCredentialEditing()
+    emit('save')
+    return
+  }
+  if (typingInField) return
+  if (event.key.toLowerCase() === 'k' && !event.shiftKey && !event.altKey) {
+    event.preventDefault()
+    requestLink()
+    return
+  }
+  if (event.altKey && event.code === 'Digit2') {
+    event.preventDefault()
+    richEditor.value?.applyFormat('heading')
+  }
 }
 
 async function focusTitle() {
@@ -129,8 +139,8 @@ async function focusTitle() {
   input?.focus()
 }
 
-onMounted(() => window.addEventListener('keydown', handleSaveShortcut))
-onBeforeUnmount(() => window.removeEventListener('keydown', handleSaveShortcut))
+onMounted(() => window.addEventListener('keydown', handleEditorShortcut))
+onBeforeUnmount(() => window.removeEventListener('keydown', handleEditorShortcut))
 
 defineExpose({ focusTitle })
 </script>
@@ -150,7 +160,6 @@ defineExpose({ focusTitle })
       <header class="notebook-editor-panel__header">
         <div class="notebook-editor-context">
           <StatusIndicator :label="notebookSaveLabel(draft)" :status="saveStatus" />
-          <span>{{ draft.updatedAt ? '本地 SQLite' : '新建笔记' }}</span>
         </div>
         <div class="notebook-editor-actions">
           <BaseButton variant="ghost" size="sm" @click="emit('toggleList')">
@@ -159,14 +168,8 @@ defineExpose({ focusTitle })
           <BaseButton :variant="draft.pinned ? 'secondary' : 'ghost'" size="sm" @click="emit('togglePin')">
             {{ draft.pinned ? '已置顶' : '置顶' }}
           </BaseButton>
-          <span
-            class="notebook-more-menu-trigger"
-            @pointerdown.capture="richEditor?.captureSelection()"
-          >
-            <BaseDropdownMenu :options="moreOptions" @select="handleMoreAction">
-              <BaseButton variant="ghost" size="sm" aria-label="更多笔记操作">更多</BaseButton>
-            </BaseDropdownMenu>
-          </span>
+          <BaseButton variant="ghost" size="sm" @click="emit('duplicate')">副本</BaseButton>
+          <BaseButton variant="ghost" size="sm" @click="emit('delete')">删除</BaseButton>
         </div>
       </header>
 
@@ -196,26 +199,69 @@ defineExpose({ focusTitle })
           autocomplete="off"
           @update:model-value="emit('update:title', $event)"
         />
-        <div class="notebook-format-toolbar" role="toolbar" aria-label="笔记格式工具栏">
-          <BaseIconButton
+        <div
+          class="notebook-format-toolbar"
+          role="toolbar"
+          aria-label="笔记格式工具栏"
+          @pointerdown.capture="richEditor?.captureSelection()"
+        >
+          <BaseButton
             v-for="tool in formatTools"
             :key="tool.format"
+            variant="ghost"
+            size="sm"
             class="notebook-format-toolbar__tool"
-            :class="`is-${tool.format}`"
-            :label="tool.label"
-            :title="tool.label"
-            size="sm"
+            :class="[`is-${tool.format}`, { 'is-active': activeFormats[tool.format] }]"
+            :aria-label="tool.label"
+            :aria-pressed="activeFormats[tool.format]"
+            :title="formatTitle(tool)"
             @click="richEditor?.applyFormat(tool.format)"
-          >{{ tool.glyph }}</BaseIconButton>
+          >
+            <svg v-if="tool.format === 'bold'" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M7 5h7a3.5 3.5 0 0 1 0 7H7z" />
+              <path d="M7 12h8a3.5 3.5 0 0 1 0 7H7z" />
+            </svg>
+            <svg v-else-if="tool.format === 'italic'" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M15 5H9" /><path d="M15 19H9" /><path d="M14 5l-4 14" />
+            </svg>
+            <svg v-else-if="tool.format === 'underline'" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M7 5v7a5 5 0 0 0 10 0V5" /><path d="M5 19h14" />
+            </svg>
+            <svg v-else-if="tool.format === 'heading'" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M6 5v14" /><path d="M18 5v14" /><path d="M6 12h12" />
+            </svg>
+            <svg v-else-if="tool.format === 'bulletList'" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M10 6h11" /><path d="M10 12h11" /><path d="M10 18h11" />
+              <circle cx="5" cy="6" r="1.2" fill="currentColor" stroke="none" />
+              <circle cx="5" cy="12" r="1.2" fill="currentColor" stroke="none" />
+              <circle cx="5" cy="18" r="1.2" fill="currentColor" stroke="none" />
+            </svg>
+            <svg v-else viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M10 6h11" /><path d="M10 12h11" /><path d="M10 18h11" />
+              <path d="M4 5.5v3" /><path d="M5.5 5.5v3" /><path d="M4 11.5h3l-3 4h3" />
+            </svg>
+          </BaseButton>
           <span class="notebook-format-toolbar__divider" aria-hidden="true" />
-          <BaseButton variant="ghost" size="sm" title="将选中文字设为链接" @click="requestLink">🔗 链接</BaseButton>
-          <BaseButton variant="ghost" size="sm" title="在光标处插入凭据信息表" @click="richEditor?.insertCredential()">▦ 凭证表格</BaseButton>
-          <BaseIconButton
-            label="统一整篇格式"
-            title="统一整篇格式"
-            size="sm"
-            @click="richEditor?.normalizeDocument()"
-          >🧹</BaseIconButton>
+          <BaseButton variant="ghost" size="sm" class="notebook-format-toolbar__action" title="将选中文字设为链接 ⌘K" @click="requestLink">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M10 13a5 5 0 0 0 7.07 0l1.41-1.41a5 5 0 0 0-7.07-7.07L10 5.84" />
+              <path d="M14 11a5 5 0 0 0-7.07 0L5.52 12.4a5 5 0 0 0 7.07 7.07L14 18.16" />
+            </svg>
+            链接
+          </BaseButton>
+          <BaseButton variant="ghost" size="sm" class="notebook-format-toolbar__action" title="插入凭据信息表，点格编辑，悬停复制" @click="richEditor?.insertCredential()">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="4" width="18" height="16" rx="2" />
+              <path d="M3 10h18" /><path d="M9 10v10" />
+            </svg>
+            凭证表
+          </BaseButton>
+          <BaseButton variant="ghost" size="sm" class="notebook-format-toolbar__tool" title="统一整篇格式" aria-label="统一整篇格式" @click="richEditor?.normalizeDocument()">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 3v3" /><path d="M12 18v3" /><path d="M3 12h3" /><path d="M18 12h3" />
+              <path d="M5.6 5.6l2.1 2.1" /><path d="M16.3 16.3l2.1 2.1" /><path d="M5.6 18.4l2.1-2.1" /><path d="M16.3 7.7l2.1-2.1" />
+            </svg>
+          </BaseButton>
         </div>
         <NotebookRichEditor
           ref="richEditor"
@@ -223,15 +269,16 @@ defineExpose({ focusTitle })
           :note-id="draft.id"
           :model-value="draft.content"
           @update:model-value="emit('update:content', $event)"
+          @update:formats="onFormats"
         />
       </div>
 
       <footer class="notebook-editor-panel__footer">
         <div>
           <span>{{ characterCount }} 字</span>
-          <span>停止输入 800ms 后自动保存</span>
+          <span>停止输入后自动保存</span>
         </div>
-        <span>选中文字可设为链接 · ⌘ 单击打开</span>
+        <span>链接 ⌘K · ⌘ 单击打开 · 悬停复制凭证 · ⌘⇧C</span>
       </footer>
     </template>
   </BaseCard>
