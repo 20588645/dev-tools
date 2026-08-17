@@ -16,9 +16,11 @@ const emit = defineEmits<{
 }>()
 
 const filterChipThemeOverrides = {
-  borderRadius: 'var(--radius-pill)',
-  heightSmall: 'var(--component-control-height-sm)',
-  fontSizeSmall: 'var(--font-size-xs)',
+  borderRadius: 'var(--component-control-radius)',
+  heightSmall: 'var(--component-control-height-md)',
+  heightMedium: 'var(--component-control-height-md)',
+  fontSizeSmall: 'var(--component-button-font-size)',
+  fontSizeMedium: 'var(--component-button-font-size)',
   fontWeightStrong: 'var(--font-weight-semibold)',
   padding: '0 var(--space-3)',
   border: '1px solid var(--component-control-border)',
@@ -50,8 +52,7 @@ const filterChipThemeOverrides = {
     :closable="removable"
     :disabled="disabled"
     :aria-label="ariaLabel"
-    size="small"
-    round
+    size="medium"
     :theme-overrides="filterChipThemeOverrides"
     @update:checked="emit('update:selected', $event)"
     @close="emit('remove')"
@@ -62,11 +63,15 @@ const filterChipThemeOverrides = {
 
 <style scoped>
 .filter-chip {
-  min-height: var(--component-control-height-sm);
+  --n-height: var(--component-control-height-md);
+  height: var(--component-control-height-md);
+  min-height: var(--component-control-height-md);
   color: var(--color-text-muted);
+  font-size: var(--component-button-font-size);
   cursor: pointer;
   letter-spacing: 0.01em;
   border: 1px solid var(--component-control-border);
+  border-radius: var(--component-control-radius);
   transition: color var(--duration-fast) var(--ease-standard), background-color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 .filter-chip:hover { border-color: var(--component-control-border-hover); }

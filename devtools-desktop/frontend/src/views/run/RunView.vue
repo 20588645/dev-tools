@@ -2,6 +2,7 @@
 import { computed, onActivated, onBeforeUnmount, onMounted, ref } from 'vue'
 
 import BaseButton from '@/components/base/BaseButton.vue'
+import BaseIconButton from '@/components/base/BaseIconButton.vue'
 import EmptyState from '@/components/feedback/EmptyState.vue'
 import ErrorState from '@/components/feedback/ErrorState.vue'
 import LoadingState from '@/components/feedback/LoadingState.vue'
@@ -240,7 +241,7 @@ onActivated(() => { void page.load({ silent: true }) })
             @update:model-value="page.filter.value = ($event as RunFilter)"
           />
           <BaseDropdownMenu :options="overflowOptions" @select="onOverflowSelect">
-            <BaseButton variant="secondary" aria-label="更多操作" title="运行历史与批量操作">⋯</BaseButton>
+            <BaseIconButton label="更多操作" title="运行历史与批量操作">⋯</BaseIconButton>
           </BaseDropdownMenu>
         </PageToolbar>
       </PageTop>

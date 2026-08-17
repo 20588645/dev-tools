@@ -34,8 +34,26 @@ const type = computed<'error' | 'default'>(() => props.variant === 'danger' ? 'e
 </template>
 
 <style scoped>
-/* redesign-v2：圆角方形图标钮（28px / 圆角 8），悬停淡底 */
-.base-icon-button { flex: none; }
+/* 图标钮与同档文字钮同高：sm 26 / md 32 / lg 40 */
+.base-icon-button { flex: none; box-sizing: border-box; }
 
 .base-icon-button.n-button { border-radius: calc(var(--component-control-radius) - 2px); }
+
+.base-icon-button.n-button.n-button--small-type {
+  width: var(--component-control-height-sm);
+  min-width: var(--component-control-height-sm);
+  height: var(--component-control-height-sm);
+}
+
+.base-icon-button.n-button.n-button--medium-type {
+  width: var(--component-control-height-md);
+  min-width: var(--component-control-height-md);
+  height: var(--component-control-height-md);
+}
+
+.base-icon-button.n-button.n-button--large-type {
+  width: var(--component-control-height-lg);
+  min-width: var(--component-control-height-lg);
+  height: var(--component-control-height-lg);
+}
 </style>

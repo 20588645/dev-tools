@@ -54,11 +54,11 @@ const selectThemeOverrides = {
   peers: {
     InternalSelection: {
       heightSmall: 'var(--component-control-height-sm)',
-      heightMedium: 'var(--component-input-height)',
+      heightMedium: 'var(--component-control-height-md)',
       borderRadius: 'var(--component-control-radius)',
       paddingSingle: '0 var(--space-3)',
-      fontSizeSmall: 'var(--font-size-xs)',
-      fontSizeMedium: 'var(--font-size-sm)',
+      fontSizeSmall: 'var(--component-button-font-size-sm)',
+      fontSizeMedium: 'var(--component-button-font-size)',
       color: 'var(--component-control-surface)',
       border: '1px solid var(--component-control-border)',
       borderHover: '1px solid var(--component-control-border-hover)',
@@ -77,7 +77,7 @@ const selectThemeOverrides = {
       optionFontSizeSmall: 'var(--font-size-xs)',
       optionFontSizeMedium: 'var(--font-size-sm)',
       optionHeightSmall: 'var(--component-control-height-sm)',
-      optionHeightMedium: 'var(--component-input-height)',
+      optionHeightMedium: 'var(--component-control-height-md)',
       optionTextColor: 'var(--color-text-muted)',
       optionTextColorActive: 'var(--color-action)',
       optionColorActive: 'color-mix(in srgb, var(--color-action) 10%, transparent)',
@@ -96,7 +96,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="field-control">
+  <div class="field-control" :class="`field-control--size-${size}`">
     <label v-if="label" class="field-control__label" :for="selectId">
       {{ label }}<span v-if="required" aria-hidden="true"> *</span>
     </label>
@@ -130,4 +130,12 @@ onMounted(() => {
 .field-control__label span { color: var(--color-danger); }
 .field-control__message { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-xs); line-height: var(--line-height-normal); }
 .field-control__message--error { color: var(--color-danger); }
+.field-control--size-sm :deep(.n-select),
+.field-control--size-sm :deep(.n-base-selection),
+.field-control--size-md :deep(.n-select),
+.field-control--size-md :deep(.n-base-selection) {
+  --n-height: var(--component-control-height-md);
+  height: var(--component-control-height-md);
+  min-height: var(--component-control-height-md);
+}
 </style>

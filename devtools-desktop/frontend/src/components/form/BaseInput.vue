@@ -38,10 +38,31 @@ const labelId = computed(() => `${inputId.value}-label`)
 const messageId = computed(() => `${inputId.value}-message`)
 const inputType = computed<'text' | 'password'>(() => props.type === 'password' ? 'password' : 'text')
 const inputSize = computed(() => ({ sm: 'small' as const, md: 'medium' as const, lg: 'large' as const })[props.size])
+const sizeHeights = {
+  heightSmall: 'var(--component-control-height-sm)',
+  heightMedium: 'var(--component-control-height-md)',
+  heightLarge: 'var(--component-control-height-lg)',
+} as const
+
 const inputThemeOverrides = computed(() => {
-  if (props.variant === 'default') return undefined
+  if (props.variant === 'title') {
+    return {
+      color: 'transparent',
+      colorFocus: 'transparent',
+      border: '1px solid transparent',
+      borderHover: '1px solid var(--component-control-border-hover)',
+      borderFocus: '1px solid var(--component-control-border-focus)',
+      boxShadowFocus: 'var(--component-control-focus-ring)',
+      paddingSmall: '0',
+      paddingMedium: '0',
+      paddingLarge: '0',
+      fontSizeLarge: 'var(--font-size-xl)',
+      fontWeight: 'var(--font-weight-semibold)',
+    }
+  }
   if (props.variant === 'search') {
     return {
+      ...sizeHeights,
       color: 'var(--color-surface-raised)',
       colorFocus: 'var(--color-surface-raised)',
       border: '1px solid var(--component-control-border)',
@@ -50,19 +71,18 @@ const inputThemeOverrides = computed(() => {
       boxShadowFocus: 'var(--component-control-focus-ring)',
     }
   }
-  return {
-    color: 'transparent',
-    colorFocus: 'transparent',
-    border: '1px solid transparent',
-    borderHover: '1px solid var(--component-control-border-hover)',
-    borderFocus: '1px solid var(--component-control-border-focus)',
-    boxShadowFocus: 'var(--component-control-focus-ring)',
-    paddingSmall: props.variant === 'title' ? '0' : undefined,
-    paddingMedium: props.variant === 'title' ? '0' : undefined,
-    paddingLarge: props.variant === 'title' ? '0' : undefined,
-    fontSizeLarge: props.variant === 'title' ? 'var(--font-size-xl)' : undefined,
-    fontWeight: props.variant === 'title' ? 'var(--font-weight-semibold)' : undefined,
+  if (props.variant === 'plain') {
+    return {
+      ...sizeHeights,
+      color: 'transparent',
+      colorFocus: 'transparent',
+      border: '1px solid transparent',
+      borderHover: '1px solid var(--component-control-border-hover)',
+      borderFocus: '1px solid var(--component-control-border-focus)',
+      boxShadowFocus: 'var(--component-control-focus-ring)',
+    }
   }
+  return { ...sizeHeights }
 })
 
 /* 转发底层输入控制，供调用方在弹窗打开、校验失败等场景主动聚焦 */
@@ -127,6 +147,17 @@ defineExpose({
 .field-control__message { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-xs); line-height: var(--line-height-normal); }
 .field-control__message--error { color: var(--color-danger); }
 .field-control--search :deep(.n-input) { box-shadow: var(--shadow-sm); }
+.field-control--size-sm:not(.field-control--title) :deep(.n-input:not(.n-input--textarea)),
+.field-control--size-md:not(.field-control--title) :deep(.n-input:not(.n-input--textarea)) {
+  --n-height: var(--component-control-height-md);
+  height: var(--component-control-height-md);
+  min-height: var(--component-control-height-md);
+}
+.field-control--size-lg:not(.field-control--title) :deep(.n-input:not(.n-input--textarea)) {
+  --n-height: var(--component-control-height-lg);
+  height: var(--component-control-height-lg);
+  min-height: var(--component-control-height-lg);
+}
 .field-control--title { gap: var(--space-1); }
 .field-control--label-eyebrow .field-control__label {
   color: var(--color-text-subtle);

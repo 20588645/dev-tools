@@ -64,21 +64,26 @@ const tabs = [
 /* redesign-v2 分段器视觉（与 BaseSegmented 同语言）：淡色槽 + 白面浮起活块 */
 .deploy-chrome__tabs {
   display: inline-flex;
+  align-items: stretch;
+  box-sizing: border-box;
+  height: var(--component-control-height-md);
+  min-height: var(--component-control-height-md);
   gap: 2px;
   padding: 3px;
   background: var(--color-surface-subtle);
-  border-radius: 11px;
+  border-radius: var(--component-control-radius);
 }
 
 .deploy-chrome__tab {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 24px;
-  padding: 2px var(--space-3);
-  border-radius: 8px;
+  height: calc(var(--component-control-height-md) - 6px);
+  min-height: calc(var(--component-control-height-md) - 6px);
+  padding: 0 var(--space-3);
+  border-radius: calc(var(--component-control-radius) - 3px);
   color: var(--color-text-muted);
-  font-size: var(--font-size-xs);
+  font-size: var(--component-button-font-size);
   font-weight: var(--font-weight-medium);
   letter-spacing: 0.01em;
   white-space: nowrap;

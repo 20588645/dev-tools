@@ -403,15 +403,15 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 24px;
-  padding: 4px 10px;
+  height: var(--component-control-height-md);
+  padding: 0 12px;
   color: var(--color-terminal-btn-fg, var(--color-terminal-btn-fg));
-  font-size: var(--font-size-xs);
+  font-size: var(--component-button-font-size);
   font-weight: 550;
   cursor: pointer;
   background: var(--color-terminal-btn, var(--color-terminal-btn));
   border: 1px solid var(--color-border, var(--color-border));
-  border-radius: var(--radius-sm);
+  border-radius: var(--component-control-radius);
   transition: all var(--duration-normal) var(--ease-standard);
 }
 

@@ -65,4 +65,10 @@ const isDateDisabled = computed(() => props.range === 'any'
 <style scoped>
 .field-control { display: grid; gap: var(--space-2); min-width: 0; }
 .field-control__label { color: var(--color-text); font-size: var(--font-size-sm); font-weight: var(--font-weight-medium); }
+.field-control :deep(.n-date-picker),
+.field-control :deep(.n-input) {
+  height: var(--component-control-height-md);
+  min-height: var(--component-control-height-md);
+  width: 100%;
+}
 </style>

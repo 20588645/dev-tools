@@ -47,8 +47,9 @@ const variantProps = computed(() => ({
 
 <style scoped>
 /* redesign-v2 方案 B：默认钮玻璃面 + 细边，主钮蓝紫渐变 + 彩色投影，悬停轻浮起。
-   尺寸自持，不跟 Naive heightMedium（34px 输入档），对齐原型 .btn 32 / .btn.sm 26。 */
+   高度与输入/下拉同档：md 32 / sm 26 / lg 40。 */
 .base-button {
+  box-sizing: border-box;
   font-family: var(--font-family-sans);
   font-weight: var(--font-weight-semibold);
   transition: transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
@@ -58,21 +59,20 @@ const variantProps = computed(() => ({
   border-radius: var(--component-control-radius);
 }
 
-.base-button.n-button.n-button--medium-type {
+.base-button.n-button.n-button--medium-type,
+.base-button.n-button.n-button--small-type {
+  --n-height: var(--component-control-height-md);
   height: var(--component-control-height-md);
+  min-height: var(--component-control-height-md);
   padding: 0 var(--component-button-padding-x);
+  border-radius: var(--component-control-radius);
   font-size: var(--component-button-font-size);
 }
 
-.base-button.n-button.n-button--small-type {
-  height: var(--component-control-height-sm);
-  padding: 0 var(--component-button-padding-x-sm);
-  border-radius: var(--component-button-radius-sm);
-  font-size: var(--component-button-font-size-sm);
-}
-
 .base-button.n-button.n-button--large-type {
+  --n-height: var(--component-control-height-lg);
   height: var(--component-control-height-lg);
+  min-height: var(--component-control-height-lg);
 }
 
 .base-button.n-button :deep(.n-button__content) {
