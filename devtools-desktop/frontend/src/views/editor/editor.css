@@ -8,6 +8,8 @@
 
 .ed-page {
   position: relative;
+  display: flex;
+  flex-direction: column;
   height: calc(100vh - 58px);
   min-width: 0;
   min-height: 520px;
@@ -20,8 +22,7 @@
   flex: 1 1 auto;
   flex-direction: column;
   min-height: 0;
-  padding: var(--space-4);
-  padding-top: 0;
+  padding: 0 var(--space-4) var(--space-4);
 }
 
 .ed-toolbar {
@@ -36,7 +37,8 @@
   vertical-align: -2px;
 }
 
-/* 原型 .ed-wrap：标签行浮在面板上方，容器本身透明 */
+/* 原型 .ed-wrap：标签挂在面板上方。overflow-x 会把 overflow-y 算成 auto，
+   所以重叠的 1px 必须落在标签条自己的 padding 里，而不是用负 margin 溢出。 */
 .ed-layout {
   display: flex;
   flex: 1 1 auto;
@@ -45,56 +47,75 @@
   overflow: hidden;
 }
 
-/* 编辑区 + 状态栏的圆角面板：左上角与活跃标签相接（原型 .ed-body 半径） */
-.ed-panel {
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  min-height: 0;
-  overflow: hidden;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border-soft);
-  border-radius: 0 var(--component-card-radius) var(--component-card-radius) var(--component-card-radius);
-  box-shadow: var(--shadow-md);
-}
-
-/* 原型 .ed-tabs：圆角顶标签，活跃标签与面板同面色相接 */
 .ed-tabs {
+  position: relative;
+  z-index: 2;
   display: flex;
   flex-shrink: 0;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: 4px;
-  min-height: 37px;
-  overflow: hidden auto;
+  min-height: 38px;
+  padding: 8px 14px 1px 0;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
 
 .ed-tabs::-webkit-scrollbar { height: 0; }
 
 .ed-tab {
   position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   max-width: 220px;
-  padding: 8px 10px 9px 14px;
+  padding: 7px 8px 8px 13px;
   color: var(--color-text-muted);
   font-size: 12.5px;
   font-weight: var(--font-weight-medium);
   white-space: nowrap;
   cursor: pointer;
   user-select: none;
-  background: var(--color-surface-subtle);
+  background: color-mix(in srgb, var(--color-surface) 78%, var(--color-page));
+  border: 1px solid transparent;
+  border-bottom: none;
   border-radius: 10px 10px 0 0;
-  transition: background 0.12s ease, color 0.12s ease;
+  transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
   gap: 8px;
 }
 
-.ed-tab:hover { color: var(--color-text); }
+.ed-tab:hover {
+  color: var(--color-text);
+  background: color-mix(in srgb, var(--color-surface) 92%, var(--color-page));
+}
+
+.ed-tab:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: -2px;
+}
 
 .ed-tab.active {
+  z-index: 3;
+  padding-bottom: 9px;
   color: var(--color-text);
   font-weight: var(--font-weight-semibold);
   background: var(--color-surface);
-  box-shadow: 0 -4px 12px -8px color-mix(in srgb, var(--color-text) 20%, transparent);
+  border-color: var(--color-border);
+  box-shadow: 0 -6px 14px -10px color-mix(in srgb, var(--color-text) 18%, transparent);
+}
+
+.ed-tab:first-child {
+  border-top-left-radius: var(--component-card-radius);
+}
+
+.ed-tab-add {
+  display: flex;
+  flex: none;
+  align-items: center;
+  margin: 4px 0 0 2px;
+}
+
+.ed-tab-add:first-child {
+  margin-left: 8px;
 }
 
 .ed-tab-name {
@@ -110,16 +131,26 @@
   width: 18px;
   height: 18px;
   padding: 0;
-  color: var(--color-text-subtle, var(--color-text-muted));
+  color: var(--color-text-subtle);
   cursor: pointer;
   background: transparent;
   border: none;
   border-radius: 5px;
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 
-.ed-tab-close:hover {
-  color: var(--color-danger, var(--color-danger));
-  background: var(--color-danger-subtle, var(--color-danger-subtle));
+.ed-tab:hover .ed-tab-close,
+.ed-tab.active .ed-tab-close,
+.ed-tab-close.dirty,
+.ed-tab-close:focus-visible {
+  opacity: 1;
+}
+
+.ed-tab-close:hover,
+.ed-tab-close:focus-visible {
+  color: var(--color-danger);
+  background: var(--color-danger-subtle);
 }
 
 .ed-tab-close .ed-tab-x { opacity: 0.85; }
@@ -128,6 +159,7 @@
 
 /* 原型 .dirty：未保存点用警示色 */
 .ed-tab-close.dirty::before {
+  display: block;
   width: 7px;
   height: 7px;
   content: '';
@@ -135,9 +167,31 @@
   border-radius: 50%;
 }
 
-.ed-tab-close.dirty:hover::before { display: none; }
+.ed-tab-close.dirty:hover::before,
+.ed-tab-close.dirty:focus-visible::before { display: none; }
 
-.ed-tab-close.dirty:hover .ed-tab-x { display: block; }
+.ed-tab-close.dirty:hover .ed-tab-x,
+.ed-tab-close.dirty:focus-visible .ed-tab-x { display: block; }
+
+/* 编辑区 + 状态栏合成一块圆角面板；顶边与活跃标签共享 1px */
+.ed-panel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--component-card-radius);
+  box-shadow: var(--shadow-md);
+}
+
+.ed-panel--attached {
+  margin-top: -1px;
+  border-radius: 0 var(--component-card-radius) var(--component-card-radius) var(--component-card-radius);
+}
 
 .ed-body {
   position: relative;
@@ -147,20 +201,84 @@
 }
 
 .ed-editor-host {
+  display: flex;
   flex: 1 1 auto;
+  flex-direction: column;
   width: 100%;
   min-height: 0;
 }
 
-.ed-editor-host .CodeMirror {
+.ed-editor-host .CodeMirror,
+.ed-editor-host .cm-s-default.CodeMirror,
+.ed-editor-host .cm-s-material-darker.CodeMirror {
   height: 100%;
+  color: var(--color-text);
   font-family: var(--font-family-mono);
-  font-size: 13px;
-  line-height: 1.6;
+  font-size: 12.5px;
+  line-height: 1.75;
+  background: var(--color-surface);
+  background-color: var(--color-surface);
 }
 
-.ed-editor-host .CodeMirror-gutters {
-  border-right: 1px solid var(--color-border, var(--color-border));
+.ed-editor-host .CodeMirror-scroll {
+  background: transparent;
+}
+
+.ed-editor-host .CodeMirror-lines {
+  padding: 12px 0;
+}
+
+.ed-editor-host .CodeMirror-gutters,
+.ed-editor-host .cm-s-default .CodeMirror-gutters,
+.ed-editor-host .cm-s-material-darker .CodeMirror-gutters {
+  padding: 12px 0 0;
+  background: color-mix(in srgb, var(--color-page) 28%, var(--color-surface));
+  border-right: 1px solid var(--color-border-soft);
+}
+
+.ed-editor-host .CodeMirror-linenumber,
+.ed-editor-host .cm-s-material-darker .CodeMirror-linenumber {
+  min-width: 32px;
+  padding: 0 12px 0 10px;
+  color: var(--color-text-subtle);
+}
+
+.ed-editor-host .CodeMirror-cursor,
+.ed-editor-host .cm-s-material-darker .CodeMirror-cursor {
+  border-left: 2px solid var(--color-action);
+}
+
+.ed-editor-host .CodeMirror-selected,
+.ed-editor-host .CodeMirror-focused .CodeMirror-selected,
+.ed-editor-host .cm-s-material-darker div.CodeMirror-selected,
+.ed-editor-host .cm-s-material-darker.CodeMirror-focused div.CodeMirror-selected {
+  background: color-mix(in srgb, var(--color-action) 18%, transparent);
+}
+
+.ed-editor-host .CodeMirror-line::selection,
+.ed-editor-host .CodeMirror-line > span::selection,
+.ed-editor-host .cm-s-material-darker .CodeMirror-line::selection,
+.ed-editor-host .cm-s-material-darker .CodeMirror-line > span::selection {
+  background: color-mix(in srgb, var(--color-action) 22%, transparent);
+}
+
+.ed-editor-host .CodeMirror-activeline-background,
+.ed-editor-host .cm-s-material-darker .CodeMirror-activeline-background {
+  background: color-mix(in srgb, var(--color-action) 7%, transparent);
+}
+
+.ed-editor-host .CodeMirror-matchingbracket {
+  color: var(--color-action);
+  background: var(--color-action-subtle);
+}
+
+.ed-editor-host .cm-searching {
+  background: color-mix(in srgb, var(--color-action) 22%, transparent);
+}
+
+.ed-editor-host .CodeMirror-scrollbar-filler,
+.ed-editor-host .CodeMirror-gutter-filler {
+  background: var(--color-surface);
 }
 
 /* 空态改由共享 EmptyState 呈现，这里只负责占满编辑区并居中 */
@@ -170,7 +288,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: var(--color-text-subtle, var(--color-text-muted));
+  color: var(--color-text-subtle);
   text-align: center;
   gap: 4px;
 }
@@ -179,19 +297,22 @@
   display: flex;
   flex-shrink: 0;
   align-items: center;
-  height: 28px;
-  padding: 0 14px;
-  color: var(--color-text-subtle, var(--color-text-muted));
+  min-height: 32px;
+  padding: 0 16px;
+  color: var(--color-text-muted);
   font-family: var(--font-family-mono);
-  font-size: 11px;
-  background: var(--color-surface-raised, var(--color-surface-subtle));
-  border-top: 1px solid var(--color-border, var(--color-border));
-  gap: 16px;
+  font-size: 10.5px;
+  letter-spacing: 0.01em;
+  background: var(--color-surface-raised);
+  border-top: 1px solid var(--color-border-soft);
+  gap: 0;
 }
 
 .ed-status-path {
-  max-width: 50%;
+  max-width: 46%;
+  padding-right: 12px;
   overflow: hidden;
+  color: var(--color-text-subtle);
   text-align: left;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -201,16 +322,26 @@
 
 .ed-status-spacer { flex: 1 1 auto; }
 
-.ed-status-item { flex-shrink: 0; }
+.ed-status-item {
+  flex-shrink: 0;
+  padding: 0 12px;
+  border-left: 1px solid var(--color-border-soft);
+}
+
+.ed-status-item--save {
+  display: inline-flex;
+  align-items: center;
+  padding-right: 0;
+  gap: 6px;
+}
 
 .ed-statusbar .save-dot {
   display: inline-block;
+  flex: none;
   width: 7px;
   height: 7px;
-  margin-right: 4px;
-  vertical-align: 0;
   border-radius: 50%;
-  background: var(--color-text-subtle, var(--color-text-muted));
+  background: var(--color-text-subtle);
 }
 
 .ed-statusbar .save-dot.success { background: var(--color-success); }
@@ -227,9 +358,29 @@
 }
 
 .ed-editor-host .CodeMirror-dialog {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  color: var(--color-text);
   font-family: var(--font-family-sans);
   font-size: 12px;
-  border-color: var(--color-border, var(--color-border));
+  background: var(--color-surface-raised);
+  border-bottom: 1px solid var(--color-border);
+  gap: 8px;
+}
+
+.ed-editor-host .CodeMirror-dialog input {
+  min-width: 180px;
+  padding: 4px 8px;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  outline: none;
+}
+
+.ed-editor-host .CodeMirror-dialog input:focus {
+  border-color: var(--color-action);
 }
 
 /* 右键菜单浮层：与共享下拉菜单同皮肤（raised 面 / 12px 圆角 / 重投影） */
@@ -264,7 +415,7 @@
 .ed-tab-menu-item:hover { background: var(--color-action-subtle); }
 
 .ed-tab-menu-item.disabled {
-  color: var(--color-text-subtle, var(--color-text-muted));
+  color: var(--color-text-subtle);
   cursor: default;
   opacity: 0.5;
 }
@@ -274,7 +425,7 @@
 .ed-tab-menu-sep {
   height: 1px;
   margin: 5px 6px;
-  background: var(--color-border, var(--color-border));
+  background: var(--color-border-soft);
 }
 
 .ed-browser__nav {
@@ -285,7 +436,7 @@
 
 .ed-browser__empty {
   padding: 24px;
-  color: var(--color-text-subtle, var(--color-text-muted));
+  color: var(--color-text-subtle);
   text-align: center;
 }
 
@@ -297,7 +448,7 @@
 }
 
 .ed-browser__save-row > span {
-  color: var(--color-text-muted, var(--color-text-muted));
+  color: var(--color-text-muted);
   font-size: 13px;
   white-space: nowrap;
 }
@@ -307,27 +458,28 @@
   flex-wrap: wrap;
   align-items: center;
   margin-bottom: 8px;
-  color: var(--color-text-subtle, var(--color-text-muted));
+  color: var(--color-text-subtle);
   font-size: 12px;
   gap: 4px;
 }
 
 .ed-browser .browser-breadcrumb__crumb {
-  padding: 2px 4px;
-  color: var(--color-text, var(--color-text));
+  padding: 2px 6px;
+  color: var(--color-text);
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: 6px;
 }
 
 .ed-browser .browser-breadcrumb__crumb:hover {
-  background: var(--color-surface-hover, var(--color-surface-hover));
+  background: var(--color-action-subtle);
 }
 
 .ed-browser .browser-list {
   max-height: 420px;
   overflow: auto;
-  border: 1px solid var(--color-border, var(--color-border));
-  border-radius: 8px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-soft);
+  border-radius: 10px;
 }
 
 .ed-browser .browser-item {
@@ -339,14 +491,14 @@
   color: inherit;
   text-align: left;
   cursor: pointer;
-  border-bottom: 1px solid var(--color-border, var(--color-border));
+  border-bottom: 1px solid var(--color-border-soft);
   gap: 8px;
 }
 
 .ed-browser .browser-item:last-child { border-bottom: none; }
 
 .ed-browser .browser-item:hover {
-  background: var(--color-surface-hover, var(--color-surface-hover));
+  background: var(--color-action-subtle);
 }
 
 .browser-item__name {
@@ -358,17 +510,23 @@
 
 .browser-item__kind {
   flex-shrink: 0;
-  padding: 1px 5px;
-  color: var(--color-action, var(--color-action));
+  padding: 1px 6px;
+  color: var(--color-text-muted);
+  font-family: var(--font-family-mono);
   font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  background: var(--color-surface-subtle, var(--color-surface-raised));
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  background: var(--color-surface-raised);
   border-radius: 4px;
+}
+
+.browser-item__kind--dir {
+  color: var(--color-action);
+  background: var(--color-action-subtle);
 }
 
 .browser-item__meta {
   flex-shrink: 0;
-  color: var(--color-text-subtle, var(--color-text-muted));
+  color: var(--color-text-subtle);
   font-size: 11px;
 }

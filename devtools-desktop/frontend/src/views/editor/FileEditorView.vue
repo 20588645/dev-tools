@@ -173,6 +173,11 @@ function onActivate(key: string) {
   store.activate(key)
 }
 
+function onCreateTab() {
+  store.newScratchTab()
+  void nextTick().then(syncActiveDoc)
+}
+
 function onTabContext(payload: { key: string; event: MouseEvent }) {
   const tab = store.tabs[payload.key]
   if (!tab) return
@@ -333,10 +338,11 @@ onBeforeUnmount(() => {
         :active="store.active"
         @activate="onActivate"
         @close="onCloseTab"
+        @create="onCreateTab"
         @contextmenu="onTabContext"
       />
       <!-- 原型：标签浮在面板上方，编辑区 + 状态栏合为一块圆角面板（左上角与活跃标签相接） -->
-      <div class="ed-panel">
+      <div class="ed-panel" :class="{ 'ed-panel--attached': store.hasTabs }">
       <div class="ed-body">
         <CodeMirrorPane
           v-show="store.hasTabs"
@@ -348,7 +354,7 @@ onBeforeUnmount(() => {
         <div v-if="!store.hasTabs" class="ed-empty">
           <EmptyState
             title="未打开任何文件"
-            description="点击右上角「打开文件」选择一个本地文件开始编辑"
+            description="打开本地文件，或点标签栏 ＋ 新建草稿"
           >
             <template #icon>
               <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>

@@ -40,7 +40,7 @@ function saveTone(status: EditorSaveStatus) {
     <span class="ed-status-item">行 {{ cursorLine }}, 列 {{ cursorCol }}</span>
     <span class="ed-status-item">{{ edLangLabelForExt(tab.ext) }}</span>
     <span class="ed-status-item">{{ tab.eol }}</span>
-    <span class="ed-status-item">
+    <span class="ed-status-item ed-status-item--save">
       <span
         v-if="saveStatus !== 'idle'"
         class="save-dot"

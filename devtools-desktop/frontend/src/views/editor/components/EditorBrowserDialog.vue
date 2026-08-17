@@ -131,7 +131,11 @@ function confirmSave() {
           @keydown.enter="onEntry(entry)"
         >
           <span class="browser-item__name">
-            <span class="browser-item__kind" aria-hidden="true">{{ entry.isDir ? 'DIR' : 'FILE' }}</span>
+            <span
+              class="browser-item__kind"
+              :class="entry.isDir ? 'browser-item__kind--dir' : 'browser-item__kind--file'"
+              aria-hidden="true"
+            >{{ entry.isDir ? 'DIR' : 'FILE' }}</span>
             {{ entry.name }}
           </span>
           <span class="browser-item__meta">
