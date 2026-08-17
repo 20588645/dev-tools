@@ -6,6 +6,8 @@ import BaseCard from '@/components/base/BaseCard.vue'
 import BaseProgress from '@/components/base/BaseProgress.vue'
 import type { IpCheckResult } from '@/services/modules/ipcheck-service'
 
+import { formatDeviceCount } from '../ip-check-insight'
+
 const props = defineProps<{ result: IpCheckResult }>()
 
 const sharedTone = computed<'success' | 'warning' | 'danger'>(() => {
@@ -24,7 +26,7 @@ const supportTone = computed(() => /限制|风险|高危/.test(props.result.open
 </script>
 
 <template>
-  <BaseCard class="ip-section-card" content-padding="0" content-layout="column">
+  <BaseCard class="ip-signal-card" fill-height content-padding="0" content-layout="fill" content-overflow="hidden">
     <section class="ip-section-card__body" aria-labelledby="ip-signal-heading">
       <header class="ip-section-heading">
         <h2 id="ip-signal-heading">网络信号</h2>
@@ -45,6 +47,10 @@ const supportTone = computed(() => /限制|风险|高危/.test(props.result.open
           <div class="ip-signal-chart__meta">
             <span>{{ result.sharedUsers }} 用户</span>
             <span>{{ result.sharedUsersObserved ? '7 日观测' : '规则估算' }}</span>
+          </div>
+          <div class="ip-signal-chart__meta">
+            <span>本地址 {{ formatDeviceCount(result.devicesAddress, result.sharedUsersObserved) }}</span>
+            <span>同网段 {{ formatDeviceCount(result.devicesSubnet, result.sharedUsersObserved) }}</span>
           </div>
         </div>
 

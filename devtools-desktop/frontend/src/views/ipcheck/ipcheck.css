@@ -1,12 +1,20 @@
-/* 纯净检测页：概览环 + 网络信息 + 网络信号 + 场景卡；原型 ipcheck.html */
+/* 纯净检测页：铺满视口的卡片墙（概览 / 网络 / 信号 / 解读 / 场景） */
 
 .ip-check-view {
   position: relative;
+  height: 100%;
   min-width: 0;
-  min-height: calc(100vh - 58px);
+  min-height: 0;
   background:
     radial-gradient(circle at 90% 5%, color-mix(in srgb, var(--color-action) 6%, transparent), transparent 30%),
     var(--color-page);
+}
+
+.ip-check-view .page-frame__body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .ip-check-view__title-dot {
@@ -68,20 +76,23 @@
 }
 
 .ip-check-results {
-  display: grid;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
   gap: var(--space-4);
-  align-content: start;
-  padding-bottom: var(--space-4);
+  min-height: 0;
 }
 
 .ip-check-state-card {
-  min-height: 320px;
   display: grid;
+  flex: 1 1 auto;
+  min-height: 280px;
   place-items: center;
 }
 
 .ip-check-inline-error {
   display: flex;
+  flex: none;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
@@ -93,35 +104,50 @@
   font-size: var(--font-size-xs);
 }
 
-/* 原型 .grid：四列骨架 */
 .ip-check-grid {
   display: grid;
+  flex: 1 1 auto;
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-auto-rows: minmax(168px, 1fr);
   gap: var(--space-4);
+  min-height: 0;
+}
+
+.ip-check-grid > * {
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
 }
 
 .ip-result-summary,
-.ip-section-card:has(.ip-network-list) {
+.ip-network-card,
+.ip-signal-card,
+.ip-verdict-card {
   grid-column: span 2;
 }
 
-.ip-section-card:has(.ip-signal-panel),
 .ip-scenario-card {
   grid-column: span 4;
 }
 
-/* 概览卡：评分环 + 结论 */
-.ip-result-summary {
-  min-width: 0;
+.ip-result-summary,
+.ip-network-card,
+.ip-signal-card,
+.ip-verdict-card,
+.ip-scenario-card {
   overflow: hidden;
   box-shadow: var(--shadow-md);
 }
 
 .ip-result-summary__layout {
-  display: flex;
-  align-items: center;
-  gap: 20px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 12px 20px;
   min-width: 0;
+  min-height: 0;
+  height: 100%;
+  align-items: center;
 }
 
 .ip-result-summary__score {
@@ -166,18 +192,46 @@
   margin-top: 6px;
 }
 
-/* 面板卡通用 */
-.ip-section-card {
+.ip-result-summary__facts {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-2);
+  align-self: end;
+  margin: 0;
+}
+
+.ip-result-summary__fact {
+  display: grid;
+  gap: 2px;
   min-width: 0;
+  padding: 8px 10px;
+  background: color-mix(in srgb, var(--color-surface-raised) 40%, transparent);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-md);
+}
+
+.ip-result-summary__fact dt {
+  color: var(--color-text-subtle);
+  font-size: 10.5px;
+}
+
+.ip-result-summary__fact dd {
   overflow: hidden;
-  box-shadow: var(--shadow-md);
+  margin: 0;
+  color: var(--color-text);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ip-section-card__body {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  min-height: 100%;
+  min-height: 0;
+  height: 100%;
 }
 
 .ip-section-heading {
@@ -197,13 +251,58 @@
   font-weight: var(--font-weight-bold);
 }
 
-/* 原型 .kvline：键左值右分隔行 */
+.ip-section-heading__meta {
+  color: var(--color-text-subtle);
+  font-family: var(--font-family-mono);
+  font-size: 11px;
+}
+
+.ip-geo-hero {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0 18px 8px;
+  padding: 10px 12px;
+  background: color-mix(in srgb, var(--color-surface-raised) 32%, transparent);
+  border: 1px solid var(--color-border-soft);
+  border-radius: 13px;
+}
+
+.ip-geo-hero__code {
+  display: grid;
+  width: 52px;
+  height: 44px;
+  flex: none;
+  place-items: center;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-md);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-md);
+  letter-spacing: 0.04em;
+}
+
+.ip-geo-hero__copy {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+  color: var(--color-text);
+  font-size: var(--font-size-xs);
+}
+
+.ip-geo-hero__copy .ip-mono {
+  color: var(--color-text-subtle);
+}
+
 .ip-network-list {
   display: grid;
   flex: 1 1 auto;
   align-content: start;
   margin: 0;
   padding: 0 0 8px;
+  overflow: auto;
 }
 
 .ip-network-row {
@@ -211,7 +310,7 @@
   align-items: baseline;
   justify-content: space-between;
   gap: var(--space-4);
-  padding: 8px 18px;
+  padding: 7px 18px;
   border-bottom: 1px solid var(--color-border-soft);
   font-size: var(--font-size-xs);
 }
@@ -239,12 +338,13 @@
   font-size: 11.5px;
 }
 
-/* 网络信号：共享程度 + 三个信号节点横排 */
 .ip-signal-panel {
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) minmax(0, 2fr);
-  gap: var(--space-4);
+  flex: 1 1 auto;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
   align-items: stretch;
+  min-height: 0;
   padding: 4px 18px 16px;
 }
 
@@ -287,6 +387,7 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 11px;
+  min-height: 0;
 }
 
 .ip-signal-node {
@@ -294,6 +395,7 @@
   align-content: center;
   justify-items: start;
   gap: 3px;
+  min-width: 0;
   padding: 11px 13px;
   background: var(--color-surface);
   border: 1px solid var(--color-border-soft);
@@ -341,26 +443,86 @@
   color: var(--color-warning);
 }
 
-/* 场景检测：原型 .sc-card 四列网格 */
-.ip-scenario-card {
-  min-width: 0;
+.ip-verdict-headline {
+  margin: 0 18px 8px;
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.ip-verdict-list {
+  display: grid;
+  flex: 1 1 auto;
+  align-content: start;
+  gap: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  list-style: none;
+}
+
+.ip-verdict-item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: 8px 18px;
+  border-bottom: 1px solid var(--color-border-soft);
+  font-size: var(--font-size-xs);
+}
+
+.ip-verdict-item span {
+  flex: none;
+  color: var(--color-text-subtle);
+}
+
+.ip-verdict-item strong {
   overflow: hidden;
-  box-shadow: var(--shadow-md);
+  color: var(--color-text);
+  font-weight: var(--font-weight-semibold);
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ip-verdict-item[data-tone="success"] strong {
+  color: var(--color-success);
+}
+
+.ip-verdict-item[data-tone="warning"] strong {
+  color: var(--color-warning);
+}
+
+.ip-verdict-item[data-tone="danger"] strong {
+  color: var(--color-danger);
+}
+
+.ip-verdict-next {
+  margin: auto 18px 14px;
+  padding-top: 10px;
+  color: var(--color-text-muted);
+  font-size: 11.5px;
+  line-height: 1.55;
 }
 
 .ip-scenario-list {
   display: grid;
+  flex: 1 1 auto;
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
   gap: 11px;
-  padding: 4px 18px 16px;
+  min-height: 0;
+  padding: 4px 18px 10px;
 }
 
 .ip-scenario-item {
   display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   min-width: 0;
-  align-content: start;
-  gap: 4px;
-  padding: 11px 13px;
+  min-height: 0;
+  gap: 6px;
+  padding: 12px 13px;
   background: var(--color-surface);
   border: 1px solid var(--color-border-soft);
   border-radius: 13px;
@@ -384,33 +546,29 @@
   white-space: nowrap;
 }
 
+.ip-scenario-item__desc {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 11.5px;
+  line-height: 1.55;
+}
+
 .ip-scenario-item__reason {
   display: flex;
   min-width: 0;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
+  gap: 6px 10px;
   color: var(--color-text-subtle);
   font-size: 11px;
 }
 
-.ip-scenario-item__reason i {
-  width: 5px;
-  height: 5px;
-  flex: none;
-  background: var(--color-text-subtle);
-  border-radius: var(--radius-pill);
-  opacity: 0.6;
-}
-
-.ip-scenario-item__reason span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .ip-check-data-note {
   display: flex;
+  flex: none;
   justify-content: center;
+  margin: 0;
+  padding: 0 18px 12px;
   color: var(--color-text-subtle);
   font-size: 10.5px;
 }
@@ -430,28 +588,34 @@
 
 @media (max-width: 1180px) {
   .ip-scenario-list {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 1100px) {
   .ip-check-grid {
     grid-template-columns: minmax(0, 1fr);
+    grid-auto-rows: auto;
+  }
+
+  .ip-check-grid > * {
+    height: auto;
   }
 
   .ip-result-summary,
-  .ip-section-card:has(.ip-network-list),
-  .ip-section-card:has(.ip-signal-panel),
+  .ip-network-card,
+  .ip-signal-card,
+  .ip-verdict-card,
   .ip-scenario-card {
     grid-column: auto;
   }
 
-  .ip-scenario-list {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .ip-result-summary__layout {
+    height: auto;
   }
 
-  .ip-signal-panel {
-    grid-template-columns: minmax(0, 1fr);
+  .ip-result-summary__facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -460,13 +624,13 @@
     display: none;
   }
 
-  .ip-signal-nodes {
+  .ip-signal-nodes,
+  .ip-scenario-list,
+  .ip-result-summary__facts {
     grid-template-columns: minmax(0, 1fr);
   }
 
   .ip-result-summary__layout {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--space-3);
+    grid-template-columns: minmax(0, 1fr);
   }
 }

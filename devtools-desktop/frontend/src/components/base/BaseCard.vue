@@ -64,5 +64,18 @@ const cardThemeOverrides = {
 .base-card { color: var(--color-text); }
 .base-card--default.n-card,
 .base-card--raised.n-card { box-shadow: var(--shadow-md); }
-.base-card--fill-height { height: 100%; min-height: 0; }
+.base-card--fill-height {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+.base-card--fill-height :deep(.n-card__content),
+.base-card--fill-height :deep(.n-card-content) {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  box-sizing: border-box;
+}
 </style>

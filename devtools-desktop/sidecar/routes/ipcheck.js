@@ -203,6 +203,7 @@ router.get('/lookup', async (req, res) => {
     res.json({
       ip: resolvedIp,
       location,
+      timezone: ipApiData.timezone || '',
       asn,
       asn_owner_type: (rawType === 'Hosting' || rawType === 'VPN') ? 'IDC' : 'ISP',
       asn_owner: asnOwner,

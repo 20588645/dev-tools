@@ -13,6 +13,7 @@ interface IpCheckRawScenario {
 interface IpCheckRawResponse {
   ip?: unknown
   location?: unknown
+  timezone?: unknown
   asn?: unknown
   asn_owner_type?: unknown
   asn_owner?: unknown
@@ -55,6 +56,7 @@ export interface IpScenario {
   advice: string
   description: string
   reason: string
+  rating: number
   tone: IpScenarioTone
 }
 
@@ -74,11 +76,16 @@ export interface IpCheckResult extends IpPuritySummary {
   sharedUsersPercent: number
   sharedUsersObserved: boolean
   sharedUsersSource: string
+  devicesAddress: number
+  devicesSubnet: number
   proxyDetected: boolean
   vpnDetected: boolean
   openAiSupport: string
   riskSource: string
   providerName: string
+  countryCode: string
+  isp: string
+  timezone: string
   scenarios: IpScenario[]
 }
 
@@ -121,6 +128,11 @@ function scenarioReason(name: string, riskScore: number, ipType: string) {
   return '地区与代理状态综合判断'
 }
 
+function scenarioRating(stars: unknown) {
+  const filled = (stringValue(stars).match(/★/g) || []).length
+  return Math.max(0, Math.min(5, filled))
+}
+
 function normalizeScenarios(value: unknown, riskScore: number, ipType: string): IpScenario[] {
   if (!Array.isArray(value)) return []
   return value.map((item) => {
@@ -132,6 +144,7 @@ function normalizeScenarios(value: unknown, riskScore: number, ipType: string): 
       advice,
       description: scenarioDescription(advice),
       reason: scenarioReason(name, riskScore, ipType),
+      rating: scenarioRating(scenario.stars),
       tone: scenarioTone(advice),
     }
   })
@@ -191,6 +204,11 @@ export function normalizeIpCheckResult(value: IpCheckRawResponse | null | undefi
     openAiSupport: stringValue(value?.openai_support, '未知').replace(/^[^\p{L}\p{N}]+/u, ''),
     riskSource: '基于当前第三方风控接口结果',
     providerName: 'Proxycheck',
+    countryCode: stringValue(value?._raw?.country_code).toUpperCase(),
+    isp: stringValue(value?._raw?.isp),
+    timezone: stringValue(value?.timezone, '未知'),
+    devicesAddress: observedAddress,
+    devicesSubnet: observedSubnet,
     scenarios: normalizeScenarios(value?.scenarios, riskScore, ipType),
   }
 }

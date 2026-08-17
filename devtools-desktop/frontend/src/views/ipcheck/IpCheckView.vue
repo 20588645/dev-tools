@@ -18,6 +18,7 @@ import IpQueryBar from './components/IpQueryBar.vue'
 import IpResultSummary from './components/IpResultSummary.vue'
 import IpRiskDetails from './components/IpRiskDetails.vue'
 import IpScenarioGrid from './components/IpScenarioGrid.vue'
+import IpVerdictCard from './components/IpVerdictCard.vue'
 import { useIpCheck } from './composables/useIpCheck'
 import './ipcheck.css'
 
@@ -50,9 +51,13 @@ async function copyDetails() {
   const text = [
     `IP: ${result.value.ip}`,
     `位置: ${result.value.location}`,
+    `国家: ${result.value.countryCode || '未知'}`,
+    `时区: ${result.value.timezone}`,
     `ASN: ${result.value.asn}`,
     `组织: ${result.value.organization}`,
+    `运营商: ${result.value.isp || result.value.organization}`,
     `风险: ${result.value.riskScore}/100`,
+    `纯净度: ${Math.max(0, 100 - result.value.riskScore)}`,
   ].join('\n')
 
   try {
@@ -93,15 +98,15 @@ async function copyDetails() {
     </template>
 
     <div class="ip-check-results" :aria-busy="loading">
-      <BaseCard v-if="loading && !result" class="ip-check-state-card">
+      <BaseCard v-if="loading && !result" class="ip-check-state-card" fill-height>
         <LoadingState label="正在查询地理与风控数据…" />
       </BaseCard>
 
-      <BaseCard v-else-if="error && !result" class="ip-check-state-card">
+      <BaseCard v-else-if="error && !result" class="ip-check-state-card" fill-height>
         <ErrorState title="纯净检测暂不可用" :description="error" @retry="retry" />
       </BaseCard>
 
-      <BaseCard v-else-if="!result" class="ip-check-state-card">
+      <BaseCard v-else-if="!result" class="ip-check-state-card" fill-height>
         <EmptyState title="开始纯净度检测" description="输入 IP 或域名，也可以直接查询当前公网 IP">
           <template #actions><BaseButton @click="queryCurrent">查询我的 IP</BaseButton></template>
         </EmptyState>
@@ -116,14 +121,12 @@ async function copyDetails() {
           <IpResultSummary :key="result.ip" :result="result" :updated-label="updatedLabel" />
           <IpNetworkDetails :result="result" @copy="copyDetails" />
           <IpRiskDetails :key="result.ip" :result="result" />
+          <IpVerdictCard :result="result" />
           <IpScenarioGrid v-if="result.scenarios.length" :scenarios="result.scenarios" />
-          <BaseCard v-else variant="subtle" class="ip-scenario-card">
+          <BaseCard v-else variant="subtle" class="ip-scenario-card" fill-height>
             <EmptyState compact title="暂无业务场景建议" description="网络身份和风险结果仍可正常参考" />
           </BaseCard>
         </div>
-        <footer class="ip-check-data-note">
-          <span>第三方数据 · 检测结果仅供参考</span>
-        </footer>
         <div v-if="loading" class="ip-check-refreshing" role="status">
           <LoadingState compact label="正在更新检测结果…" />
         </div>

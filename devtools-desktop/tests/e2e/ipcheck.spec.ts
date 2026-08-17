@@ -18,6 +18,7 @@ const mockResult = {
   shared_users_level: '优质共享',
   shared_users_percent: 10,
   openai_support: '✅ 完美支持',
+  timezone: 'America/New_York',
   scenarios: [
     { name: 'TikTok', stars: '★★★★★', advice: '非常适合' },
     { name: '跨境电商', stars: '★★★★★', advice: '非常适合' },
@@ -31,6 +32,7 @@ const mockResult = {
     devices_address: 6,
     devices_subnet: 0,
     country_code: 'US',
+    isp: 'Google LLC',
   },
 }
 
@@ -52,6 +54,24 @@ async function expectNoHorizontalOverflow(page: Page) {
   expect(layout).toEqual({ document: false, page: false })
 }
 
+async function expectFilledViewport(page: Page) {
+  const metrics = await page.locator('#page-ipcheck').evaluate((root) => {
+    const grid = root.querySelector('.ip-check-grid')
+    if (!grid) return null
+    const pageRect = root.getBoundingClientRect()
+    const gridRect = grid.getBoundingClientRect()
+    return {
+      bottomGap: Math.round(pageRect.bottom - gridRect.bottom),
+      gridHeight: Math.round(gridRect.height),
+      pageHeight: Math.round(pageRect.height),
+    }
+  })
+  expect(metrics).not.toBeNull()
+  expect(metrics?.bottomGap).toBeGreaterThanOrEqual(8)
+  expect(metrics?.bottomGap).toBeLessThanOrEqual(48)
+  expect((metrics?.gridHeight ?? 0) / (metrics?.pageHeight ?? 1)).toBeGreaterThan(0.55)
+}
+
 test('renders the confirmed Vue page at the default window size in both themes', async ({ page }) => {
   await page.setViewportSize({ width: 1665, height: 1184 })
   await page.emulateMedia({ colorScheme: 'light' })
@@ -62,7 +82,12 @@ test('renders the confirmed Vue page at the default window size in both themes',
   await expect(page.locator('.legacy-ipcheck-fallback')).toHaveCount(0)
   await expect(page.locator('#ipcheckInput')).toHaveCount(0)
   await expect(page.locator('.page.active')).toHaveCount(1)
+  await expect(page.getByRole('heading', { name: '风险解读', exact: true })).toBeVisible()
+  await expect(page.getByText('当前出口纯净度良好', { exact: true })).toBeVisible()
+  await expect(page.getByText('本地址 6 台', { exact: true })).toBeVisible()
+  await expect(page.getByText('当前线路条件较稳定，仍建议保持账号与设备环境一致。').first()).toBeVisible()
   await expectNoHorizontalOverflow(page)
+  await expectFilledViewport(page)
 
   // P9-8：主题菜单已删，侧栏按钮循环 system→light→dark
   for (let i = 0; i < 3 && !(await page.locator('body[data-theme="dark"]').count()); i++) {
@@ -71,6 +96,7 @@ test('renders the confirmed Vue page at the default window size in both themes',
   await expect(page.locator('body')).toHaveAttribute('data-theme', 'dark')
   await expect(page.getByRole('heading', { name: '业务场景建议', exact: true })).toBeVisible()
   await expectNoHorizontalOverflow(page)
+  await expectFilledViewport(page)
 })
 
 test('validates input, updates data, and preserves the last result across navigation', async ({ page }) => {

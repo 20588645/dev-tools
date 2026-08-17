@@ -25,12 +25,15 @@ describe('ipcheck service', () => {
       shared_users_level: '优质共享',
       shared_users_percent: 10,
       openai_support: '✅ 完美支持',
+      timezone: 'America/New_York',
       scenarios: [{ name: 'AI 应用', advice: '完美支持', stars: '★★★★★' }],
       _raw: {
         type: 'Business',
         proxy: false,
         vpn: false,
         devices_address: 6,
+        country_code: 'US',
+        isp: 'Google LLC',
       },
     })
 
@@ -47,10 +50,14 @@ describe('ipcheck service', () => {
       proxyDetected: false,
       vpnDetected: false,
       openAiSupport: '完美支持',
+      countryCode: 'US',
+      timezone: 'America/New_York',
+      devicesAddress: 6,
     })
     expect(result.scenarios).toEqual([expect.objectContaining({
       name: 'AI 应用',
       tone: 'success',
+      rating: 5,
       reason: '地区与风险规则综合判断',
     })])
   })

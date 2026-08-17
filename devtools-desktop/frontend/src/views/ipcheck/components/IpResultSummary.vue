@@ -31,10 +31,24 @@ const nativeBadge = computed(() => (
     ? { label: '✓ 原生 IP', tone: 'success' as const }
     : { label: props.result.nativeIp, tone: 'neutral' as const }
 ))
+
+const facts = computed(() => [
+  { label: '纯净度', value: String(purityScore.value) },
+  { label: '风险值', value: `${props.result.riskScore}/100` },
+  { label: '共享', value: `${props.result.sharedUsersPercent}%` },
+  { label: '线路', value: props.result.ipType },
+])
 </script>
 
 <template>
-  <BaseCard class="ip-result-summary" :data-risk-tone="riskTone" content-padding="18px">
+  <BaseCard
+    class="ip-result-summary"
+    fill-height
+    content-layout="fill"
+    content-overflow="hidden"
+    content-padding="18px"
+    :data-risk-tone="riskTone"
+  >
     <div class="ip-result-summary__layout">
       <ScoreRing
         :value="purityScore"
@@ -60,6 +74,12 @@ const nativeBadge = computed(() => (
           <BaseBadge v-if="updatedLabel">{{ updatedLabel }} 更新</BaseBadge>
         </div>
       </section>
+      <dl class="ip-result-summary__facts">
+        <div v-for="fact in facts" :key="fact.label" class="ip-result-summary__fact">
+          <dt>{{ fact.label }}</dt>
+          <dd>{{ fact.value }}</dd>
+        </div>
+      </dl>
     </div>
   </BaseCard>
 </template>
