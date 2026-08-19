@@ -1,14 +1,4 @@
-/* 快捷命令 / 终端页：迁自 src/css/pages/terminal.css，token 驱动 */
-
-#vue-terminal-host {
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  width: 100%;
-  min-width: 0;
-  min-height: 0;
-  height: 100%;
-}
+/* 快捷命令 / 终端页 */
 
 .term-page {
   position: relative;

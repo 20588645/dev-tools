@@ -59,9 +59,8 @@ export const useRunStore = defineStore('run', {
     /**
      * 状态变更后的对外广播：刷新系统托盘菜单 + 通知首页重取。
      *
-     * 托盘由本 store 直接经 Tauri IPC 更新（原先绕 `app.js` 的 `syncTrayMenu` 读
-     * 旧全局 `runningProjects`，该链路已删除）。首页仍走 legacy 事件桥，等首页
-     * 改为直接消费本 store 后可一并去掉。
+     * 托盘由本 store 直接经 Tauri IPC 更新。首页通过 `HOME_REFRESH_REQUESTED_EVENT` 重取摘要，
+     * 避免 Run store 直接依赖首页 composable。
      *
      * 不广播会导致服务起停后托盘菜单不更新——那是真实回归，不是可以推后的细节。
      */

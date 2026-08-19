@@ -19,7 +19,6 @@ devtools-desktop/sidecar/data/devtools.db-wal
 devtools-desktop/sidecar/data/notebook-images/
 # 测试沙箱数据目录（开发测试用，不提交）
 devtools-desktop/sidecar/data-test/
-deploy-panel/server/data/.secret
 
 # Temp files
 /tmp/
@@ -58,6 +57,3 @@ devtools-desktop/sidecar/data/restore-pending.db
 # Development and verification visuals (do not commit generated captures)
 devtools-desktop/design-preview/screenshots/
 devtools-desktop/design-qa.md
-devtools-desktop/PRD/vue-migration/**/evidence/
-devtools-desktop/PRD/vue-migration/**/contact-sheets/
-devtools-desktop/PRD/vue-migration/**/measurements-*.json

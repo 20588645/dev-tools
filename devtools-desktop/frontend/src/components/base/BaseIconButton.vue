@@ -34,26 +34,30 @@ const type = computed<'error' | 'default'>(() => props.variant === 'danger' ? 'e
 </template>
 
 <style scoped>
+/* stylelint-disable declaration-no-important -- Naive 把 --n-height 写在根节点 inline style，必须盖住变量。 */
 /* 图标钮与同档文字钮同高：sm 26 / md 32 / lg 40 */
 .base-icon-button { flex: none; box-sizing: border-box; }
 
 .base-icon-button.n-button { border-radius: calc(var(--component-control-radius) - 2px); }
 
 .base-icon-button.n-button.n-button--small-type {
-  width: var(--component-control-height-sm);
-  min-width: var(--component-control-height-sm);
-  height: var(--component-control-height-sm);
+  --n-height: var(--component-control-height-sm) !important;
+  width: var(--component-control-height-sm) !important;
+  min-width: var(--component-control-height-sm) !important;
+  height: var(--component-control-height-sm) !important;
 }
 
 .base-icon-button.n-button.n-button--medium-type {
-  width: var(--component-control-height-md);
-  min-width: var(--component-control-height-md);
-  height: var(--component-control-height-md);
+  --n-height: var(--component-control-height-md) !important;
+  width: var(--component-control-height-md) !important;
+  min-width: var(--component-control-height-md) !important;
+  height: var(--component-control-height-md) !important;
 }
 
 .base-icon-button.n-button.n-button--large-type {
-  width: var(--component-control-height-lg);
-  min-width: var(--component-control-height-lg);
-  height: var(--component-control-height-lg);
+  --n-height: var(--component-control-height-lg) !important;
+  width: var(--component-control-height-lg) !important;
+  min-width: var(--component-control-height-lg) !important;
+  height: var(--component-control-height-lg) !important;
 }
 </style>

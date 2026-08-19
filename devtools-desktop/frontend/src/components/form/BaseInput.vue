@@ -150,6 +150,7 @@ defineExpose({
 </template>
 
 <style scoped>
+/* stylelint-disable declaration-no-important -- Naive 把 --n-height 写在根节点 inline style，必须盖住变量和内部行高。 */
 .field-control { display: grid; gap: var(--space-2); min-width: 0; }
 .field-control__label { color: var(--color-text); font-size: var(--font-size-sm); font-weight: var(--font-weight-medium); }
 .field-control__label span { color: var(--color-danger); }
@@ -159,14 +160,31 @@ defineExpose({
 .field-control--search :deep(.n-input) { box-shadow: var(--shadow-sm); }
 .field-control--size-sm:not(.field-control--title) :deep(.n-input:not(.n-input--textarea)),
 .field-control--size-md:not(.field-control--title) :deep(.n-input:not(.n-input--textarea)) {
-  --n-height: var(--component-control-height-md);
-  height: var(--component-control-height-md);
-  min-height: var(--component-control-height-md);
+  --n-height: var(--component-control-height-md) !important;
+  --n-font-size: var(--component-button-font-size) !important;
+  --n-border-radius: var(--component-control-radius) !important;
+  display: inline-flex;
+  align-items: center;
+  height: var(--component-control-height-md) !important;
+  min-height: var(--component-control-height-md) !important;
+  max-height: var(--component-control-height-md) !important;
+  font-size: var(--component-button-font-size);
+  line-height: 1;
+  border-radius: var(--component-control-radius);
+}
+.field-control--size-sm:not(.field-control--title) :deep(.n-input:not(.n-input--textarea) .n-input__input-el),
+.field-control--size-md:not(.field-control--title) :deep(.n-input:not(.n-input--textarea) .n-input__input-el),
+.field-control--size-sm:not(.field-control--title) :deep(.n-input:not(.n-input--textarea) .n-input-wrapper),
+.field-control--size-md:not(.field-control--title) :deep(.n-input:not(.n-input--textarea) .n-input-wrapper) {
+  height: var(--component-control-height-md) !important;
+  min-height: var(--component-control-height-md) !important;
+  line-height: var(--component-control-height-md) !important;
 }
 .field-control--size-lg:not(.field-control--title) :deep(.n-input:not(.n-input--textarea)) {
-  --n-height: var(--component-control-height-lg);
-  height: var(--component-control-height-lg);
-  min-height: var(--component-control-height-lg);
+  --n-height: var(--component-control-height-lg) !important;
+  height: var(--component-control-height-lg) !important;
+  min-height: var(--component-control-height-lg) !important;
+  max-height: var(--component-control-height-lg) !important;
 }
 .field-control--title { gap: var(--space-1); }
 .field-control--label-eyebrow .field-control__label {

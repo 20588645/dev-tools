@@ -125,6 +125,7 @@ onMounted(() => {
 </template>
 
 <style scoped>
+/* stylelint-disable declaration-no-important -- Naive 把 --n-height 写在根节点 inline style，必须盖住变量和内部行高。 */
 .field-control { display: grid; gap: var(--space-2); min-width: 0; }
 .field-control__label { color: var(--color-text); font-size: var(--font-size-sm); font-weight: var(--font-weight-medium); }
 .field-control__label span { color: var(--color-danger); }
@@ -134,8 +135,24 @@ onMounted(() => {
 .field-control--size-sm :deep(.n-base-selection),
 .field-control--size-md :deep(.n-select),
 .field-control--size-md :deep(.n-base-selection) {
-  --n-height: var(--component-control-height-md);
-  height: var(--component-control-height-md);
-  min-height: var(--component-control-height-md);
+  --n-height: var(--component-control-height-md) !important;
+  --n-font-size: var(--component-button-font-size) !important;
+  --n-border-radius: var(--component-control-radius) !important;
+  display: flex;
+  overflow: hidden;
+  height: var(--component-control-height-md) !important;
+  min-height: var(--component-control-height-md) !important;
+  max-height: var(--component-control-height-md) !important;
+  font-size: var(--component-button-font-size);
+  line-height: 1;
+  border-radius: var(--component-control-radius);
+}
+.field-control--size-sm :deep(.n-base-selection-label),
+.field-control--size-md :deep(.n-base-selection-label),
+.field-control--size-sm :deep(.n-base-selection-overlay),
+.field-control--size-md :deep(.n-base-selection-overlay) {
+  height: var(--component-control-height-md) !important;
+  min-height: var(--component-control-height-md) !important;
+  line-height: var(--component-control-height-md) !important;
 }
 </style>

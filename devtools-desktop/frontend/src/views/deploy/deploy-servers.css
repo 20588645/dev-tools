@@ -1,8 +1,3 @@
-#vue-deploy-servers-host {
-  width: 100%;
-  min-width: 0;
-}
-
 .deploy-servers {
   display: grid;
   width: 100%;

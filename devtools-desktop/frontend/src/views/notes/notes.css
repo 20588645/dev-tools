@@ -1,10 +1,4 @@
-/* 工时内容页：周导航 + 三栏（本周记录 / 当日编辑 / Git 活动参考）；原型 notes.html */
-
-#vue-notes-host {
-  width: 100%;
-  min-width: 0;
-  min-height: calc(100vh - 58px);
-}
+/* 工时内容页：周导航 + 三栏（本周记录 / 当日编辑 / Git 活动参考） */
 
 .notes-view {
   position: relative;

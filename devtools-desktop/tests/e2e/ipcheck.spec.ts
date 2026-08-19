@@ -43,11 +43,11 @@ async function openIpCheck(page: Page) {
   await page.goto('/?apiPort=13900')
   await page.locator('.sidebar-item[data-page="ipcheck"]').click()
   await expect(page.getByRole('heading', { name: '纯净检测', exact: true })).toBeVisible()
-  await expect(page.locator('#page-ipcheck').getByText('8.8.8.8', { exact: true })).toBeVisible()
+  await expect(page.locator('[data-page-id="ipcheck"]').getByText('8.8.8.8', { exact: true })).toBeVisible()
 }
 
 async function expectNoHorizontalOverflow(page: Page) {
-  const layout = await page.locator('#page-ipcheck').evaluate((activePage) => ({
+  const layout = await page.locator('[data-page-id="ipcheck"]').evaluate((activePage) => ({
     document: document.documentElement.scrollWidth > document.documentElement.clientWidth,
     page: activePage.scrollWidth > activePage.clientWidth,
   }))
@@ -55,7 +55,7 @@ async function expectNoHorizontalOverflow(page: Page) {
 }
 
 async function expectFilledViewport(page: Page) {
-  const metrics = await page.locator('#page-ipcheck').evaluate((root) => {
+  const metrics = await page.locator('[data-page-id="ipcheck"]').evaluate((root) => {
     const grid = root.querySelector('.ip-check-grid')
     if (!grid) return null
     const pageRect = root.getBoundingClientRect()
@@ -77,11 +77,11 @@ test('renders the confirmed Vue page at the default window size in both themes',
   await page.emulateMedia({ colorScheme: 'light' })
   await openIpCheck(page)
 
-  await expect(page.locator('#page-ipcheck')).toHaveCount(1)
+  await expect(page.locator('[data-page-id="ipcheck"]')).toHaveCount(1)
   await expect(page.locator('.ip-check-view')).toHaveCount(1)
   await expect(page.locator('.legacy-ipcheck-fallback')).toHaveCount(0)
   await expect(page.locator('#ipcheckInput')).toHaveCount(0)
-  await expect(page.locator('.page.active')).toHaveCount(1)
+  await expect(page.locator('.page')).toHaveCount(1)
   await expect(page.getByRole('heading', { name: '风险解读', exact: true })).toBeVisible()
   await expect(page.getByText('当前出口纯净度良好', { exact: true })).toBeVisible()
   await expect(page.getByText('本地址 6 台', { exact: true })).toBeVisible()
@@ -89,7 +89,7 @@ test('renders the confirmed Vue page at the default window size in both themes',
   await expectNoHorizontalOverflow(page)
   await expectFilledViewport(page)
 
-  // P9-8：主题菜单已删，侧栏按钮循环 system→light→dark
+  // 侧栏外观按钮循环 system → light → dark
   for (let i = 0; i < 3 && !(await page.locator('body[data-theme="dark"]').count()); i++) {
     await page.locator('[data-test="theme-toggle"]').click()
   }
@@ -113,9 +113,9 @@ test('validates input, updates data, and preserves the last result across naviga
   await expect(page.getByText('AS15169', { exact: true })).toBeVisible()
 
   await page.locator('.sidebar-item[data-page="home"]').click()
-  await expect(page.locator('#page-home')).toHaveClass(/\bactive\b/)
+  await expect(page.locator('[data-page-id="home"]')).toBeVisible()
   await page.locator('.sidebar-item[data-page="ipcheck"]').click()
-  await expect(page.locator('#page-ipcheck').getByText('8.8.8.8', { exact: true })).toBeVisible()
+  await expect(page.locator('[data-page-id="ipcheck"]').getByText('8.8.8.8', { exact: true })).toBeVisible()
   await expectNoHorizontalOverflow(page)
 })
 

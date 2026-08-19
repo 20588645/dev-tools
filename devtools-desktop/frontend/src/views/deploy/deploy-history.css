@@ -1,8 +1,3 @@
-#vue-deploy-history-host {
-  width: 100%;
-  min-width: 0;
-}
-
 .deploy-history {
   display: grid;
   width: 100%;

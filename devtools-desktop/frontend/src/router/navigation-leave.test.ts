@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { NavigationFailureType, isNavigationFailure } from 'vue-router'
 
 import { registerPageLeaveGuard } from '@/router/page-contract'
-import { createMigrationRouter } from '@/router'
+import { createAppRouter } from '@/router'
 import {
   listLeaveContract,
   pageIdFromRoute,
@@ -21,7 +21,7 @@ describe('leave contract catalog', () => {
 
 describe('shouldRunLeaveGuard', () => {
   it('skips deploy sub-route switches with same pageId', async () => {
-    const router = createMigrationRouter()
+    const router = createAppRouter()
     await router.push('/deploy/dashboard')
     const from = { ...router.currentRoute.value }
     await router.push('/deploy/servers')
@@ -32,7 +32,7 @@ describe('shouldRunLeaveGuard', () => {
   })
 
   it('detects leaving editor for another pageId', async () => {
-    const router = createMigrationRouter()
+    const router = createAppRouter()
     await router.push('/editor')
     const from = { ...router.currentRoute.value }
     await router.push('/run')
@@ -51,7 +51,7 @@ describe('router beforeEach leave guard', () => {
 
   it('blocks navigation when editor guard returns false', async () => {
     stops.push(registerPageLeaveGuard('editor', async () => false))
-    const router = createMigrationRouter()
+    const router = createAppRouter()
     await router.push('/editor')
     expect(router.currentRoute.value.name).toBe('editor')
 
@@ -63,7 +63,7 @@ describe('router beforeEach leave guard', () => {
   it('allows navigation when editor guard returns true', async () => {
     const guard = vi.fn().mockResolvedValue(true)
     stops.push(registerPageLeaveGuard('editor', guard))
-    const router = createMigrationRouter()
+    const router = createAppRouter()
     await router.push('/editor')
     const failure = await router.push('/run')
     expect(failure).toBeUndefined()

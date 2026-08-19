@@ -1,10 +1,4 @@
-/* ===== views/editor：迁自 src/css/pages/editor.css，适配 Vue PageFrame ===== */
-
-#vue-editor-host {
-  width: 100%;
-  min-width: 0;
-  min-height: calc(100vh - 58px);
-}
+/* 文件编辑器：浏览树 + 多标签 + CodeMirror */
 
 .ed-page {
   position: relative;

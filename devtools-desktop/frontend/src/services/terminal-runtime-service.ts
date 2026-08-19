@@ -9,11 +9,11 @@ import { useNotificationStore } from '@/stores/notification'
 import { useTerminalStore } from '@/stores/terminal'
 
 /**
- * 应用级终端运行时：xterm + PTY WS 常驻 MigrationHost。
+ * 应用级终端运行时：xterm + PTY WS 常驻 AppShellServices。
  *
  * 切走「快捷命令」页时 KeepAlive 会 deactivate TerminalView，但本服务不 dispose：
  * 同 WS 内 PTY 与每 tab 的 Terminal 实例继续存活；切回只 fit+focus。
- * 真正销毁发生在：关 tab、或 MigrationHost onBeforeUnmount → stop()。
+ * 真正销毁发生在：关 tab、或应用卸载时 stop()。
  */
 
 interface XtermTheme {

@@ -1,10 +1,4 @@
-/* 待办事项页：双栏（列表 380px + 详情），原型 todo.html；token 驱动，作用域 .todo-view */
-
-#vue-todo-host {
-  width: 100%;
-  min-width: 0;
-  min-height: calc(100vh - 58px);
-}
+/* 待办事项页：双栏（列表 380px + 详情） */
 
 .todo-view {
   --todo-accent: var(--color-action);

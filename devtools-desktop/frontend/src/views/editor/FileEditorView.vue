@@ -29,7 +29,7 @@ const notify = useNotificationStore()
 
 const paneRef = ref<InstanceType<typeof CodeMirrorPane> | null>(null)
 let cmReady = false
-/** KeepAlive 下用激活态代替 document#page-editor 查询，避免架构门禁 document-query。 */
+/** KeepAlive 下用激活态代替查询页面根节点，避免架构门禁 document-query。 */
 const pageActive = ref(true)
 
 const browserOpen = ref(false)

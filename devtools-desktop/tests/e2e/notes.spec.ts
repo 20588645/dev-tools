@@ -105,7 +105,7 @@ async function openNotes(page: Page, options: { failLoads?: boolean } = {}) {
 }
 
 async function expectNoPageOverflow(page: Page) {
-  const layout = await page.locator('#page-notes').evaluate((activePage) => ({
+  const layout = await page.locator('[data-page-id="notes"]').evaluate((activePage) => ({
     documentX: document.documentElement.scrollWidth > document.documentElement.clientWidth,
     pageX: activePage.scrollWidth > activePage.clientWidth,
     pageY: activePage.scrollHeight > activePage.clientHeight + 1,
@@ -166,7 +166,7 @@ test('renders the confirmed Vue workspace without the retired legacy implementat
   await page.emulateMedia({ colorScheme: 'light' })
   await openNotes(page)
 
-  await expect(page.locator('#page-notes')).toHaveCount(1)
+  await expect(page.locator('[data-page-id="notes"]')).toHaveCount(1)
   await expect(page.locator('.notes-view')).toHaveCount(1)
   await expect(page.locator('.legacy-notes-fallback')).toHaveCount(0)
   await expect(page.locator('#notesWeekGrid')).toHaveCount(0)
@@ -176,7 +176,7 @@ test('renders the confirmed Vue workspace without the retired legacy implementat
   await expectNoPageOverflow(page)
   await expectUsableEditor(page)
 
-  // P9-8：主题菜单已删，侧栏按钮循环 system→light→dark
+  // 侧栏外观按钮循环 system → light → dark
   for (let i = 0; i < 3 && !(await page.locator('body[data-theme="dark"]').count()); i++) {
     await page.locator('[data-test="theme-toggle"]').click()
   }

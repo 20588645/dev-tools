@@ -106,7 +106,7 @@ async function mockDeployApis(page: Page): Promise<DeployMock> {
 async function openDeployDashboard(page: Page) {
   await page.goto('/')
   await page.locator('.sidebar-item[data-page="deploy"]').click()
-  await expect(page.locator('#page-deploy')).toHaveClass(/\bactive\b/)
+  await expect(page.locator('[data-page-id="deploy"]')).toBeVisible()
   await expect(page.locator('[data-test="deploy-dashboard"]')).toBeVisible()
 }
 

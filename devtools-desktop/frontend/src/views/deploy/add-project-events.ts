@@ -2,8 +2,7 @@ export const ADD_PROJECT_REQUESTED_EVENT = 'devtools:add-project-requested'
 export const PROJECTS_CHANGED_EVENT = 'devtools:projects-changed'
 
 /**
- * 添加项目弹窗的开合与刷新事件（P9-8 自 add-project-bridge 收编，
- * window.showAddProject 桥随旧页头删除）。
+ * 添加项目弹窗的开合与刷新事件。
  *
  * 弹窗有多个入口且分属不同挂载层级：部署面板项目总览的页头与空态、
  * 本地运行页的页头与空态。弹窗随 AppShellServices 常驻（与 LogViewer 同级），

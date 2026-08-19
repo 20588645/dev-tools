@@ -120,7 +120,7 @@ async function openTodo(page: Page, viewport = { width: 1280, height: 800 }) {
 }
 
 async function expectNoOverflow(page: Page) {
-  const layout = await page.locator('#page-todo').evaluate((activePage) => {
+  const layout = await page.locator('[data-page-id="todo"]').evaluate((activePage) => {
     const workspace = activePage.querySelector('.todo-workspace')
     return {
       documentX: document.documentElement.scrollWidth > document.documentElement.clientWidth,
@@ -140,7 +140,7 @@ async function expectNoOverflow(page: Page) {
 test('mounts one Vue todo page in both themes without the retired runtime', async ({ page }) => {
   await openTodo(page)
 
-  await expect(page.locator('#page-todo')).toHaveCount(1)
+  await expect(page.locator('[data-page-id="todo"]')).toHaveCount(1)
   await expect(page.locator('.todo-view')).toHaveCount(1)
   await expect(page.locator('#todoLayoutContainer')).toHaveCount(0)
   await expect(page.locator('script[src="js/todo.js"]')).toHaveCount(0)
@@ -162,7 +162,7 @@ test('mounts one Vue todo page in both themes without the retired runtime', asyn
   }))).toEqual({ loadTodos: 'undefined', showAddTodo: 'undefined' })
   await expectNoOverflow(page)
 
-  // P9-8：主题菜单已删，侧栏按钮循环 system→light→dark
+  // 侧栏外观按钮循环 system → light → dark
   for (let i = 0; i < 3 && !(await page.locator('body[data-theme="dark"]').count()); i++) {
     await page.locator('[data-test="theme-toggle"]').click()
   }

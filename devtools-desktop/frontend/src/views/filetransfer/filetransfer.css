@@ -1,10 +1,4 @@
-/* 文件传输页：双栏 + 队列；token 驱动，作用域 .ft-page */
-
-#vue-filetransfer-host {
-  width: 100%;
-  min-width: 0;
-  min-height: calc(100vh - 58px);
-}
+/* 文件传输页：双栏 + 队列 */
 
 .ft-page {
   position: relative;

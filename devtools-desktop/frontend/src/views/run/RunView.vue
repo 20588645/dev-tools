@@ -144,8 +144,8 @@ const overflowOptions = computed<DropdownMenuOption[]>(() => {
 })
 
 /*
-  「添加项目」与部署面板共用同一个弹窗（迁移前两页页头都是 onclick="showAddProject()"）。
-  弹窗随 MigrationHost 常驻，故直接发请求事件，不必向上抛给挂载方。
+  「添加项目」与部署面板共用同一个弹窗。
+  弹窗随 AppShellServices 常驻，故直接发请求事件，不必向上抛给挂载方。
  */
 
 function onOverflowSelect(key: string) {

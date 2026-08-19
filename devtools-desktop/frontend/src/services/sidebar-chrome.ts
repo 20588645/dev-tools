@@ -1,4 +1,4 @@
-/** 侧栏折叠 / 菜单序 chrome（P8-4）；生产 DOM 仍由 legacy 驱动直到 P8-5 */
+/** 侧栏折叠持久化（sessionStorage）。折叠态由 AppLayout 的 is-collapsed 驱动，不写 body class。 */
 
 export const SIDEBAR_COLLAPSED_KEY = 'devtools-sidebar-collapsed'
 
@@ -17,23 +17,18 @@ export function readSidebarCollapsed(
 export function writeSidebarCollapsed(
   collapsed: boolean,
   storage: Storage = globalThis.sessionStorage,
-  options: { syncBody?: boolean } = {},
 ): void {
   try {
     storage.setItem(SIDEBAR_COLLAPSED_KEY, String(collapsed))
   } catch {
     /* private mode / unavailable */
   }
-  if (options.syncBody && typeof document !== 'undefined') {
-    document.body.classList.toggle('sidebar-collapsed', collapsed)
-  }
 }
 
 export function toggleSidebarCollapsed(
   storage: Storage = globalThis.sessionStorage,
-  options: { syncBody?: boolean } = {},
 ): boolean {
   const next = !readSidebarCollapsed(storage)
-  writeSidebarCollapsed(next, storage, options)
+  writeSidebarCollapsed(next, storage)
   return next
 }

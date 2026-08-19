@@ -1,13 +1,13 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it } from 'vitest'
 
-import { createMigrationRouter } from '@/router'
+import { createAppRouter } from '@/router'
 import { getAppRouter, navigateToPage, setAppRouter } from '@/router/navigate'
 
 describe('navigateToPage', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
-    setAppRouter(createMigrationRouter())
+    setAppRouter(createAppRouter())
   })
 
   it('pushes catalog path for known pageIds', async () => {

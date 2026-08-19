@@ -1,6 +1,5 @@
-/* ===== 实验性全局特效（experimental-effects-service 的 DOM 产物） =====
- * L3 自 styles/legacy/runtime.css 收编：点击粒子与 Live2D 看板娘均挂 body 下，
- * 与任何页面组件无父子关系，故保留为全局样式。色板取组件层 token。 */
+/* 实验性全局特效（experimental-effects-service 的 DOM 产物）。
+ * 点击粒子与 Live2D 看板娘均挂 body 下，与页面组件无父子关系。 */
 
 .click-particle {
   position: fixed;

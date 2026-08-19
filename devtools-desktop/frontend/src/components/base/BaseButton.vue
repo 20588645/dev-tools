@@ -46,6 +46,7 @@ const variantProps = computed(() => ({
 </template>
 
 <style scoped>
+/* stylelint-disable declaration-no-important -- Naive 把 --n-height 写在根节点 inline style，必须盖住变量。 */
 /* redesign-v2 方案 B：默认钮玻璃面 + 细边，主钮蓝紫渐变 + 彩色投影，悬停轻浮起。
    高度与输入/下拉同档：md 32 / sm 26 / lg 40。 */
 .base-button {
@@ -61,18 +62,23 @@ const variantProps = computed(() => ({
 
 .base-button.n-button.n-button--medium-type,
 .base-button.n-button.n-button--small-type {
-  --n-height: var(--component-control-height-md);
-  height: var(--component-control-height-md);
-  min-height: var(--component-control-height-md);
-  padding: 0 var(--component-button-padding-x);
+  --n-height: var(--component-control-height-md) !important;
+  --n-font-size: var(--component-button-font-size) !important;
+  --n-padding: 0 var(--component-button-padding-x) !important;
+  --n-border-radius: var(--component-control-radius) !important;
+  height: var(--component-control-height-md) !important;
+  min-height: var(--component-control-height-md) !important;
+  max-height: var(--component-control-height-md) !important;
+  padding: 0 var(--component-button-padding-x) !important;
   border-radius: var(--component-control-radius);
   font-size: var(--component-button-font-size);
 }
 
 .base-button.n-button.n-button--large-type {
-  --n-height: var(--component-control-height-lg);
-  height: var(--component-control-height-lg);
-  min-height: var(--component-control-height-lg);
+  --n-height: var(--component-control-height-lg) !important;
+  height: var(--component-control-height-lg) !important;
+  min-height: var(--component-control-height-lg) !important;
+  max-height: var(--component-control-height-lg) !important;
 }
 
 .base-button.n-button :deep(.n-button__content) {

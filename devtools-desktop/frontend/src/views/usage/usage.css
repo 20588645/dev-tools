@@ -1,9 +1,3 @@
-#vue-usage-host {
-  width: 100%;
-  min-width: 0;
-  min-height: calc(100vh - 58px);
-}
-
 .usage-view {
   position: relative;
   height: calc(100vh - 58px);

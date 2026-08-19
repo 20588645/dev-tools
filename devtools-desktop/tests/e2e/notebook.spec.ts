@@ -150,7 +150,7 @@ async function openNotebook(page: Page) {
 }
 
 async function expectNoOverflow(page: Page) {
-  const layout = await page.locator('#page-notebook').evaluate((activePage) => {
+  const layout = await page.locator('[data-page-id="notebook"]').evaluate((activePage) => {
     const workspace = activePage.querySelector('.notebook-workspace')
     const editor = activePage.querySelector('.notebook-rich-editor__content')
     const richEditor = activePage.querySelector('.notebook-rich-editor')
@@ -201,7 +201,7 @@ test('renders the Vue notebook workspace in both themes without the retired DOM'
   })
   await expectNoOverflow(page)
 
-  // P9-8：主题菜单已删，侧栏按钮循环 system→light→dark
+  // 侧栏外观按钮循环 system → light → dark
   for (let i = 0; i < 3 && !(await page.locator('body[data-theme="dark"]').count()); i++) {
     await page.locator('[data-test="theme-toggle"]').click()
   }
@@ -419,7 +419,7 @@ test('matches the credential card structure in light and dark themes', async ({ 
   expect(Number(light.projectWeight)).toBeGreaterThanOrEqual(600)
   expect(light.valueFont).toContain('SF Mono')
 
-  // P9-8：主题菜单已删，侧栏按钮循环 system→light→dark
+  // 侧栏外观按钮循环 system → light → dark
   for (let i = 0; i < 3 && !(await page.locator('body[data-theme="dark"]').count()); i++) {
     await page.locator('[data-test="theme-toggle"]').click()
   }

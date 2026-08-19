@@ -1,7 +1,7 @@
 import type { AppPageId } from '@/router/page-contract'
 
 /**
- * 路由 meta：侧栏与离开策略的单一数据源（P8-1+；P8-5 后可见侧栏由 AppSidebar 消费）。
+ * 路由 meta：侧栏与离开策略的单一数据源。
  */
 export type NavFixed = 'first' | 'last'
 
@@ -47,7 +47,7 @@ export interface NavCatalogItem {
   view: string
 }
 
-/** 与 `app.js` DEFAULT_MENU_ORDER 一致（不含固定首尾）；菜单序单一默认源（P8-4） */
+/** 可排序菜单项的默认顺序（不含固定首尾）。 */
 export const DEFAULT_MENU_ORDER = [
   'run',
   'deploy',

@@ -1,9 +1,7 @@
 import { realtimeWs } from '@/services/realtime'
 
 /**
- * 应用级 window 事件契约（P9-8 自 legacy-bridge 收编）。
- * 这些事件解耦「设置页 / 常驻服务 / 页面」之间的跨域通知，
- * 名字保留 `devtools:` 前缀以兼容既有监听方。
+ * 应用级 window 事件契约，解耦设置页、常驻服务和页面之间的通知。
  */
 
 export const HOME_REFRESH_REQUESTED_EVENT = 'devtools:home-refresh-requested'

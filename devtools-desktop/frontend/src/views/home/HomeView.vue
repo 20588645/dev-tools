@@ -18,7 +18,7 @@ import './home.css'
 
 defineOptions({ name: 'HomeView' })
 
-/** KeepAlive：用 activated 驱动刷新，不再依赖 MigrationHost 传入的 active prop */
+/** KeepAlive：用 activated 驱动刷新 */
 const active = ref(true)
 onActivated(() => { active.value = true })
 onDeactivated(() => { active.value = false })

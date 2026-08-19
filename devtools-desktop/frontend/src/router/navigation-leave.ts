@@ -9,7 +9,7 @@ import {
 import { NAV_CATALOG, type LeavePolicy } from './route-meta'
 
 /**
- * Phase 8 P8-2：统一离开契约。
+ * 统一离开契约。
  *
  * - 运行时确认仍走 `registerPageLeaveGuard`（editor 脏标签）
  * - Router beforeEach 与页面注册的 guard 共用 `runPageLeaveGuards`
@@ -62,8 +62,7 @@ export async function confirmLeavePage(pageId: AppPageId): Promise<boolean> {
 }
 
 /**
- * 挂到 createMigrationRouter：P8-5 cutover 后正式生效。
- * P8-2 先接线并单测；main 仍未 use(router)，不影响当前壳。
+ * 挂到 createAppRouter 的 beforeEach。
  */
 export function installRouterNavigationGuards(router: Router): () => void {
   return router.beforeEach(async (to, from) => {

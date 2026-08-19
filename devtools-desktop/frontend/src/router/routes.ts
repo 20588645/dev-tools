@@ -19,10 +19,9 @@ function metaOf(pageId: AppRouteMeta['pageId'], patch: Partial<AppRouteMeta> = {
 }
 
 /**
- * Phase 8 P8-5：完整业务 route records，已接入 main.ts + AppShell RouterView。
- * deploy 子页用扁平路径（非嵌套 RouterView），便于单层 `<RouterView>` + KeepAlive。
+ * 业务路由。deploy 子页用扁平路径（非嵌套 RouterView），便于单层 `<RouterView>` + KeepAlive。
  */
-export const migrationRoutes: RouteRecordRaw[] = [
+export const appRoutes: RouteRecordRaw[] = [
   {
     path: '/',
     name: 'home',

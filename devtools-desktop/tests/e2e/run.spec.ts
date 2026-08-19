@@ -143,19 +143,19 @@ async function openRun(page: Page, viewport = { width: 1280, height: 800 }) {
 }
 
 async function expectNoPageOverflow(page: Page) {
-  const overflow = await page.evaluate(() => ({
-    documentX: document.documentElement.scrollWidth > document.documentElement.clientWidth,
-    pageX: (() => {
-      const active = document.getElementById('page-run')
-      return active ? active.scrollWidth > active.clientWidth : true
-    })(),
-  }))
+  const overflow = await page.evaluate(() => {
+    const active = document.querySelector('[data-page-id="run"]')
+    return {
+      documentX: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+      pageX: active ? active.scrollWidth > active.clientWidth : true,
+    }
+  })
   expect(overflow).toEqual({ documentX: false, pageX: false })
 }
 
 test('mounts one Vue run page without the retired DOM or scripts', async ({ page }) => {
   await openRun(page)
-  await expect(page.locator('#page-run')).toHaveCount(1)
+  await expect(page.locator('[data-page-id="run"]')).toHaveCount(1)
   await expect(page.locator('script[src="js/run.js"]')).toHaveCount(0)
   await expect(page.locator('link[href="css/pages/run.css"]')).toHaveCount(0)
   // 旧页面 DOM 与两个旧弹窗都已移除
@@ -169,25 +169,25 @@ test('mounts one Vue run page without the retired DOM or scripts', async ({ page
 test('shows the multi-module count instead of the meaningless saved-command stat', async ({ page }) => {
   await openRun(page)
   // redesign-v2：三个统计并进页头副题一句话（原型 page-sub），不再占独立一行
-  const summary = page.locator('#page-run .page-header__copy p')
+  const summary = page.locator('[data-page-id="run"] .page-header__copy p')
   await expect(summary).toHaveText('3 个项目 · 0 运行中 · 1 多模块')
 })
 
 test('filters by keyword and by project kind', async ({ page }) => {
   await openRun(page)
-  const search = page.locator('#page-run input[placeholder="搜索可运行项目..."]')
+  const search = page.locator('[data-page-id="run"] input[placeholder="搜索可运行项目..."]')
 
   await search.fill('blog')
   await expect(page.locator('.run-card')).toHaveCount(1)
   await search.fill('zzzz')
   await expect(page.locator('.run-card')).toHaveCount(0)
-  await expect(page.locator('#page-run')).toContainText('没有匹配的项目')
+  await expect(page.locator('[data-page-id="run"]')).toContainText('没有匹配的项目')
 
   await search.fill('')
   await expect(page.locator('.run-card')).toHaveCount(3)
 
   // redesign-v2：筛选从 FilterChip 换成原型的 .seg 分段器
-  const filters = page.locator('#page-run .page-toolbar .base-segmented .n-tabs-tab')
+  const filters = page.locator('[data-page-id="run"] .page-toolbar .base-segmented .n-tabs-tab')
   await filters.filter({ hasText: '多模块' }).click()
   await expect(page.locator('.run-card')).toHaveCount(1)
   await filters.filter({ hasText: '单体项目' }).click()
@@ -204,7 +204,7 @@ test('keeps the toolbar on one row when a service is running', async ({ page }) 
   await page.locator('.sidebar-item[data-page="run"]').click()
   await expect(page.locator('.run-card.project-card--running')).toHaveCount(1)
 
-  const toolbarHeight = await page.locator('#page-run .page-toolbar').evaluate(el => el.getBoundingClientRect().height)
+  const toolbarHeight = await page.locator('[data-page-id="run"] .page-toolbar').evaluate(el => el.getBoundingClientRect().height)
   expect(toolbarHeight).toBeLessThan(60)
   await expectNoPageOverflow(page)
 })
@@ -238,7 +238,7 @@ test('keeps the running total aligned when an older stopped job is also returned
   await page.goto('/?apiPort=13900')
   await page.locator('.sidebar-item[data-page="run"]').click()
 
-  await expect(page.locator('#page-run .page-header__copy p')).toContainText('1 运行中')
+  await expect(page.locator('[data-page-id="run"] .page-header__copy p')).toContainText('1 运行中')
   await expect(page.locator('.run-card.project-card--running')).toHaveCount(1)
   await expect(page.locator('.run-card[data-project="b8seed-portal"]')).toHaveClass(/project-card--running/)
 })
@@ -303,7 +303,7 @@ test('forces the configured port instead of silently inferring one', async ({ pa
 
 test('shows real modules and all three history status tiers', async ({ page }) => {
   await openRun(page)
-  await page.locator('#page-run .page-toolbar button').last().click()
+  await page.locator('[data-page-id="run"] .page-toolbar button').last().click()
   await page.getByText('📋 运行历史').click()
 
   const table = page.getByRole('region', { name: '本地运行历史' })
@@ -329,7 +329,7 @@ test('renders groups with collapse and ordering, ungrouped last', async ({ page 
   await page.goto('/?apiPort=13900')
   await page.locator('.sidebar-item[data-page="run"]').click()
 
-  const groups = page.locator('#page-run .run-group')
+  const groups = page.locator('[data-page-id="run"] .run-group')
   await expect(groups).toHaveCount(3)
   // 「未分组」始终排在末尾且没有排序/重命名操作
   await expect(groups.last().locator('.run-group__name')).toHaveText('未分组')
@@ -368,9 +368,8 @@ test('shows the log viewer on top of the run page, not trapped in the home host'
   await page.getByText('查看日志', { exact: true }).click()
 
   /*
-   * MigrationHost 挂在 #page-home 内，而 .page 非激活时是 display:none !important。
-   * 外壳必须走 BaseDialog（NModal 自带 teleport 到 body）；自建 position:fixed
-   * 覆盖层会留在原地，导致在本地运行页「点了没反应」——弹窗其实渲染了但宿主不可见。
+   * 日志查看器必须走 BaseDialog（NModal 自带 teleport 到 body）。
+   * 自建 position:fixed 覆盖层会留在 KeepAlive 页面里，切页后看起来像「点了没反应」。
    */
   const stack = page.locator('.log-viewer__stack')
   await expect(stack).toBeVisible()
@@ -471,7 +470,7 @@ test('wraps each group and its cards in one shared panel boundary', async ({ pag
   await page.setViewportSize({ width: 1280, height: 800 })
   await page.goto('/?apiPort=13900')
   await page.locator('.sidebar-item[data-page="run"]').click()
-  const group = page.locator('#page-run .run-group').first()
+  const group = page.locator('[data-page-id="run"] .run-group').first()
   await expect(group.locator('.run-card')).toHaveCount(2)
 
   // 分组用公共折叠组件的 panel 分区容器，而不是裸标题

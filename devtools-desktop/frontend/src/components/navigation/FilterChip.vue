@@ -62,10 +62,13 @@ const filterChipThemeOverrides = {
 </template>
 
 <style scoped>
+/* stylelint-disable declaration-no-important -- Naive 把 --n-height 写在根节点 inline style，必须盖住变量。 */
 .filter-chip {
-  --n-height: var(--component-control-height-md);
-  height: var(--component-control-height-md);
-  min-height: var(--component-control-height-md);
+  --n-height: var(--component-control-height-md) !important;
+  --n-font-size: var(--component-button-font-size) !important;
+  --n-border-radius: var(--component-control-radius) !important;
+  height: var(--component-control-height-md) !important;
+  min-height: var(--component-control-height-md) !important;
   color: var(--color-text-muted);
   font-size: var(--component-button-font-size);
   cursor: pointer;

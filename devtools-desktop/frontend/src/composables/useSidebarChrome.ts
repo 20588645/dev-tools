@@ -8,15 +8,10 @@ import {
 } from '@/services/sidebar-chrome'
 import type { SortableMenuPage } from '@/router/route-meta'
 
-/**
- * P8-4：侧栏 chrome 状态（折叠 + 菜单序 tick）。
- * 预览默认不 syncBody，避免碰生产侧栏。
- */
+/** 侧栏折叠状态与菜单序刷新。 */
 export function useSidebarChrome(options: {
-  syncBody?: boolean
   persistCollapse?: boolean
 } = {}) {
-  const syncBody = options.syncBody === true
   const persistCollapse = options.persistCollapse !== false
 
   const collapsed = ref(
@@ -26,7 +21,7 @@ export function useSidebarChrome(options: {
 
   function setCollapsed(value: boolean) {
     collapsed.value = value
-    if (persistCollapse) writeSidebarCollapsed(value, sessionStorage, { syncBody })
+    if (persistCollapse) writeSidebarCollapsed(value)
   }
 
   function toggleCollapsed() {

@@ -1,10 +1,10 @@
-# 共享 UI 现状盘点
+# 共享 UI 清单
 
-> 状态：Phase 2-D 预览验收已完成；Naive UI 作为底层实现，项目 Base 组件作为业务唯一入口。2026-07-31 起组件所有权受[组件架构合规专项](./component-architecture-compliance.md)与 `npm run lint:architecture` 共同约束。
+> Naive UI 作为底层实现，项目 Base 组件作为业务唯一入口。组件所有权受[组件架构合规](./component-architecture-compliance.md)与 `npm run lint:architecture` 共同约束。
 
-## 首批基础组件
+## 基础组件
 
-| 组件 | 使用语义 | 首批状态 | 约束 |
+| 组件 | 使用语义 | 状态 | 约束 |
 | --- | --- | --- | --- |
 | `PageFrame` / `PageBody` | 页面外壳与滚动区域 | 已实现 | 页面顶部不参与正文滚动，支持 standard / immersive / workspace |
 | `PageTop` / `PageHeader` | 标题、说明和主操作 | 已实现 | 每页只有一个 h1，窄窗口操作进入更多菜单 |
@@ -43,15 +43,14 @@
 - 项目封装层：`Base*` 组件对外暴露项目自己的 props、events 和 slots；Naive UI 只作为内部实现细节。后续替换组件库时只改 `components/vendor`、`adapters` 和 Base 封装层。
 - 弃用规则：禁止业务 View 直接导入 `naive-ui` 或 `element-plus`；如未来替换库，只改 `components/vendor`、`adapters` 和 `plugins/ui-library.ts`。
 
-## 页面级候选
+## 图表与分组原语
 
-这些模式不在平台层凭空抽象，等页面完成 PG0～PG3 后再决定是否提升：
-
-- 本地运行和部署：项目分组、日志查看器；结构化项目卡片优先复用 `BaseEntityCard`，Phase 6-2 再接入旧部署页。
-- 文件传输：文件树、传输队列、远程目录表格。
-- 终端与编辑器：终端容器、标签栏、代码编辑器外壳。
-- 用量和价格：图表容器、日期范围选择器、价格表格。
-- 2FA 与纯净检查：验证码卡片、安全状态卡片。
+| 组件 | 使用语义 | 约束 |
+| --- | --- | --- |
+| `AreaChart` / `RankBar` / `ScoreRing` / `SplitBar` | 首页用量、IP 纯净分、用量排行等业务图 | 业务页按语义选用，不在页面内重写同类图 |
+| `Sparkline` / `BarChart` | 通用迷你图 / 柱状图 | 预览与 `redesign-smoke` 覆盖；有第二处相同语义时再接入业务页 |
+| `GroupSection` | 标题 + 数量 + 重命名的简单分组条 | 运行/部署分组含排序、网关与运行态，使用页面私有包装，底层仍是 `BaseDisclosure` 的 `panel` 变体 |
+| `ProjectCard` | 运行/部署项目卡外壳 | 页面包装（`RunProjectCard` / `DeployProjectCard`）只补业务内容 |
 
 ## 提炼规则
 
@@ -60,9 +59,9 @@
 3. 新组件必须同步类型、亮暗主题预览、键盘/ARIA 测试和使用页面清单。
 4. 业务 View 和页面私有组件禁止直接 `import ... from 'naive-ui'`；复杂控件也必须先进入项目 Base/适配层。
 
-## 2026-07-31 组件架构专项补齐
+## 已接入的公共能力
 
-首批补齐已经完成源码、预览、类型和组件测试，真实消费者将在后续逐页收口子项中接入：
+源码、预览、类型和组件测试均已落地，当前消费者如下：
 
 - 表格：`BaseDataTable.vue` + `base-data-table.ts`，Usage 的项目排名、高用量请求、模型统计、请求日志与模型单价，以及 Run 运行历史均已接入。
 - 折叠：`BaseDisclosure.vue`，Settings、Todo、Twofa 与 Run 项目分组均已接入；新增 `panel` 分区容器变体，标题条与内容共享一个外框并提供内嵌项圆角 token，首个消费者为 Run 项目分组。
@@ -70,7 +69,7 @@
 - 进度：`BaseProgress` 新增 circle、`rail` 轨道对比度与 `tickInterval` 节拍契约；circle 用于 Twofa 常用卡片倒计时环，`line + rail="visible"` 用于 Twofa 账号卡片的细线倒计时，两者均以 `tickInterval=1000` 表达每秒推进。
 - 布局与表单变体：`BaseCard`、`BaseInput`、`BaseTextarea`、`BaseCheckbox` 的公开能力已用于 Notes、Notebook、Todo、Usage 与 Run。
 - 可选择列表项：`BaseSelectableItem` 统一 Notes 日期、Notebook 笔记和 Todo 任务列表的选择、焦点与悬停语义，三个消费者均已接入。
-- 结构化实体卡片：`BaseEntityCard` 统一图标、标题、副标题、徽标、头部尾随内容、主体、状态、操作区与可展开详情；两行状态区、表面受光与 `fillHeight` 让同一网格的卡片等高，异常态不会把同排卡片顶高；`statusPlacement="footer"` 让低信息量状态文案降级到底部说明位，避免卡片内出现框中框，`bodyAlign="stretch"` 支持多行纵向主体。Twofa 账号卡与 Run 项目卡是现有两个消费者，旧 Deploy 项目卡在 Phase 6-2 Vue 迁移时接入，不提前修改 legacy 页面。
+- 结构化实体卡片：`BaseEntityCard` 统一图标、标题、副标题、徽标、头部尾随内容、主体、状态、操作区与可展开详情；两行状态区、表面受光与 `fillHeight` 让同一网格的卡片等高。Twofa 账号卡是现有消费者；运行/部署项目卡走 `ProjectCard` 外壳。
 - 筛选、进度与定时器：Twofa 已接入 `FilterChip`、`BaseProgress`（常用卡片 circle、账号卡片 line）与 `useInterval`，Usage 自动刷新也已接入 `useInterval`；公共层统一负责 timer 的 autoStart、暂停、恢复与卸载契约。
 
 通知宿主已在后续独立子项完成：`AppToastHost` 不再绘制 Toast 或管理定时器，而是通过项目 adapter 驱动 Naive Message；`NNotificationProvider` 保留给未来需要标题、描述或操作区的富通知，业务页面仍不得直接访问任一 Provider API。

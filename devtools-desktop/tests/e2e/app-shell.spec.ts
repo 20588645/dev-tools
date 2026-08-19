@@ -28,30 +28,23 @@ async function expectPageNavigationToWork(page: Page) {
     await expect(navItem).toHaveCount(1)
     await navItem.click()
     await expect(navItem).toHaveClass(/\bactive\b/)
-    await expect(page.locator('.page.active').first()).toBeVisible()
+    await expect(page.locator(`[data-page-id="${pageId}"]`).first()).toBeVisible()
     await expect.poll(() => page.evaluate(() => window.location.hash)).toBe(pageHash[pageId] === '#/deploy' ? '#/deploy/dashboard' : pageHash[pageId])
   }
 }
 
-test('Vue AppShell owns navigation after P8-5 cutover', async ({ page }) => {
-  // 28 次导航 + 主题循环的重型用例：全量并行跑时视图链冷加载偶发挤爆 30s 默认预算，放宽到 3 倍。
+test('AppShell owns navigation and theme cycling', async ({ page }) => {
   test.slow()
   await page.setViewportSize({ width: 1665, height: 1184 })
   await page.emulateMedia({ colorScheme: 'light' })
   await page.goto('/')
 
   await expect(page.locator('#app')).toHaveCount(1)
-  await expect(page.locator('#vue-migration-host')).toHaveCount(0)
+  await expect(page.locator('[data-app-shell]')).toHaveCount(1)
   await expect(page.locator('[data-app-shell-services]')).toHaveCount(1)
   await expect(page.locator('.app-sidebar .sidebar-item[data-page="home"]')).toHaveCount(1)
-  await expect(page.locator('#page-home.page.active')).toHaveCount(1)
+  await expect(page.locator('[data-page-id="home"]')).toHaveCount(1)
   await expect(page.locator('[data-v-app]')).toHaveCount(1)
-
-  const migrationState = await page.evaluate(() => ({
-    deferred: window.__DEVTOOLS_MIGRATION__?.deferred,
-    mounted: Boolean(window.__DEVTOOLS_MIGRATION__?.app),
-  }))
-  expect(migrationState).toEqual({ deferred: false, mounted: true })
 
   await expectPageNavigationToWork(page)
 
@@ -59,7 +52,6 @@ test('Vue AppShell owns navigation after P8-5 cutover', async ({ page }) => {
   await expect(body).toHaveAttribute('data-theme-mode', 'system')
   await expect(body).toHaveAttribute('data-theme', 'light')
 
-  // 外观按钮循环主题（P8-4 单一写入）
   const themeBtn = page.locator('.sidebar-footer .sidebar-tool-button').filter({ hasText: '外观' })
   await themeBtn.click()
   await expect(body).toHaveAttribute('data-theme-mode', 'light')

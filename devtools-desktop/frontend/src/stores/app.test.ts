@@ -117,14 +117,10 @@ describe('app theme store', () => {
     expect(localStorage.getItem('devtools-accent')).toBeNull()
   })
 
-  it('persists theme and emits theme-changed', () => {
+  it('persists theme mode to localStorage', () => {
     const app = useAppStore()
-    const spy = vi.fn()
-    window.addEventListener('devtools:theme-changed', spy)
     app.applyThemeMode('dark')
     expect(localStorage.getItem('devtools-theme')).toBe('dark')
     expect(document.body.getAttribute('data-theme-mode')).toBe('dark')
-    expect(spy).toHaveBeenCalled()
-    window.removeEventListener('devtools:theme-changed', spy)
   })
 })

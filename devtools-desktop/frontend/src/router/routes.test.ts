@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { APP_PAGE_IDS } from '@/router/page-contract'
-import { createMigrationRouter } from '@/router'
+import { createAppRouter } from '@/router'
 import {
   DEFAULT_MENU_ORDER,
   NAV_CATALOG,
@@ -9,10 +9,10 @@ import {
   keepAliveNamesFromCatalog,
   normalizeMenuOrder,
 } from '@/router/route-meta'
-import { migrationRoutes } from '@/router/routes'
+import { appRoutes } from '@/router/routes'
 
 describe('route-meta catalog', () => {
-  it('covers every legacy page id exactly once in NAV_CATALOG', () => {
+  it('covers every page id exactly once in NAV_CATALOG', () => {
     const ids = NAV_CATALOG.map((item) => item.pageId)
     expect(ids.sort()).toEqual([...APP_PAGE_IDS].sort())
     expect(new Set(ids).size).toBe(ids.length)
@@ -25,7 +25,7 @@ describe('route-meta catalog', () => {
     expect(NAV_CATALOG.find((i) => i.pageId === 'terminal')?.keepSession).toBe(true)
   })
 
-  it('normalizes menu order like legacy DEFAULT_MENU_ORDER', () => {
+  it('normalizes menu order against DEFAULT_MENU_ORDER', () => {
     expect(normalizeMenuOrder(undefined)).toEqual(DEFAULT_MENU_ORDER)
     expect(normalizeMenuOrder(['usage', 'run', 'usage', 'nope'])).toEqual([
       'usage',
@@ -50,9 +50,9 @@ describe('route-meta catalog', () => {
   })
 })
 
-describe('migrationRoutes P8-1', () => {
+describe('appRoutes', () => {
   it('registers top-level routes for all nav pages and deploy children', () => {
-    const names = migrationRoutes.map((r) => r.name).filter(Boolean)
+    const names = appRoutes.map((r) => r.name).filter(Boolean)
     for (const page of APP_PAGE_IDS) {
       expect(names).toContain(page)
     }
@@ -61,8 +61,8 @@ describe('migrationRoutes P8-1', () => {
     expect(names).toContain('deploy-history')
   })
 
-  it('resolves hash paths via createMigrationRouter', async () => {
-    const router = createMigrationRouter()
+  it('resolves hash paths via createAppRouter', async () => {
+    const router = createAppRouter()
     await router.push('/editor')
     expect(router.currentRoute.value.name).toBe('editor')
     expect(router.currentRoute.value.meta.leavePolicy).toBe('confirm')

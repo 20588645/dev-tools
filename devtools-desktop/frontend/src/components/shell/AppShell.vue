@@ -23,7 +23,6 @@ const contentClass = computed(() => ({
 }))
 
 const { collapsed, setCollapsed } = useSidebarChrome({
-  syncBody: false,
   persistCollapse: true,
 })
 
@@ -49,9 +48,9 @@ function onIntro() {
       <KeepAlive :include="keepAliveInclude">
         <component
           :is="Component"
-          :id="`page-${String(viewRoute.meta.pageId || 'home')}`"
           :key="String(viewRoute.meta.keepAliveName || viewRoute.name || viewRoute.path)"
-          class="page active"
+          class="page"
+          :data-page-id="String(viewRoute.meta.pageId || 'home')"
         />
       </KeepAlive>
     </RouterView>
@@ -61,8 +60,7 @@ function onIntro() {
 </template>
 
 <style>
-/* L2（legacy token 化）：RouterView 根（.page）骨架自 styles/legacy/layout.css 移入自持。
-   页头由 PageTop 承担、不参与滚动；正文在 PageBody 内独立滚动。 */
+/* 页头由 PageTop 承担、不参与滚动；正文在 PageBody 内独立滚动。 */
 .page {
   display: flex;
   flex-direction: column;
@@ -72,14 +70,10 @@ function onIntro() {
   min-height: 0;
   overflow: hidden;
   padding: 0;
-}
-
-.page.active {
-  display: flex;
   animation: pageEnter 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.main-content.router-main > .page.active {
+.main-content.router-main > .page {
   display: flex;
   width: 100%;
   min-width: 0;
@@ -89,8 +83,7 @@ function onIntro() {
   overflow: hidden;
 }
 
-.main-content.home-active.router-main > .page.active,
-.main-content.home-active > #page-home.active {
+.main-content.home-active.router-main > .page {
   flex: 1 1 auto;
   height: 100%;
   min-height: 0;

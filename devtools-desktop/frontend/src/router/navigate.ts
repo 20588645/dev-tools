@@ -4,7 +4,7 @@ import { getNavCatalogItem } from '@/router/route-meta'
 
 let appRouter: Router | null = null
 
-/** main.ts 在 createMigrationRouter 后调用一次 */
+/** main.ts 在 createAppRouter 后调用一次 */
 export function setAppRouter(router: Router) {
   appRouter = router
 }

@@ -11,8 +11,7 @@ import { browseRemoteDir, type RemoteEntry } from '@/services/modules/deploy-ser
  * `deploy-format.ts`）。
  *
  * 与添加项目的手动浏览刻意**不共用组件**：那边是两列、多选条目、本机读盘；
- * 这边是四列、单选「当前所在目录」、有 SFTP 连接态与后端回落提示。详见
- * decision.md 第 14 节 M7 降级说明。
+ * 这边是四列、单选「当前所在目录」、有 SFTP 连接态与后端回落提示。
  */
 
 export interface RemoteBreadcrumb {

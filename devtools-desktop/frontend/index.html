@@ -3,15 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DevTools - Deploy Panel</title>
-<script>
-  if (window.__TAURI_INTERNALS__) {
-    window.__TAURI__ = window.__TAURI_INTERNALS__;
-  }
-</script>
+<title>DevTools</title>
 </head>
 <body data-theme="light" data-theme-mode="system">
-<!-- P9-4：Vue 挂载前按本地偏好刷主题，避免 FOUC；权威仍归 Pinia startThemeSync -->
+<!-- Vue 挂载前按本地偏好刷主题，避免 FOUC；权威仍归 Pinia startThemeSync -->
 <script>
 (function () {
   try {
@@ -25,7 +20,6 @@
   } catch (e) {}
 })();
 </script>
-<!-- P8-5：可见壳由 Vue AppLayout 接管；P9-7：全部样式随 Vue 构建（styles/legacy + tokens） -->
 <div id="app" aria-live="polite"></div>
 
 <script type="module" src="/src/main.ts"></script>

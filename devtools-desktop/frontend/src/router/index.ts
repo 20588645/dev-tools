@@ -1,12 +1,12 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 
 import { installRouterNavigationGuards } from './navigation-leave'
-import { migrationRoutes } from './routes'
+import { appRoutes } from './routes'
 
-export function createMigrationRouter() {
+export function createAppRouter() {
   const router = createRouter({
     history: createWebHashHistory(),
-    routes: migrationRoutes,
+    routes: appRoutes,
   })
   installRouterNavigationGuards(router)
   return router

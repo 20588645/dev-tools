@@ -1,6 +1,4 @@
-/* ===== 全局基础（L3 自 styles/legacy/base.css token 化收编，死规则未随迁） =====
- * 范围：reset、body 画布、滚动条、原生控件兜底、跨页 save-dot、全局 keyframes。
- * 原生 input/select 的旧全局重置体系已确认零消费者（全站走 Base/Naive 组件），未保留。 */
+/* 全局基础：reset、body 画布、滚动条、跨页 save-dot、全局 keyframes。 */
 
 *,
 *::before,

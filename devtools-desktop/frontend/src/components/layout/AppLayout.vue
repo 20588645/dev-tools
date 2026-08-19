@@ -31,7 +31,7 @@ const rootClass = computed(() => ({
 </script>
 
 <template>
-  <div :class="rootClass">
+  <div :class="rootClass" data-app-shell>
     <div class="app-shell">
       <AppSidebar
         :active-page-id="activePageId"
@@ -57,8 +57,7 @@ const rootClass = computed(() => ({
 </template>
 
 <style>
-/* L2（legacy token 化）：壳层容器几何与 main 区自 styles/legacy/layout.css 移入自持。
-   折叠态覆盖靠 .app-layout-root.is-collapsed 前缀的更高特异性生效。 */
+/* 壳层容器几何与 main 区。折叠态覆盖靠 .app-layout-root.is-collapsed 前缀的更高特异性生效。 */
 .app-layout-root {
   height: 100%;
   min-height: 100vh;
@@ -69,8 +68,7 @@ const rootClass = computed(() => ({
   --sidebar-width: 56px;
 }
 
-/* 过渡期：未按 redesign-v2 重建的页面在窄窗下仍按旧内容宽度布局，
-   收窄侧栏避免横向溢出；页面批次全部落地后可回归原型的固定 224px。 */
+/* 窄窗收窄侧栏，避免主区被挤出横向滚动。 */
 @media (max-width: 1080px) {
   .app-layout-root:not(.is-collapsed) {
     --sidebar-width: 150px;

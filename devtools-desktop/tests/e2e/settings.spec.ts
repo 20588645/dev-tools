@@ -139,7 +139,7 @@ async function openSettings(page: Page, viewport = { width: 1280, height: 720 })
 }
 
 async function expectNoPageOverflow(page: Page) {
-  const layout = await page.locator('#page-settings').evaluate((activePage) => ({
+  const layout = await page.locator('[data-page-id="settings"]').evaluate((activePage) => ({
     documentX: document.documentElement.scrollWidth > document.documentElement.clientWidth,
     pageX: activePage.scrollWidth > activePage.clientWidth,
     pageY: activePage.scrollHeight > activePage.clientHeight + 1,
@@ -150,7 +150,7 @@ async function expectNoPageOverflow(page: Page) {
 }
 
 async function expectFilledWorkspace(page: Page) {
-  const metrics = await page.locator('#page-settings').evaluate((root) => {
+  const metrics = await page.locator('[data-page-id="settings"]').evaluate((root) => {
     const workspace = root.querySelector('.settings-workspace')
     if (!workspace) return null
     const pageRect = root.getBoundingClientRect()
@@ -183,13 +183,13 @@ test('mounts one formal Vue settings page and keeps both themes inside the defau
   await page.emulateMedia({ colorScheme: 'dark' })
   await openSettings(page)
 
-  await expect(page.locator('#page-settings')).toHaveCount(1)
+  await expect(page.locator('[data-page-id="settings"]')).toHaveCount(1)
   await expect(page.locator('.settings-view')).toHaveCount(1)
   await expect(page.locator('.legacy-settings-fallback')).toHaveCount(0)
-  await expect(page.locator('#page-settings .settings-content')).toHaveCount(0)
+  await expect(page.locator('[data-page-id="settings"] .settings-content')).toHaveCount(0)
   await expect(page.locator('script[src="js/settings.js"]')).toHaveCount(0)
   await expect(page.locator('link[href="css/pages/settings.css"]')).toHaveCount(0)
-  // P9-7：旧 CSS 全部吸收进 Vue 构建（styles/legacy），index.html 不再有任何静态 link
+  // 构建产物不再外链已删除的旧 CSS
   await expect(page.locator('link[href$="legacy-runtime.css"]')).toHaveCount(0)
   expect(await page.evaluate(() => ({
     loadSettings: typeof (window as unknown as { loadSettings?: unknown }).loadSettings,
@@ -262,7 +262,7 @@ test('keeps settings categories on a top tab row and exposes search clearly', as
   const nav = page.getByRole('navigation', { name: '设置分类' })
   await expect(nav).toHaveClass(/base-side-nav--horizontal/)
 
-  const layout = await page.locator('#page-settings').evaluate((root) => {
+  const layout = await page.locator('[data-page-id="settings"]').evaluate((root) => {
     const categoryNav = root.querySelector('.settings-category-nav')
     const content = root.querySelector('.settings-workspace__content')
     const items = [...(categoryNav?.querySelectorAll('[role="menuitem"]') ?? [])]

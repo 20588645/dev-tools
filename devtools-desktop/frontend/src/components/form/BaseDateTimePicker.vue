@@ -63,12 +63,21 @@ const isDateDisabled = computed(() => props.range === 'any'
 </template>
 
 <style scoped>
+/* stylelint-disable declaration-no-important -- Naive 把 --n-height 写在根节点 inline style，必须盖住变量和内部行高。 */
 .field-control { display: grid; gap: var(--space-2); min-width: 0; }
 .field-control__label { color: var(--color-text); font-size: var(--font-size-sm); font-weight: var(--font-weight-medium); }
 .field-control :deep(.n-date-picker),
 .field-control :deep(.n-input) {
-  height: var(--component-control-height-md);
-  min-height: var(--component-control-height-md);
+  --n-height: var(--component-control-height-md) !important;
+  height: var(--component-control-height-md) !important;
+  min-height: var(--component-control-height-md) !important;
+  max-height: var(--component-control-height-md) !important;
   width: 100%;
+}
+.field-control :deep(.n-input__input-el),
+.field-control :deep(.n-input-wrapper) {
+  height: var(--component-control-height-md) !important;
+  min-height: var(--component-control-height-md) !important;
+  line-height: var(--component-control-height-md) !important;
 }
 </style>

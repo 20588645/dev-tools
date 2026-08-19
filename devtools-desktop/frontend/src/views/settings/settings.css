@@ -12,12 +12,6 @@
     var(--color-page);
 }
 
-#vue-settings-host {
-  width: 100%;
-  min-width: 0;
-  min-height: 0;
-}
-
 .settings-view > .page-frame__body {
   display: flex;
   flex-direction: column;

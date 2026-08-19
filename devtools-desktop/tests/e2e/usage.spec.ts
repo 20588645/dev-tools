@@ -116,7 +116,7 @@ async function openUsage(page: Page, viewport = { width: 1280, height: 800 }) {
   await page.goto('/?apiPort=13900')
   await page.locator('.sidebar-item[data-page="usage"]').click()
   await expect(page).toHaveURL(/#\/usage/)
-  await expect(page.locator('#page-usage')).toBeVisible()
+  await expect(page.locator('[data-page-id="usage"]')).toBeVisible()
   await expect(page.getByRole('heading', { name: '用量统计', exact: true })).toBeVisible()
   // redesign-v2：总量落在首张 stat 卡（紧凑格式）
   await expect(page.locator('.usage-stats .stat-card').first()).toContainText('3.24 亿')
@@ -127,8 +127,8 @@ async function openUsage(page: Page, viewport = { width: 1280, height: 800 }) {
 }
 
 async function expectNoPageOverflow(page: Page) {
-  const layout = await page.locator('#page-usage').evaluate((activePage) => {
-    // P8 后 RouterView 根即 View 根：#page-usage 与 .usage-view 是同一元素
+  const layout = await page.locator('[data-page-id="usage"]').evaluate((activePage) => {
+    // P8 后 RouterView 根即 View 根：[data-page-id="usage"] 与 .usage-view 是同一元素
     const view = activePage.matches('.usage-view') ? activePage : activePage.querySelector('.usage-view')
     return {
       documentX: document.documentElement.scrollWidth > document.documentElement.clientWidth,
@@ -142,7 +142,7 @@ async function expectNoPageOverflow(page: Page) {
 
 test('mounts one Vue usage page without the retired DOM or scripts', async ({ page }) => {
   await openUsage(page)
-  await expect(page.locator('#page-usage')).toHaveCount(1)
+  await expect(page.locator('[data-page-id="usage"]')).toHaveCount(1)
   await expect(page.locator('.usage-view')).toHaveCount(1)
   await expect(page.locator('#usageTrendChart')).toHaveCount(0)
   await expect(page.locator('script[src="js/usage.js"]')).toHaveCount(0)
@@ -157,7 +157,7 @@ test('keeps the dashboard usable in both themes at 900 by 600', async ({ page })
   await expectNoPageOverflow(page)
   await expect(page.getByText('Token 构成', { exact: true })).toBeVisible()
 
-  // P9-8：主题菜单已删，侧栏按钮循环 system→light→dark
+  // 侧栏外观按钮循环 system → light → dark
   for (let i = 0; i < 3 && !(await page.locator('body[data-theme="dark"]').count()); i++) {
     await page.locator('[data-test="theme-toggle"]').click()
   }

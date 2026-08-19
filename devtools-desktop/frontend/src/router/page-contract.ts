@@ -1,5 +1,5 @@
 /**
- * 应用页面契约（P9-8 自 legacy-bridge 收编更名）：
+ * 应用页面契约：
  * 14 个页面 id 是路由、侧栏、KeepAlive 与 E2E 的共同契约；
  * 离开守卫供 Router beforeEach 与页面（editor 脏确认）注册使用。
  */

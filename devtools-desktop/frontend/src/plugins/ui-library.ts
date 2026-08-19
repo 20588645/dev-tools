@@ -1,7 +1,6 @@
 import type { App as VueApp } from 'vue'
 import { defineAsyncComponent } from 'vue'
 
-/** Keep the desktop UI library out of the legacy startup chunk. */
 const UiLibraryProvider = defineAsyncComponent(() => import('@/components/vendor/UiLibraryProvider.vue'))
 
 /** Register the one application-level provider used by every Vue surface. */
