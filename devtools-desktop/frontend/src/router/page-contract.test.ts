@@ -8,11 +8,13 @@ import {
 } from './page-contract'
 
 describe('app page contract', () => {
-  it('keeps the complete 13-page contract after report is absorbed into notes', () => {
-    expect(APP_PAGE_IDS).toHaveLength(13)
-    expect(new Set(APP_PAGE_IDS).size).toBe(13)
+  it('keeps the complete 14-page contract including the app-fix tool', () => {
+    expect(APP_PAGE_IDS).toHaveLength(14)
+    expect(new Set(APP_PAGE_IDS).size).toBe(14)
     expect(isAppPageId('report')).toBe(false)
     expect(isAppPageId('twofa')).toBe(true)
+    expect(isAppPageId('appfix')).toBe(true)
+    expect(isAppPageId('wechatdaily')).toBe(false)
     expect(isAppPageId('unknown')).toBe(false)
   })
 })

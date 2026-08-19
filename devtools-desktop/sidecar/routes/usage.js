@@ -11,67 +11,49 @@ const pricing = require('../services/pricing');
 // 应用筛选参数白名单
 function appParam(req) {
   const app = String(req.query.app || '');
-  return ['claude', 'codex'].includes(app) ? app : '';
+  return ['claude', 'codex', 'cursor'].includes(app) ? app : '';
+}
+
+async function withLocalSync(req, res, write) {
+  try {
+    usage.syncUsage();
+    await usage.syncCursorUsage();
+    write(req, res);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 }
 
 // GET /api/usage/summary?start=&end=  （unix 秒）
-router.get('/summary', (req, res) => {
-  try {
-    usage.syncUsage();
-    res.json(usage.getSummary(req.query.start, req.query.end, appParam(req)));
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
+router.get('/summary', (req, res) => withLocalSync(req, res, () => {
+  res.json(usage.getSummary(req.query.start, req.query.end, appParam(req)));
+}));
 
 // GET /api/usage/trends?start=&end=&bucket=hour|day
-router.get('/trends', (req, res) => {
-  try {
-    usage.syncUsage();
-    const bucket = ['min10', 'hour', 'day'].includes(req.query.bucket) ? req.query.bucket : 'day';
-    res.json(usage.getTrends(req.query.start, req.query.end, bucket, appParam(req)));
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
+router.get('/trends', (req, res) => withLocalSync(req, res, () => {
+  const bucket = ['min10', 'hour', 'day'].includes(req.query.bucket) ? req.query.bucket : 'day';
+  res.json(usage.getTrends(req.query.start, req.query.end, bucket, appParam(req)));
+}));
 
 // GET /api/usage/models?start=&end=
-router.get('/models', (req, res) => {
-  try {
-    usage.syncUsage();
-    res.json(usage.getModelStats(req.query.start, req.query.end, appParam(req)));
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
+router.get('/models', (req, res) => withLocalSync(req, res, () => {
+  res.json(usage.getModelStats(req.query.start, req.query.end, appParam(req)));
+}));
 
 // GET /api/usage/projects?start=&end=&app= — 项目维度聚合
-router.get('/projects', (req, res) => {
-  try {
-    res.json(usage.getProjectStats(req.query.start, req.query.end, appParam(req)));
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
+router.get('/projects', (req, res) => withLocalSync(req, res, () => {
+  res.json(usage.getProjectStats(req.query.start, req.query.end, appParam(req)));
+}));
 
 // GET /api/usage/top?start=&end=&app=&limit=&sort=cost|tokens
-router.get('/top', (req, res) => {
-  try {
-    res.json(usage.getTopRequests(req.query.start, req.query.end, appParam(req), req.query.limit, req.query.sort));
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
+router.get('/top', (req, res) => withLocalSync(req, res, () => {
+  res.json(usage.getTopRequests(req.query.start, req.query.end, appParam(req), req.query.limit, req.query.sort));
+}));
 
 // GET /api/usage/logs?start=&end=&model=&page=&pageSize=
-router.get('/logs', (req, res) => {
-  try {
-    usage.syncUsage();
-    res.json(usage.getLogs(req.query));
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
+router.get('/logs', (req, res) => withLocalSync(req, res, () => {
+  res.json(usage.getLogs({ ...req.query, app: appParam(req) }));
+}));
 
 // GET /api/usage/pricing — 单价表
 router.get('/pricing', (req, res) => {
@@ -124,10 +106,16 @@ router.put('/pricing/:modelId', (req, res) => {
   }
 });
 
-// POST /api/usage/sync — 强制全量重扫
-router.post('/sync', (req, res) => {
+// POST /api/usage/sync — 强制全量重扫（含 Cursor 官方用量）
+router.post('/sync', async (req, res) => {
   try {
-    res.json(usage.syncUsage(true));
+    const local = usage.syncUsage(true);
+    const cursor = await usage.syncCursorUsage(true);
+    res.json({
+      ...local,
+      cursorUpserted: cursor.upserted || 0,
+      cursorError: cursor.cursorError || '',
+    });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }

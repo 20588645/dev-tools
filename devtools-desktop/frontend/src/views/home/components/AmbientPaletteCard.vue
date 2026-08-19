@@ -46,7 +46,6 @@ const hasCustomAccent = computed(() => activeColor.value !== null)
           <span>{{ hexLabel(color) }}</span>
         </div>
       </div>
-      <div class="palette-note">按日期生成，每天 0 点自动换一组、当天固定；点击色块把主题色换成该色</div>
     </div>
   </section>
 </template>

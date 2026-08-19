@@ -138,25 +138,32 @@ fn restart_sidecar(app: tauri::AppHandle) -> Result<u16, String> {
     }
 }
 
-#[tauri::command]
-fn pick_folder() -> Option<String> {
+fn posix_path_from_osascript(script: &str) -> Option<String> {
     use std::process::Command;
-    let output = Command::new("osascript")
-        .arg("-e")
-        .arg("set theFolder to POSIX path of (choose folder with prompt \"选择项目文件夹\")")
-        .output();
-
+    let output = Command::new("osascript").arg("-e").arg(script).output();
     match output {
-        Ok(out) => {
-            if out.status.success() {
-                let path = String::from_utf8_lossy(&out.stdout).trim().to_string();
-                if path.is_empty() { None } else { Some(path.trim_end_matches('/').to_string()) }
-            } else {
+        Ok(out) if out.status.success() => {
+            let path = String::from_utf8_lossy(&out.stdout).trim().to_string();
+            if path.is_empty() {
                 None
+            } else {
+                Some(path.trim_end_matches('/').to_string())
             }
         }
-        Err(_) => None,
+        _ => None,
     }
+}
+
+#[tauri::command]
+fn pick_folder() -> Option<String> {
+    posix_path_from_osascript("set theFolder to POSIX path of (choose folder with prompt \"选择项目文件夹\")")
+}
+
+#[tauri::command]
+fn pick_app_bundle() -> Option<String> {
+    posix_path_from_osascript(
+        "set theApp to POSIX path of (choose file of type {\"com.apple.application-bundle\"} with prompt \"选择要修复的应用\")",
+    )
 }
 
 #[derive(serde::Deserialize, Clone)]
@@ -362,6 +369,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             get_sidecar_port,
             pick_folder,
+            pick_app_bundle,
             restart_sidecar,
             update_tray_menu,
             exit_app,

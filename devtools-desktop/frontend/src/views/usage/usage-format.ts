@@ -35,6 +35,18 @@ export function usageProjectName(projectDir: string) {
   return segments.at(-1) || '(未知)'
 }
 
+export function usageAppLabel(app: string) {
+  if (app === 'codex') return 'Codex'
+  if (app === 'cursor') return 'Cursor'
+  if (app === 'claude') return 'Claude'
+  return app || '未知'
+}
+
+export function usageAppTone(app: string) {
+  if (app === 'codex' || app === 'cursor') return app
+  return 'claude'
+}
+
 export const usageModelTokens = (model: UsageModelStat) => usageTotalTokens(model)
 export const usageProjectTokens = (project: UsageProjectStat) => usageTotalTokens(project)
 export const usageLogTokens = (log: UsageLogRecord) => usageTotalTokens(log)

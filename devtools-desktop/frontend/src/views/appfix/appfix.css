@@ -1,0 +1,292 @@
+/* 修复损坏：拖放主卡 + 结果/步骤 + 三张说明卡铺满工作区 */
+
+.app-fix-view {
+  position: relative;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  background:
+    radial-gradient(circle at 88% 8%, color-mix(in srgb, var(--color-action) 6%, transparent), transparent 32%),
+    var(--color-page);
+}
+
+.app-fix-view .page-frame__body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.app-fix-toolbar {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.app-fix-toolbar .base-button {
+  height: var(--component-control-height-md);
+  min-height: var(--component-control-height-md);
+}
+
+.app-fix-toolbar__input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.app-fix-board {
+  display: grid;
+  flex: 1 1 auto;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: minmax(220px, 1.2fr) minmax(200px, 1fr);
+  gap: var(--space-4);
+  min-height: 0;
+}
+
+.app-fix-board > * {
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
+
+.app-fix-drop {
+  grid-column: span 2;
+  border: 1.5px dashed var(--color-border);
+  transition:
+    border-color var(--duration-fast) var(--ease-standard),
+    background var(--duration-fast) var(--ease-standard);
+}
+
+.app-fix-board.is-dragging .app-fix-drop {
+  border-color: var(--color-action);
+  background: color-mix(in srgb, var(--color-action) 8%, var(--color-surface));
+}
+
+.app-fix-drop__body {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-6);
+  text-align: center;
+}
+
+.app-fix-drop__mark {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  color: var(--color-action-hover);
+  background: color-mix(in srgb, var(--color-action) 10%, var(--color-surface-raised));
+  border: 1px solid color-mix(in srgb, var(--color-action) 28%, var(--color-border));
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-lg);
+}
+
+.app-fix-drop__body > strong {
+  color: var(--color-text);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+}
+
+.app-fix-drop__body > p {
+  max-width: 28rem;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-relaxed);
+}
+
+.app-fix-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.app-fix-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.app-fix-images {
+  display: grid;
+  gap: var(--space-3);
+  min-height: 0;
+  margin-top: auto;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border-soft);
+}
+
+.app-fix-images > h3 {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+}
+
+.app-fix-images > ul {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  list-style: none;
+}
+
+.app-fix-images > ul > li {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.app-fix-images > ul > li > div {
+  min-width: 0;
+}
+
+.app-fix-images strong {
+  display: block;
+  overflow: hidden;
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-fix-images p {
+  margin: 0;
+  overflow: hidden;
+  color: var(--color-text-subtle);
+  font-size: var(--font-size-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-fix-panel__head {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.app-fix-panel__head > h2 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-bold);
+}
+
+.app-fix-panel__body {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.app-fix-panel__body > strong {
+  color: var(--color-text);
+  font-size: var(--font-size-md);
+}
+
+.app-fix-panel__body > p,
+.app-fix-panel__path {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-relaxed);
+}
+
+.app-fix-panel__path {
+  word-break: break-all;
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+}
+
+.app-fix-panel__next {
+  margin-top: auto;
+  color: var(--color-text);
+  font-weight: var(--font-weight-semibold);
+}
+
+.app-fix-result--error .app-fix-panel__head > h2,
+.app-fix-result--error .app-fix-panel__body > p {
+  color: var(--color-danger);
+}
+
+.app-fix-result .base-button,
+.app-fix-result--error .base-button {
+  margin-top: var(--space-3);
+  align-self: flex-start;
+}
+
+.app-fix-steps,
+.app-fix-list {
+  display: grid;
+  flex: 1 1 auto;
+  align-content: start;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.app-fix-steps > li,
+.app-fix-list > li {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  gap: var(--space-3);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-relaxed);
+}
+
+.app-fix-steps > li > span {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  flex: none;
+  place-items: center;
+  color: var(--color-action-hover);
+  background: color-mix(in srgb, var(--color-action) 10%, var(--color-surface-raised));
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+}
+
+.app-fix-list > li::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  flex: none;
+  margin-top: 0.45em;
+  background: color-mix(in srgb, var(--color-action) 55%, var(--color-border));
+  border-radius: var(--radius-pill);
+}
+
+@media (max-width: 980px) {
+  .app-fix-view .page-frame__body {
+    overflow-y: auto;
+  }
+
+  .app-fix-board {
+    grid-template-columns: 1fr;
+    grid-template-rows: none;
+    overflow: visible;
+  }
+
+  .app-fix-drop {
+    grid-column: auto;
+    min-height: 200px;
+  }
+}

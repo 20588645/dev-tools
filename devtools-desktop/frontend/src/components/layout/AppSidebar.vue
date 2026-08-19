@@ -38,11 +38,6 @@ const groups = computed(() => {
   return resolveSidebarNavGroups(readMenuOrder())
 })
 
-const themeIcon = computed(() => {
-  if (app.themeMode === 'system') return '◐'
-  return app.theme === 'dark' ? '☾' : '☀'
-})
-
 const themeTitle = computed(() => {
   if (app.themeMode === 'system') {
     return `外观：跟随系统（当前${app.theme === 'dark' ? '暗色' : '亮色'}）· 点击切换`
@@ -124,6 +119,7 @@ watch(
       <button
         type="button"
         class="sidebar-update-button"
+        :class="{ 'is-busy': updateBusy }"
         data-test="sidebar-update"
         :title="updateTitle"
         :aria-label="updateTitle"
@@ -138,14 +134,20 @@ watch(
         </span>
         <span class="sidebar-tool-label">{{ updateLabel }}</span>
       </button>
-      <div class="sidebar-footer__tools">
+      <div class="sidebar-footer__tools" role="group" aria-label="侧栏工具">
         <button
           type="button"
           class="sidebar-tool-button"
           title="项目介绍"
           @click="openIntro"
         >
-          <span class="sidebar-tool-icon">ⓘ</span>
+          <span class="sidebar-tool-icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 16v-4" />
+              <path d="M12 8h.01" />
+            </svg>
+          </span>
           <span class="sidebar-tool-label">介绍</span>
         </button>
         <button
@@ -157,17 +159,91 @@ watch(
           :aria-label="themeTitle"
           @click="cycleTheme"
         >
-          <span class="sidebar-tool-icon">{{ themeIcon }}</span>
+          <span class="sidebar-tool-icon" aria-hidden="true">
+            <svg
+              v-if="app.themeMode === 'system'"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.9"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 3a9 9 0 0 0 0 18Z" fill="currentColor" stroke="none" />
+            </svg>
+            <svg
+              v-else-if="app.theme === 'dark'"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.9"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+            </svg>
+            <svg
+              v-else
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.9"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="4" />
+              <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+            </svg>
+          </span>
           <span class="sidebar-tool-label">外观</span>
         </button>
         <button
           type="button"
           class="sidebar-tool-button sidebar-collapse-toggle"
           :title="collapsed ? '展开侧栏' : '折叠侧栏'"
+          :aria-label="collapsed ? '展开侧栏' : '折叠侧栏'"
           @click="toggleCollapse"
         >
-          <span class="sidebar-tool-icon sidebar-collapse-icon">{{ collapsed ? '›' : '‹' }}</span>
-          <span class="sidebar-tool-label sidebar-collapse-label">收起</span>
+          <span class="sidebar-tool-icon" aria-hidden="true">
+            <svg
+              v-if="collapsed"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.9"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <path d="M9 3v18" />
+              <path d="m14 9 3 3-3 3" />
+            </svg>
+            <svg
+              v-else
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.9"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <path d="M9 3v18" />
+              <path d="m16 15-3-3 3-3" />
+            </svg>
+          </span>
+          <span class="sidebar-tool-label sidebar-collapse-label">{{ collapsed ? '展开' : '收起' }}</span>
         </button>
       </div>
     </div>
@@ -327,45 +403,58 @@ watch(
   flex-direction: column;
   align-items: stretch;
   width: 100%;
-  gap: 6px;
-  padding: 10px 0 0;
+  gap: 8px;
+  padding: 12px 0 2px;
   border-top: 1px solid var(--color-border-soft);
   box-sizing: border-box;
   -webkit-app-region: no-drag;
 }
 
 .sidebar-footer__tools {
-  display: flex;
-  flex-direction: row;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: stretch;
   width: 100%;
-  gap: 6px;
+  gap: 2px;
+  padding: 2px;
+  background: var(--color-surface-subtle);
+  border-radius: 12px;
+}
+
+.sidebar-update-button,
+.sidebar-tool-button {
+  font-family: inherit;
+  box-shadow: none;
+  box-sizing: border-box;
+  -webkit-app-region: no-drag;
 }
 
 .sidebar-update-button {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   width: 100%;
   min-width: 0;
-  height: 34px;
-  gap: 6px;
-  padding: 0 8px;
-  border: 0;
+  height: 36px;
+  gap: 10px;
+  padding: 0 10px;
+  border: 1px solid color-mix(in srgb, var(--color-action) 22%, transparent);
   border-radius: 10px;
-  background: color-mix(in srgb, var(--color-action) 14%, transparent);
+  background: color-mix(in srgb, var(--color-action) 12%, transparent);
   color: var(--color-action);
-  font-size: 12px;
-  font-weight: 650;
-  box-shadow: none;
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
-  box-sizing: border-box;
-  transition: background 0.12s, color 0.12s, opacity 0.12s;
-  -webkit-app-region: no-drag;
+  transition: background 0.12s, color 0.12s, opacity 0.12s, border-color 0.12s;
 }
 
 .sidebar-update-button:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--color-action) 22%, transparent);
+  background: color-mix(in srgb, var(--color-action) 20%, transparent);
+  border-color: color-mix(in srgb, var(--color-action) 36%, transparent);
+}
+
+.sidebar-update-button:active:not(:disabled) {
+  background: color-mix(in srgb, var(--color-action) 26%, transparent);
 }
 
 .sidebar-update-button:disabled {
@@ -373,31 +462,48 @@ watch(
   opacity: 0.72;
 }
 
+.sidebar-update-button.is-busy .sidebar-tool-icon {
+  animation: sidebar-spin 0.85s linear infinite;
+}
+
 .sidebar-tool-button {
   display: flex;
-  flex: 1;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   min-width: 0;
-  height: 32px;
-  gap: 6px;
-  padding: 0 4px;
+  min-height: 44px;
+  gap: 3px;
+  padding: 6px 2px 5px;
   border: 0;
   border-radius: 10px;
   background: transparent;
   color: var(--color-text-muted);
-  font-size: 12px;
-  font-weight: 500;
-  box-shadow: none;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
   cursor: pointer;
-  box-sizing: border-box;
   transition: background 0.12s, color 0.12s;
-  -webkit-app-region: no-drag;
 }
 
-.sidebar-tool-button:hover {
+.sidebar-tool-button:hover:not(:disabled) {
   color: var(--color-text);
-  background: var(--color-surface-subtle);
+  background: color-mix(in srgb, var(--color-surface) 72%, transparent);
+}
+
+.sidebar-tool-button:active:not(:disabled) {
+  background: color-mix(in srgb, var(--color-surface) 88%, transparent);
+}
+
+.sidebar-tool-button:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.sidebar-update-button:focus-visible,
+.sidebar-tool-button:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
 }
 
 .sidebar-tool-icon {
@@ -406,18 +512,31 @@ watch(
   justify-content: center;
   width: 16px;
   min-width: 16px;
+  height: 16px;
   line-height: 1;
+}
+
+.sidebar-tool-icon svg {
+  display: block;
+  flex: none;
 }
 
 .sidebar-tool-label {
   min-width: 0;
+  max-width: 100%;
   overflow: hidden;
+  line-height: 1.2;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.sidebar-collapse-icon {
-  font-size: 15px;
-  line-height: 1;
+@keyframes sidebar-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-update-button.is-busy .sidebar-tool-icon {
+    animation: none;
+  }
 }
 </style>

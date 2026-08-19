@@ -25,7 +25,6 @@ defineEmits<{
       <div class="quote-stage">
         <span class="quote-mark" aria-hidden="true">“</span>
         <p class="quote-text" :class="{ 'is-switching': switching }">{{ quote }}</p>
-        <span class="quote-by">— 本地文案 · 手动切换</span>
       </div>
       <div class="quote-foot">
         <span>{{ greeting }}</span>

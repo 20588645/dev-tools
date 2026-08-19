@@ -1,15 +1,16 @@
 /**
- * Claude Code 用量统计服务
- * 数据源：~/.claude/projects/ 下的会话日志（*.jsonl），即 Claude Code 每次
- * API 响应在本地落盘的 assistant 消息（含 model 与 usage 计数）。
- * 增量扫描按"文件字节偏移"续读，按 message.id 去重入库（同一响应的多个
- * 内容块共享 id，后写入的块带最终 usage，故用 REPLACE 让最后一条胜出）。
- * 成本以"微美元"整数存储：tokens × (USD/百万token) 恰好等于微美元数。
+ * 用量统计服务
+ * - Claude Code：~/.claude/projects 下 jsonl 的 assistant.usage
+ * - Codex：~/.codex/sessions 同类 jsonl
+ * - Cursor：本机登录态请求官方 usage events（账号/Team 总量，不是这台电脑）
+ * 增量扫描按文件字节偏移续读，按 requestId 去重入库。
+ * 成本以微美元整数存储：tokens × (USD/百万token) 恰好等于微美元数。
  */
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const db = require('./database');
+const cursorUsage = require('./cursor-usage');
 
 const CLAUDE_PROJECTS_DIR = path.join(os.homedir(), '.claude', 'projects');
 // Codex 会话日志长期保留，归档目录与活跃目录格式一致
@@ -338,6 +339,70 @@ function syncUsage(force = false) {
   let upserted = 0;
   for (const f of files) upserted += syncFile(f.file, f.app);
   return { files: files.length, upserted };
+}
+
+const CURSOR_THROTTLE_MS = 5 * 60 * 1000;
+const CURSOR_ERROR_THROTTLE_MS = 60 * 1000;
+let cursorSyncAt = 0;
+let cursorSyncErrorAt = 0;
+let cursorSyncInflight = null;
+
+function insertCursorEvents(events) {
+  const insert = insertLog();
+  const tx = db.transaction(() => {
+    for (const event of events) {
+      const pricing = findPricing(event.model);
+      const officialCost = event.chargedCents > 0 ? Math.round(event.chargedCents * 10_000) : 0;
+      insert.run({
+        requestId: event.requestId,
+        sessionId: event.sessionId,
+        projectDir: event.projectDir,
+        appType: 'cursor',
+        model: event.model,
+        pricingModel: pricing ? pricing.modelId : (officialCost ? 'cursor-official' : ''),
+        inputTokens: event.inputTokens,
+        outputTokens: event.outputTokens,
+        cacheReadTokens: event.cacheReadTokens,
+        cacheCreationTokens: event.cacheCreationTokens,
+        costMicroUsd: officialCost || calcCostMicroUsd(event, pricing),
+        pricingSnapshotJson: pricingSnapshot(pricing),
+        createdAt: event.createdAt,
+      });
+    }
+  });
+  tx();
+  return events.length;
+}
+
+/**
+ * 拉取 Cursor 官方用量事件并入库。默认 5 分钟节流；force 跳过节流。
+ * 失败不抛给页面：返回 cursorError，本地 Claude / Codex 扫描照常可用。
+ */
+async function syncCursorUsage(force = false) {
+  const now = Date.now();
+  if (!force && cursorSyncAt && now - cursorSyncAt < CURSOR_THROTTLE_MS) {
+    return { skipped: true, upserted: 0 };
+  }
+  if (!force && cursorSyncErrorAt && now - cursorSyncErrorAt < CURSOR_ERROR_THROTTLE_MS) {
+    return { skipped: true, upserted: 0 };
+  }
+  if (cursorSyncInflight) return cursorSyncInflight;
+  cursorSyncInflight = (async () => {
+    try {
+      ensurePricingSeed();
+      const events = await cursorUsage.fetchOfficialEvents();
+      const upserted = insertCursorEvents(events);
+      cursorSyncAt = Date.now();
+      cursorSyncErrorAt = 0;
+      return { upserted };
+    } catch (error) {
+      cursorSyncErrorAt = Date.now();
+      return { upserted: 0, cursorError: error instanceof Error ? error.message : 'Cursor 用量同步失败' };
+    } finally {
+      cursorSyncInflight = null;
+    }
+  })();
+  return cursorSyncInflight;
 }
 
 // ========== 美元→人民币汇率 ==========
@@ -679,6 +744,7 @@ function getLogs({ start, end, model, app, page = 1, pageSize = 20 }) {
 
 module.exports = {
   syncUsage,
+  syncCursorUsage,
   repriceAll,
   importFromCcSwitch,
   getUsdCnyRate,

@@ -268,6 +268,9 @@ db.exec(`
   );
 `);
 
+try { db.exec('DROP TABLE IF EXISTS wechat_daily_cache') } catch { /* 功能已移除 */ }
+try { db.prepare("DELETE FROM app_settings WHERE key = 'deepseekApiKeyCipher'").run() } catch { /* 功能已移除 */ }
+
 // 确保 sortOrder 列存在（兼容旧数据库）
 try {
   db.prepare("SELECT sortOrder FROM notebook_notes LIMIT 1").get();

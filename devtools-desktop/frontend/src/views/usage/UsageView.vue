@@ -52,6 +52,7 @@ const {
   topRequests,
   claudeTrends,
   codexTrends,
+  cursorTrends,
   logs,
   logModel,
   modelOptions,
@@ -148,6 +149,7 @@ const appOptions = [
   { label: '全部应用', value: '' },
   { label: 'Claude Code', value: 'claude' },
   { label: 'Codex', value: 'codex' },
+  { label: 'Cursor', value: 'cursor' },
 ]
 
 const tokenDelta = computed(() => usageDelta(summary.value.totalTokens, previousSummary.value?.totalTokens ?? 0))
@@ -183,7 +185,7 @@ const modelRanking = computed(() => {
   <PageFrame class="usage-view" variant="immersive" data-test="usage-view">
     <template #top>
       <PageTop>
-        <PageHeader title="用量统计" description="AI 工具 Token 用量与成本">
+        <PageHeader title="用量统计" description="Claude / Codex 扫本机日志；Cursor 为当前登录账号的官方用量（共用账号会含其他人）">
           <template #icon><span class="usage-view__title-mark">▥</span></template>
           <template #actions>
             <StatusIndicator :label="status.label" :status="status.status" />
@@ -238,7 +240,7 @@ const modelRanking = computed(() => {
     </template>
 
     <div class="usage-view__scroll">
-      <LoadingState v-if="loading && !summary.requests" label="正在读取本地用量数据…" />
+      <LoadingState v-if="loading && !summary.requests" label="正在同步用量数据…" />
       <ErrorState
         v-else-if="error && !summary.requests"
         title="用量数据加载失败"
@@ -292,7 +294,7 @@ const modelRanking = computed(() => {
               <span>{{ rangeHint }} · 按应用</span>
             </div>
             <div class="usage-trend-card__body">
-              <UsageTrendChart :claude="claudeTrends" :codex="codexTrends" :range="range" />
+              <UsageTrendChart :claude="claudeTrends" :codex="codexTrends" :cursor="cursorTrends" :range="range" />
             </div>
           </BaseCard>
           <BaseCard class="usage-model-rank" content-padding="0" content-layout="column">

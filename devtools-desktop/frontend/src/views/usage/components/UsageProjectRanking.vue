@@ -7,7 +7,7 @@ import type { BaseDataTableColumn, BaseDataTableRow } from '@/components/data/ba
 import EmptyState from '@/components/feedback/EmptyState.vue'
 import type { UsageProjectStat } from '@/services/modules/usage-service'
 
-import { formatUsageNumber, formatUsagePercent, usageProjectTokens } from '../usage-format'
+import { formatUsageNumber, formatUsagePercent, usageAppLabel, usageAppTone, usageProjectTokens } from '../usage-format'
 
 const props = defineProps<{ projects: UsageProjectStat[] }>()
 const visible = computed(() => props.projects.slice(0, 6))
@@ -25,8 +25,8 @@ const columns = computed<BaseDataTableColumn<ProjectTableRow>[]>(() => [
       h('div', { class: 'usage-project-name' }, [
         ...row.apps.map(app => h(BaseBadge, {
           key: app,
-          class: ['usage-app-tag', app === 'codex' ? 'is-codex' : 'is-claude'],
-        }, () => app === 'codex' ? 'Codex' : 'Claude')),
+          class: ['usage-app-tag', `is-${usageAppTone(app)}`],
+        }, () => usageAppLabel(app))),
         h('strong', row.project),
       ]),
       h('div', { class: 'usage-project-bar' }, [

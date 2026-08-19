@@ -171,6 +171,7 @@ export function useUsage(options: UseUsageOptions = {}) {
   const topRequests = ref<UsageLogRecord[]>([])
   const claudeTrends = ref<UsageTrendRow[]>([])
   const codexTrends = ref<UsageTrendRow[]>([])
+  const cursorTrends = ref<UsageTrendRow[]>([])
   const logs = ref<UsageLogsPage>(emptyLogs())
   const logModel = ref('')
   const pricing = ref<UsagePricingRow[]>([])
@@ -258,7 +259,7 @@ export function useUsage(options: UseUsageOptions = {}) {
     else loading.value = true
     error.value = ''
     try {
-      const apps: Array<Exclude<UsageApp, ''>> = app.value ? [app.value as Exclude<UsageApp, ''>] : ['claude', 'codex']
+      const apps: Array<Exclude<UsageApp, ''>> = app.value ? [app.value as Exclude<UsageApp, ''>] : ['claude', 'codex', 'cursor']
       const previous = previousUsageQuery(range.value, now(), customRange.value)
       if (previous) previous.app = app.value
       const results = await Promise.all([
@@ -279,6 +280,7 @@ export function useUsage(options: UseUsageOptions = {}) {
       previousSummary.value = nextPrevious as UsageSummary | null
       claudeTrends.value = apps.includes('claude') ? trendRows[apps.indexOf('claude')] ?? [] : []
       codexTrends.value = apps.includes('codex') ? trendRows[apps.indexOf('codex')] ?? [] : []
+      cursorTrends.value = apps.includes('cursor') ? trendRows[apps.indexOf('cursor')] ?? [] : []
       const [nextTop, nextLogs] = await Promise.all([
         service.getUsageTop(query.value, nextSummary.pricingCoverage > 0 ? 'cost' : 'tokens', controller.signal),
         service.getUsageLogs(query.value, logs.value.page, logs.value.pageSize, logModel.value, controller.signal),
@@ -352,7 +354,10 @@ export function useUsage(options: UseUsageOptions = {}) {
     scanning.value = true
     try {
       const result = await service.forceUsageScan()
-      notifications.push(`已扫描 ${result.files} 个日志文件，更新 ${result.upserted} 条记录`, 'success')
+      const cursorPart = result.cursorError
+        ? `Cursor 同步失败：${result.cursorError}`
+        : `Cursor 官方用量 ${result.cursorUpserted} 条`
+      notifications.push(`已扫描 ${result.files} 个日志文件，更新 ${result.upserted} 条记录；${cursorPart}`, result.cursorError ? 'warning' : 'success')
       await refresh(true)
     } catch (reason) {
       notifications.push(reason instanceof Error ? reason.message : '重新扫描失败', 'error')
@@ -432,6 +437,7 @@ export function useUsage(options: UseUsageOptions = {}) {
     topRequests,
     claudeTrends,
     codexTrends,
+    cursorTrends,
     logs,
     logModel,
     modelOptions,

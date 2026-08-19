@@ -19,6 +19,8 @@ import {
   formatUsageDate,
   formatUsageNumber,
   formatUsagePercent,
+  usageAppLabel,
+  usageAppTone,
   usageModelTokens,
   usageProjectName,
 } from '../usage-format'
@@ -64,8 +66,8 @@ const modelColumns: BaseDataTableColumn<ModelTableRow>[] = [
   {
     key: 'appType', title: '应用', width: 92,
     render: model => h(BaseBadge, {
-      class: ['usage-app-tag', model.appType === 'codex' ? 'is-codex' : 'is-claude'],
-    }, () => model.appType === 'codex' ? 'Codex' : 'Claude'),
+      class: ['usage-app-tag', `is-${usageAppTone(model.appType)}`],
+    }, () => usageAppLabel(model.appType)),
   },
   { key: 'requests', title: '请求数', width: 90, align: 'right', render: model => formatUsageNumber(model.requests) },
   { key: 'tokens', title: 'Tokens', width: 110, align: 'right', render: model => formatUsageNumber(usageModelTokens(model)) },

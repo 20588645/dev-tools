@@ -48,6 +48,35 @@ export class TauriClient {
     return this.invoke<number>('get_sidecar_port')
   }
 
+  async pickAppBundle(): Promise<string | null> {
+    if (!this.available) return null
+    const picked = await this.invoke<string | null>('pick_app_bundle')
+    const path = typeof picked === 'string' ? picked.trim() : ''
+    return path || null
+  }
+
+  /**
+   * Tauri 会拦截系统文件拖放；桌面端用这条拿到 .app 绝对路径。
+   * 浏览器开发模式没有该事件，调用方应同时保留 HTML 拖放兜底。
+   */
+  async listenDragDrop(
+    handler: (event: { type: 'enter' | 'over' | 'drop' | 'leave'; paths?: string[] }) => void,
+  ): Promise<() => void> {
+    if (!this.available) return () => {}
+    try {
+      const { getCurrentWebview } = await import('@tauri-apps/api/webview')
+      return await getCurrentWebview().onDragDropEvent(({ payload }) => {
+        if (payload.type === 'drop' || payload.type === 'enter') {
+          handler({ type: payload.type, paths: payload.paths })
+          return
+        }
+        handler({ type: payload.type })
+      })
+    } catch {
+      return () => {}
+    }
+  }
+
   async restartSidecar(): Promise<number> {
     return this.invoke<number>('restart_sidecar')
   }

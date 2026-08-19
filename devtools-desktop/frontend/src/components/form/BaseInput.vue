@@ -83,7 +83,15 @@ const inputThemeOverrides = computed(() => {
       boxShadowFocus: 'var(--component-control-focus-ring)',
     }
   }
-  return { ...sizeHeights }
+  return {
+    ...sizeHeights,
+    color: 'var(--color-surface)',
+    colorFocus: 'var(--color-surface)',
+    border: '1px solid var(--component-control-border)',
+    borderHover: '1px solid var(--component-control-border-hover)',
+    borderFocus: '1px solid var(--component-control-border-focus)',
+    boxShadowFocus: 'var(--component-control-focus-ring)',
+  }
 })
 
 /* 转发底层输入控制，供调用方在弹窗打开、校验失败等场景主动聚焦 */
@@ -147,6 +155,7 @@ defineExpose({
 .field-control__label span { color: var(--color-danger); }
 .field-control__message { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-xs); line-height: var(--line-height-normal); }
 .field-control__message--error { color: var(--color-danger); }
+.field-control--default :deep(.n-input:not(.n-input--textarea)),
 .field-control--search :deep(.n-input) { box-shadow: var(--shadow-sm); }
 .field-control--size-sm:not(.field-control--title) :deep(.n-input:not(.n-input--textarea)),
 .field-control--size-md:not(.field-control--title) :deep(.n-input:not(.n-input--textarea)) {

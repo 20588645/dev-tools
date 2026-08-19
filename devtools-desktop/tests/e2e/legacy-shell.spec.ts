@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test'
 
 const pageIds = [
   'home', 'run', 'deploy', 'filetransfer', 'terminal', 'todo', 'notes',
-  'notebook', 'editor', 'ipcheck', 'twofa', 'usage', 'settings',
+  'notebook', 'editor', 'ipcheck', 'twofa', 'appfix', 'usage', 'settings',
 ] as const
 
 const pageHash: Record<(typeof pageIds)[number], string> = {
@@ -17,6 +17,7 @@ const pageHash: Record<(typeof pageIds)[number], string> = {
   editor: '#/editor',
   ipcheck: '#/ipcheck',
   twofa: '#/twofa',
+  appfix: '#/appfix',
   usage: '#/usage',
   settings: '#/settings',
 }
@@ -33,7 +34,7 @@ async function expectPageNavigationToWork(page: Page) {
 }
 
 test('Vue AppShell owns navigation after P8-5 cutover', async ({ page }) => {
-  // 26 次导航 + 主题循环的重型用例：全量并行跑时视图链冷加载偶发挤爆 30s 默认预算，放宽到 3 倍。
+  // 28 次导航 + 主题循环的重型用例：全量并行跑时视图链冷加载偶发挤爆 30s 默认预算，放宽到 3 倍。
   test.slow()
   await page.setViewportSize({ width: 1665, height: 1184 })
   await page.emulateMedia({ colorScheme: 'light' })

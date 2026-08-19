@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { apiClient } from '@/services/api-client'
 import {
   buildUsageQuery,
+  forceUsageScan,
   getUsageSummary,
   normalizeUsageLog,
   normalizeUsageSummary,
@@ -37,6 +38,7 @@ describe('usage service', () => {
       { start: 100, end: 200, app: 'codex' },
       { bucket: 'hour', page: 2 },
     )).toBe('?start=100&end=200&app=codex&bucket=hour&page=2')
+    expect(buildUsageQuery({ app: 'cursor' })).toBe('?app=cursor')
   })
 
   it('passes abort ownership through dashboard reads', async () => {
@@ -70,6 +72,21 @@ describe('usage service', () => {
       conflicts: 1,
       repriced: 99,
       sources: [{ source: 'models.dev', ok: true, count: 10 }],
+    })
+  })
+
+  it('keeps Cursor official scan counts on a forced refresh', async () => {
+    vi.spyOn(apiClient, 'post').mockResolvedValue({
+      files: 4,
+      upserted: 12,
+      cursorUpserted: '8',
+      cursorError: '',
+    } as never)
+    await expect(forceUsageScan()).resolves.toEqual({
+      files: 4,
+      upserted: 12,
+      cursorUpserted: 8,
+      cursorError: '',
     })
   })
 })

@@ -143,11 +143,6 @@
   opacity: 0;
 }
 
-.quote-by {
-  font-size: 12.5px;
-  color: var(--color-text-subtle);
-}
-
 .quote-foot {
   position: relative;
   display: flex;
@@ -739,9 +734,4 @@
   color: var(--color-neutral-0);
   background: color-mix(in srgb, var(--color-neutral-950) 25%, transparent);
   border-radius: 5px;
-}
-
-.palette-note {
-  font-size: 11px;
-  color: var(--color-text-subtle);
 }

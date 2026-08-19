@@ -22,7 +22,7 @@ const NAV_GROUP_DEFS: ReadonlyArray<{ id: string; label: string; pages: readonly
   { id: 'workbench', label: '工作台', pages: ['home', 'run', 'deploy'] },
   { id: 'files', label: '文件与终端', pages: ['filetransfer', 'editor', 'terminal'] },
   { id: 'records', label: '记录', pages: ['todo', 'notes', 'notebook'] },
-  { id: 'tools', label: '工具', pages: ['ipcheck', 'twofa', 'usage'] },
+  { id: 'tools', label: '工具', pages: ['ipcheck', 'twofa', 'appfix', 'usage'] },
   { id: 'system', label: '系统', pages: ['settings'] },
 ]
 

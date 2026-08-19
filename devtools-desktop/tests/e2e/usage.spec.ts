@@ -115,6 +115,8 @@ async function openUsage(page: Page, viewport = { width: 1280, height: 800 }) {
   const mock = await mockUsage(page)
   await page.goto('/?apiPort=13900')
   await page.locator('.sidebar-item[data-page="usage"]').click()
+  await expect(page).toHaveURL(/#\/usage/)
+  await expect(page.locator('#page-usage')).toBeVisible()
   await expect(page.getByRole('heading', { name: '用量统计', exact: true })).toBeVisible()
   // redesign-v2：总量落在首张 stat 卡（紧凑格式）
   await expect(page.locator('.usage-stats .stat-card').first()).toContainText('3.24 亿')
@@ -145,7 +147,7 @@ test('mounts one Vue usage page without the retired DOM or scripts', async ({ pa
   await expect(page.locator('#usageTrendChart')).toHaveCount(0)
   await expect(page.locator('script[src="js/usage.js"]')).toHaveCount(0)
   await expect(page.locator('link[href="css/pages/usage.css"]')).toHaveCount(0)
-  await expect(page.locator('.usage-trend canvas')).toHaveCount(1)
+  await expect(page.getByRole('tab', { name: 'Cursor', exact: true })).toBeVisible()
   await expect(page.locator('.chart-slider')).toHaveCount(0)
   await expectNoPageOverflow(page)
 })
@@ -165,6 +167,9 @@ test('keeps the dashboard usable in both themes at 900 by 600', async ({ page })
 
 test('filters data and paginates logs through Vue state', async ({ page }) => {
   const mock = await openUsage(page)
+  await page.getByRole('tab', { name: 'Cursor', exact: true }).click()
+  await expect.poll(() => mock.requests.some((request) => request.includes('app=cursor') && request.includes('/api/usage/summary'))).toBe(true)
+
   await page.getByRole('tab', { name: '近 7 天', exact: true }).click()
   await expect.poll(() => mock.requests.some((request) => request.includes('start=') && request.includes('/api/usage/summary'))).toBe(true)
 

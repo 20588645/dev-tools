@@ -59,6 +59,7 @@ export const DEFAULT_MENU_ORDER = [
   'editor',
   'ipcheck',
   'twofa',
+  'appfix',
   'usage',
 ] as const
 
@@ -178,6 +179,16 @@ export const NAV_CATALOG: readonly NavCatalogItem[] = [
     keepSession: false,
     path: '/twofa',
     view: 'twofa/TwofaView.vue',
+  },
+  {
+    pageId: 'appfix',
+    title: '修复损坏',
+    menuKey: 'appfix',
+    keepAliveName: 'AppFixView',
+    leavePolicy: 'none',
+    keepSession: false,
+    path: '/appfix',
+    view: 'appfix/AppFixView.vue',
   },
   {
     pageId: 'usage',

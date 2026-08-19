@@ -11,6 +11,8 @@ import {
   formatUsageCost,
   formatUsageDate,
   formatUsageNumber,
+  usageAppLabel,
+  usageAppTone,
   usageLogTokens,
   usageProjectName,
 } from '../usage-format'
@@ -30,8 +32,8 @@ const columns = computed<BaseDataTableColumn<RequestTableRow>[]>(() => [
     render: row => h('div', { class: 'usage-request-cell' }, [
       h('span', { class: 'usage-request-project' }, usageProjectName(row.projectDir)),
       h(BaseBadge, {
-        class: ['usage-app-tag', row.appType === 'codex' ? 'is-codex' : 'is-claude'],
-      }, () => row.appType === 'codex' ? 'Codex' : 'Claude'),
+        class: ['usage-app-tag', `is-${usageAppTone(row.appType)}`],
+      }, () => usageAppLabel(row.appType)),
     ]),
   },
   { key: 'model', title: '模型', minWidth: 150, render: row => h('span', { class: 'usage-mono' }, row.model) },

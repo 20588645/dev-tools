@@ -8,11 +8,16 @@ import { useAppStore } from '@/stores/app'
 import { formatUsageCompact, formatUsageCost, formatUsageNumber, usageTrendTokens } from '../usage-format'
 import type { UsageRange } from '../composables/useUsage'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   claude: UsageTrendRow[]
   codex: UsageTrendRow[]
+  cursor: UsageTrendRow[]
   range: UsageRange
-}>()
+}>(), {
+  claude: () => [],
+  codex: () => [],
+  cursor: () => [],
+})
 
 const app = useAppStore()
 const canvas = ref<HTMLCanvasElement | null>(null)
@@ -25,11 +30,15 @@ const hoverX = ref(0)
 const accessibleLabel = computed(() => {
   const claudeTotal = props.claude.reduce((sum, row) => sum + usageTrendTokens(row), 0)
   const codexTotal = props.codex.reduce((sum, row) => sum + usageTrendTokens(row), 0)
-  return `用量趋势：Claude Code ${formatUsageCompact(claudeTotal)} Token，Codex ${formatUsageCompact(codexTotal)} Token`
+  const cursorTotal = props.cursor.reduce((sum, row) => sum + usageTrendTokens(row), 0)
+  return `用量趋势：Claude Code ${formatUsageCompact(claudeTotal)} Token，Codex ${formatUsageCompact(codexTotal)} Token，Cursor ${formatUsageCompact(cursorTotal)} Token`
 })
 
-/** 两条线共用同一组 bucket，取较长的一条作为时间轴基准 */
-const axisRows = computed(() => (props.claude.length >= props.codex.length ? props.claude : props.codex))
+/** 三条线共用同一组 bucket，取最长的一条作为时间轴基准 */
+const axisRows = computed(() => {
+  const rows = [props.claude, props.codex, props.cursor]
+  return rows.reduce((longest, current) => current.length > longest.length ? current : longest, rows[0])
+})
 
 const hoverDetail = computed(() => {
   const index = hoverIndex.value
@@ -43,6 +52,7 @@ const hoverDetail = computed(() => {
   const series = [
     { name: 'Claude Code', shortName: 'Claude', row: props.claude[index] ?? null, tone: 'claude' as const },
     { name: 'Codex', shortName: 'Codex', row: props.codex[index] ?? null, tone: 'codex' as const },
+    { name: 'Cursor', shortName: 'Cursor', row: props.cursor[index] ?? null, tone: 'cursor' as const },
   ].filter((item) => rowTotal(item.row) > 0)
   if (!series.length) return null
   const metrics = [
@@ -137,7 +147,7 @@ function draw() {
   context.setTransform(ratio, 0, 0, ratio, 0, 0)
   context.clearRect(0, 0, rect.width, rect.height)
 
-  const allRows = [...props.claude, ...props.codex]
+  const allRows = [...props.claude, ...props.codex, ...props.cursor]
   const max = Math.max(...allRows.map(usageTrendTokens), 1)
   const grid = css('--color-border')
   const label = css('--color-text-subtle')
@@ -200,12 +210,15 @@ function draw() {
 
   const claudeColor = css('--color-series-1')
   const codexColor = css('--color-series-2')
+  const cursorColor = css('--color-series-3')
   drawSeries(context, props.claude, claudeColor, box, max)
   drawSeries(context, props.codex, codexColor, box, max)
+  drawSeries(context, props.cursor, cursorColor, box, max)
 
   if (hoverIndex.value !== null) {
     drawPoint(context, props.claude, hoverIndex.value, claudeColor, box, max)
     drawPoint(context, props.codex, hoverIndex.value, codexColor, box, max)
+    drawPoint(context, props.cursor, hoverIndex.value, cursorColor, box, max)
   }
 }
 
@@ -251,7 +264,7 @@ const tooltipStyle = computed(() => {
 
 useResizeObserver(wrap, () => draw())
 watch(
-  [() => props.claude, () => props.codex, () => props.range, () => app.theme],
+  [() => props.claude, () => props.codex, () => props.cursor, () => props.range, () => app.theme],
   () => {
     hoverIndex.value = null
     void nextTick(draw)
@@ -268,6 +281,7 @@ onBeforeUnmount(() => {
     <div class="usage-trend__legend" aria-hidden="true">
       <span v-if="claude.length"><i class="usage-trend__line usage-trend__line--claude" />Claude Code</span>
       <span v-if="codex.length"><i class="usage-trend__line usage-trend__line--codex" />Codex</span>
+      <span v-if="cursor.length"><i class="usage-trend__line usage-trend__line--cursor" />Cursor</span>
     </div>
     <canvas
       ref="canvas"

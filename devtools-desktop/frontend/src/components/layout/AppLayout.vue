@@ -190,25 +190,30 @@ const rootClass = computed(() => ({
   flex-direction: column;
   width: 100%;
   align-items: center;
-  gap: 6px;
-  padding: 10px 0 0;
+  gap: 8px;
+  padding: 10px 0 2px;
 }
 
 .app-layout-root.is-collapsed .app-sidebar .sidebar-footer .sidebar-footer__tools {
+  display: flex;
   flex-direction: column;
-  width: 100%;
+  width: auto;
   align-items: center;
-  gap: 6px;
+  gap: 2px;
+  padding: 2px;
 }
 
 .app-layout-root.is-collapsed .app-sidebar .sidebar-footer .sidebar-tool-button,
 .app-layout-root.is-collapsed .app-sidebar .sidebar-footer .sidebar-update-button {
   flex: none;
+  flex-direction: row;
   width: 36px;
   min-width: 36px;
   max-width: 36px;
-  height: 34px;
+  height: 36px;
+  min-height: 36px;
   justify-content: center;
+  gap: 0;
   padding: 0;
 }
 

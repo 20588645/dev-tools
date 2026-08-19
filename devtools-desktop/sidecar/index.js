@@ -105,6 +105,7 @@ app.use('/api/upgrade', require('./routes/upgrade'));
 app.use('/api/terminal', require('./routes/terminal'));
 app.use('/api/usage', require('./routes/usage'));
 app.use('/api/twofa', require('./routes/twofa'));
+app.use('/api/appfix', require('./routes/appfix'));
 app.use('/api/group-publish', require('./routes/group-publish'));
 app.use('/api/backup', require('./routes/backup'));
 app.use('/api/settings', require('./routes/settings'));
@@ -112,8 +113,14 @@ app.use('/api/settings', require('./routes/settings'));
 // 用量统计后台兜底同步：Claude 桌面端会快速清理已关闭会话的日志文件，
 // 必须趁文件还在时抢先入库，不能只依赖用量页面被打开时的按需同步
 const usageService = require('./services/usage');
-setTimeout(() => { try { usageService.syncUsage(true); } catch (e) { console.error('[Usage] 启动同步失败:', e.message); } }, 5000);
-setInterval(() => { try { usageService.syncUsage(true); } catch {} }, 5 * 60 * 1000);
+setTimeout(() => {
+  try { usageService.syncUsage(true); } catch (e) { console.error('[Usage] 启动同步失败:', e.message); }
+  usageService.syncCursorUsage(true).catch((e) => console.error('[Usage] Cursor 同步失败:', e.message));
+}, 5000);
+setInterval(() => {
+  try { usageService.syncUsage(true); } catch {}
+  usageService.syncCursorUsage().catch(() => {});
+}, 5 * 60 * 1000);
 
 // 数据库自动备份：启动后延迟触发（每日至多一次）+ 24h 周期兜底
 const backupService = require('./services/backup');

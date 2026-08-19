@@ -6,6 +6,9 @@ import {
   usageDelta,
   usageProjectName,
   usageTotalTokens,
+  usageAppLabel,
+  usageAppTone,
+  usageModelTokens,
 } from './usage-format'
 
 describe('usage formatting', () => {
@@ -25,5 +28,20 @@ describe('usage formatting', () => {
     expect(usageProjectName('ldts')).toBe('ldts')
     expect(usageDelta(120, 100)).toBeCloseTo(0.2)
     expect(usageDelta(120, 0)).toBeNull()
+    expect(usageAppLabel('cursor')).toBe('Cursor')
+    expect(usageAppTone('cursor')).toBe('cursor')
+    expect(usageAppTone('claude')).toBe('claude')
+    expect(usageModelTokens({
+      model: 'cursor-grok-4.6',
+      displayName: 'Grok',
+      appType: 'cursor',
+      pricingModel: '',
+      requests: 1,
+      inputTokens: 10,
+      outputTokens: 20,
+      cacheReadTokens: 30,
+      cacheCreationTokens: 40,
+      costMicroUsd: 0,
+    })).toBe(100)
   })
 })

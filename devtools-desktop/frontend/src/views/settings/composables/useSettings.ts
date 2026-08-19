@@ -74,6 +74,7 @@ export const MENU_ITEMS: MenuItemDefinition[] = [
   { page: 'editor', label: '文件编辑' },
   { page: 'ipcheck', label: '纯净检测' },
   { page: 'twofa', label: '双因验证' },
+  { page: 'appfix', label: '修复损坏' },
   { page: 'usage', label: '用量统计' },
 ]
 

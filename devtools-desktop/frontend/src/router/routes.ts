@@ -123,6 +123,12 @@ export const migrationRoutes: RouteRecordRaw[] = [
     meta: metaOf('twofa'),
   },
   {
+    path: '/appfix',
+    name: 'appfix',
+    component: () => import('@/views/appfix/AppFixView.vue'),
+    meta: metaOf('appfix'),
+  },
+  {
     path: '/usage',
     name: 'usage',
     component: () => import('@/views/usage/UsageView.vue'),

@@ -39,7 +39,14 @@
 
 .usage-toolbar {
   width: 100%;
+  flex-wrap: wrap;
   justify-content: space-between;
+  row-gap: var(--space-2);
+}
+
+.usage-toolbar__filters {
+  flex: 1 1 420px;
+  flex-wrap: wrap;
 }
 
 .usage-toolbar__divider {
@@ -197,8 +204,16 @@
   border-radius: var(--radius-pill);
 }
 
+.usage-trend__line--claude {
+  background: var(--color-series-1);
+}
+
 .usage-trend__line--codex {
   background: var(--color-series-2);
+}
+
+.usage-trend__line--cursor {
+  background: var(--color-series-3);
 }
 
 /* 指标为行、应用为列的紧凑卡片：行数不随应用数翻倍，避免卡片超出图表高度 */
@@ -439,6 +454,11 @@
 .usage-app-tag.is-codex {
   color: var(--color-series-2);
   background: color-mix(in srgb, var(--color-series-2) 12%, transparent);
+}
+
+.usage-app-tag.is-cursor {
+  color: var(--color-series-3);
+  background: color-mix(in srgb, var(--color-series-3) 12%, transparent);
 }
 
 .usage-project-name {

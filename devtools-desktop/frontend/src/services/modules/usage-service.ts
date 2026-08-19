@@ -2,7 +2,7 @@ import { apiClient } from '@/services/api-client'
 
 const USAGE_TIMEOUT = 30_000
 
-export type UsageApp = '' | 'claude' | 'codex'
+export type UsageApp = '' | 'claude' | 'codex' | 'cursor'
 export type UsageBucket = 'min10' | 'hour' | 'day'
 
 export interface UsageQuery {
@@ -119,6 +119,8 @@ export interface UsagePricingSyncResult {
 export interface UsageScanResult {
   files: number
   upserted: number
+  cursorUpserted: number
+  cursorError: string
 }
 
 export interface UsageImportResult {
@@ -322,7 +324,12 @@ export async function saveUsagePricing(modelId: string, input: Omit<UsagePricing
 
 export async function forceUsageScan(): Promise<UsageScanResult> {
   const value = record(await apiClient.post('/api/usage/sync', {}, 60_000))
-  return { files: number(value.files), upserted: number(value.upserted) }
+  return {
+    files: number(value.files),
+    upserted: number(value.upserted),
+    cursorUpserted: number(value.cursorUpserted),
+    cursorError: text(value.cursorError),
+  }
 }
 
 export async function importCcSwitchUsage(): Promise<UsageImportResult> {
