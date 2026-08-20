@@ -4,7 +4,7 @@ import { getHealth } from '@/services/modules/settings-service'
 
 export type IntroSidecarTone = 'ok' | 'warn' | 'danger' | ''
 
-const FALLBACK_VERSION = '0.1.93'
+const FALLBACK_VERSION = '1.0.0'
 
 export function useProjectIntro(visible: Ref<boolean>) {
   const version = ref('读取中')

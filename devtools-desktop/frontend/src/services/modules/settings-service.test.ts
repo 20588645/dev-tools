@@ -41,13 +41,13 @@ describe('settings service', () => {
       status: 'ok',
       uptime: '120',
       pid: '48102',
-      version: '0.1.93',
+      version: '1.0.0',
       dataDir: '/tmp/data-test',
     })).toEqual({
       status: 'ok',
       uptime: 120,
       pid: 48102,
-      version: '0.1.93',
+      version: '1.0.0',
       dataDir: '/tmp/data-test',
     })
 

@@ -1,6 +1,6 @@
 {
   "name": "devtools-sidecar",
-  "version": "0.1.93",
+  "version": "1.0.0",
   "main": "index.js",
   "description": "DevTools Desktop 本机 Node 后端（Express、SQLite、PTY、SFTP）。由 Tauri 以 node index.js 拉起；测试从仓库根目录 npm test 运行。",
   "scripts": {
