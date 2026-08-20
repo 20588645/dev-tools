@@ -1,6 +1,6 @@
 [package]
 name = "app"
-version = "0.1.93"
+version = "1.0.0"
 description = "DevTools Desktop"
 authors = ["ldy"]
 license = ""

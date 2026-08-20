@@ -20,13 +20,13 @@ describe('useProjectIntro', () => {
       status: 'ok',
       uptime: 12,
       pid: 1,
-      version: '0.1.93',
+      version: '1.0.0',
       dataDir: '/tmp',
     })
     const open = ref(false)
     const intro = useProjectIntro(open)
     open.value = true
-    await vi.waitFor(() => expect(intro.version.value).toBe('0.1.93'))
+    await vi.waitFor(() => expect(intro.version.value).toBe('1.0.0'))
     expect(intro.sidecarLabel.value).toBe('正常')
     expect(intro.sidecarClass.value).toBe('ok')
   })

@@ -15,7 +15,7 @@ const { health, app } = props.controller
     </div>
 
     <div class="settings-about-grid">
-      <article><small>Version</small><strong>{{ health?.version || '0.1.93' }}</strong><p>macOS · Desktop</p></article>
+      <article><small>Version</small><strong>{{ health?.version || '1.0.0' }}</strong><p>macOS · Desktop</p></article>
       <article><small>Runtime</small><strong>Tauri 2</strong><p>Node Sidecar · SQLite</p></article>
       <article><small>Data</small><strong>Local First</strong><p>数据保存在当前设备</p></article>
     </div>
