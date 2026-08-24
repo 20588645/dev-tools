@@ -7,7 +7,7 @@ import type { BaseDataTableColumn, BaseDataTableRow } from '@/components/data/ba
 import EmptyState from '@/components/feedback/EmptyState.vue'
 import type { UsageProjectStat } from '@/services/modules/usage-service'
 
-import { formatUsageNumber, formatUsagePercent, usageAppLabel, usageAppTone, usageProjectTokens } from '../usage-format'
+import { formatUsageCost, formatUsageNumber, formatUsagePercent, usageAppLabel, usageAppTone, usageProjectTokens } from '../usage-format'
 
 const props = defineProps<{ projects: UsageProjectStat[] }>()
 const visible = computed(() => props.projects.slice(0, 6))
@@ -37,6 +37,10 @@ const columns = computed<BaseDataTableColumn<ProjectTableRow>[]>(() => [
   { key: 'requests', title: '请求数', width: 82, align: 'right', render: row => formatUsageNumber(row.requests) },
   { key: 'tokens', title: 'Tokens', width: 104, align: 'right', render: row => formatUsageNumber(usageProjectTokens(row)) },
   { key: 'ratio', title: '占比', width: 76, align: 'right', render: row => formatUsagePercent(usageProjectTokens(row) / total.value) },
+  {
+    key: 'cost', title: '成本', width: 92, align: 'right',
+    render: row => h('span', { class: 'usage-mono' }, row.costMicroUsd > 0 ? formatUsageCost(row.costMicroUsd) : '不可计算'),
+  },
 ])
 </script>
 
@@ -50,7 +54,7 @@ const columns = computed<BaseDataTableColumn<ProjectTableRow>[]>(() => [
       :rows="tableRows"
       :row-key="row => row.project"
       density="compact"
-      :scroll-x="620"
+      :scroll-x="720"
       aria-label="项目用量排名"
     />
   </div>

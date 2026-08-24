@@ -182,6 +182,7 @@ export function useUsage(options: UseUsageOptions = {}) {
   const error = ref('')
   const refreshing = ref(false)
   const scanning = ref(false)
+  const cursorSyncing = ref(false)
   const importing = ref(false)
   const pricingLoading = ref(false)
   const pricingSyncing = ref(false)
@@ -196,7 +197,9 @@ export function useUsage(options: UseUsageOptions = {}) {
   const sortedProjects = computed(() => [...projects.value].sort((a, b) => usageProjectTokens(b) - usageProjectTokens(a)))
   const priced = computed(() => summary.value.pricingCoverage > 0)
   const status = computed(() => {
-    if (loading.value || refreshing.value || scanning.value) return { label: '正在同步', status: 'checking' as const }
+    if (loading.value || refreshing.value || scanning.value || cursorSyncing.value) {
+      return { label: cursorSyncing.value ? '正在同步 Cursor' : '正在同步', status: 'checking' as const }
+    }
     if (error.value) return { label: '数据异常', status: 'offline' as const }
     if (!lastUpdatedAt.value) return { label: '等待同步', status: 'idle' as const }
     return {
@@ -354,15 +357,29 @@ export function useUsage(options: UseUsageOptions = {}) {
     scanning.value = true
     try {
       const result = await service.forceUsageScan()
-      const cursorPart = result.cursorError
-        ? `Cursor 同步失败：${result.cursorError}`
-        : `Cursor 官方用量 ${result.cursorUpserted} 条`
-      notifications.push(`已扫描 ${result.files} 个日志文件，更新 ${result.upserted} 条记录；${cursorPart}`, result.cursorError ? 'warning' : 'success')
+      notifications.push(`已扫描 ${result.files} 个日志文件，更新 ${result.upserted} 条记录`, 'success')
       await refresh(true)
     } catch (reason) {
-      notifications.push(reason instanceof Error ? reason.message : '重新扫描失败', 'error')
+      notifications.push(reason instanceof Error ? reason.message : '扫描日志失败', 'error')
     } finally {
       scanning.value = false
+    }
+  }
+
+  async function syncCursor() {
+    cursorSyncing.value = true
+    try {
+      const result = await service.syncCursorUsage()
+      if (result.cursorError) {
+        notifications.push(`Cursor 同步失败：${result.cursorError}`, 'error')
+        return
+      }
+      notifications.push(`已同步 Cursor 官方用量 ${result.upserted} 条`, 'success')
+      await refresh(true)
+    } catch (reason) {
+      notifications.push(reason instanceof Error ? reason.message : 'Cursor 同步失败', 'error')
+    } finally {
+      cursorSyncing.value = false
     }
   }
 
@@ -449,6 +466,7 @@ export function useUsage(options: UseUsageOptions = {}) {
     error,
     refreshing,
     scanning,
+    cursorSyncing,
     importing,
     pricingLoading,
     pricingSyncing,
@@ -459,6 +477,7 @@ export function useUsage(options: UseUsageOptions = {}) {
     syncPricing,
     savePricing,
     forceScan,
+    syncCursor,
     importHistory,
     saveSubscriptionFee,
     setLogPage,

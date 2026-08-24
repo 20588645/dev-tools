@@ -1,6 +1,7 @@
 /**
- * Claude Code 用量统计 API
- * 查询接口会顺带触发一次节流同步（15s 内复用上次结果），保证数据基本实时
+ * 用量统计 API
+ * 查询只顺带节流扫描本机 Claude / Codex 日志（15s 内复用）。
+ * Cursor 官方用量只在 POST /sync/cursor 时拉取，避免挡住进页。
  */
 const express = require('express');
 const router = express.Router();
@@ -14,10 +15,9 @@ function appParam(req) {
   return ['claude', 'codex', 'cursor'].includes(app) ? app : '';
 }
 
-async function withLocalSync(req, res, write) {
+function withLocalSync(req, res, write) {
   try {
     usage.syncUsage();
-    await usage.syncCursorUsage();
     write(req, res);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -106,14 +106,21 @@ router.put('/pricing/:modelId', (req, res) => {
   }
 });
 
-// POST /api/usage/sync — 强制全量重扫（含 Cursor 官方用量）
-router.post('/sync', async (req, res) => {
+// POST /api/usage/sync — 强制重扫本机 Claude / Codex 日志
+router.post('/sync', (req, res) => {
   try {
-    const local = usage.syncUsage(true);
+    res.json(usage.syncUsage(true));
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// POST /api/usage/sync/cursor — 按需拉取 Cursor 官方用量
+router.post('/sync/cursor', async (req, res) => {
+  try {
     const cursor = await usage.syncCursorUsage(true);
     res.json({
-      ...local,
-      cursorUpserted: cursor.upserted || 0,
+      upserted: cursor.upserted || 0,
       cursorError: cursor.cursorError || '',
     });
   } catch (e) {

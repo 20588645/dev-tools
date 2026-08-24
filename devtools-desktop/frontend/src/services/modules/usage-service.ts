@@ -119,7 +119,10 @@ export interface UsagePricingSyncResult {
 export interface UsageScanResult {
   files: number
   upserted: number
-  cursorUpserted: number
+}
+
+export interface UsageCursorSyncResult {
+  upserted: number
   cursorError: string
 }
 
@@ -327,7 +330,13 @@ export async function forceUsageScan(): Promise<UsageScanResult> {
   return {
     files: number(value.files),
     upserted: number(value.upserted),
-    cursorUpserted: number(value.cursorUpserted),
+  }
+}
+
+export async function syncCursorUsage(): Promise<UsageCursorSyncResult> {
+  const value = record(await apiClient.post('/api/usage/sync/cursor', {}, 60_000))
+  return {
+    upserted: number(value.upserted),
     cursorError: text(value.cursorError),
   }
 }

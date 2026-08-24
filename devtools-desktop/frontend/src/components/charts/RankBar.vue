@@ -7,12 +7,14 @@ export type RankBarSeries = 'action' | 1 | 2 | 3
 const props = withDefaults(defineProps<{
   label: string
   value?: string
+  detail?: string
   percent: number
   /** action = 主题渐变；1/2/3 = 数据系列色 */
   series?: RankBarSeries
   labelWidth?: string
 }>(), {
   value: undefined,
+  detail: undefined,
   series: 'action',
   labelWidth: '130px',
 })
@@ -31,6 +33,7 @@ const fillStyle = computed(() => {
     <span class="rank-bar__label" :style="{ width: labelWidth }" :title="label">{{ label }}</span>
     <span class="rank-bar__track"><i class="rank-bar__fill" :style="fillStyle" /></span>
     <span v-if="value !== undefined" class="rank-bar__value">{{ value }}</span>
+    <span v-if="detail" class="rank-bar__detail">{{ detail }}</span>
   </div>
 </template>
 
@@ -74,6 +77,16 @@ const fillStyle = computed(() => {
   color: var(--color-text-muted);
   font-family: var(--font-family-mono);
   font-size: var(--font-size-xs);
+  text-align: right;
+}
+
+.rank-bar__detail {
+  flex: none;
+  width: 72px;
+  color: var(--color-text);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
   text-align: right;
 }
 </style>

@@ -7,6 +7,7 @@ import {
   getUsageSummary,
   normalizeUsageLog,
   normalizeUsageSummary,
+  syncCursorUsage,
   syncUsagePricing,
 } from './usage-service'
 
@@ -75,18 +76,26 @@ describe('usage service', () => {
     })
   })
 
-  it('keeps Cursor official scan counts on a forced refresh', async () => {
+  it('keeps local scan counts on a forced refresh', async () => {
     vi.spyOn(apiClient, 'post').mockResolvedValue({
       files: 4,
       upserted: 12,
-      cursorUpserted: '8',
-      cursorError: '',
     } as never)
     await expect(forceUsageScan()).resolves.toEqual({
       files: 4,
       upserted: 12,
-      cursorUpserted: 8,
+    })
+  })
+
+  it('posts Cursor official usage to a dedicated sync endpoint', async () => {
+    const post = vi.spyOn(apiClient, 'post').mockResolvedValue({
+      upserted: '8',
+      cursorError: '',
+    } as never)
+    await expect(syncCursorUsage()).resolves.toEqual({
+      upserted: 8,
       cursorError: '',
     })
+    expect(post).toHaveBeenCalledWith('/api/usage/sync/cursor', {}, 60_000)
   })
 })

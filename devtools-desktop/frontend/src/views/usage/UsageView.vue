@@ -29,6 +29,7 @@ import UsageTrendChart from './components/UsageTrendChart.vue'
 import { USAGE_REFRESH_OPTIONS, useUsage, type UsageRange } from './composables/useUsage'
 import {
   formatUsageCompact,
+  formatUsageCost,
   formatUsageNumber,
   formatUsagePercent,
   usageDelta,
@@ -63,6 +64,7 @@ const {
   error,
   refreshing,
   scanning,
+  cursorSyncing,
   importing,
   pricingLoading,
   pricingSyncing,
@@ -73,6 +75,7 @@ const {
   syncPricing,
   savePricing,
   forceScan,
+  syncCursor,
   importHistory,
   saveSubscriptionFee,
   setLogPage,
@@ -167,12 +170,13 @@ const cacheSavedLabel = computed(() => `节省 ≈ $${summary.value.cacheSavedUs
 
 const rangeHint = computed(() => rangeOptions.find((option) => option.value === range.value)?.label ?? '')
 
-/** 原型「模型用量排行」：按总 Token 取前 5 */
+/** 原型「模型用量排行」：按总 Token 取前 5，右侧同时给出估算成本 */
 const modelRanking = computed(() => {
   const rows = models.value
     .map((model) => ({
       name: model.displayName || model.model,
       tokens: model.inputTokens + model.outputTokens + model.cacheReadTokens + model.cacheCreationTokens,
+      costMicroUsd: model.costMicroUsd,
     }))
     .sort((a, b) => b.tokens - a.tokens)
     .slice(0, 5)
@@ -185,7 +189,7 @@ const modelRanking = computed(() => {
   <PageFrame class="usage-view" variant="immersive" data-test="usage-view">
     <template #top>
       <PageTop>
-        <PageHeader title="用量统计" description="Claude / Codex 扫本机日志；Cursor 为当前登录账号的官方用量（共用账号会含其他人）">
+        <PageHeader title="用量统计" description="Claude / Codex 扫本机日志；Cursor 官方用量需点「同步 Cursor」拉取（共用账号会含其他人）">
           <template #icon><span class="usage-view__title-mark">▥</span></template>
           <template #actions>
             <StatusIndicator :label="status.label" :status="status.status" />
@@ -232,7 +236,8 @@ const modelRanking = computed(() => {
                 @update:model-value="setRefreshSeconds(Number($event))"
               />
               <BaseButton variant="ghost" size="sm" :loading="refreshing" @click="refresh(true)">刷新数据</BaseButton>
-              <BaseButton variant="ghost" size="sm" :loading="scanning" @click="forceScan">重新扫描</BaseButton>
+              <BaseButton variant="ghost" size="sm" :loading="scanning" @click="forceScan">扫描日志</BaseButton>
+              <BaseButton variant="ghost" size="sm" :loading="cursorSyncing" @click="syncCursor">同步 Cursor</BaseButton>
             </div>
           </div>
         </PageToolbar>
@@ -240,7 +245,7 @@ const modelRanking = computed(() => {
     </template>
 
     <div class="usage-view__scroll">
-      <LoadingState v-if="loading && !summary.requests" label="正在同步用量数据…" />
+      <LoadingState v-if="loading && !summary.requests" label="正在加载用量数据…" />
       <ErrorState
         v-else-if="error && !summary.requests"
         title="用量数据加载失败"
@@ -308,6 +313,7 @@ const modelRanking = computed(() => {
                 :key="row.name"
                 :label="row.name"
                 :value="formatUsageCompact(row.tokens)"
+                :detail="row.costMicroUsd > 0 ? formatUsageCost(row.costMicroUsd) : '—'"
                 :percent="row.percent"
                 label-width="118px"
               />

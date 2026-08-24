@@ -115,11 +115,9 @@ app.use('/api/settings', require('./routes/settings'));
 const usageService = require('./services/usage');
 setTimeout(() => {
   try { usageService.syncUsage(true); } catch (e) { console.error('[Usage] 启动同步失败:', e.message); }
-  usageService.syncCursorUsage(true).catch((e) => console.error('[Usage] Cursor 同步失败:', e.message));
 }, 5000);
 setInterval(() => {
   try { usageService.syncUsage(true); } catch {}
-  usageService.syncCursorUsage().catch(() => {});
 }, 5 * 60 * 1000);
 
 // 数据库自动备份：启动后延迟触发（每日至多一次）+ 24h 周期兜底

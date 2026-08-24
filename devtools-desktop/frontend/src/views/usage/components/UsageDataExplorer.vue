@@ -79,6 +79,10 @@ const modelColumns: BaseDataTableColumn<ModelTableRow>[] = [
     key: 'pricingModel', title: '单价状态', width: 92,
     render: model => h(BaseBadge, { tone: model.pricingModel ? 'success' : 'warning' }, () => model.pricingModel ? '已定价' : '未匹配'),
   },
+  {
+    key: 'cost', title: '成本', width: 96, align: 'right',
+    render: model => h('span', { class: 'usage-mono' }, model.costMicroUsd > 0 ? formatUsageCost(model.costMicroUsd) : '不可计算'),
+  },
 ]
 
 const logColumns: BaseDataTableColumn<LogTableRow>[] = [
@@ -110,7 +114,7 @@ const logColumns: BaseDataTableColumn<LogTableRow>[] = [
         :rows="modelRows"
         :row-key="row => `${row.model}-${row.appType}`"
         density="compact"
-        :scroll-x="760"
+        :scroll-x="860"
         aria-label="模型用量统计"
         empty-text="暂无模型统计"
       />

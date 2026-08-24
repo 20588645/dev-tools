@@ -90,11 +90,12 @@ describe('redesign-v2 shared components', () => {
     expect(ring.findAll('circle')).toHaveLength(2)
 
     const rank = mount(RankBar, {
-      props: { label: 'Claude', value: '612K', percent: 48, series: 1 },
+      props: { label: 'Claude', value: '612K', detail: '$12.50', percent: 48, series: 1 },
     })
     expect(rank.attributes('aria-valuenow')).toBe('48')
     expect(rank.get('.rank-bar__fill').attributes('style')).toContain('width: 48%')
     expect(rank.get('.rank-bar__value').text()).toBe('612K')
+    expect(rank.get('.rank-bar__detail').text()).toBe('$12.50')
   })
 
   it('normalizes split bar segments and renders the legend', () => {

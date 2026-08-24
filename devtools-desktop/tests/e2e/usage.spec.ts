@@ -17,12 +17,12 @@ const summary = {
 }
 
 const models = [
-  { model: 'gpt-5.6-sol', displayName: 'gpt-5.6-sol', appType: 'codex', pricingModel: '', requests: 2119, inputTokens: 120000000, outputTokens: 30000000, cacheReadTokens: 160000000, cacheCreationTokens: 7000000, costMicroUsd: 0 },
+  { model: 'gpt-5.6-sol', displayName: 'gpt-5.6-sol', appType: 'codex', pricingModel: 'gpt-5.6-sol', requests: 2119, inputTokens: 120000000, outputTokens: 30000000, cacheReadTokens: 160000000, cacheCreationTokens: 7000000, costMicroUsd: 45_000_000 },
   { model: 'claude-opus-4-1', displayName: 'Claude Opus 4.1', appType: 'claude', pricingModel: '', requests: 47, inputTokens: 2000000, outputTokens: 800000, cacheReadTokens: 3000000, cacheCreationTokens: 1000000, costMicroUsd: 0 },
 ]
 
 const projects = [
-  { project: 'personalTools', apps: ['codex'], requests: 1028, inputTokens: 80000000, outputTokens: 12000000, cacheReadTokens: 70000000, cacheCreationTokens: 6000000, costMicroUsd: 0 },
+  { project: 'personalTools', apps: ['codex'], requests: 1028, inputTokens: 80000000, outputTokens: 12000000, cacheReadTokens: 70000000, cacheCreationTokens: 6000000, costMicroUsd: 12_500_000 },
   { project: 'ldts', apps: ['codex', 'claude'], requests: 642, inputTokens: 50000000, outputTokens: 8000000, cacheReadTokens: 40000000, cacheCreationTokens: 3000000, costMicroUsd: 0 },
 ]
 
@@ -99,7 +99,14 @@ async function mockUsage(page: Page) {
         sources: [{ source: 'models.dev', url: 'https://models.dev/api.json', ok: true, count: 100, error: '' }],
       })
     }
-    if (request.method() === 'POST' && path === '/api/usage/sync') return fulfill(route, { files: 20, upserted: 10 })
+    if (request.method() === 'POST' && path === '/api/usage/sync') {
+      writes.push({ path, body: request.postDataJSON() })
+      return fulfill(route, { files: 20, upserted: 10 })
+    }
+    if (request.method() === 'POST' && path === '/api/usage/sync/cursor') {
+      writes.push({ path, body: request.postDataJSON() })
+      return fulfill(route, { upserted: 8, cursorError: '' })
+    }
     if (request.method() === 'POST' && path === '/api/usage/import-ccswitch') return fulfill(route, { scanned: 100, imported: 2, pricingImported: 1 })
     if (request.method() === 'PUT' && path.startsWith('/api/usage/pricing/')) {
       writes.push({ path, body: request.postDataJSON() })
@@ -121,8 +128,13 @@ async function openUsage(page: Page, viewport = { width: 1280, height: 800 }) {
   // redesign-v2：总量落在首张 stat 卡（紧凑格式）
   await expect(page.locator('.usage-stats .stat-card').first()).toContainText('3.24 亿')
   await expect(page.getByRole('region', { name: '项目用量排名' })).toBeVisible()
+  await expect(page.getByRole('region', { name: '项目用量排名' })).toContainText('成本')
+  await expect(page.getByRole('region', { name: '项目用量排名' })).toContainText('$12.5000')
   await expect(page.getByRole('region', { name: '高用量请求排名' })).toBeVisible()
   await expect(page.getByRole('region', { name: '模型用量统计' })).toBeVisible()
+  await expect(page.getByRole('region', { name: '模型用量统计' })).toContainText('成本')
+  await expect(page.getByRole('region', { name: '模型用量统计' })).toContainText('$45.0000')
+  await expect(page.locator('.usage-model-rank')).toContainText('$45.0000')
   return mock
 }
 
@@ -201,8 +213,18 @@ test('hides the retired header entries and keeps a default refresh interval', as
   // 顶部两个按钮已隐藏：价格设置与底部 Tab 重复，CC Switch 导入是一次性迁移入口
   await expect(page.getByRole('button', { name: '数据与价格设置', exact: true })).toHaveCount(0)
   await expect(page.getByRole('button', { name: '导入 CC Switch 历史', exact: true })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: '刷新数据', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: '扫描日志', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: '同步 Cursor', exact: true })).toBeVisible()
   // 未设置过时必须是 30s，不能因为 Number(null) === 0 落到「关闭」
   await expect(page.locator('.usage-refresh-select')).toContainText('30s')
+})
+
+test('syncs Cursor official usage only from the dedicated button', async ({ page }) => {
+  const mock = await openUsage(page)
+  expect(mock.writes.some((write) => write.path === '/api/usage/sync/cursor')).toBe(false)
+  await page.getByRole('button', { name: '同步 Cursor', exact: true }).click()
+  await expect.poll(() => mock.writes.some((write) => write.path === '/api/usage/sync/cursor')).toBe(true)
 })
 
 test('queries an explicit window when a custom range is applied', async ({ page }) => {

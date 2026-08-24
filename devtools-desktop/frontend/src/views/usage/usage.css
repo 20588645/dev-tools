@@ -43,6 +43,11 @@
   flex-wrap: wrap;
 }
 
+.usage-toolbar__actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .usage-toolbar__divider {
   width: 1px;
   height: 22px;
