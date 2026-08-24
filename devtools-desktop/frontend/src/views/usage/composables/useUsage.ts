@@ -192,8 +192,6 @@ export function useUsage(options: UseUsageOptions = {}) {
   let loadVersion = 0
   let loadController: AbortController | null = null
 
-  const rangeInfo = computed(() => usageRangeQuery(range.value, now(), customRange.value))
-  const query = computed<UsageQuery>(() => ({ ...rangeInfo.value.query, app: app.value }))
   const sortedProjects = computed(() => [...projects.value].sort((a, b) => usageProjectTokens(b) - usageProjectTokens(a)))
   const priced = computed(() => summary.value.pricingCoverage > 0)
   const status = computed(() => {
@@ -262,16 +260,21 @@ export function useUsage(options: UseUsageOptions = {}) {
     else loading.value = true
     error.value = ''
     try {
+      // 每次拉取都按当前时刻重算区间。自定义「跟随当前」的 end=0 会在这里展开成 now，
+      // 不能放进 computed：now() 不是响应式依赖，点确定后 end 会被冻在那一瞬。
+      const at = now()
+      const rangeInfo = usageRangeQuery(range.value, at, customRange.value)
+      const query: UsageQuery = { ...rangeInfo.query, app: app.value }
       const apps: Array<Exclude<UsageApp, ''>> = app.value ? [app.value as Exclude<UsageApp, ''>] : ['claude', 'codex', 'cursor']
-      const previous = previousUsageQuery(range.value, now(), customRange.value)
+      const previous = previousUsageQuery(range.value, at, customRange.value)
       if (previous) previous.app = app.value
       const results = await Promise.all([
-        service.getUsageSummary(query.value, controller.signal),
-        service.getUsageModels(query.value, controller.signal),
-        service.getUsageProjects(query.value, controller.signal),
+        service.getUsageSummary(query, controller.signal),
+        service.getUsageModels(query, controller.signal),
+        service.getUsageProjects(query, controller.signal),
         service.getUsageRate(controller.signal).catch(() => null),
         previous ? service.getUsageSummary(previous, controller.signal).catch(() => null) : Promise.resolve(null),
-        ...apps.map((name) => service.getUsageTrends(query.value, rangeInfo.value.bucket, name, controller.signal)),
+        ...apps.map((name) => service.getUsageTrends(query, rangeInfo.bucket, name, controller.signal)),
       ])
       if (version !== loadVersion) return
       const [nextSummary, nextModels, nextProjects, nextRate, nextPrevious] = results
@@ -285,8 +288,8 @@ export function useUsage(options: UseUsageOptions = {}) {
       codexTrends.value = apps.includes('codex') ? trendRows[apps.indexOf('codex')] ?? [] : []
       cursorTrends.value = apps.includes('cursor') ? trendRows[apps.indexOf('cursor')] ?? [] : []
       const [nextTop, nextLogs] = await Promise.all([
-        service.getUsageTop(query.value, nextSummary.pricingCoverage > 0 ? 'cost' : 'tokens', controller.signal),
-        service.getUsageLogs(query.value, logs.value.page, logs.value.pageSize, logModel.value, controller.signal),
+        service.getUsageTop(query, nextSummary.pricingCoverage > 0 ? 'cost' : 'tokens', controller.signal),
+        service.getUsageLogs(query, logs.value.page, logs.value.pageSize, logModel.value, controller.signal),
       ])
       if (version !== loadVersion) return
       topRequests.value = nextTop

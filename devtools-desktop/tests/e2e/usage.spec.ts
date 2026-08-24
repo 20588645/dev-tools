@@ -250,3 +250,41 @@ test('queries an explicit window when a custom range is applied', async ({ page 
     && request.includes('start=')
     && request.includes('end='))).toBe(true)
 })
+
+function latestSummaryEndForStart(requests: string[], start: number) {
+  for (let index = requests.length - 1; index >= 0; index -= 1) {
+    const request = requests[index]
+    if (!request.includes('/api/usage/summary')) continue
+    const params = new URLSearchParams(request.slice(request.indexOf('?') + 1))
+    if (Number(params.get('start')) !== start) continue
+    return Number(params.get('end'))
+  }
+  return 0
+}
+
+test('advances a follow-now custom end when usage data is refreshed', async ({ page }) => {
+  await page.clock.install({ time: new Date('2026-08-24T09:30:00+08:00') })
+  const mock = await openUsage(page)
+  await page.getByRole('tab', { name: '自定义', exact: true }).click()
+  const dialog = page.getByRole('dialog')
+  await expect(dialog).toBeVisible()
+
+  const startInput = dialog.locator('input').first()
+  await startInput.fill('2026-08-24 08:40:00')
+  await startInput.press('Enter')
+  await dialog.getByRole('button', { name: '确定', exact: true }).click()
+  await expect(dialog).toHaveCount(0)
+  await expect(page.locator('.usage-custom-chip')).toContainText('当前')
+
+  const start = Math.floor(new Date('2026-08-24T08:40:00+08:00').getTime() / 1000)
+  const confirmedAt = Math.floor(new Date('2026-08-24T09:30:00+08:00').getTime() / 1000)
+  await expect.poll(() => latestSummaryEndForStart(mock.requests, start)).toBeGreaterThanOrEqual(confirmedAt)
+  await expect.poll(() => latestSummaryEndForStart(mock.requests, start)).toBeLessThan(confirmedAt + 30)
+  const firstEnd = latestSummaryEndForStart(mock.requests, start)
+
+  await page.clock.setSystemTime(new Date('2026-08-24T09:51:00+08:00'))
+  await page.getByRole('button', { name: '刷新数据', exact: true }).click()
+  const refreshedAt = Math.floor(new Date('2026-08-24T09:51:00+08:00').getTime() / 1000)
+  await expect.poll(() => latestSummaryEndForStart(mock.requests, start)).toBeGreaterThan(firstEnd)
+  await expect.poll(() => latestSummaryEndForStart(mock.requests, start)).toBeGreaterThanOrEqual(refreshedAt)
+})
